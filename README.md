@@ -71,3 +71,35 @@ See:
 **Deep when there is time. Short when there is not. Evidence first in both cases.**
 
 The public prototype will use only public or synthetic data. Any private team layer will be demonstrated with synthetic scrim records unless an authorized team dataset is explicitly provided.
+
+## Current implementation status
+
+Phase 1 now provides an executable, dependency-light evaluation foundation:
+
+- immutable typed records with separate `observed_at` and `available_at`,
+- reusable point-in-time filtering and strict future-data rejection,
+- offline adapters for patch, professional match, and high-Elo aggregate fixtures,
+- three transparent baselines,
+- deterministic top-K backtesting and JSON output,
+- a synthetic adoption/false-positive scenario.
+
+This is an evaluation skeleton, not a production data pipeline or a claim of predictive value.
+
+## Quick start
+
+Requires Python 3.11 or newer.
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest
+python -m ruff check src tests
+python -m ruff format --check src tests
+python -m pro_meta_intelligence evaluate --output outputs/synthetic-backtest.json
+```
+
+The generated report is explicitly marked `fixture_only: true`.
+
+See also:
+
+- [`docs/PHASE1_IMPLEMENTATION.md`](docs/PHASE1_IMPLEMENTATION.md)
+- [`docs/PRODUCT_MODES.md`](docs/PRODUCT_MODES.md)
