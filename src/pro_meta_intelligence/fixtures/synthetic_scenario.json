@@ -1,0 +1,324 @@
+{
+  "scenario_id": "synthetic-jungle-emergence-v1",
+  "snapshot_id": "fixture-2026-08-15T00:00:00Z-v1",
+  "adoption_threshold": 2,
+  "window": {
+    "cutoff": "2026-08-15T00:00:00Z",
+    "evaluation_start": "2026-08-15T00:00:00Z",
+    "evaluation_end": "2026-08-22T00:00:00Z",
+    "top_k": 2
+  },
+  "sources": {
+    "patch": {
+      "source_id": "fixture-patch-26.16",
+      "source_type": "synthetic_patch",
+      "source_uri": "fixture://patch/26.16",
+      "source_version": "v1",
+      "retrieved_at": "2026-08-21T00:00:00Z",
+      "content_hash": "sha256:synthetic-patch-26.16-v1",
+      "schema_version": "1"
+    },
+    "pro": {
+      "source_id": "fixture-pro-matches",
+      "source_type": "synthetic_pro_match",
+      "source_uri": "fixture://pro-matches/jungle-emergence-v1",
+      "source_version": "v1",
+      "retrieved_at": "2026-08-21T00:00:00Z",
+      "content_hash": "sha256:synthetic-pro-v1",
+      "schema_version": "1"
+    },
+    "soloq": {
+      "source_id": "fixture-high-elo",
+      "source_type": "synthetic_solo_queue_aggregate",
+      "source_uri": "fixture://solo-queue/high-elo-v1",
+      "source_version": "v1",
+      "retrieved_at": "2026-08-21T00:00:00Z",
+      "content_hash": "sha256:synthetic-soloq-v1",
+      "schema_version": "1"
+    },
+    "evidence": {
+      "source_id": "fixture-evidence",
+      "source_type": "synthetic_evidence",
+      "source_uri": "fixture://evidence/jungle-emergence-v1",
+      "source_version": "v1",
+      "retrieved_at": "2026-08-21T00:00:00Z",
+      "content_hash": "sha256:synthetic-evidence-v1",
+      "schema_version": "1"
+    }
+  },
+  "patch_snapshots": [
+    {
+      "patch_id": "26.16",
+      "region": "GLOBAL",
+      "champion_state_version": "26.16.1",
+      "item_state_version": "26.16.1",
+      "rune_state_version": "26.16.1",
+      "observed_at": "2026-08-01T00:00:00Z",
+      "available_at": "2026-08-02T00:00:00Z",
+      "source": "patch",
+      "changes": [
+        {
+          "champion_id": "Shyvana",
+          "role": "JUNGLE",
+          "kind": "BUFF",
+          "reason": "Synthetic direct clear-speed buff for heuristic validation."
+        },
+        {
+          "champion_id": "Zyra",
+          "role": "JUNGLE",
+          "kind": "BUFF",
+          "reason": "Synthetic monster-damage buff for heuristic validation."
+        },
+        {
+          "champion_id": "Maokai",
+          "role": "JUNGLE",
+          "kind": "NERF",
+          "reason": "Synthetic durability nerf."
+        }
+      ]
+    }
+  ],
+  "matches": [
+    {
+      "match_id": "prior-1",
+      "series_id": "prior-series-1",
+      "league": "SYN",
+      "tournament": "Synthetic Invitational",
+      "patch_id": "26.16",
+      "blue_team_id": "A",
+      "red_team_id": "B",
+      "winner_team_id": "A",
+      "observed_at": "2026-08-04T12:00:00Z",
+      "available_at": "2026-08-04T13:00:00Z",
+      "source": "pro"
+    },
+    {
+      "match_id": "prior-2",
+      "series_id": "prior-series-2",
+      "league": "SYN",
+      "tournament": "Synthetic Invitational",
+      "patch_id": "26.16",
+      "blue_team_id": "C",
+      "red_team_id": "D",
+      "winner_team_id": "D",
+      "observed_at": "2026-08-06T12:00:00Z",
+      "available_at": "2026-08-06T13:00:00Z",
+      "source": "pro"
+    },
+    {
+      "match_id": "recent-1",
+      "series_id": "recent-series-1",
+      "league": "SYN",
+      "tournament": "Synthetic Invitational",
+      "patch_id": "26.16",
+      "blue_team_id": "E",
+      "red_team_id": "F",
+      "winner_team_id": "E",
+      "observed_at": "2026-08-10T12:00:00Z",
+      "available_at": "2026-08-10T13:00:00Z",
+      "source": "pro"
+    },
+    {
+      "match_id": "recent-2",
+      "series_id": "recent-series-2",
+      "league": "SYN",
+      "tournament": "Synthetic Invitational",
+      "patch_id": "26.16",
+      "blue_team_id": "G",
+      "red_team_id": "H",
+      "winner_team_id": "H",
+      "observed_at": "2026-08-12T12:00:00Z",
+      "available_at": "2026-08-12T13:00:00Z",
+      "source": "pro"
+    },
+    {
+      "match_id": "future-1",
+      "series_id": "future-series-1",
+      "league": "SYN",
+      "tournament": "Synthetic Invitational",
+      "patch_id": "26.16",
+      "blue_team_id": "I",
+      "red_team_id": "J",
+      "winner_team_id": "I",
+      "observed_at": "2026-08-16T12:00:00Z",
+      "available_at": "2026-08-16T13:00:00Z",
+      "source": "pro"
+    },
+    {
+      "match_id": "future-2",
+      "series_id": "future-series-2",
+      "league": "SYN",
+      "tournament": "Synthetic Invitational",
+      "patch_id": "26.16",
+      "blue_team_id": "K",
+      "red_team_id": "L",
+      "winner_team_id": "L",
+      "observed_at": "2026-08-18T12:00:00Z",
+      "available_at": "2026-08-18T13:00:00Z",
+      "source": "pro"
+    }
+  ],
+  "pick_ban_events": [
+    {
+      "event_id": "draft-prior-1-maokai",
+      "match_id": "prior-1",
+      "sequence": 1,
+      "team_id": "A",
+      "side": "BLUE",
+      "action": "PICK",
+      "champion_id": "Maokai",
+      "role": "JUNGLE",
+      "observed_at": "2026-08-04T12:00:00Z",
+      "available_at": "2026-08-04T13:00:00Z",
+      "source": "pro"
+    },
+    {
+      "event_id": "draft-prior-2-sejuani",
+      "match_id": "prior-2",
+      "sequence": 1,
+      "team_id": "C",
+      "side": "BLUE",
+      "action": "PICK",
+      "champion_id": "Sejuani",
+      "role": "JUNGLE",
+      "observed_at": "2026-08-06T12:00:00Z",
+      "available_at": "2026-08-06T13:00:00Z",
+      "source": "pro"
+    },
+    {
+      "event_id": "draft-recent-1-zyra",
+      "match_id": "recent-1",
+      "sequence": 1,
+      "team_id": "E",
+      "side": "BLUE",
+      "action": "PICK",
+      "champion_id": "Zyra",
+      "role": "JUNGLE",
+      "observed_at": "2026-08-10T12:00:00Z",
+      "available_at": "2026-08-10T13:00:00Z",
+      "source": "pro"
+    },
+    {
+      "event_id": "draft-recent-2-shyvana",
+      "match_id": "recent-2",
+      "sequence": 1,
+      "team_id": "G",
+      "side": "BLUE",
+      "action": "BAN",
+      "champion_id": "Shyvana",
+      "role": "JUNGLE",
+      "observed_at": "2026-08-12T12:00:00Z",
+      "available_at": "2026-08-12T13:00:00Z",
+      "source": "pro"
+    },
+    {
+      "event_id": "draft-future-1-zyra",
+      "match_id": "future-1",
+      "sequence": 1,
+      "team_id": "I",
+      "side": "BLUE",
+      "action": "PICK",
+      "champion_id": "Zyra",
+      "role": "JUNGLE",
+      "observed_at": "2026-08-16T12:00:00Z",
+      "available_at": "2026-08-16T13:00:00Z",
+      "source": "pro"
+    },
+    {
+      "event_id": "draft-future-2-zyra",
+      "match_id": "future-2",
+      "sequence": 1,
+      "team_id": "K",
+      "side": "BLUE",
+      "action": "PICK",
+      "champion_id": "Zyra",
+      "role": "JUNGLE",
+      "observed_at": "2026-08-18T12:00:00Z",
+      "available_at": "2026-08-18T13:00:00Z",
+      "source": "pro"
+    }
+  ],
+  "solo_queue_usage": [
+    {
+      "usage_id": "usage-prior-zyra",
+      "champion_id": "Zyra",
+      "role": "JUNGLE",
+      "patch_id": "26.16",
+      "tier_bucket": "HIGH_ELO",
+      "window_start": "2026-08-01T00:00:00Z",
+      "window_end": "2026-08-07T00:00:00Z",
+      "pick_count": 10,
+      "game_count": 1000,
+      "observed_at": "2026-08-07T00:00:00Z",
+      "available_at": "2026-08-08T00:00:00Z",
+      "source": "soloq"
+    },
+    {
+      "usage_id": "usage-current-zyra",
+      "champion_id": "Zyra",
+      "role": "JUNGLE",
+      "patch_id": "26.16",
+      "tier_bucket": "HIGH_ELO",
+      "window_start": "2026-08-08T00:00:00Z",
+      "window_end": "2026-08-14T00:00:00Z",
+      "pick_count": 40,
+      "game_count": 1000,
+      "observed_at": "2026-08-14T00:00:00Z",
+      "available_at": "2026-08-15T00:00:00Z",
+      "source": "soloq"
+    },
+    {
+      "usage_id": "usage-prior-shyvana",
+      "champion_id": "Shyvana",
+      "role": "JUNGLE",
+      "patch_id": "26.16",
+      "tier_bucket": "HIGH_ELO",
+      "window_start": "2026-08-01T00:00:00Z",
+      "window_end": "2026-08-07T00:00:00Z",
+      "pick_count": 10,
+      "game_count": 1000,
+      "observed_at": "2026-08-07T00:00:00Z",
+      "available_at": "2026-08-08T00:00:00Z",
+      "source": "soloq"
+    },
+    {
+      "usage_id": "usage-current-shyvana",
+      "champion_id": "Shyvana",
+      "role": "JUNGLE",
+      "patch_id": "26.16",
+      "tier_bucket": "HIGH_ELO",
+      "window_start": "2026-08-08T00:00:00Z",
+      "window_end": "2026-08-14T00:00:00Z",
+      "pick_count": 60,
+      "game_count": 1000,
+      "observed_at": "2026-08-14T00:00:00Z",
+      "available_at": "2026-08-15T00:00:00Z",
+      "source": "soloq"
+    },
+    {
+      "usage_id": "usage-future-karthus",
+      "champion_id": "Karthus",
+      "role": "JUNGLE",
+      "patch_id": "26.16",
+      "tier_bucket": "HIGH_ELO",
+      "window_start": "2026-08-15T00:00:00Z",
+      "window_end": "2026-08-16T00:00:00Z",
+      "pick_count": 900,
+      "game_count": 1000,
+      "observed_at": "2026-08-16T00:00:00Z",
+      "available_at": "2026-08-17T00:00:00Z",
+      "source": "soloq"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "evidence-fixture-scope",
+      "evidence_type": "fixture_note",
+      "subject_id": "synthetic-jungle-emergence-v1",
+      "claim": "All named teams, events, and measurements in this scenario are synthetic.",
+      "observed_at": "2026-08-01T00:00:00Z",
+      "available_at": "2026-08-01T00:00:00Z",
+      "source": "evidence"
+    }
+  ]
+}

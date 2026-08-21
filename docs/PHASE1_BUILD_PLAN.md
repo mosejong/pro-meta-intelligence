@@ -11,7 +11,7 @@
 예정 구조:
 
 ```text
-src/pro_meta/
+src/pro_meta_intelligence/
   ingestion/
   normalization/
   features/
@@ -23,6 +23,9 @@ configs/
 data/README.md
 scripts/
 ```
+
+구현 시 패키지 경로는 Issue #2 및 Phase 1 이관 명세의 정식 이름인
+`pro_meta_intelligence`를 따른다. 기존 `pro_meta` 표기는 축약 예시로 간주한다.
 
 원천 대용량 데이터는 Git에 커밋하지 않는다.
 

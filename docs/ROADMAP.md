@@ -58,7 +58,7 @@ Deliver:
 
 Exit gate: clear benchmark against which future complexity will be judged.
 
-## Phase 4 — Expert / OTP Evidence
+## Phase 4 — Expert / OTP Evidence + User-defined Intelligence Sources
 
 Validate high-Elo / OTP / expert sources and ingestion policy.
 
@@ -69,7 +69,17 @@ Add:
 - opinion vs fact labeling
 - quantitative support / contradiction
 
-Exit gate: demonstrate whether expert signals improve historical candidate ranking.
+In parallel, add an allowlisted source-registry track for user-defined interests:
+
+- official or supported API first,
+- source-specific terms, robots, retention, and rate-limit policy metadata,
+- permitted public-web adapters only,
+- raw immutable snapshots separated from AI-derived translation, summary, and tags,
+- optional bring-your-own AI API credentials stored through a secrets boundary and never logged,
+- no login bypass, private-data collection, hidden-account identification, or silent scraping around restrictions.
+
+Exit gate: demonstrate whether expert signals improve historical candidate ranking, and prove that
+each enabled source has an explicit, current collection policy and provenance trail.
 
 ## Phase 5 — Player Familiarity / Test-cost Proxy
 
@@ -85,7 +95,7 @@ Run A/B comparisons against single-agent and non-LLM baselines.
 
 Exit gate: multi-agent path must justify added cost/latency or be simplified.
 
-## Phase 7 — Strategy Agent + Emergency Brief
+## Phase 7 — Strategy Agent + Emergency Brief + Creator Mode
 
 Natural-language querying over verified structured data.
 
@@ -96,6 +106,12 @@ Core examples:
 - evidence for/against a candidate
 - historical analogues
 - 3-minute match-day brief
+
+Creator Mode reuses the same evidence and evaluation core to produce analyst-reviewed content
+packages: topic candidates, claims and counterclaims, data-card specifications, source lists,
+long-form scripts, chapters, and short-form summaries. It is an Analyst Studio, not an unattended
+content farm; publication remains a human decision and later misses become first-class
+post-evaluation material.
 
 Exit gate: generated answers remain grounded and traceable.
 
