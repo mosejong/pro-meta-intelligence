@@ -13,7 +13,12 @@ from pro_meta_intelligence.ingestion import load_synthetic_scenario
 from pro_meta_intelligence.ingestion.ddragon import DataDragonAdapter
 from pro_meta_intelligence.ingestion.oracles_elixir import OracleElixirCSVAdapter
 from pro_meta_intelligence.models import BacktestWindow
-from pro_meta_intelligence.publishing import SnapshotFeedPublisher
+from pro_meta_intelligence.publishing import (
+    FeedJobAlreadyRunning,
+    FeedJobOperationResult,
+    FeedJobRunner,
+    SnapshotFeedPublisher,
+)
 from pro_meta_intelligence.radar import LeagueRegionMap, MetaRadar, MetaRadarConfig
 from pro_meta_intelligence.sources import SnapshotArchive, SourceRegistry
 from pro_meta_intelligence.temporal import parse_datetime
@@ -102,6 +107,13 @@ def build_parser() -> argparse.ArgumentParser:
     refresh.add_argument("--max-index-entries", type=int, default=50)
     refresh.add_argument("--published-at", help="explicit publication timestamp; defaults to now")
     refresh.add_argument("--output", type=Path, help="optional refresh summary path")
+
+    job = subparsers.add_parser(
+        "run-feed-job",
+        help="run a configured local feed refresh with a single-writer lock and audit record",
+    )
+    job.add_argument("--config", type=Path, required=True, help="feed job JSON config")
+    job.add_argument("--output", type=Path, help="optional job audit summary path")
     return parser
 
 
@@ -121,6 +133,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _build_creator_brief(args)
     if args.command == "refresh-feed":
         return _refresh_feed(args)
+    if args.command == "run-feed-job":
+        return _run_feed_job(args)
     raise AssertionError("unreachable command")
 
 
@@ -286,6 +300,12 @@ def _build_creator_brief(args: argparse.Namespace) -> int:
 
 
 def _refresh_feed(args: argparse.Namespace) -> int:
+    exit_code, payload = _refresh_feed_payload(args)
+    _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    return exit_code
+
+
+def _refresh_feed_payload(args: argparse.Namespace) -> tuple[int, dict[str, object]]:
     radar, has_import_issues = _radar_payload(args)
     if args.fail_on_import_issues and has_import_issues:
         payload = {
@@ -294,8 +314,7 @@ def _refresh_feed(args: argparse.Namespace) -> int:
             "published": False,
             "import_report": radar["input"]["import_report"],
         }
-        _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
-        return 2
+        return 2, payload
 
     creator = CreatorBriefBuilder().build(radar, top_k=args.creator_top_k)
     published_at = parse_datetime(args.published_at) if args.published_at else datetime.now(UTC)
@@ -312,8 +331,89 @@ def _refresh_feed(args: argparse.Namespace) -> int:
             "creator_topic_count": len(creator.to_dict()["topic_candidates"]),
         }
     )
+    return 0, payload
+
+
+def _run_feed_job(args: argparse.Namespace) -> int:
+    config = _load_feed_job_config(args.config)
+    refresh_args = _feed_job_refresh_args(args.config, config)
+    runner = FeedJobRunner(_resolve_config_path(args.config, config["run_dir"]))
+
+    def operation() -> FeedJobOperationResult:
+        exit_code, payload = _refresh_feed_payload(refresh_args)
+        return FeedJobOperationResult(exit_code=exit_code, payload=payload)
+
+    try:
+        result = runner.run(operation, config_path=args.config)
+        payload = result.audit
+        exit_code = result.exit_code
+    except FeedJobAlreadyRunning as error:
+        payload = {
+            "schema_version": "1",
+            "status": "ALREADY_RUNNING",
+            "exit_code": 3,
+            "error": str(error),
+        }
+        exit_code = 3
     _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
-    return 0
+    return exit_code
+
+
+def _load_feed_job_config(path: Path) -> dict[str, object]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or payload.get("schema_version") != "1":
+        raise ValueError("feed job config requires schema_version 1")
+    for key in ("input", "source_timezone", "feed_dir", "run_dir"):
+        if not isinstance(payload.get(key), str) or not payload[key]:
+            raise ValueError(f"feed job config requires non-empty {key}")
+    for section in ("radar", "creator", "policy"):
+        value = payload.get(section, {})
+        if not isinstance(value, dict):
+            raise ValueError(f"feed job config {section} must be an object")
+    return payload
+
+
+def _feed_job_refresh_args(config_path: Path, config: dict[str, object]) -> argparse.Namespace:
+    radar = config.get("radar", {})
+    creator = config.get("creator", {})
+    policy = config.get("policy", {})
+    assert isinstance(radar, dict)
+    assert isinstance(creator, dict)
+    assert isinstance(policy, dict)
+
+    def optional_path(key: str) -> Path | None:
+        value = config.get(key)
+        return _resolve_config_path(config_path, value) if isinstance(value, str) else None
+
+    return argparse.Namespace(
+        input=_resolve_config_path(config_path, config["input"]),
+        source_timezone=config["source_timezone"],
+        retrieved_at=config.get("retrieved_at"),
+        source_uri=config.get("source_uri"),
+        registry=optional_path("registry"),
+        region_map=optional_path("region_map"),
+        cutoff=config.get("cutoff"),
+        patch=radar.get("patch"),
+        recent_days=int(radar.get("recent_days", 7)),
+        prior_days=int(radar.get("prior_days", 7)),
+        minimum_recent_matches=int(radar.get("minimum_recent_matches", 5)),
+        minimum_prior_matches=int(radar.get("minimum_prior_matches", 5)),
+        minimum_region_matches=int(radar.get("minimum_region_matches", 3)),
+        minimum_current_picks=int(radar.get("minimum_current_picks", 2)),
+        fail_on_import_issues=bool(policy.get("fail_on_import_issues", True)),
+        feed_dir=_resolve_config_path(config_path, config["feed_dir"]),
+        creator_top_k=int(creator.get("top_k", 3)),
+        max_index_entries=int(config.get("max_index_entries", 50)),
+        published_at=config.get("published_at"),
+        output=None,
+    )
+
+
+def _resolve_config_path(config_path: Path, value: object) -> Path:
+    if not isinstance(value, str) or not value:
+        raise ValueError("feed job path must be a non-empty string")
+    path = Path(value)
+    return path if path.is_absolute() else config_path.resolve().parent / path
 
 
 def _add_radar_arguments(parser: argparse.ArgumentParser) -> None:

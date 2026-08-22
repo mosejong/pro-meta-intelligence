@@ -63,20 +63,73 @@ export type RadarReport = {
 };
 
 export function isRadarReport(value: unknown): value is RadarReport {
-  if (!value || typeof value !== "object") return false;
+  if (!isRecord(value)) return false;
   const report = value as Partial<RadarReport>;
-  if (report.schema_version !== "1" || !Array.isArray(report.entries) || !report.windows) return false;
-  return report.entries.every((entry) =>
-    Boolean(
-      entry &&
-      typeof entry.champion_id === "string" &&
-      typeof entry.role === "string" &&
-      typeof entry.eligible_for_review === "boolean" &&
-      entry.metrics &&
-      typeof entry.metrics.current_pick_presence === "number" &&
-      typeof entry.metrics.demand_velocity === "number" &&
-      Array.isArray(entry.region_presence) &&
-      Array.isArray(entry.evidence_event_ids),
-    ),
+  if (
+    report.schema_version !== "1" ||
+    typeof report.fixture_only !== "boolean" ||
+    typeof report.cutoff !== "string" ||
+    typeof report.patch_id !== "string" ||
+    !isRecord(report.windows) ||
+    !isWindow(report.windows.prior) ||
+    !isWindow(report.windows.recent) ||
+    !isRecord(report.quality) ||
+    !Array.isArray(report.quality.unknown_leagues) ||
+    !isRecord(report.formulae) ||
+    !isRecord(report.evidence_index) ||
+    !Array.isArray(report.evidence_index.prior_match_ids) ||
+    !Array.isArray(report.evidence_index.recent_match_ids) ||
+    !Array.isArray(report.evidence_index.source_versions) ||
+    !Array.isArray(report.entries)
+  ) return false;
+  return report.entries.every(isRadarEntry);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function isWindow(value: unknown) {
+  if (!isRecord(value)) return false;
+  return typeof value.days === "number" && typeof value.match_count === "number" && typeof value.active_team_count === "number";
+}
+
+function isRadarEntry(value: unknown) {
+  if (!isRecord(value) || !isRecord(value.metrics)) return false;
+  const metrics = value.metrics;
+  const numericMetrics = [
+    "current_pick_count", "prior_pick_count", "current_pick_presence", "prior_pick_presence",
+    "pick_presence_delta", "current_distinct_team_count", "prior_distinct_team_count",
+    "current_demand", "prior_demand", "demand_velocity",
+  ];
+  return (
+    typeof value.rank === "number" &&
+    typeof value.champion_id === "string" &&
+    typeof value.role === "string" &&
+    typeof value.eligible_for_review === "boolean" &&
+    Array.isArray(value.quality_flags) && value.quality_flags.every((item) => typeof item === "string") &&
+    numericMetrics.every((name) => typeof metrics[name] === "number") &&
+    isNullableNumber(metrics.team_concentration) &&
+    isNullableNumber(metrics.regional_divergence) &&
+    isNullableNumber(metrics.most_divergent_region_delta) &&
+    (metrics.most_divergent_region === null || typeof metrics.most_divergent_region === "string") &&
+    Array.isArray(value.region_presence) && value.region_presence.every(isRegionPresence) &&
+    Array.isArray(value.evidence_event_ids) && value.evidence_event_ids.every((item) => typeof item === "string")
   );
+}
+
+function isRegionPresence(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    typeof value.region === "string" &&
+    typeof value.match_count === "number" &&
+    typeof value.pick_count === "number" &&
+    typeof value.pick_presence === "number" &&
+    typeof value.delta_from_global === "number" &&
+    typeof value.sample_eligible === "boolean",
+  );
+}
+
+function isNullableNumber(value: unknown) {
+  return value === null || typeof value === "number";
 }

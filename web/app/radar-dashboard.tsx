@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isRadarReport, type RadarEntry, type RadarReport } from "./radar-types";
 import { sampleReport } from "./sample-report";
 
@@ -10,6 +10,12 @@ const flagLabels: Record<string, string> = {
   LOW_CURRENT_PICK_COUNT: "최근 픽 표본 부족",
   INSUFFICIENT_REGIONAL_SAMPLES: "지역 표본 부족",
   UNMAPPED_LEAGUE_EVIDENCE: "미등록 리그 포함",
+};
+
+type FeedState = {
+  kind: "connecting" | "published" | "demo" | "uploaded";
+  label: string;
+  detail: string;
 };
 
 function keyOf(entry: RadarEntry) {
@@ -73,8 +79,13 @@ export function RadarDashboard() {
   const [role, setRole] = useState("ALL");
   const [eligibleOnly, setEligibleOnly] = useState(false);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
-  const [uploadNote, setUploadNote] = useState("DEMO SNAPSHOT");
+  const [feedState, setFeedState] = useState<FeedState>({
+    kind: "connecting",
+    label: "FEED CONNECTING",
+    detail: "발행 피드를 확인하는 중",
+  });
   const fileInput = useRef<HTMLInputElement>(null);
+  const manualOverride = useRef(false);
 
   const roles = useMemo(
     () => ["ALL", ...Array.from(new Set(report.entries.map((entry) => entry.role))).sort()],
@@ -87,6 +98,40 @@ export function RadarDashboard() {
   const selected = visibleEntries.find((entry) => keyOf(entry) === selectedKey) ?? visibleEntries[0] ?? report.entries[0];
   const quality = qualityState(report);
   const eligibleCount = report.entries.filter((entry) => entry.eligible_for_review).length;
+
+  const loadPublishedFeed = useCallback(async () => {
+    if (manualOverride.current) return;
+    try {
+      const response = await fetch("/feed/current.json", { cache: "no-store" });
+      if (!response.ok) throw new Error(`feed returned ${response.status}`);
+      const parsed: unknown = await response.json();
+      if (!isRadarReport(parsed)) throw new Error("unsupported report");
+      setReport(parsed);
+      setSelectedKey(parsed.entries[0] ? keyOf(parsed.entries[0]) : "");
+      setRole("ALL");
+      setEligibleOnly(false);
+      setFeedState({
+        kind: parsed.fixture_only ? "demo" : "published",
+        label: parsed.fixture_only ? "PUBLISHED DEMO FEED" : "LIVE PUBLISHED FEED",
+        detail: parsed.fixture_only ? "자동 연결됨 · 합성 데이터" : "자동 연결됨 · 검증된 발행본",
+      });
+    } catch {
+      setFeedState({
+        kind: "demo",
+        label: "DEMO FALLBACK",
+        detail: "발행 피드 없음 · 내장 데모 표시 중",
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const initial = window.setTimeout(() => void loadPublishedFeed(), 0);
+    const interval = window.setInterval(() => void loadPublishedFeed(), 5 * 60 * 1000);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(interval);
+    };
+  }, [loadPublishedFeed]);
 
   useEffect(() => {
     if (!evidenceOpen) return;
@@ -109,19 +154,19 @@ export function RadarDashboard() {
       setSelectedKey(keyOf(parsed.entries[0]));
       setRole("ALL");
       setEligibleOnly(false);
-      setUploadNote(file.name.toUpperCase());
+      manualOverride.current = true;
+      setFeedState({ kind: "uploaded", label: "LOCAL FILE", detail: file.name.toUpperCase() });
     } catch {
-      setUploadNote("INVALID META RADAR JSON");
+      setFeedState({ kind: "demo", label: "INVALID LOCAL FILE", detail: "기존 화면 유지" });
     } finally {
       event.target.value = "";
     }
   }
 
-  if (!selected) return null;
-  const regions = [
+  const regions = selected ? [
     { region: "GLOBAL", pick_presence: selected.metrics.current_pick_presence, sample_eligible: true },
     ...selected.region_presence,
-  ];
+  ] : [];
 
   return (
     <main>
@@ -135,15 +180,19 @@ export function RadarDashboard() {
           <a href="#evidence">EVIDENCE</a>
           <a href="#method">METHOD</a>
         </nav>
-        <button className="load-button" type="button" onClick={() => fileInput.current?.click()}>
-          JSON 불러오기 <span>↗</span>
-        </button>
+        <div className="topbar-actions">
+          <span className={`snapshot-state ${feedState.kind}`} title={feedState.detail} aria-live="polite"><i />{feedState.label}</span>
+          <button className="refresh-button" type="button" onClick={() => { manualOverride.current = false; void loadPublishedFeed(); }} aria-label="발행 피드 새로고침">↻</button>
+          <button className="load-button" type="button" onClick={() => fileInput.current?.click()}>
+            JSON 불러오기 <span>↗</span>
+          </button>
+        </div>
         <input ref={fileInput} className="visually-hidden" type="file" accept="application/json,.json" onChange={loadReport} aria-label="Meta Radar JSON 불러오기" />
       </header>
 
       <section className="hero" id="top">
         <div>
-          <div className="kicker-row"><p className="eyebrow">PATCH {report.patch_id} · ANALYST SNAPSHOT</p><span>{uploadNote}</span></div>
+          <div className="kicker-row"><p className="eyebrow">PATCH {report.patch_id} · ANALYST SNAPSHOT</p><span>{feedState.detail}</span></div>
           <h1>변화를 먼저 보고,<br /><em>근거까지 바로 확인합니다.</em></h1>
           <p className="lede">같은 패치의 인접 구간을 비교하는 설명 가능한 메타 레이더입니다. 숨은 점수 없이 픽 점유율, 팀 수요, 지역 편차와 표본 경고를 그대로 보여줍니다.</p>
         </div>
@@ -175,7 +224,7 @@ export function RadarDashboard() {
           <div className="candidate-table" aria-label="메타 레이더 후보">
             <div className="table-head"><span>CHAMPION / ROLE</span><span>PICK PRESENCE</span><span>DEMAND Δ</span><span>REGION GAP</span><span>STATUS</span></div>
             {visibleEntries.length ? visibleEntries.map((entry) => {
-              const active = keyOf(entry) === keyOf(selected);
+              const active = Boolean(selected && keyOf(entry) === keyOf(selected));
               const signal = signalFor(entry);
               return (
                 <button className={`candidate ${active ? "selected" : ""}`} type="button" key={keyOf(entry)} onClick={() => setSelectedKey(keyOf(entry))} aria-pressed={active}>
@@ -189,7 +238,7 @@ export function RadarDashboard() {
             }) : <div className="empty-state">현재 필터에 맞는 후보가 없습니다.</div>}
           </div>
 
-          <aside className="detail" id="evidence">
+          {selected ? <aside className="detail" id="evidence">
             <div className="detail-head"><div><span>SELECTED SIGNAL</span><h3>{selected.champion_id.toUpperCase()} · {selected.role}</h3></div><b>{String(selected.rank).padStart(2, "0")}</b></div>
             <p className="verdict">{verdictFor(selected)}</p>
             <div className="region-bars" aria-label="지역별 픽 점유율">
@@ -203,7 +252,7 @@ export function RadarDashboard() {
             </dl>
             {selected.quality_flags.length > 0 && <div className="flag-list">{selected.quality_flags.map((flag) => <span key={flag}>{flagLabels[flag] ?? flag}</span>)}</div>}
             <button className="evidence-button" type="button" onClick={() => setEvidenceOpen(true)}>근거 레코드 보기 <span>→</span></button>
-          </aside>
+          </aside> : <aside className="detail detail-empty" id="evidence"><span>NO REVIEW SIGNALS</span><p>이 스냅샷에는 표시할 후보가 없습니다. 표본 기준과 수집 상태를 확인하세요.</p></aside>}
         </div>
       </section>
 
@@ -218,7 +267,7 @@ export function RadarDashboard() {
       </section>
       <footer><span>NO COMPOSITE SCORE</span><p>Demand velocity → Pick presence delta → Regional divergence 순으로 정렬</p><b>SCHEMA v{report.schema_version}</b></footer>
 
-      {evidenceOpen && (
+      {evidenceOpen && selected && (
         <div className="dialog-backdrop">
           <button className="dialog-dismiss" type="button" onClick={() => setEvidenceOpen(false)} aria-label="근거 창 닫기" />
           <section className="evidence-dialog" role="dialog" aria-modal="true" aria-labelledby="evidence-title">

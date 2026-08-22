@@ -13,3 +13,5 @@ outputs/
 .env
 .env.*
 !.env.example
+web/public/feed/*
+!web/public/feed/current.json

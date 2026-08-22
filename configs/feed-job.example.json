@@ -1,0 +1,22 @@
+{
+  "schema_version": "1",
+  "input": "../data/inbox/oracles-elixir.csv",
+  "source_timezone": "UTC",
+  "feed_dir": "../web/public/feed",
+  "run_dir": "../outputs/feed-jobs",
+  "max_index_entries": 50,
+  "radar": {
+    "recent_days": 7,
+    "prior_days": 7,
+    "minimum_recent_matches": 5,
+    "minimum_prior_matches": 5,
+    "minimum_region_matches": 3,
+    "minimum_current_picks": 2
+  },
+  "creator": {
+    "top_k": 3
+  },
+  "policy": {
+    "fail_on_import_issues": true
+  }
+}
