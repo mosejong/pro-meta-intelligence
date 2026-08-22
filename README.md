@@ -104,6 +104,7 @@ See also:
 - [`docs/PHASE1_IMPLEMENTATION.md`](docs/PHASE1_IMPLEMENTATION.md)
 - [`docs/SOURCE_REGISTRY.md`](docs/SOURCE_REGISTRY.md)
 - [`docs/ORACLES_ELIXIR_IMPORT.md`](docs/ORACLES_ELIXIR_IMPORT.md)
+- [`docs/OE_COVERAGE_AUDIT.md`](docs/OE_COVERAGE_AUDIT.md)
 - [`docs/META_RADAR.md`](docs/META_RADAR.md)
 - [`docs/SNAPSHOT_FEED.md`](docs/SNAPSHOT_FEED.md)
 - [`docs/FEED_JOB.md`](docs/FEED_JOB.md)
@@ -130,6 +131,10 @@ python -m pro_meta_intelligence import-oe \
   --input path/to/2026_LoL_esports_match_data_from_OraclesElixir.csv \
   --source-timezone UTC \
   --output outputs/oracles-elixir/import-report.json
+python -m pro_meta_intelligence audit-oe-coverage \
+  --input path/to/2026_LoL_esports_match_data_from_OraclesElixir.csv \
+  --source-timezone UTC \
+  --output outputs/oracles-elixir/coverage.json
 ```
 
 Raw responses are stored under the ignored `outputs/ddragon/` directory by content hash. A raw
@@ -147,6 +152,11 @@ backdated into an earlier historical cutoff.
 file when the daily interval permits, otherwise reuses only the newest verified archive, validates
 and normalizes it, and advances the Radar/Creator feed. If the provider is unavailable and no cache
 exists, it leaves the current public feed unchanged.
+
+Before an unattended publication, the annual coverage audit checks the selected patch's validated
+match, distinct-team, and mapped-region counts, plus rejected games and unknown leagues. It exposes
+the measurements and blocking reason codes rather than a composite score. A failed readiness gate
+is audited and leaves the existing public feed unchanged.
 
 ## Explainable Meta Radar
 
