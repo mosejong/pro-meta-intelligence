@@ -104,6 +104,7 @@ See also:
 - [`docs/PHASE1_IMPLEMENTATION.md`](docs/PHASE1_IMPLEMENTATION.md)
 - [`docs/SOURCE_REGISTRY.md`](docs/SOURCE_REGISTRY.md)
 - [`docs/ORACLES_ELIXIR_IMPORT.md`](docs/ORACLES_ELIXIR_IMPORT.md)
+- [`docs/META_RADAR.md`](docs/META_RADAR.md)
 - [`docs/PRODUCT_MODES.md`](docs/PRODUCT_MODES.md)
 
 ## Policy-gated static-data ingestion
@@ -129,3 +130,21 @@ The Oracle's Elixir importer performs no network collection. It hashes the compl
 file, rejects malformed games, normalizes validated match and pick records, and uses the explicit
 retrieval time as conservative `available_at`. A current annual file is never backdated into an
 earlier historical cutoff.
+
+## Explainable Meta Radar
+
+Phase 2 now has a deterministic JSON analyst snapshot over validated professional picks:
+
+```bash
+python -m pro_meta_intelligence build-radar \
+  --input path/to/2026_LoL_esports_match_data_from_OraclesElixir.csv \
+  --source-timezone UTC \
+  --retrieved-at 2026-08-22T03:00:00Z \
+  --cutoff 2026-08-22T03:00:00Z \
+  --output outputs/meta-radar/current.json
+```
+
+The report exposes pick presence and change, distinct-team demand and velocity, regional divergence,
+team concentration, sample warnings, source versions, match IDs, pick-event IDs, and every formula.
+It has no learned or arbitrary composite score. Current Oracle's Elixir normalization is pick-only,
+so the report does not claim pick/ban presence.

@@ -57,3 +57,40 @@ def test_import_oe_cli_writes_qa_and_normalization_summary(tmp_path) -> None:
     assert payload["normalization"]["match_count"] == 1
     assert payload["normalization"]["pick_event_count"] == 10
     assert payload["import_report"]["rejected_game_count"] == 0
+
+
+def test_build_radar_cli_reuses_validated_oe_import(tmp_path) -> None:
+    output = tmp_path / "radar.json"
+
+    assert (
+        main(
+            [
+                "build-radar",
+                "--input",
+                str(FIXTURES / "oracles_elixir_game.csv"),
+                "--source-timezone",
+                "UTC",
+                "--retrieved-at",
+                "2026-08-22T03:00:00Z",
+                "--cutoff",
+                "2026-08-22T03:00:00Z",
+                "--minimum-recent-matches",
+                "1",
+                "--minimum-prior-matches",
+                "1",
+                "--minimum-region-matches",
+                "1",
+                "--minimum-current-picks",
+                "1",
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["patch_id"] == "16.15"
+    assert payload["windows"]["recent"]["match_count"] == 1
+    assert payload["input"]["network_collection_performed"] is False
+    assert payload["input"]["import_report"]["imported_game_count"] == 1
