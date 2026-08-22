@@ -1,0 +1,12 @@
+{
+  "schema_version": "1",
+  "leagues": {
+    "CBLOL": "BRAZIL",
+    "LCK": "KOREA",
+    "LCP": "PACIFIC",
+    "LCS": "NORTH_AMERICA",
+    "LEC": "EMEA",
+    "LPL": "CHINA",
+    "PCS": "PACIFIC"
+  }
+}

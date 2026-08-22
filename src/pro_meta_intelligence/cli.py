@@ -12,6 +12,7 @@ from pro_meta_intelligence.ingestion import load_synthetic_scenario
 from pro_meta_intelligence.ingestion.ddragon import DataDragonAdapter
 from pro_meta_intelligence.ingestion.oracles_elixir import OracleElixirCSVAdapter
 from pro_meta_intelligence.models import BacktestWindow
+from pro_meta_intelligence.radar import LeagueRegionMap, MetaRadar, MetaRadarConfig
 from pro_meta_intelligence.sources import SnapshotArchive, SourceRegistry
 from pro_meta_intelligence.temporal import parse_datetime
 
@@ -69,6 +70,32 @@ def build_parser() -> argparse.ArgumentParser:
         help="return exit code 2 when one or more import issues are reported",
     )
     oe_import.add_argument("--output", type=Path, help="optional JSON import report path")
+
+    radar = subparsers.add_parser(
+        "build-radar", help="build an explainable patch-level Meta Radar from a local OE CSV"
+    )
+    radar.add_argument("--input", type=Path, required=True, help="provider-published CSV file")
+    radar.add_argument(
+        "--source-timezone", required=True, help="UTC, offset, or installed IANA zone"
+    )
+    radar.add_argument("--retrieved-at", help="snapshot retrieval time; defaults to current UTC")
+    radar.add_argument("--source-uri", help="optional registered provider HTTPS source URL")
+    radar.add_argument("--registry", type=Path, help="optional source registry JSON")
+    radar.add_argument("--region-map", type=Path, help="optional league-to-region JSON mapping")
+    radar.add_argument("--cutoff", help="analysis cutoff; defaults to retrieved-at")
+    radar.add_argument("--patch", help="patch ID; latest available match patch if omitted")
+    radar.add_argument("--recent-days", type=int, default=7)
+    radar.add_argument("--prior-days", type=int, default=7)
+    radar.add_argument("--minimum-recent-matches", type=int, default=5)
+    radar.add_argument("--minimum-prior-matches", type=int, default=5)
+    radar.add_argument("--minimum-region-matches", type=int, default=3)
+    radar.add_argument("--minimum-current-picks", type=int, default=2)
+    radar.add_argument(
+        "--fail-on-import-issues",
+        action="store_true",
+        help="return exit code 2 when the OE importer reports rejected games",
+    )
+    radar.add_argument("--output", type=Path, help="optional JSON radar report path")
     return parser
 
 
@@ -82,6 +109,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _fetch_ddragon(args)
     if args.command == "import-oe":
         return _import_oe(args)
+    if args.command == "build-radar":
+        return _build_radar(args)
     raise AssertionError("unreachable command")
 
 
@@ -193,6 +222,43 @@ def _import_oe(args: argparse.Namespace) -> int:
     }
     _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
     if args.fail_on_rejected and imported.report.issue_counts:
+        return 2
+    return 0
+
+
+def _build_radar(args: argparse.Namespace) -> int:
+    retrieved_at = parse_datetime(args.retrieved_at) if args.retrieved_at else datetime.now(UTC)
+    imported = OracleElixirCSVAdapter(_load_registry(args.registry)).import_file(
+        args.input,
+        retrieved_at=retrieved_at,
+        source_timezone=args.source_timezone,
+        source_uri=args.source_uri,
+    )
+    cutoff = parse_datetime(args.cutoff) if args.cutoff else retrieved_at
+    config = MetaRadarConfig(
+        cutoff=cutoff,
+        patch_id=args.patch,
+        recent_window_days=args.recent_days,
+        prior_window_days=args.prior_days,
+        minimum_recent_matches=args.minimum_recent_matches,
+        minimum_prior_matches=args.minimum_prior_matches,
+        minimum_region_matches=args.minimum_region_matches,
+        minimum_current_picks=args.minimum_current_picks,
+    )
+    league_regions = (
+        LeagueRegionMap.from_json(args.region_map)
+        if args.region_map
+        else LeagueRegionMap.load_default()
+    )
+    radar = MetaRadar().build(imported.matches, imported.draft_events, config, league_regions)
+    payload = dict(radar.to_dict())
+    payload["input"] = {
+        "authenticity": "UNVERIFIED_CALLER_SUPPLIED_FILE",
+        "network_collection_performed": False,
+        "import_report": imported.report.to_dict(),
+    }
+    _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    if args.fail_on_import_issues and imported.report.issue_counts:
         return 2
     return 0
 

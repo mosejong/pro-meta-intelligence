@@ -1,4 +1,4 @@
-.PHONY: install test lint evaluate sources fetch-ddragon import-oe
+.PHONY: install test lint evaluate sources fetch-ddragon import-oe build-radar
 
 install:
 	python -m pip install -e ".[dev]"
@@ -22,3 +22,7 @@ fetch-ddragon:
 import-oe:
 	@test -n "$(INPUT)" || (echo "usage: make import-oe INPUT=path/to/file.csv" && exit 2)
 	python -m pro_meta_intelligence import-oe --input "$(INPUT)" --source-timezone UTC
+
+build-radar:
+	@test -n "$(INPUT)" || (echo "usage: make build-radar INPUT=path/to/file.csv" && exit 2)
+	python -m pro_meta_intelligence build-radar --input "$(INPUT)" --source-timezone UTC

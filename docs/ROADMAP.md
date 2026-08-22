@@ -43,6 +43,10 @@ Build first patch-level analyst page.
 
 Exit gate: metrics are reproducible and explainable from raw records.
 
+Current implementation status: the machine-readable patch snapshot, formulas, sample guards,
+provenance, deterministic multi-region fixture, and interactive analyst page are implemented.
+Full-year real-file performance validation remains before Phase 2 is complete.
+
 ## Phase 3 — Blind Spot Benchmark
 
 Define review-candidate labels and historical evaluation windows.
