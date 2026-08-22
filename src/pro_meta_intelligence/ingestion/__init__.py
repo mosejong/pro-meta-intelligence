@@ -6,6 +6,11 @@ from pro_meta_intelligence.ingestion.fixtures import (
     SyntheticScenario,
     load_synthetic_scenario,
 )
+from pro_meta_intelligence.ingestion.oracles_elixir import (
+    OracleElixirCSVAdapter,
+    OracleElixirImport,
+    OracleElixirSchemaError,
+)
 
 __all__ = [
     "FixturePatchAdapter",
@@ -14,4 +19,7 @@ __all__ = [
     "SyntheticScenario",
     "load_synthetic_scenario",
     "DataDragonAdapter",
+    "OracleElixirCSVAdapter",
+    "OracleElixirImport",
+    "OracleElixirSchemaError",
 ]

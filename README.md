@@ -103,19 +103,29 @@ See also:
 
 - [`docs/PHASE1_IMPLEMENTATION.md`](docs/PHASE1_IMPLEMENTATION.md)
 - [`docs/SOURCE_REGISTRY.md`](docs/SOURCE_REGISTRY.md)
+- [`docs/ORACLES_ELIXIR_IMPORT.md`](docs/ORACLES_ELIXIR_IMPORT.md)
 - [`docs/PRODUCT_MODES.md`](docs/PRODUCT_MODES.md)
 
 ## Policy-gated static-data ingestion
 
-The next stacked increment adds a fail-closed source registry and a first real adapter for Riot Data
-Dragon's documented static JSON endpoints. It does not enable arbitrary crawling or Riot Web API
-access.
+The source layer now includes a fail-closed registry, Riot Data Dragon static JSON ingestion, and a
+validated local-import path for Oracle's Elixir professional-match CSV snapshots. It does not enable
+arbitrary crawling or Riot Web API access.
 
 ```bash
 python -m pro_meta_intelligence sources
 python -m pro_meta_intelligence fetch-ddragon --version latest --locale en_US
+python -m pro_meta_intelligence import-oe \
+  --input path/to/2026_LoL_esports_match_data_from_OraclesElixir.csv \
+  --source-timezone UTC \
+  --output outputs/oracles-elixir/import-report.json
 ```
 
 Raw responses are stored under the ignored `outputs/ddragon/` directory by content hash. A raw
 catalog is normalized into a temporal snapshot only when a separately verified patch release time is
 provided with `--release-at`.
+
+The Oracle's Elixir importer performs no network collection. It hashes the complete caller-supplied
+file, rejects malformed games, normalizes validated match and pick records, and uses the explicit
+retrieval time as conservative `available_at`. A current annual file is never backdated into an
+earlier historical cutoff.

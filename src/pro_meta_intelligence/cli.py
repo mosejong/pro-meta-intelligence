@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections import Counter
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -9,6 +10,7 @@ from pathlib import Path
 from pro_meta_intelligence.backtest import BacktestHarness
 from pro_meta_intelligence.ingestion import load_synthetic_scenario
 from pro_meta_intelligence.ingestion.ddragon import DataDragonAdapter
+from pro_meta_intelligence.ingestion.oracles_elixir import OracleElixirCSVAdapter
 from pro_meta_intelligence.models import BacktestWindow
 from pro_meta_intelligence.sources import SnapshotArchive, SourceRegistry
 from pro_meta_intelligence.temporal import parse_datetime
@@ -42,6 +44,31 @@ def build_parser() -> argparse.ArgumentParser:
         "--archive-dir", type=Path, default=Path("outputs/ddragon"), help="raw archive root"
     )
     ddragon.add_argument("--output", type=Path, help="optional JSON summary path")
+
+    oe_import = subparsers.add_parser(
+        "import-oe", help="validate and normalize a local Oracle's Elixir CSV snapshot"
+    )
+    oe_import.add_argument("--input", type=Path, required=True, help="provider-published CSV file")
+    oe_import.add_argument(
+        "--source-timezone",
+        required=True,
+        help="UTC, fixed offset, or installed IANA zone for the timezone-naive date column",
+    )
+    oe_import.add_argument(
+        "--retrieved-at",
+        help="snapshot retrieval time; defaults to current UTC time",
+    )
+    oe_import.add_argument(
+        "--source-uri",
+        help="optional durable public source URL; local absolute paths are never emitted",
+    )
+    oe_import.add_argument("--registry", type=Path, help="optional source registry JSON")
+    oe_import.add_argument(
+        "--fail-on-rejected",
+        action="store_true",
+        help="return exit code 2 when one or more import issues are reported",
+    )
+    oe_import.add_argument("--output", type=Path, help="optional JSON import report path")
     return parser
 
 
@@ -53,6 +80,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _sources(args)
     if args.command == "fetch-ddragon":
         return _fetch_ddragon(args)
+    if args.command == "import-oe":
+        return _import_oe(args)
     raise AssertionError("unreachable command")
 
 
@@ -123,6 +152,48 @@ def _fetch_ddragon(args: argparse.Namespace) -> int:
             }
         )
     _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    return 0
+
+
+def _import_oe(args: argparse.Namespace) -> int:
+    retrieved_at = parse_datetime(args.retrieved_at) if args.retrieved_at else datetime.now(UTC)
+    imported = OracleElixirCSVAdapter(_load_registry(args.registry)).import_file(
+        args.input,
+        retrieved_at=retrieved_at,
+        source_timezone=args.source_timezone,
+        source_uri=args.source_uri,
+    )
+    observed = [match.observed_at for match in imported.matches]
+    payload = {
+        "schema_version": "1",
+        "input_authenticity": "UNVERIFIED_CALLER_SUPPLIED_FILE",
+        "network_collection_performed": False,
+        "normalization": {
+            "match_count": len(imported.matches),
+            "pick_event_count": len(imported.draft_events),
+            "league_counts": dict(
+                sorted(Counter(match.league for match in imported.matches).items())
+            ),
+            "patch_counts": dict(
+                sorted(Counter(match.patch_id for match in imported.matches).items())
+            ),
+            "first_observed_at": min(observed).isoformat() if observed else None,
+            "last_observed_at": max(observed).isoformat() if observed else None,
+            "available_at": retrieved_at.isoformat(),
+        },
+        "import_report": imported.report.to_dict(),
+        "limitations": [
+            "current annual snapshots are unavailable to historical cutoffs before retrieved_at",
+            (
+                "series_id is a game-scoped placeholder because the CSV has no stable "
+                "series identifier"
+            ),
+            "ban events are not normalized because bans do not have reliable role assignments",
+        ],
+    }
+    _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    if args.fail_on_rejected and imported.report.issue_counts:
+        return 2
     return 0
 
 

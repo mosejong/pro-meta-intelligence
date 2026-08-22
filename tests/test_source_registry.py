@@ -17,6 +17,8 @@ def test_default_registry_enables_only_reviewed_static_data() -> None:
     registry = SourceRegistry.load_default()
 
     assert registry.get("riot-data-dragon").status is SourceStatus.ENABLED
+    assert registry.get("oracles-elixir-match-data").status is SourceStatus.ENABLED
+    assert registry.get("oracles-elixir-match-data").allowed_operations == ("IMPORT_LOCAL_CSV",)
     assert registry.get("riot-web-api").status is SourceStatus.REVIEW_REQUIRED
 
 
