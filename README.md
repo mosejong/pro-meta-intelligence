@@ -119,6 +119,12 @@ arbitrary crawling or Riot Web API access.
 
 ```bash
 python -m pro_meta_intelligence sources
+python -m pro_meta_intelligence fetch-oe \
+  --year 2026 \
+  --archive-dir outputs/oracles-elixir/raw
+python -m pro_meta_intelligence sync-oe-feed \
+  --year 2026 \
+  --source-timezone UTC
 python -m pro_meta_intelligence fetch-ddragon --version latest --locale en_US
 python -m pro_meta_intelligence import-oe \
   --input path/to/2026_LoL_esports_match_data_from_OraclesElixir.csv \
@@ -130,10 +136,17 @@ Raw responses are stored under the ignored `outputs/ddragon/` directory by conte
 catalog is normalized into a temporal snapshot only when a separately verified patch release time is
 provided with `--release-at`.
 
-The Oracle's Elixir importer performs no network collection. It hashes the complete caller-supplied
-file, rejects malformed games, normalizes validated match and pick records, and uses the explicit
-retrieval time as conservative `available_at`. A current annual file is never backdated into an
-earlier historical cutoff.
+The Oracle's Elixir downloader is restricted to exact annual file IDs verified in the provider's
+official folder, enforces the published daily interval, rejects HTML quota pages and schema drift,
+and archives the raw CSV by content hash without republishing it. The importer also accepts a
+caller-supplied local file, rejects malformed games, normalizes validated match and pick records,
+and uses the explicit retrieval time as conservative `available_at`. A current annual file is never
+backdated into an earlier historical cutoff.
+
+`sync-oe-feed` is the unattended path. Under one exclusive writer lock it downloads the reviewed
+file when the daily interval permits, otherwise reuses only the newest verified archive, validates
+and normalizes it, and advances the Radar/Creator feed. If the provider is unavailable and no cache
+exists, it leaves the current public feed unchanged.
 
 ## Explainable Meta Radar
 

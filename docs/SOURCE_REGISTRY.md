@@ -38,9 +38,15 @@ means only that this repository permits the listed operation; it is not Riot app
 
 ### `oracles-elixir-match-data`
 
-Enabled only for `IMPORT_LOCAL_CSV`. The adapter reads a provider-published CSV that the user has
-already placed on disk; it does not automate Google Drive, follow arbitrary links, or crawl HTML.
-The reviewed registry interval is one day because the provider says files update once daily.
+Enabled for `FETCH_PUBLISHED_CSV` and `IMPORT_LOCAL_CSV`. The download adapter accepts only an exact
+file ID checked into `oe_published_files.json` after it has been verified in the official public
+Google Drive folder. It does not enumerate the folder, accept arbitrary URLs, or crawl HTML. The
+reviewed registry interval is one day because the provider says files update once daily.
+
+The downloader enforces that interval across processes using the latest archived retrieval
+metadata. It rejects HTML quota/error pages, validates the CSV header before archival, limits the
+response to 200 MiB, and stores the original bytes under a SHA-256 filename. There is deliberately
+no force flag for bypassing the provider interval.
 
 The importer hashes the complete file, treats the hash as the mutable annual file's version, checks
 the 2026 column contract, and validates every game as one contiguous group containing participant
@@ -89,9 +95,9 @@ A Data Dragon response first becomes a `RawSourceArtifact` containing:
 - exact response bytes,
 - SHA-256 content hash.
 
-`SnapshotArchive` stores response bytes under the content hash and a separate immutable metadata file
-for each retrieval timestamp. Re-fetching unchanged content reuses the raw bytes without losing the
-new retrieval event.
+`SnapshotArchive` stores response bytes under the content hash (`.json` or `.csv`) and a separate
+immutable metadata file for each retrieval timestamp. Re-fetching unchanged content reuses the raw
+bytes without losing the new retrieval event.
 
 Data Dragon's champion catalog does not itself prove the patch release timestamp. Therefore raw
 fetching does not fabricate `observed_at`. Normalization into `ChampionCatalogSnapshot` requires a
@@ -127,6 +133,8 @@ Inspect policy state:
 
 ```bash
 python -m pro_meta_intelligence sources
+python -m pro_meta_intelligence fetch-oe --year 2026
+python -m pro_meta_intelligence sync-oe-feed --year 2026 --source-timezone UTC
 ```
 
 Fetch the current version index and champion catalog, then store both raw artifacts:

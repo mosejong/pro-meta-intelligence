@@ -30,6 +30,7 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /NO COMPOSITE SCORE/);
   assert.match(html, /JSON 불러오기/);
   assert.match(html, /FEED CONNECTING/);
+  assert.match(html, /isn&#x27;t endorsed by Riot Games/i);
   assert.match(html, /https:\/\/meta-radar\.example\/og\.png/);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
 });
