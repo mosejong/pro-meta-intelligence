@@ -117,6 +117,10 @@ long-form scripts, chapters, and short-form summaries. It is an Analyst Studio, 
 content farm; publication remains a human decision and later misses become first-class
 post-evaluation material.
 
+Current foundation: deterministic, claim-locked topic briefs and an immutable Radar/Creator snapshot
+feed are implemented. Natural-language querying, provider-backed drafting, long-form script review,
+and post-outcome miss tracking remain future gates.
+
 Exit gate: generated answers remain grounded and traceable.
 
 ## Phase 8 — Synthetic Private Team Demo

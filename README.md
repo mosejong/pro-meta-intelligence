@@ -105,6 +105,8 @@ See also:
 - [`docs/SOURCE_REGISTRY.md`](docs/SOURCE_REGISTRY.md)
 - [`docs/ORACLES_ELIXIR_IMPORT.md`](docs/ORACLES_ELIXIR_IMPORT.md)
 - [`docs/META_RADAR.md`](docs/META_RADAR.md)
+- [`docs/SNAPSHOT_FEED.md`](docs/SNAPSHOT_FEED.md)
+- [`docs/CREATOR_BRIEF.md`](docs/CREATOR_BRIEF.md)
 - [`web/README.md`](web/README.md)
 - [`docs/PRODUCT_MODES.md`](docs/PRODUCT_MODES.md)
 
@@ -157,6 +159,23 @@ role and eligibility filters, selectable candidate evidence, quality warnings, r
 and an evidence packet with event IDs, match IDs, source hashes, and formulas. It ships with a
 clearly marked deterministic demo snapshot and accepts local JSON through the browser; uploaded
 files are parsed on the device and are not sent to an application server.
+
+## Snapshot feed and Creator brief
+
+One unattended-safe command can now rebuild a Radar report from a caller-supplied local CSV, create
+a claim-locked Creator Mode brief, archive both as an immutable version, and atomically advance
+`current.json`, `current-creator.json`, and `index.json`:
+
+```bash
+python -m pro_meta_intelligence refresh-feed \
+  --input path/to/oracles-elixir.csv \
+  --source-timezone UTC \
+  --feed-dir outputs/meta-radar-feed \
+  --fail-on-import-issues
+```
+
+The refresh command performs no network collection and calls no AI API. It is ready to run under a
+single-writer scheduler after an approved source adapter has supplied the local file.
 
 ```bash
 cd web

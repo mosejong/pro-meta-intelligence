@@ -8,10 +8,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from pro_meta_intelligence.backtest import BacktestHarness
+from pro_meta_intelligence.creator import CreatorBriefBuilder
 from pro_meta_intelligence.ingestion import load_synthetic_scenario
 from pro_meta_intelligence.ingestion.ddragon import DataDragonAdapter
 from pro_meta_intelligence.ingestion.oracles_elixir import OracleElixirCSVAdapter
 from pro_meta_intelligence.models import BacktestWindow
+from pro_meta_intelligence.publishing import SnapshotFeedPublisher
 from pro_meta_intelligence.radar import LeagueRegionMap, MetaRadar, MetaRadarConfig
 from pro_meta_intelligence.sources import SnapshotArchive, SourceRegistry
 from pro_meta_intelligence.temporal import parse_datetime
@@ -74,28 +76,32 @@ def build_parser() -> argparse.ArgumentParser:
     radar = subparsers.add_parser(
         "build-radar", help="build an explainable patch-level Meta Radar from a local OE CSV"
     )
-    radar.add_argument("--input", type=Path, required=True, help="provider-published CSV file")
-    radar.add_argument(
-        "--source-timezone", required=True, help="UTC, offset, or installed IANA zone"
-    )
-    radar.add_argument("--retrieved-at", help="snapshot retrieval time; defaults to current UTC")
-    radar.add_argument("--source-uri", help="optional registered provider HTTPS source URL")
-    radar.add_argument("--registry", type=Path, help="optional source registry JSON")
-    radar.add_argument("--region-map", type=Path, help="optional league-to-region JSON mapping")
-    radar.add_argument("--cutoff", help="analysis cutoff; defaults to retrieved-at")
-    radar.add_argument("--patch", help="patch ID; latest available match patch if omitted")
-    radar.add_argument("--recent-days", type=int, default=7)
-    radar.add_argument("--prior-days", type=int, default=7)
-    radar.add_argument("--minimum-recent-matches", type=int, default=5)
-    radar.add_argument("--minimum-prior-matches", type=int, default=5)
-    radar.add_argument("--minimum-region-matches", type=int, default=3)
-    radar.add_argument("--minimum-current-picks", type=int, default=2)
-    radar.add_argument(
-        "--fail-on-import-issues",
-        action="store_true",
-        help="return exit code 2 when the OE importer reports rejected games",
-    )
+    _add_radar_arguments(radar)
     radar.add_argument("--output", type=Path, help="optional JSON radar report path")
+
+    creator = subparsers.add_parser(
+        "build-creator-brief",
+        help="turn an approved Meta Radar JSON report into a claim-locked Creator brief",
+    )
+    creator.add_argument("--radar", type=Path, required=True, help="Meta Radar JSON report")
+    creator.add_argument("--top-k", type=int, default=3, help="maximum eligible topic candidates")
+    creator.add_argument("--output", type=Path, help="optional JSON Creator brief path")
+
+    refresh = subparsers.add_parser(
+        "refresh-feed",
+        help="build radar and Creator snapshots and atomically advance a local feed",
+    )
+    _add_radar_arguments(refresh)
+    refresh.add_argument(
+        "--feed-dir",
+        type=Path,
+        default=Path("outputs/meta-radar-feed"),
+        help="snapshot feed root",
+    )
+    refresh.add_argument("--creator-top-k", type=int, default=3)
+    refresh.add_argument("--max-index-entries", type=int, default=50)
+    refresh.add_argument("--published-at", help="explicit publication timestamp; defaults to now")
+    refresh.add_argument("--output", type=Path, help="optional refresh summary path")
     return parser
 
 
@@ -111,6 +117,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _import_oe(args)
     if args.command == "build-radar":
         return _build_radar(args)
+    if args.command == "build-creator-brief":
+        return _build_creator_brief(args)
+    if args.command == "refresh-feed":
+        return _refresh_feed(args)
     raise AssertionError("unreachable command")
 
 
@@ -227,6 +237,14 @@ def _import_oe(args: argparse.Namespace) -> int:
 
 
 def _build_radar(args: argparse.Namespace) -> int:
+    payload, has_import_issues = _radar_payload(args)
+    _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    if args.fail_on_import_issues and has_import_issues:
+        return 2
+    return 0
+
+
+def _radar_payload(args: argparse.Namespace) -> tuple[dict[str, object], bool]:
     retrieved_at = parse_datetime(args.retrieved_at) if args.retrieved_at else datetime.now(UTC)
     imported = OracleElixirCSVAdapter(_load_registry(args.registry)).import_file(
         args.input,
@@ -257,10 +275,69 @@ def _build_radar(args: argparse.Namespace) -> int:
         "network_collection_performed": False,
         "import_report": imported.report.to_dict(),
     }
-    _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
-    if args.fail_on_import_issues and imported.report.issue_counts:
-        return 2
+    return payload, bool(imported.report.issue_counts)
+
+
+def _build_creator_brief(args: argparse.Namespace) -> int:
+    report = json.loads(args.radar.read_text(encoding="utf-8"))
+    brief = CreatorBriefBuilder().build(report, top_k=args.top_k)
+    _emit(brief.to_json(), args.output)
     return 0
+
+
+def _refresh_feed(args: argparse.Namespace) -> int:
+    radar, has_import_issues = _radar_payload(args)
+    if args.fail_on_import_issues and has_import_issues:
+        payload = {
+            "schema_version": "1",
+            "status": "REJECTED_IMPORT_ISSUES",
+            "published": False,
+            "import_report": radar["input"]["import_report"],
+        }
+        _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+        return 2
+
+    creator = CreatorBriefBuilder().build(radar, top_k=args.creator_top_k)
+    published_at = parse_datetime(args.published_at) if args.published_at else datetime.now(UTC)
+    publisher = SnapshotFeedPublisher(
+        args.feed_dir,
+        max_index_entries=args.max_index_entries,
+    )
+    result = publisher.publish(radar, creator.to_dict(), published_at=published_at)
+    payload = result.to_dict(args.feed_dir)
+    payload.update(
+        {
+            "status": "PUBLISHED",
+            "network_collection_performed": False,
+            "creator_topic_count": len(creator.to_dict()["topic_candidates"]),
+        }
+    )
+    _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    return 0
+
+
+def _add_radar_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--input", type=Path, required=True, help="provider-published CSV file")
+    parser.add_argument(
+        "--source-timezone", required=True, help="UTC, offset, or installed IANA zone"
+    )
+    parser.add_argument("--retrieved-at", help="snapshot retrieval time; defaults to current UTC")
+    parser.add_argument("--source-uri", help="optional registered provider HTTPS source URL")
+    parser.add_argument("--registry", type=Path, help="optional source registry JSON")
+    parser.add_argument("--region-map", type=Path, help="optional league-to-region JSON mapping")
+    parser.add_argument("--cutoff", help="analysis cutoff; defaults to retrieved-at")
+    parser.add_argument("--patch", help="patch ID; latest available match patch if omitted")
+    parser.add_argument("--recent-days", type=int, default=7)
+    parser.add_argument("--prior-days", type=int, default=7)
+    parser.add_argument("--minimum-recent-matches", type=int, default=5)
+    parser.add_argument("--minimum-prior-matches", type=int, default=5)
+    parser.add_argument("--minimum-region-matches", type=int, default=3)
+    parser.add_argument("--minimum-current-picks", type=int, default=2)
+    parser.add_argument(
+        "--fail-on-import-issues",
+        action="store_true",
+        help="return exit code 2 when the OE importer reports rejected games",
+    )
 
 
 def _load_registry(path: Path | None) -> SourceRegistry:
