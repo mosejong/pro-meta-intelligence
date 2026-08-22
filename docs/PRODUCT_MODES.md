@@ -34,6 +34,10 @@ Creator Mode must not invent new analytical facts. It consumes approved claims a
 core, preserves source links and time scope, and requires human approval before publication. The
 product goal is an Analyst Studio, not unattended bulk content generation.
 
+Current foundation: eligible Meta Radar entries can be transformed without an LLM into versioned
+Creator briefs containing claim IDs, exact values, counterpoints, falsifiers, data-card specs,
+evidence event IDs, and an explicit human-review gate. Optional AI drafting remains a later adapter.
+
 ## User-defined Intelligence Sources
 
 A future user may save a narrow interest such as a team, region, champion-role, or specialist scene.
