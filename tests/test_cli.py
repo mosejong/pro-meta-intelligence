@@ -1,10 +1,10 @@
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
 from pro_meta_intelligence.cli import main
-from pro_meta_intelligence.sources import RawSourceArtifact
+from pro_meta_intelligence.sources import RawSourceArtifact, SnapshotArchive
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -93,6 +93,88 @@ def test_audit_oe_coverage_cli_writes_machine_readable_readiness(tmp_path) -> No
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert payload["ready_for_radar"] is True
     assert payload["selected_patch_id"] == "16.15"
+
+
+def test_audit_oe_history_cli_fails_closed_for_an_empty_archive(tmp_path) -> None:
+    output = tmp_path / "oe-history.json"
+
+    assert (
+        main(
+            [
+                "audit-oe-history",
+                "--source-timezone",
+                "UTC",
+                "--archive-dir",
+                str(tmp_path / "raw"),
+                "--output",
+                str(output),
+            ]
+        )
+        == 2
+    )
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["ready_for_historical_backtest"] is False
+    assert payload["blocking_reasons"] == ["NO_ARCHIVED_RETRIEVALS"]
+
+
+def test_audit_oe_history_cli_accepts_matured_normalized_states(tmp_path) -> None:
+    source_id = "oracles-elixir-match-data"
+    source_url = "https://drive.usercontent.google.com/download?id=reviewed"
+    retrieved_at = datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
+    base = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
+    rows = base.splitlines(keepends=True)
+    next_game = (
+        b"".join(rows[1:])
+        .replace(b"GAME001", b"GAME002")
+        .replace(b"2026-08-20 10:00:00", b"2026-08-25 10:00:00")
+    )
+    archive_dir = tmp_path / "raw"
+    archive = SnapshotArchive(archive_dir)
+    for index, body in enumerate((base, base + next_game)):
+        archive.store(
+            RawSourceArtifact.create(
+                source_id=source_id,
+                request_url=source_url,
+                final_url=source_url,
+                media_type="text/csv",
+                retrieved_at=retrieved_at + timedelta(days=index * 7),
+                body=body,
+            )
+        )
+    output = tmp_path / "oe-history.json"
+
+    assert (
+        main(
+            [
+                "audit-oe-history",
+                "--source-timezone",
+                "UTC",
+                "--archive-dir",
+                str(archive_dir),
+                "--minimum-retrievals",
+                "2",
+                "--minimum-unique-states",
+                "2",
+                "--minimum-collection-span-days",
+                "7",
+                "--maximum-gap-hours",
+                "168",
+                "--outcome-horizon-days",
+                "7",
+                "--minimum-matured-cutoffs",
+                "1",
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["ready_for_historical_backtest"] is True
+    assert payload["collection"]["unique_normalized_state_count"] == 2
+    assert payload["revision_ledger"][0]["added_match_count"] == 1
 
 
 def test_build_radar_cli_reuses_validated_oe_import(tmp_path) -> None:

@@ -105,6 +105,7 @@ See also:
 - [`docs/SOURCE_REGISTRY.md`](docs/SOURCE_REGISTRY.md)
 - [`docs/ORACLES_ELIXIR_IMPORT.md`](docs/ORACLES_ELIXIR_IMPORT.md)
 - [`docs/OE_COVERAGE_AUDIT.md`](docs/OE_COVERAGE_AUDIT.md)
+- [`docs/OE_HISTORY_READINESS.md`](docs/OE_HISTORY_READINESS.md)
 - [`docs/META_RADAR.md`](docs/META_RADAR.md)
 - [`docs/SNAPSHOT_FEED.md`](docs/SNAPSHOT_FEED.md)
 - [`docs/FEED_JOB.md`](docs/FEED_JOB.md)
@@ -135,6 +136,10 @@ python -m pro_meta_intelligence audit-oe-coverage \
   --input path/to/2026_LoL_esports_match_data_from_OraclesElixir.csv \
   --source-timezone UTC \
   --output outputs/oracles-elixir/coverage.json
+python -m pro_meta_intelligence audit-oe-history \
+  --archive-dir outputs/oracles-elixir/raw \
+  --source-timezone UTC \
+  --output outputs/oracles-elixir/history-readiness.json
 ```
 
 Raw responses are stored under the ignored `outputs/ddragon/` directory by content hash. A raw
@@ -157,6 +162,11 @@ Before an unattended publication, the annual coverage audit checks the selected 
 match, distinct-team, and mapped-region counts, plus rejected games and unknown leagues. It exposes
 the measurements and blocking reason codes rather than a composite score. A failed readiness gate
 is audited and leaves the existing public feed unchanged.
+
+Historical backtests have a stricter contract. `audit-oe-history` verifies every archived metadata
+record and raw file, deeply imports each distinct content version at its earliest retrieval time,
+measures collection gaps, and counts cutoffs with a later outcome window. It performs no network
+request and never treats repeated unchanged bytes as a new historical state.
 
 ## Explainable Meta Radar
 

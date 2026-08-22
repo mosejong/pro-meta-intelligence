@@ -8,6 +8,7 @@ from pro_meta_intelligence.ingestion.ddragon import DataDragonAdapter, SourcePay
 from pro_meta_intelligence.ingestion.http import HttpResponse
 from pro_meta_intelligence.sources import (
     SnapshotArchive,
+    SnapshotArchiveIntegrityError,
     SourcePolicyError,
     SourceRegistry,
     SourceStatus,
@@ -143,3 +144,25 @@ def test_snapshot_archive_keeps_distinct_retrieval_metadata_for_unchanged_bytes(
     assert first.data_path == second.data_path
     assert first.metadata_path != second.metadata_path
     assert first.metadata_path.is_file() and second.metadata_path.is_file()
+
+
+def test_snapshot_archive_inspection_verifies_immutable_bytes(tmp_path) -> None:
+    adapter, _ = build_adapter()
+    archive = SnapshotArchive(tmp_path)
+    stored = archive.store(adapter.fetch_champion_catalog("16.15.1").artifact)
+
+    inspection = archive.inspect("riot-data-dragon")
+
+    assert inspection.issues == ()
+    assert len(inspection.snapshots) == 1
+    assert inspection.snapshots[0].byte_length == len(stored.data_path.read_bytes())
+
+    original = stored.data_path.read_bytes()
+    replacement = (b"x" if original[:1] != b"x" else b"y") + original[1:]
+    stored.data_path.write_bytes(replacement)
+    corrupted = archive.inspect("riot-data-dragon")
+    assert [issue.code for issue in corrupted.issues] == ["CONTENT_HASH_MISMATCH"]
+    with pytest.raises(SnapshotArchiveIntegrityError, match="CONTENT_HASH_MISMATCH"):
+        archive.latest("riot-data-dragon")
+    with pytest.raises(FileExistsError, match="immutable archive collision"):
+        archive.store(adapter.fetch_champion_catalog("16.15.1").artifact)

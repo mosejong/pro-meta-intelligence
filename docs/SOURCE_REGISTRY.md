@@ -97,7 +97,9 @@ A Data Dragon response first becomes a `RawSourceArtifact` containing:
 
 `SnapshotArchive` stores response bytes under the content hash (`.json` or `.csv`) and a separate
 immutable metadata file for each retrieval timestamp. Re-fetching unchanged content reuses the raw
-bytes without losing the new retrieval event.
+bytes without losing the new retrieval event. Operational archive lookup verifies metadata schema,
+safe file references, byte length, and SHA-256 before returning a snapshot; corruption fails closed.
+Completed bytes are atomically linked into write-once final names rather than exposed while writing.
 
 Data Dragon's champion catalog does not itself prove the patch release timestamp. Therefore raw
 fetching does not fabricate `observed_at`. Normalization into `ChampionCatalogSnapshot` requires a
@@ -135,6 +137,9 @@ Inspect policy state:
 python -m pro_meta_intelligence sources
 python -m pro_meta_intelligence fetch-oe --year 2026
 python -m pro_meta_intelligence sync-oe-feed --year 2026 --source-timezone UTC
+python -m pro_meta_intelligence audit-oe-history \
+  --archive-dir outputs/oracles-elixir/raw \
+  --source-timezone UTC
 ```
 
 Fetch the current version index and champion catalog, then store both raw artifacts:
@@ -180,7 +185,7 @@ quality gates.
 - login/session automation
 - social, video, forum, or expert-source adapters
 - automatic patch-note interpretation
-- automatic publication or Creator Mode generation
+- AI-authored or unreviewed Creator Mode publication
 
 Each future adapter needs its own registry entry, collection contract, offline fixtures, policy review,
 rate-limit behavior, provenance, and tests before enablement.

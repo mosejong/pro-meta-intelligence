@@ -44,3 +44,6 @@ but no Radar/Creator snapshot is published and the existing `current.json` remai
 
 The standalone `refresh-feed` command remains a caller-controlled local path and does not apply the
 annual readiness gate automatically.
+
+This audit is only the current-publication gate. Historical backtest input requires multiple dated
+snapshots and is evaluated separately by [`OE_HISTORY_READINESS.md`](OE_HISTORY_READINESS.md).
