@@ -1,4 +1,4 @@
-.PHONY: install test lint evaluate sources fetch-ddragon
+.PHONY: install test lint evaluate sources fetch-ddragon import-oe
 
 install:
 	python -m pip install -e ".[dev]"
@@ -18,3 +18,7 @@ sources:
 
 fetch-ddragon:
 	python -m pro_meta_intelligence fetch-ddragon --version latest --locale en_US
+
+import-oe:
+	@test -n "$(INPUT)" || (echo "usage: make import-oe INPUT=path/to/file.csv" && exit 2)
+	python -m pro_meta_intelligence import-oe --input "$(INPUT)" --source-timezone UTC

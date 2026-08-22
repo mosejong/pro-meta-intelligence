@@ -1,4 +1,4 @@
-# Source Registry and Data Dragon Adapter
+# Source Registry and Reviewed Data Adapters
 
 ## Purpose
 
@@ -6,8 +6,8 @@ External collection is fail-closed. A user interest, AI request, or future agent
 arbitrary URL into a crawl job. Every source and operation must be present in a reviewed registry
 entry before network access occurs.
 
-This increment implements the policy and archival boundary plus one narrow real adapter. It is not a
-general crawler.
+The implementation provides a policy boundary plus narrowly scoped adapters. It is not a general
+crawler.
 
 ## Current official-policy review
 
@@ -23,12 +23,38 @@ Reviewed on 2026-08-22:
   be identified from visible information.
 - Riot's [API Terms](https://developer.riotgames.com/terms) remain applicable to use of Riot developer
   materials.
+- Oracle's Elixir's
+  [official download page](https://master.d36liwrx5rvjnc.amplifyapp.com/tools/downloads) states that
+  its CSV files are provided free for analysts, commentators, and fans, are updated once per day,
+  and should not be downloaded more frequently.
+- The [Oracle's Elixir data dictionary](https://lol.timsevenhuysen.com/matchdata/match-data-dictionary/)
+  warns that schemas may change and that game IDs may not be globally unique across leagues.
 
 The registry review expires after 30 days. Once expired, the adapter refuses network access until the
 checked-in review timestamp and policy notes are deliberately updated. Internal status `ENABLED`
 means only that this repository permits the listed operation; it is not Riot approval of the product.
 
 ## Registered sources
+
+### `oracles-elixir-match-data`
+
+Enabled only for `IMPORT_LOCAL_CSV`. The adapter reads a provider-published CSV that the user has
+already placed on disk; it does not automate Google Drive, follow arbitrary links, or crawl HTML.
+The reviewed registry interval is one day because the provider says files update once daily.
+
+The importer hashes the complete file, treats the hash as the mutable annual file's version, checks
+the 2026 column contract, and validates every game as one contiguous group containing participant
+IDs `1-10`, `100`, and `200`. A game is normalized only when all of the following agree:
+
+- 12 rows and `datacompleteness=complete`,
+- one Blue and one Red team row with exactly one winner and first-pick side,
+- five unique player positions and stable team IDs per side,
+- `pick1` through `pick5` matching the five player champions,
+- a game timestamp that does not occur after retrieval.
+
+Invalid games are rejected as a unit and included in a machine-readable QA report. Picks are mapped
+to global pick order and player roles. Bans are intentionally omitted because the file does not
+provide a reliable role for a banned champion.
 
 ### `riot-data-dragon`
 
@@ -81,6 +107,20 @@ Using retrieval time as `available_at` may understate historical lead time, but 
 record into a period before this collector actually possessed it. A future archival availability
 policy may use earlier timestamps only after it is documented and tested.
 
+Oracle's Elixir's `date` column is timezone-naive in the reviewed CSV and the public dictionary does
+not state a timezone. Therefore the caller must provide `UTC`, a fixed offset such as `+09:00`, or an
+installed IANA zone. The importer does not guess. For every imported record:
+
+```text
+observed_at  = source date interpreted with the caller's explicit timezone
+available_at = explicit local snapshot retrieval time
+retrieved_at = explicit local snapshot retrieval time
+```
+
+A file downloaded today cannot be injected into a historical cutoff before today merely because it
+contains older games. Reconstructing earlier availability requires archived snapshots captured at
+those earlier times.
+
 ## CLI
 
 Inspect policy state:
@@ -108,6 +148,20 @@ python -m pro_meta_intelligence fetch-ddragon \
 ```
 
 The example timestamp is illustrative, not a claim about the real release time of that version.
+
+Validate and normalize a locally downloaded Oracle's Elixir CSV:
+
+```bash
+python -m pro_meta_intelligence import-oe \
+  --input outputs/oracles-elixir/2026_LoL_esports_match_data_from_OraclesElixir.csv \
+  --source-timezone UTC \
+  --retrieved-at 2026-08-22T03:00:00Z \
+  --output outputs/oracles-elixir/2026-import-report.json
+```
+
+The command marks authenticity as `UNVERIFIED_CALLER_SUPPLIED_FILE`: matching a schema and hash does
+not prove that an arbitrary local file came from the provider. Use `--fail-on-rejected` in scheduled
+quality gates.
 
 ## Deferred intentionally
 
