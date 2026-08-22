@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import datetime
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
@@ -22,14 +21,7 @@ from pro_meta_intelligence.models import (
     Provenance,
     Side,
 )
-
-
-def parse_datetime(value: str) -> datetime:
-    normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
-    parsed = datetime.fromisoformat(normalized)
-    if parsed.tzinfo is None or parsed.utcoffset() is None:
-        raise ValueError(f"fixture timestamp must be timezone-aware: {value}")
-    return parsed
+from pro_meta_intelligence.temporal import parse_datetime
 
 
 def _provenance(raw: dict[str, Any]) -> Provenance:
