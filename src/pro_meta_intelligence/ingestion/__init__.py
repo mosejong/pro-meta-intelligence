@@ -6,6 +6,12 @@ from pro_meta_intelligence.ingestion.fixtures import (
     SyntheticScenario,
     load_synthetic_scenario,
 )
+from pro_meta_intelligence.ingestion.oe_download import (
+    OracleElixirDownloadError,
+    OracleElixirDownloadIntervalError,
+    OracleElixirPublishedDownloadAdapter,
+    PublishedCSVDownload,
+)
 from pro_meta_intelligence.ingestion.oracles_elixir import (
     OracleElixirCSVAdapter,
     OracleElixirImport,
@@ -22,4 +28,8 @@ __all__ = [
     "OracleElixirCSVAdapter",
     "OracleElixirImport",
     "OracleElixirSchemaError",
+    "OracleElixirDownloadError",
+    "OracleElixirDownloadIntervalError",
+    "OracleElixirPublishedDownloadAdapter",
+    "PublishedCSVDownload",
 ]

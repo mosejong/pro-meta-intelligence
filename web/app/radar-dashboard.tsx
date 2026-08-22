@@ -266,6 +266,9 @@ export function RadarDashboard() {
         </div>
       </section>
       <footer><span>NO COMPOSITE SCORE</span><p>Demand velocity → Pick presence delta → Regional divergence 순으로 정렬</p><b>SCHEMA v{report.schema_version}</b></footer>
+      <section className="legal-notice" aria-label="Riot Games 비제휴 고지">
+        Pro Meta Intelligence isn&apos;t endorsed by Riot Games and doesn&apos;t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
+      </section>
 
       {evidenceOpen && selected && (
         <div className="dialog-backdrop">

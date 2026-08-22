@@ -1,8 +1,10 @@
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 from pro_meta_intelligence.cli import main
+from pro_meta_intelligence.sources import RawSourceArtifact
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -27,7 +29,10 @@ def test_sources_cli_reports_enabled_and_blocked_policy_state(tmp_path) -> None:
         for item in json.loads(output.read_text(encoding="utf-8"))["sources"]
     }
     assert sources["riot-data-dragon"]["status"] == "ENABLED"
-    assert sources["oracles-elixir-match-data"]["allowed_operations"] == ["IMPORT_LOCAL_CSV"]
+    assert sources["oracles-elixir-match-data"]["allowed_operations"] == [
+        "FETCH_PUBLISHED_CSV",
+        "IMPORT_LOCAL_CSV",
+    ]
     assert sources["riot-web-api"]["status"] == "REVIEW_REQUIRED"
 
 
@@ -243,3 +248,76 @@ def test_run_feed_job_cli_refuses_existing_lock(tmp_path) -> None:
     assert json.loads((run_dir / "feed-job.lock.json").read_text(encoding="utf-8")) == {
         "run_id": "active"
     }
+
+
+def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
+    tmp_path, monkeypatch
+) -> None:
+    retrieved_at = datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
+    source_body = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
+
+    class FakeDownloadAdapter:
+        source_id = "oracles-elixir-match-data"
+
+        def __init__(self, registry) -> None:
+            assert registry.get(self.source_id) is not None
+
+        def fetch_year(self, year, *, last_retrieved_at=None):
+            assert year == 2026
+            assert last_retrieved_at is None
+            url = "https://drive.usercontent.google.com/download?id=reviewed"
+            return SimpleNamespace(
+                file=SimpleNamespace(year=year, filename="2026_test.csv"),
+                artifact=RawSourceArtifact.create(
+                    source_id=self.source_id,
+                    request_url=url,
+                    final_url=url,
+                    media_type="text/csv",
+                    retrieved_at=retrieved_at,
+                    body=source_body,
+                ),
+            )
+
+    monkeypatch.setattr(
+        "pro_meta_intelligence.cli.OracleElixirPublishedDownloadAdapter",
+        FakeDownloadAdapter,
+    )
+    output = tmp_path / "sync.json"
+    feed = tmp_path / "feed"
+
+    assert (
+        main(
+            [
+                "sync-oe-feed",
+                "--year",
+                "2026",
+                "--source-timezone",
+                "UTC",
+                "--archive-dir",
+                str(tmp_path / "raw"),
+                "--feed-dir",
+                str(feed),
+                "--run-dir",
+                str(tmp_path / "jobs"),
+                "--minimum-recent-matches",
+                "1",
+                "--minimum-prior-matches",
+                "1",
+                "--minimum-region-matches",
+                "1",
+                "--minimum-current-picks",
+                "1",
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+
+    audit = json.loads(output.read_text(encoding="utf-8"))
+    current = json.loads((feed / "current.json").read_text(encoding="utf-8"))
+    assert audit["status"] == "SUCCEEDED"
+    assert audit["result"]["source_acquisition"]["status"] == "DOWNLOADED"
+    assert audit["result"]["network_collection_performed"] is True
+    assert current["fixture_only"] is False
+    assert current["input"]["authenticity"] == "REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD"

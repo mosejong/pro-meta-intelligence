@@ -9,8 +9,16 @@ The 2026 file was visible as a 59.8 MB CSV. Its live header matched the fields u
 including `gameid`, `datacompleteness`, `league`, `date`, `patch`, `participantid`, `side`,
 `position`, `teamid`, `firstPick`, `champion`, and `pick1` through `pick5`.
 
-This increment does not automate that Google Drive download. Only `IMPORT_LOCAL_CSV` is enabled in
-the registry. This keeps collection fail-closed while providing a real-data normalization path.
+`FETCH_PUBLISHED_CSV` is now enabled for the exact 2026 file ID verified in that official folder.
+The downloader does not enumerate Drive or accept caller-supplied URLs. It enforces the provider's
+daily interval using local archive metadata, rejects quota/error HTML and schema drift, stores the
+original CSV by content hash, and never republishes the raw file. `IMPORT_LOCAL_CSV` remains
+available for a file obtained manually from the same provider page.
+
+For unattended operation, `sync-oe-feed` holds the single-writer lock across acquisition,
+normalization, Radar/Creator generation, and publication. A provider error can reuse a previously
+verified archive with an explicit status. With no verified cache, publication fails closed and the
+existing feed is not moved.
 
 References:
 
@@ -72,7 +80,10 @@ never written into provenance by default.
 
 ## Known limitations
 
-- Authenticity remains `UNVERIFIED_CALLER_SUPPLIED_FILE`; schema validity is not origin proof.
+- A local manual import remains `UNVERIFIED_CALLER_SUPPLIED_FILE`; an adapter download records the
+  exact reviewed official file ID and retrieval URL.
+- Google Drive can temporarily return a quota page. This is reported as source unavailable and is
+  never archived or interpreted as CSV.
 - Full annual-file performance has not yet been benchmarked in CI; fixtures preserve the real 2026
   structural contract without committing provider data.
 - The official timezone semantics still require provider confirmation.

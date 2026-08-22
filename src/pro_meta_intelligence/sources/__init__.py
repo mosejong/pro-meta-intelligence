@@ -1,4 +1,8 @@
-from pro_meta_intelligence.sources.artifacts import RawSourceArtifact, SnapshotArchive
+from pro_meta_intelligence.sources.artifacts import (
+    ArchivedSnapshot,
+    RawSourceArtifact,
+    SnapshotArchive,
+)
 from pro_meta_intelligence.sources.registry import (
     PolicyDecision,
     PolicyGate,
@@ -12,6 +16,7 @@ from pro_meta_intelligence.sources.registry import (
 __all__ = [
     "PolicyDecision",
     "PolicyGate",
+    "ArchivedSnapshot",
     "RawSourceArtifact",
     "SnapshotArchive",
     "SourceAccessMethod",

@@ -9,9 +9,10 @@
       "access_method": "PROVIDER_PUBLISHED_DOWNLOAD",
       "base_urls": [
         "https://master.d36liwrx5rvjnc.amplifyapp.com",
-        "https://drive.google.com"
+        "https://drive.google.com",
+        "https://drive.usercontent.google.com"
       ],
-      "allowed_operations": ["IMPORT_LOCAL_CSV"],
+      "allowed_operations": ["FETCH_PUBLISHED_CSV", "IMPORT_LOCAL_CSV"],
       "policy_urls": [
         "https://master.d36liwrx5rvjnc.amplifyapp.com/tools/downloads",
         "https://lol.timsevenhuysen.com/matchdata/match-data-dictionary/",
@@ -22,11 +23,11 @@
       "credential_requirement": "NONE_FOR_PROVIDER_PUBLISHED_DOWNLOAD",
       "minimum_interval_seconds": 86400.0,
       "maximum_response_bytes": 209715200,
-      "robots_policy": "NO_CRAWLING; LOCAL_IMPORT_OF_PROVIDER_PUBLISHED_FILE_ONLY",
+      "robots_policy": "NO_CRAWLING; EXACT REVIEWED GOOGLE_DRIVE_FILE_ID_ONLY",
       "retention_policy": "CONTENT_HASH_AND_IMPORT_REPORT; RAW_FILE_REMAINS_USER_CONTROLLED",
       "redistribution_policy": "DO_NOT_REPUBLISH_RAW_DATASET; FOLLOW_RIOT_AND_ATTRIBUTION_TERMS",
       "availability_policy": "LOCAL_RETRIEVAL_TIME_IS_CONSERVATIVE_AVAILABLE_AT",
-      "notes": "Official files are free for analysts, commentators, and fans and updated once daily. This entry permits local import only; automated Google Drive collection is not enabled."
+      "notes": "Official files are free for analysts, commentators, and fans and updated once daily. Download is limited to exact file IDs verified in the official public folder; folder enumeration and raw redistribution are not enabled."
     },
     {
       "source_id": "riot-data-dragon",

@@ -55,7 +55,7 @@ class UrllibTransport:
 
     def fetch(self, url: str, *, maximum_bytes: int, user_agent: str) -> HttpResponse:
         self._require_allowed_https(url)
-        request = Request(url, headers={"User-Agent": user_agent, "Accept": "application/json"})
+        request = Request(url, headers={"User-Agent": user_agent, "Accept": "*/*"})
         try:
             with self._opener.open(request, timeout=self.timeout_seconds) as response:
                 final_url = response.geturl()

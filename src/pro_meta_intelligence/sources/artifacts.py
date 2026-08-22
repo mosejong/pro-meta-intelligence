@@ -63,6 +63,15 @@ class ArchivedArtifact:
     content_hash: str
 
 
+@dataclass(frozen=True, slots=True)
+class ArchivedSnapshot:
+    data_path: Path
+    metadata_path: Path
+    retrieved_at: datetime
+    content_hash: str
+    final_url: str
+
+
 class SnapshotArchive:
     def __init__(self, root: Path) -> None:
         self.root = root.resolve()
@@ -73,7 +82,8 @@ class SnapshotArchive:
         if self.root not in source_dir.parents:
             raise ValueError("resolved source archive escaped archive root")
         source_dir.mkdir(parents=True, exist_ok=True)
-        data_path = source_dir / f"{digest}.json"
+        extension = ".csv" if artifact.media_type == "text/csv" else ".json"
+        data_path = source_dir / f"{digest}{extension}"
         retrieval_key = artifact.retrieved_at.astimezone(UTC).strftime("%Y%m%dT%H%M%S%fZ")
         metadata_path = source_dir / f"{digest}.{retrieval_key}.meta.json"
         self._write_once(data_path, artifact.body)
@@ -86,6 +96,7 @@ class SnapshotArchive:
             "retrieved_at": artifact.retrieved_at.isoformat(),
             "content_hash": artifact.content_hash,
             "byte_length": len(artifact.body),
+            "data_file": data_path.name,
         }
         metadata_bytes = (
             json.dumps(metadata, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
@@ -101,3 +112,34 @@ class SnapshotArchive:
             return
         with path.open("xb") as handle:
             handle.write(content)
+
+    def latest_retrieved_at(self, source_id: str) -> datetime | None:
+        latest = self.latest(source_id)
+        return latest.retrieved_at if latest else None
+
+    def latest(self, source_id: str) -> ArchivedSnapshot | None:
+        if not SAFE_SOURCE_ID.fullmatch(source_id):
+            raise ValueError("source_id is not safe for archive lookup")
+        source_dir = self.root / source_id
+        if not source_dir.is_dir():
+            return None
+        snapshots: list[ArchivedSnapshot] = []
+        for path in source_dir.glob("*.meta.json"):
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if payload.get("source_id") == source_id:
+                data_file = payload.get("data_file")
+                if not isinstance(data_file, str):
+                    data_file = f"{payload['content_hash'].removeprefix('sha256:')}.json"
+                data_path = source_dir / data_file
+                if not data_path.is_file():
+                    raise FileNotFoundError(f"archived source bytes are missing: {data_path}")
+                snapshots.append(
+                    ArchivedSnapshot(
+                        data_path=data_path,
+                        metadata_path=path,
+                        retrieved_at=datetime.fromisoformat(payload["retrieved_at"]),
+                        content_hash=payload["content_hash"],
+                        final_url=payload["final_url"],
+                    )
+                )
+        return max(snapshots, key=lambda item: item.retrieved_at) if snapshots else None

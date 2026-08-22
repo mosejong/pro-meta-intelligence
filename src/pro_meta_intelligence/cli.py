@@ -11,6 +11,11 @@ from pro_meta_intelligence.backtest import BacktestHarness
 from pro_meta_intelligence.creator import CreatorBriefBuilder
 from pro_meta_intelligence.ingestion import load_synthetic_scenario
 from pro_meta_intelligence.ingestion.ddragon import DataDragonAdapter
+from pro_meta_intelligence.ingestion.oe_download import (
+    OracleElixirDownloadError,
+    OracleElixirDownloadIntervalError,
+    OracleElixirPublishedDownloadAdapter,
+)
 from pro_meta_intelligence.ingestion.oracles_elixir import OracleElixirCSVAdapter
 from pro_meta_intelligence.models import BacktestWindow
 from pro_meta_intelligence.publishing import (
@@ -78,6 +83,43 @@ def build_parser() -> argparse.ArgumentParser:
     )
     oe_import.add_argument("--output", type=Path, help="optional JSON import report path")
 
+    oe_fetch = subparsers.add_parser(
+        "fetch-oe",
+        help="download one explicitly reviewed Oracle's Elixir annual CSV",
+    )
+    oe_fetch.add_argument("--year", type=int, default=datetime.now(UTC).year)
+    oe_fetch.add_argument("--registry", type=Path, help="optional source registry JSON")
+    oe_fetch.add_argument(
+        "--archive-dir",
+        type=Path,
+        default=Path("outputs/oracles-elixir/raw"),
+        help="content-addressed raw archive root",
+    )
+    oe_fetch.add_argument("--output", type=Path, help="optional JSON summary path")
+
+    oe_sync = subparsers.add_parser(
+        "sync-oe-feed",
+        help="fetch or reuse the reviewed OE CSV and publish an audited Meta Radar feed",
+    )
+    oe_sync.add_argument("--year", type=int, default=datetime.now(UTC).year)
+    oe_sync.add_argument("--source-timezone", required=True)
+    oe_sync.add_argument("--registry", type=Path, help="optional source registry JSON")
+    oe_sync.add_argument("--region-map", type=Path, help="optional league-to-region JSON mapping")
+    oe_sync.add_argument("--archive-dir", type=Path, default=Path("outputs/oracles-elixir/raw"))
+    oe_sync.add_argument("--feed-dir", type=Path, default=Path("web/public/feed"))
+    oe_sync.add_argument("--run-dir", type=Path, default=Path("outputs/oe-feed-jobs"))
+    oe_sync.add_argument("--patch", help="patch ID; latest available match patch if omitted")
+    oe_sync.add_argument("--cutoff", help="analysis cutoff; defaults to source retrieval time")
+    oe_sync.add_argument("--recent-days", type=int, default=7)
+    oe_sync.add_argument("--prior-days", type=int, default=7)
+    oe_sync.add_argument("--minimum-recent-matches", type=int, default=5)
+    oe_sync.add_argument("--minimum-prior-matches", type=int, default=5)
+    oe_sync.add_argument("--minimum-region-matches", type=int, default=3)
+    oe_sync.add_argument("--minimum-current-picks", type=int, default=2)
+    oe_sync.add_argument("--creator-top-k", type=int, default=3)
+    oe_sync.add_argument("--max-index-entries", type=int, default=50)
+    oe_sync.add_argument("--output", type=Path, help="optional audited sync summary path")
+
     radar = subparsers.add_parser(
         "build-radar", help="build an explainable patch-level Meta Radar from a local OE CSV"
     )
@@ -127,6 +169,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _fetch_ddragon(args)
     if args.command == "import-oe":
         return _import_oe(args)
+    if args.command == "fetch-oe":
+        return _fetch_oe(args)
+    if args.command == "sync-oe-feed":
+        return _sync_oe_feed(args)
     if args.command == "build-radar":
         return _build_radar(args)
     if args.command == "build-creator-brief":
@@ -250,6 +296,146 @@ def _import_oe(args: argparse.Namespace) -> int:
     return 0
 
 
+def _fetch_oe(args: argparse.Namespace) -> int:
+    archive = SnapshotArchive(args.archive_dir)
+    adapter = OracleElixirPublishedDownloadAdapter(_load_registry(args.registry))
+    last_retrieved_at = archive.latest_retrieved_at(adapter.source_id)
+    try:
+        downloaded = adapter.fetch_year(args.year, last_retrieved_at=last_retrieved_at)
+    except OracleElixirDownloadIntervalError as error:
+        payload = {
+            "schema_version": "1",
+            "status": "RATE_LIMITED",
+            "network_collection_performed": False,
+            "retry_at": error.retry_at.isoformat(),
+        }
+        _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+        return 3
+    except OracleElixirDownloadError as error:
+        payload = {
+            "schema_version": "1",
+            "status": "SOURCE_UNAVAILABLE",
+            "network_collection_performed": True,
+            "error": str(error),
+        }
+        _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+        return 4
+    archived = archive.store(downloaded.artifact)
+    payload = {
+        "schema_version": "1",
+        "status": "DOWNLOADED",
+        "source_id": adapter.source_id,
+        "year": downloaded.file.year,
+        "filename": downloaded.file.filename,
+        "network_collection_performed": True,
+        "retrieved_at": downloaded.artifact.retrieved_at.isoformat(),
+        "content_hash": downloaded.artifact.content_hash,
+        "byte_length": len(downloaded.artifact.body),
+        "raw_data_path": str(archived.data_path),
+        "raw_metadata_path": str(archived.metadata_path),
+        "raw_redistribution_allowed": False,
+    }
+    _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    return 0
+
+
+def _sync_oe_feed(args: argparse.Namespace) -> int:
+    runner = FeedJobRunner(args.run_dir)
+
+    def operation() -> FeedJobOperationResult:
+        archive = SnapshotArchive(args.archive_dir)
+        adapter = OracleElixirPublishedDownloadAdapter(_load_registry(args.registry))
+        latest = archive.latest(adapter.source_id)
+        network_attempted = False
+        acquisition_status: str
+        acquisition_error: str | None = None
+        try:
+            downloaded = adapter.fetch_year(
+                args.year,
+                last_retrieved_at=latest.retrieved_at if latest else None,
+            )
+            network_attempted = True
+            archived = archive.store(downloaded.artifact)
+            latest = archive.latest(adapter.source_id)
+            if latest is None:  # pragma: no cover - archive.store guarantees metadata
+                raise AssertionError("downloaded source did not enter the archive")
+            acquisition_status = "DOWNLOADED"
+            assert archived.data_path == latest.data_path
+        except OracleElixirDownloadIntervalError:
+            acquisition_status = "REUSED_DAILY_CACHE"
+        except OracleElixirDownloadError as error:
+            network_attempted = True
+            acquisition_status = (
+                "REUSED_CACHE_AFTER_SOURCE_ERROR" if latest else "SOURCE_ERROR_NO_CACHE"
+            )
+            acquisition_error = str(error)
+
+        if latest is None:
+            payload = {
+                "schema_version": "1",
+                "status": "SOURCE_UNAVAILABLE_NO_CACHE",
+                "published": False,
+                "network_collection_performed": network_attempted,
+                "source_acquisition": {
+                    "status": acquisition_status,
+                    "error": acquisition_error,
+                },
+            }
+            return FeedJobOperationResult(exit_code=4, payload=payload)
+
+        refresh_args = argparse.Namespace(
+            input=latest.data_path,
+            source_timezone=args.source_timezone,
+            retrieved_at=latest.retrieved_at.isoformat(),
+            source_uri=latest.final_url,
+            registry=args.registry,
+            region_map=args.region_map,
+            cutoff=args.cutoff,
+            patch=args.patch,
+            recent_days=args.recent_days,
+            prior_days=args.prior_days,
+            minimum_recent_matches=args.minimum_recent_matches,
+            minimum_prior_matches=args.minimum_prior_matches,
+            minimum_region_matches=args.minimum_region_matches,
+            minimum_current_picks=args.minimum_current_picks,
+            fail_on_import_issues=True,
+            feed_dir=args.feed_dir,
+            creator_top_k=args.creator_top_k,
+            max_index_entries=args.max_index_entries,
+            published_at=None,
+            output=None,
+            input_authenticity="REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD",
+            source_network_collection_performed=network_attempted,
+        )
+        exit_code, payload = _refresh_feed_payload(refresh_args)
+        payload["network_collection_performed"] = network_attempted
+        payload["source_acquisition"] = {
+            "status": acquisition_status,
+            "error": acquisition_error,
+            "retrieved_at": latest.retrieved_at.isoformat(),
+            "content_hash": latest.content_hash,
+        }
+        return FeedJobOperationResult(exit_code=exit_code, payload=payload)
+
+    try:
+        result = runner.run(
+            operation,
+            config_path=Path("configs/oe-sync.runtime.json"),
+        )
+        payload = result.audit
+        exit_code = result.exit_code
+    except FeedJobAlreadyRunning as error:
+        payload = {
+            "schema_version": "1",
+            "status": "ALREADY_RUNNING",
+            "exit_code": 3,
+            "error": str(error),
+        }
+        exit_code = 3
+    _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    return exit_code
+
+
 def _build_radar(args: argparse.Namespace) -> int:
     payload, has_import_issues = _radar_payload(args)
     _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
@@ -285,8 +471,8 @@ def _radar_payload(args: argparse.Namespace) -> tuple[dict[str, object], bool]:
     radar = MetaRadar().build(imported.matches, imported.draft_events, config, league_regions)
     payload = dict(radar.to_dict())
     payload["input"] = {
-        "authenticity": "UNVERIFIED_CALLER_SUPPLIED_FILE",
-        "network_collection_performed": False,
+        "authenticity": getattr(args, "input_authenticity", "UNVERIFIED_CALLER_SUPPLIED_FILE"),
+        "network_collection_performed": getattr(args, "source_network_collection_performed", False),
         "import_report": imported.report.to_dict(),
     }
     return payload, bool(imported.report.issue_counts)
