@@ -9,14 +9,18 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`, then use **JSON 불러오기** to load a report created by:
+Open `http://localhost:3000`. The dashboard first requests the same-origin
+`/feed/current.json`, checks the report schema, and rechecks it every five minutes. The bundled feed
+is synthetic and visibly marked as a published demo. Use **JSON 불러오기** for a temporary local
+override created by:
 
 ```bash
 python -m pro_meta_intelligence build-radar --input path/to/oracles-elixir.csv
 ```
 
-The bundled snapshot is synthetic and visibly marked as a demo. Imported files stay in browser
-memory; this version does not upload or persist them.
+Imported files stay in browser memory and are not uploaded or persisted. The refresh button returns
+from a local override to the published feed. Host access control is separate from application data:
+the dashboard itself has no ChatGPT, OpenAI, or product-account login flow.
 
 ## Checks
 

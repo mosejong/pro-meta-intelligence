@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
 const templateRoot = new URL("../", import.meta.url);
@@ -29,8 +29,16 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /REKSAI/i);
   assert.match(html, /NO COMPOSITE SCORE/);
   assert.match(html, /JSON 불러오기/);
+  assert.match(html, /FEED CONNECTING/);
   assert.match(html, /https:\/\/meta-radar\.example\/og\.png/);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
+});
+
+test("ships a valid same-origin demo feed for automatic loading", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  assert.equal(feed.schema_version, "1");
+  assert.equal(feed.fixture_only, true);
+  assert.ok(feed.entries.length > 0);
 });
 
 test("starter preview files are removed", async () => {
