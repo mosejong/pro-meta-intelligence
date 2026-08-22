@@ -1,0 +1,53 @@
+{
+  "schema_version": "1",
+  "sources": [
+    {
+      "source_id": "riot-data-dragon",
+      "display_name": "Riot Data Dragon",
+      "owner": "Riot Games",
+      "status": "ENABLED",
+      "access_method": "OFFICIAL_STATIC_DATA",
+      "base_urls": ["https://ddragon.leagueoflegends.com"],
+      "allowed_operations": ["FETCH_VERSION_INDEX", "FETCH_CHAMPION_CATALOG"],
+      "policy_urls": [
+        "https://developer.riotgames.com/docs/lol",
+        "https://developer.riotgames.com/policies/general",
+        "https://developer.riotgames.com/terms"
+      ],
+      "policy_reviewed_at": "2026-08-22T00:00:00Z",
+      "review_interval_days": 30,
+      "credential_requirement": "NONE_FOR_DOCUMENTED_STATIC_CDN_ENDPOINTS",
+      "minimum_interval_seconds": 1.0,
+      "maximum_response_bytes": 10485760,
+      "robots_policy": "NOT_APPLICABLE_TO_DOCUMENTED_STATIC_DATA_ENDPOINT",
+      "retention_policy": "CONTENT_ADDRESSED_RAW_JSON_WITH_PROVENANCE",
+      "redistribution_policy": "REVIEW_CURRENT_RIOT_TERMS_BEFORE_PUBLIC_REDISTRIBUTION",
+      "availability_policy": "RETRIEVAL_TIME_IS_CONSERVATIVE_AVAILABLE_AT_UNTIL_ARCHIVAL_LAG_IS_VALIDATED",
+      "notes": "Internal ENABLED means this repository permits the documented adapter operation; it is not a claim of Riot product approval."
+    },
+    {
+      "source_id": "riot-web-api",
+      "display_name": "Riot Games Web APIs",
+      "owner": "Riot Games",
+      "status": "REVIEW_REQUIRED",
+      "access_method": "OFFICIAL_API",
+      "base_urls": ["https://developer.riotgames.com"],
+      "allowed_operations": [],
+      "policy_urls": [
+        "https://developer.riotgames.com/docs/portal",
+        "https://developer.riotgames.com/policies/general",
+        "https://developer.riotgames.com/terms"
+      ],
+      "policy_reviewed_at": "2026-08-22T00:00:00Z",
+      "review_interval_days": 30,
+      "credential_requirement": "PRODUCTION_KEY_REQUIRED_FOR_PUBLIC_PRODUCT",
+      "minimum_interval_seconds": 1.0,
+      "maximum_response_bytes": 10485760,
+      "robots_policy": "NOT_APPLICABLE_TO_OFFICIAL_API",
+      "retention_policy": "DEFINE_PER_ENDPOINT_BEFORE_ENABLEMENT",
+      "redistribution_policy": "DEFINE_PER_PRODUCT_REGISTRATION_BEFORE_ENABLEMENT",
+      "availability_policy": "DEFINE_PER_ENDPOINT_BEFORE_ENABLEMENT",
+      "notes": "Fail closed until endpoint scope, credential class, rate limits, and product registration are configured."
+    }
+  ]
+}

@@ -102,4 +102,20 @@ The generated report is explicitly marked `fixture_only: true`.
 See also:
 
 - [`docs/PHASE1_IMPLEMENTATION.md`](docs/PHASE1_IMPLEMENTATION.md)
+- [`docs/SOURCE_REGISTRY.md`](docs/SOURCE_REGISTRY.md)
 - [`docs/PRODUCT_MODES.md`](docs/PRODUCT_MODES.md)
+
+## Policy-gated static-data ingestion
+
+The next stacked increment adds a fail-closed source registry and a first real adapter for Riot Data
+Dragon's documented static JSON endpoints. It does not enable arbitrary crawling or Riot Web API
+access.
+
+```bash
+python -m pro_meta_intelligence sources
+python -m pro_meta_intelligence fetch-ddragon --version latest --locale en_US
+```
+
+Raw responses are stored under the ignored `outputs/ddragon/` directory by content hash. A raw
+catalog is normalized into a temporal snapshot only when a separately verified patch release time is
+provided with `--release-at`.

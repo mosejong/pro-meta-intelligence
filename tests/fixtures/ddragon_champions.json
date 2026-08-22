@@ -1,0 +1,21 @@
+{
+  "type": "champion",
+  "format": "standAloneComplex",
+  "version": "16.15.1",
+  "data": {
+    "Annie": {
+      "id": "Annie",
+      "key": "1",
+      "name": "Annie",
+      "title": "the Dark Child",
+      "tags": ["Mage"]
+    },
+    "Olaf": {
+      "id": "Olaf",
+      "key": "2",
+      "name": "Olaf",
+      "title": "the Berserker",
+      "tags": ["Fighter", "Tank"]
+    }
+  }
+}

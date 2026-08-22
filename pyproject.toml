@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pro-meta-intelligence"
-version = "0.1.0"
+version = "0.2.0"
 description = "Leakage-safe, evidence-first esports strategy evaluation foundations"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,7 +25,7 @@ pro-meta = "pro_meta_intelligence.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-pro_meta_intelligence = ["fixtures/*.json"]
+pro_meta_intelligence = ["config/*.json", "fixtures/*.json"]
 
 [tool.pytest.ini_options]
 addopts = "-ra"
