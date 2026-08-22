@@ -11,10 +11,10 @@ from importlib.resources import files
 from typing import Any
 from urllib.parse import urlencode, urlparse
 
+from pro_meta_intelligence._version import USER_AGENT
 from pro_meta_intelligence.ingestion.http import HttpTransport, UrllibTransport
 from pro_meta_intelligence.sources import PolicyGate, RawSourceArtifact, SourceRegistry
 
-USER_AGENT = "ProMetaIntelligence/0.7 (+https://github.com/mosejong/pro-meta-intelligence)"
 REQUIRED_COLUMNS = frozenset(
     {
         "gameid",

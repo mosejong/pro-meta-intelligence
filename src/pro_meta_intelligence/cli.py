@@ -27,7 +27,12 @@ from pro_meta_intelligence.publishing import (
     FeedJobRunner,
     SnapshotFeedPublisher,
 )
-from pro_meta_intelligence.quality import OECoverageCriteria, audit_oe_coverage
+from pro_meta_intelligence.quality import (
+    OECoverageCriteria,
+    OEHistoryCriteria,
+    audit_oe_coverage,
+    audit_oe_history,
+)
 from pro_meta_intelligence.radar import LeagueRegionMap, MetaRadar, MetaRadarConfig
 from pro_meta_intelligence.sources import SnapshotArchive, SourceRegistry
 from pro_meta_intelligence.temporal import parse_datetime
@@ -115,6 +120,25 @@ def build_parser() -> argparse.ArgumentParser:
     _add_readiness_arguments(oe_audit)
     oe_audit.add_argument("--output", type=Path, help="optional JSON coverage audit path")
 
+    oe_history = subparsers.add_parser(
+        "audit-oe-history",
+        help="verify archived OE snapshots and measure historical backtest readiness",
+    )
+    oe_history.add_argument("--source-timezone", required=True)
+    oe_history.add_argument("--registry", type=Path, help="optional source registry JSON")
+    oe_history.add_argument(
+        "--archive-dir",
+        type=Path,
+        default=Path("outputs/oracles-elixir/raw"),
+    )
+    oe_history.add_argument("--minimum-retrievals", type=int, default=14)
+    oe_history.add_argument("--minimum-unique-states", type=int, default=3)
+    oe_history.add_argument("--minimum-collection-span-days", type=int, default=14)
+    oe_history.add_argument("--maximum-gap-hours", type=int, default=48)
+    oe_history.add_argument("--outcome-horizon-days", type=int, default=7)
+    oe_history.add_argument("--minimum-matured-cutoffs", type=int, default=2)
+    oe_history.add_argument("--output", type=Path, help="optional JSON history audit path")
+
     oe_sync = subparsers.add_parser(
         "sync-oe-feed",
         help="fetch or reuse the reviewed OE CSV and publish an audited Meta Radar feed",
@@ -192,6 +216,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _fetch_oe(args)
     if args.command == "audit-oe-coverage":
         return _audit_oe(args)
+    if args.command == "audit-oe-history":
+        return _audit_oe_history(args)
     if args.command == "sync-oe-feed":
         return _sync_oe_feed(args)
     if args.command == "build-radar":
@@ -372,6 +398,29 @@ def _audit_oe(args: argparse.Namespace) -> int:
         args.output,
     )
     return 0 if audit.ready_for_radar else 2
+
+
+def _audit_oe_history(args: argparse.Namespace) -> int:
+    archive = SnapshotArchive(args.archive_dir)
+    source_id = OracleElixirPublishedDownloadAdapter.source_id
+    audit = audit_oe_history(
+        archive.inspect(source_id),
+        _load_registry(args.registry),
+        source_timezone=args.source_timezone,
+        criteria=OEHistoryCriteria(
+            minimum_retrievals=args.minimum_retrievals,
+            minimum_unique_states=args.minimum_unique_states,
+            minimum_collection_span_days=args.minimum_collection_span_days,
+            maximum_gap_hours=args.maximum_gap_hours,
+            outcome_horizon_days=args.outcome_horizon_days,
+            minimum_matured_cutoffs=args.minimum_matured_cutoffs,
+        ),
+    )
+    _emit(
+        json.dumps(audit.to_dict(), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        args.output,
+    )
+    return 0 if audit.ready_for_historical_backtest else 2
 
 
 def _sync_oe_feed(args: argparse.Namespace) -> int:

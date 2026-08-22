@@ -92,4 +92,6 @@ never written into provenance by default.
   structural contract without committing provider data.
 - The official timezone semantics still require provider confirmation.
 - Current files cannot reconstruct historical availability before the recorded retrieval time.
+- Historical archive continuity and outcome maturity are measured by `audit-oe-history`; the audit
+  cannot become ready until distinct normalized daily states have actually accumulated over time.
 - Ban-role analytics and series reconstruction remain deferred.

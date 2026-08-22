@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from urllib.parse import urlparse
 
+from pro_meta_intelligence._version import USER_AGENT
 from pro_meta_intelligence.ingestion.http import HttpResponse, HttpTransport, UrllibTransport
 from pro_meta_intelligence.models import Provenance, require_temporal_order
 from pro_meta_intelligence.sources import (
@@ -21,7 +22,6 @@ from pro_meta_intelligence.sources import (
 
 VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
 LOCALE_PATTERN = re.compile(r"^[a-z]{2}_[A-Z]{2}$")
-USER_AGENT = "ProMetaIntelligence/0.2 (+https://github.com/mosejong/pro-meta-intelligence)"
 
 
 class SourcePayloadError(ValueError):
