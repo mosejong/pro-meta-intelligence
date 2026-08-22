@@ -106,6 +106,7 @@ See also:
 - [`docs/ORACLES_ELIXIR_IMPORT.md`](docs/ORACLES_ELIXIR_IMPORT.md)
 - [`docs/META_RADAR.md`](docs/META_RADAR.md)
 - [`docs/SNAPSHOT_FEED.md`](docs/SNAPSHOT_FEED.md)
+- [`docs/FEED_JOB.md`](docs/FEED_JOB.md)
 - [`docs/CREATOR_BRIEF.md`](docs/CREATOR_BRIEF.md)
 - [`web/README.md`](web/README.md)
 - [`docs/PRODUCT_MODES.md`](docs/PRODUCT_MODES.md)
@@ -174,8 +175,16 @@ python -m pro_meta_intelligence refresh-feed \
   --fail-on-import-issues
 ```
 
-The refresh command performs no network collection and calls no AI API. It is ready to run under a
-single-writer scheduler after an approved source adapter has supplied the local file.
+The refresh command performs no network collection and calls no AI API. The scheduler-ready wrapper
+adds an exclusive local writer lock and immutable run audit:
+
+```bash
+python -m pro_meta_intelligence run-feed-job --config configs/feed-job.example.json
+```
+
+The dashboard automatically consumes `web/public/feed/current.json`, rechecks it every five
+minutes, and distinguishes published, synthetic-demo, local-file, and fallback states. It contains
+no ChatGPT/OpenAI login flow; any login page shown before the dashboard is hosting access control.
 
 ```bash
 cd web

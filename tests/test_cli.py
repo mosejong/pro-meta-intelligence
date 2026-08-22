@@ -180,3 +180,66 @@ def test_refresh_feed_cli_is_idempotent_and_performs_no_network_collection(tmp_p
     second = json.loads(summary.read_text(encoding="utf-8"))
     assert second["snapshot_id"] == first["snapshot_id"]
     assert second["created"] is False
+
+
+def test_run_feed_job_cli_publishes_with_lock_and_audit(tmp_path) -> None:
+    feed = tmp_path / "feed"
+    run_dir = tmp_path / "runs"
+    config = tmp_path / "feed-job.json"
+    output = tmp_path / "job-result.json"
+    config.write_text(
+        json.dumps(
+            {
+                "schema_version": "1",
+                "input": str(FIXTURES / "oracles_elixir_game.csv"),
+                "source_timezone": "UTC",
+                "retrieved_at": "2026-08-22T03:00:00Z",
+                "cutoff": "2026-08-22T03:00:00Z",
+                "published_at": "2026-08-22T03:05:00Z",
+                "feed_dir": str(feed),
+                "run_dir": str(run_dir),
+                "radar": {
+                    "minimum_recent_matches": 1,
+                    "minimum_prior_matches": 1,
+                    "minimum_region_matches": 1,
+                    "minimum_current_picks": 1,
+                },
+                "policy": {"fail_on_import_issues": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert main(["run-feed-job", "--config", str(config), "--output", str(output)]) == 0
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["status"] == "SUCCEEDED"
+    assert payload["result"]["status"] == "PUBLISHED"
+    assert payload["result"]["network_collection_performed"] is False
+    assert (feed / "current.json").is_file()
+    assert (run_dir / "latest.json").is_file()
+    assert not (run_dir / "feed-job.lock.json").exists()
+
+
+def test_run_feed_job_cli_refuses_existing_lock(tmp_path) -> None:
+    run_dir = tmp_path / "runs"
+    run_dir.mkdir()
+    (run_dir / "feed-job.lock.json").write_text('{"run_id":"active"}', encoding="utf-8")
+    config = tmp_path / "feed-job.json"
+    config.write_text(
+        json.dumps(
+            {
+                "schema_version": "1",
+                "input": str(FIXTURES / "oracles_elixir_game.csv"),
+                "source_timezone": "UTC",
+                "feed_dir": str(tmp_path / "feed"),
+                "run_dir": str(run_dir),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert main(["run-feed-job", "--config", str(config)]) == 3
+    assert json.loads((run_dir / "feed-job.lock.json").read_text(encoding="utf-8")) == {
+        "run_id": "active"
+    }

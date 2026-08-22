@@ -41,8 +41,9 @@ backfill enters the index but cannot move `current.json` behind a newer cutoff.
 When two different snapshots share a cutoff, the later publication is treated as the current
 correction. Publication timestamps earlier than the Radar cutoff are rejected.
 
-The current implementation assumes one feed writer at a time. A production scheduler must prevent
-overlapping runs or add a distributed single-writer lease before multiple workers are enabled.
+`run-feed-job` now enforces one local writer with an exclusive lock and retains per-run audit JSON.
+This is sufficient for one machine or one scheduler worker. Multiple machines still require a
+distributed lease before they may write the same feed.
 
 ## CLI
 
@@ -55,9 +56,9 @@ python -m pro_meta_intelligence refresh-feed \
   --max-index-entries 50
 ```
 
-The command can be invoked by Windows Task Scheduler, cron, or a CI runner after an approved source
-adapter has placed a local input file. Use `--fail-on-import-issues` in unattended jobs so a rejected
-game prevents the current feed from advancing.
+For unattended execution, configure and schedule `run-feed-job` instead. See
+[`FEED_JOB.md`](FEED_JOB.md). An approved source adapter must place the local input file first, and
+the default policy rejects import issues before the current feed can advance.
 
 For reproducible replays and tests, pass explicit `--retrieved-at`, `--cutoff`, and `--published-at`
 timestamps. Without them, current UTC is used where applicable.
@@ -67,4 +68,4 @@ timestamps. Without them, current UTC is used where applicable.
 - No site is crawled or downloaded by `refresh-feed`.
 - No external AI provider is called.
 - The local file remains caller-supplied and its authenticity is explicitly unverified.
-- Multi-writer locking, hosted object storage, and signed feed manifests are future production gates.
+- Distributed locking, hosted object storage, and signed feed manifests are future production gates.
