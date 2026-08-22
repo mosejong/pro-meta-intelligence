@@ -105,6 +105,7 @@ See also:
 - [`docs/SOURCE_REGISTRY.md`](docs/SOURCE_REGISTRY.md)
 - [`docs/ORACLES_ELIXIR_IMPORT.md`](docs/ORACLES_ELIXIR_IMPORT.md)
 - [`docs/META_RADAR.md`](docs/META_RADAR.md)
+- [`web/README.md`](web/README.md)
 - [`docs/PRODUCT_MODES.md`](docs/PRODUCT_MODES.md)
 
 ## Policy-gated static-data ingestion
@@ -148,3 +149,17 @@ The report exposes pick presence and change, distinct-team demand and velocity, 
 team concentration, sample warnings, source versions, match IDs, pick-event IDs, and every formula.
 It has no learned or arbitrary composite score. Current Oracle's Elixir normalization is pick-only,
 so the report does not claim pick/ban presence.
+
+## Analyst dashboard
+
+The `web/` app turns a Meta Radar JSON report into an interactive analyst surface. It includes
+role and eligibility filters, selectable candidate evidence, quality warnings, regional comparison,
+and an evidence packet with event IDs, match IDs, source hashes, and formulas. It ships with a
+clearly marked deterministic demo snapshot and accepts local JSON through the browser; uploaded
+files are parsed on the device and are not sent to an application server.
+
+```bash
+cd web
+npm install
+npm run dev
+```
