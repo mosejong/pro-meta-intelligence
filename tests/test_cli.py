@@ -64,6 +64,37 @@ def test_import_oe_cli_writes_qa_and_normalization_summary(tmp_path) -> None:
     assert payload["import_report"]["rejected_game_count"] == 0
 
 
+def test_audit_oe_coverage_cli_writes_machine_readable_readiness(tmp_path) -> None:
+    output = tmp_path / "oe-coverage.json"
+
+    assert (
+        main(
+            [
+                "audit-oe-coverage",
+                "--input",
+                str(FIXTURES / "oracles_elixir_game.csv"),
+                "--source-timezone",
+                "UTC",
+                "--retrieved-at",
+                "2026-08-22T03:00:00Z",
+                "--readiness-minimum-matches",
+                "1",
+                "--readiness-minimum-teams",
+                "2",
+                "--readiness-minimum-regions",
+                "1",
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["ready_for_radar"] is True
+    assert payload["selected_patch_id"] == "16.15"
+
+
 def test_build_radar_cli_reuses_validated_oe_import(tmp_path) -> None:
     output = tmp_path / "radar.json"
 
@@ -299,6 +330,12 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
                 str(feed),
                 "--run-dir",
                 str(tmp_path / "jobs"),
+                "--readiness-minimum-matches",
+                "1",
+                "--readiness-minimum-teams",
+                "2",
+                "--readiness-minimum-regions",
+                "1",
                 "--minimum-recent-matches",
                 "1",
                 "--minimum-prior-matches",
@@ -319,5 +356,72 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
     assert audit["status"] == "SUCCEEDED"
     assert audit["result"]["source_acquisition"]["status"] == "DOWNLOADED"
     assert audit["result"]["network_collection_performed"] is True
+    assert audit["result"]["readiness_audit"]["ready_for_radar"] is True
     assert current["fixture_only"] is False
     assert current["input"]["authenticity"] == "REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD"
+
+
+def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
+    tmp_path, monkeypatch
+) -> None:
+    retrieved_at = datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
+    source_body = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
+
+    class FakeDownloadAdapter:
+        source_id = "oracles-elixir-match-data"
+
+        def __init__(self, registry) -> None:
+            assert registry.get(self.source_id) is not None
+
+        def fetch_year(self, year, *, last_retrieved_at=None):
+            url = "https://drive.usercontent.google.com/download?id=reviewed"
+            return SimpleNamespace(
+                file=SimpleNamespace(year=year, filename="2026_test.csv"),
+                artifact=RawSourceArtifact.create(
+                    source_id=self.source_id,
+                    request_url=url,
+                    final_url=url,
+                    media_type="text/csv",
+                    retrieved_at=retrieved_at,
+                    body=source_body,
+                ),
+            )
+
+    monkeypatch.setattr(
+        "pro_meta_intelligence.cli.OracleElixirPublishedDownloadAdapter",
+        FakeDownloadAdapter,
+    )
+    output = tmp_path / "sync.json"
+    feed = tmp_path / "feed"
+
+    assert (
+        main(
+            [
+                "sync-oe-feed",
+                "--year",
+                "2026",
+                "--source-timezone",
+                "UTC",
+                "--archive-dir",
+                str(tmp_path / "raw"),
+                "--feed-dir",
+                str(feed),
+                "--run-dir",
+                str(tmp_path / "jobs"),
+                "--output",
+                str(output),
+            ]
+        )
+        == 2
+    )
+
+    audit = json.loads(output.read_text(encoding="utf-8"))
+    assert audit["status"] == "REJECTED"
+    assert audit["result"]["status"] == "REJECTED_READINESS"
+    assert audit["result"]["published"] is False
+    assert audit["result"]["readiness_audit"]["blocking_reasons"] == [
+        "PATCH_MATCH_COUNT_BELOW_MINIMUM",
+        "PATCH_DISTINCT_TEAM_COUNT_BELOW_MINIMUM",
+        "PATCH_REGION_COUNT_BELOW_MINIMUM",
+    ]
+    assert not (feed / "current.json").exists()

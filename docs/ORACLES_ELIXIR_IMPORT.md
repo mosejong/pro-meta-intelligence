@@ -20,6 +20,10 @@ normalization, Radar/Creator generation, and publication. A provider error can r
 verified archive with an explicit status. With no verified cache, publication fails closed and the
 existing feed is not moved.
 
+After normalization, unattended sync also runs the explicit annual coverage gate documented in
+[`OE_COVERAGE_AUDIT.md`](OE_COVERAGE_AUDIT.md). Import defects or insufficient latest-patch breadth
+are retained in the job audit and do not advance the public feed.
+
 References:
 
 - [Official downloads](https://master.d36liwrx5rvjnc.amplifyapp.com/tools/downloads)

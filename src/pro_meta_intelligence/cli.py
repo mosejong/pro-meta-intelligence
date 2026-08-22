@@ -16,7 +16,10 @@ from pro_meta_intelligence.ingestion.oe_download import (
     OracleElixirDownloadIntervalError,
     OracleElixirPublishedDownloadAdapter,
 )
-from pro_meta_intelligence.ingestion.oracles_elixir import OracleElixirCSVAdapter
+from pro_meta_intelligence.ingestion.oracles_elixir import (
+    OracleElixirCSVAdapter,
+    OracleElixirImport,
+)
 from pro_meta_intelligence.models import BacktestWindow
 from pro_meta_intelligence.publishing import (
     FeedJobAlreadyRunning,
@@ -24,6 +27,7 @@ from pro_meta_intelligence.publishing import (
     FeedJobRunner,
     SnapshotFeedPublisher,
 )
+from pro_meta_intelligence.quality import OECoverageCriteria, audit_oe_coverage
 from pro_meta_intelligence.radar import LeagueRegionMap, MetaRadar, MetaRadarConfig
 from pro_meta_intelligence.sources import SnapshotArchive, SourceRegistry
 from pro_meta_intelligence.temporal import parse_datetime
@@ -97,6 +101,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     oe_fetch.add_argument("--output", type=Path, help="optional JSON summary path")
 
+    oe_audit = subparsers.add_parser(
+        "audit-oe-coverage",
+        help="measure annual and patch coverage before Meta Radar publication",
+    )
+    oe_audit.add_argument("--input", type=Path, required=True)
+    oe_audit.add_argument("--source-timezone", required=True)
+    oe_audit.add_argument("--retrieved-at", help="snapshot retrieval time; defaults to current UTC")
+    oe_audit.add_argument("--source-uri", help="optional registered provider HTTPS source URL")
+    oe_audit.add_argument("--registry", type=Path, help="optional source registry JSON")
+    oe_audit.add_argument("--region-map", type=Path, help="optional league-to-region JSON mapping")
+    oe_audit.add_argument("--patch", help="patch to evaluate; latest observed patch if omitted")
+    _add_readiness_arguments(oe_audit)
+    oe_audit.add_argument("--output", type=Path, help="optional JSON coverage audit path")
+
     oe_sync = subparsers.add_parser(
         "sync-oe-feed",
         help="fetch or reuse the reviewed OE CSV and publish an audited Meta Radar feed",
@@ -116,6 +134,7 @@ def build_parser() -> argparse.ArgumentParser:
     oe_sync.add_argument("--minimum-prior-matches", type=int, default=5)
     oe_sync.add_argument("--minimum-region-matches", type=int, default=3)
     oe_sync.add_argument("--minimum-current-picks", type=int, default=2)
+    _add_readiness_arguments(oe_sync)
     oe_sync.add_argument("--creator-top-k", type=int, default=3)
     oe_sync.add_argument("--max-index-entries", type=int, default=50)
     oe_sync.add_argument("--output", type=Path, help="optional audited sync summary path")
@@ -171,6 +190,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _import_oe(args)
     if args.command == "fetch-oe":
         return _fetch_oe(args)
+    if args.command == "audit-oe-coverage":
+        return _audit_oe(args)
     if args.command == "sync-oe-feed":
         return _sync_oe_feed(args)
     if args.command == "build-radar":
@@ -339,6 +360,20 @@ def _fetch_oe(args: argparse.Namespace) -> int:
     return 0
 
 
+def _audit_oe(args: argparse.Namespace) -> int:
+    imported = _load_oe_import(args)
+    audit = audit_oe_coverage(
+        imported,
+        _load_league_regions(args.region_map),
+        _readiness_criteria(args),
+    )
+    _emit(
+        json.dumps(audit.to_dict(), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        args.output,
+    )
+    return 0 if audit.ready_for_radar else 2
+
+
 def _sync_oe_feed(args: argparse.Namespace) -> int:
     runner = FeedJobRunner(args.run_dir)
 
@@ -407,7 +442,32 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             input_authenticity="REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD",
             source_network_collection_performed=network_attempted,
         )
-        exit_code, payload = _refresh_feed_payload(refresh_args)
+        imported = _load_oe_import(refresh_args)
+        coverage = audit_oe_coverage(
+            imported,
+            _load_league_regions(args.region_map),
+            _readiness_criteria(args),
+        )
+        if imported.report.issue_counts:
+            exit_code = 2
+            payload = {
+                "schema_version": "1",
+                "status": "REJECTED_IMPORT_ISSUES",
+                "published": False,
+                "import_report": imported.report.to_dict(),
+                "readiness_audit": coverage.to_dict(),
+            }
+        elif not coverage.ready_for_radar:
+            exit_code = 2
+            payload = {
+                "schema_version": "1",
+                "status": "REJECTED_READINESS",
+                "published": False,
+                "readiness_audit": coverage.to_dict(),
+            }
+        else:
+            exit_code, payload = _refresh_feed_payload(refresh_args, imported=imported)
+            payload["readiness_audit"] = coverage.to_dict()
         payload["network_collection_performed"] = network_attempted
         payload["source_acquisition"] = {
             "status": acquisition_status,
@@ -444,14 +504,13 @@ def _build_radar(args: argparse.Namespace) -> int:
     return 0
 
 
-def _radar_payload(args: argparse.Namespace) -> tuple[dict[str, object], bool]:
+def _radar_payload(
+    args: argparse.Namespace,
+    *,
+    imported: OracleElixirImport | None = None,
+) -> tuple[dict[str, object], bool]:
     retrieved_at = parse_datetime(args.retrieved_at) if args.retrieved_at else datetime.now(UTC)
-    imported = OracleElixirCSVAdapter(_load_registry(args.registry)).import_file(
-        args.input,
-        retrieved_at=retrieved_at,
-        source_timezone=args.source_timezone,
-        source_uri=args.source_uri,
-    )
+    imported = imported or _load_oe_import(args, retrieved_at=retrieved_at)
     cutoff = parse_datetime(args.cutoff) if args.cutoff else retrieved_at
     config = MetaRadarConfig(
         cutoff=cutoff,
@@ -463,11 +522,7 @@ def _radar_payload(args: argparse.Namespace) -> tuple[dict[str, object], bool]:
         minimum_region_matches=args.minimum_region_matches,
         minimum_current_picks=args.minimum_current_picks,
     )
-    league_regions = (
-        LeagueRegionMap.from_json(args.region_map)
-        if args.region_map
-        else LeagueRegionMap.load_default()
-    )
+    league_regions = _load_league_regions(args.region_map)
     radar = MetaRadar().build(imported.matches, imported.draft_events, config, league_regions)
     payload = dict(radar.to_dict())
     payload["input"] = {
@@ -491,8 +546,12 @@ def _refresh_feed(args: argparse.Namespace) -> int:
     return exit_code
 
 
-def _refresh_feed_payload(args: argparse.Namespace) -> tuple[int, dict[str, object]]:
-    radar, has_import_issues = _radar_payload(args)
+def _refresh_feed_payload(
+    args: argparse.Namespace,
+    *,
+    imported: OracleElixirImport | None = None,
+) -> tuple[int, dict[str, object]]:
+    radar, has_import_issues = _radar_payload(args, imported=imported)
     if args.fail_on_import_issues and has_import_issues:
         payload = {
             "schema_version": "1",
@@ -624,6 +683,41 @@ def _add_radar_arguments(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="return exit code 2 when the OE importer reports rejected games",
     )
+
+
+def _add_readiness_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--readiness-minimum-matches", type=int, default=20)
+    parser.add_argument("--readiness-minimum-teams", type=int, default=8)
+    parser.add_argument("--readiness-minimum-regions", type=int, default=2)
+
+
+def _readiness_criteria(args: argparse.Namespace) -> OECoverageCriteria:
+    return OECoverageCriteria(
+        minimum_matches=args.readiness_minimum_matches,
+        minimum_distinct_teams=args.readiness_minimum_teams,
+        minimum_regions=args.readiness_minimum_regions,
+        patch_id=args.patch,
+    )
+
+
+def _load_oe_import(
+    args: argparse.Namespace,
+    *,
+    retrieved_at: datetime | None = None,
+) -> OracleElixirImport:
+    retrieved_at = retrieved_at or (
+        parse_datetime(args.retrieved_at) if args.retrieved_at else datetime.now(UTC)
+    )
+    return OracleElixirCSVAdapter(_load_registry(args.registry)).import_file(
+        args.input,
+        retrieved_at=retrieved_at,
+        source_timezone=args.source_timezone,
+        source_uri=args.source_uri,
+    )
+
+
+def _load_league_regions(path: Path | None) -> LeagueRegionMap:
+    return LeagueRegionMap.from_json(path) if path else LeagueRegionMap.load_default()
 
 
 def _load_registry(path: Path | None) -> SourceRegistry:
