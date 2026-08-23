@@ -85,6 +85,8 @@ data path:
 - a synthetic adoption/false-positive scenario,
 - reviewed Oracle's Elixir acquisition, validation, and immutable local archiving,
 - explicit current-patch publication readiness with disclosed exclusions,
+- an immutable OE walk-forward Blind Spot Benchmark with separate cutoff/outcome hashes, Recall@K,
+  lead time, false alerts, evidence coverage, and miss logs,
 - an explainable real-data Meta Radar/Creator snapshot feed and public static dashboard,
 - a meeting-ready Team Decision Brief with evidence, counterevidence, practice questions, stop
   conditions, print/PDF output, and machine-readable JSON handoff.
@@ -118,6 +120,7 @@ See also:
 - [`docs/OE_COVERAGE_AUDIT.md`](docs/OE_COVERAGE_AUDIT.md)
 - [`docs/LEAGUE_REGION_MAP.md`](docs/LEAGUE_REGION_MAP.md)
 - [`docs/OE_HISTORY_READINESS.md`](docs/OE_HISTORY_READINESS.md)
+- [`docs/BLIND_SPOT_BENCHMARK.md`](docs/BLIND_SPOT_BENCHMARK.md)
 - [`docs/META_RADAR.md`](docs/META_RADAR.md)
 - [`docs/SNAPSHOT_FEED.md`](docs/SNAPSHOT_FEED.md)
 - [`docs/FEED_JOB.md`](docs/FEED_JOB.md)
@@ -156,6 +159,10 @@ python -m pro_meta_intelligence audit-oe-history \
   --archive-dir outputs/oracles-elixir/raw \
   --source-timezone UTC \
   --output outputs/oracles-elixir/history-readiness.json
+python -m pro_meta_intelligence benchmark-oe-history \
+  --archive-dir outputs/oracles-elixir/raw \
+  --source-timezone UTC \
+  --output outputs/oracles-elixir/blind-spot-benchmark.json
 python -m pro_meta_intelligence benchmark-oe \
   --input path/to/2026_LoL_esports_match_data_from_OraclesElixir.csv \
   --source-timezone UTC \

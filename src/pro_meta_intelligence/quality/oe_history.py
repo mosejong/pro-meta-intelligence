@@ -13,6 +13,7 @@ from pro_meta_intelligence.ingestion.oracles_elixir import (
     OracleElixirCSVAdapter,
     OracleElixirImport,
 )
+from pro_meta_intelligence.quality.oe_coverage import KNOWN_EXCLUSION_CODES
 from pro_meta_intelligence.sources import ArchiveInspection, SourceRegistry
 
 
@@ -91,6 +92,13 @@ def audit_oe_history(
             )
             continue
         observed = [match.observed_at for match in imported.matches]
+        issue_counts = dict(imported.report.issue_counts)
+        known_exclusion_count = sum(
+            count for code, count in issue_counts.items() if code in KNOWN_EXCLUSION_CODES
+        )
+        blocking_issue_count = sum(
+            count for code, count in issue_counts.items() if code not in KNOWN_EXCLUSION_CODES
+        )
         fingerprints = _match_fingerprints(imported)
         normalized_state_hash = _normalized_state_hash(fingerprints)
         state_fingerprints[normalized_state_hash] = fingerprints
@@ -107,17 +115,12 @@ def audit_oe_history(
             "discovered_game_count": imported.report.discovered_game_count,
             "imported_game_count": imported.report.imported_game_count,
             "rejected_game_count": imported.report.rejected_game_count,
+            "known_exclusion_game_count": known_exclusion_count,
+            "blocking_issue_game_count": blocking_issue_count,
+            "issue_counts": issue_counts,
             "first_observed_at": min(observed).isoformat() if observed else None,
             "last_observed_at": max(observed).isoformat() if observed else None,
         }
-        if imported.report.rejected_game_count:
-            validation_issues.append(
-                {
-                    "code": "REJECTED_GAMES_PRESENT",
-                    "content_hash": content_hash,
-                    "detail": f"{imported.report.rejected_game_count} game(s) rejected",
-                }
-            )
 
     retrieval_times = sorted({snapshot.retrieved_at for snapshot in snapshots})
     gaps = []
@@ -132,11 +135,7 @@ def audit_oe_history(
                 }
             )
 
-    valid_hashes = {
-        content_hash
-        for content_hash, summary in validated.items()
-        if summary["rejected_game_count"] == 0
-    }
+    valid_hashes = set(validated)
     first_seen_by_state: dict[str, tuple[datetime, str]] = {}
     for content_hash, occurrences in by_hash.items():
         if content_hash not in valid_hashes:
@@ -189,6 +188,10 @@ def audit_oe_history(
             state_sequence.append((snapshot.retrieved_at, state_hash, snapshot.content_hash))
     revision_ledger = []
     warnings: list[str] = []
+    if any(summary["known_exclusion_game_count"] for summary in validated.values()):
+        warnings.append("KNOWN_IMPORT_EXCLUSIONS_PRESENT")
+    if any(summary["blocking_issue_game_count"] for summary in validated.values()):
+        warnings.append("BLOCKING_GAME_IMPORT_ISSUES_PRESENT")
     for previous, current in zip(state_sequence, state_sequence[1:], strict=False):
         previous_time, previous_state, previous_content = previous
         current_time, current_state, current_content = current
@@ -260,7 +263,10 @@ def audit_oe_history(
             "outcome_horizon_days": criteria.outcome_horizon_days,
             "minimum_matured_cutoffs": criteria.minimum_matured_cutoffs,
             "require_archive_integrity": True,
-            "require_zero_import_issues": True,
+            "require_zero_file_import_failures": True,
+            "defer_game_issue_scope_to_benchmark_patch": True,
+            "allow_known_import_exclusions": True,
+            "known_exclusion_codes": sorted(KNOWN_EXCLUSION_CODES),
         },
         "collection": {
             "retrieval_count": len(snapshots),
@@ -287,6 +293,8 @@ def audit_oe_history(
         "limitations": [
             "readiness means reproducible public-data backtest input, not statistical power",
             "each content version is imported at its earliest archived retrieval time",
+            "known incomplete games and missing team IDs are excluded and counted per snapshot",
+            "game-level contract issues are scoped to the selected patch by the benchmark",
             "later distinct normalized state is required to mature an outcome window",
             "a matured outcome state must contain matches observed after its cutoff",
         ],

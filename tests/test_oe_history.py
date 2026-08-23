@@ -134,6 +134,73 @@ def test_oe_history_distinguishes_valid_raw_bytes_from_invalid_csv(tmp_path) -> 
     assert audit["collection"]["validated_content_count"] == 0
 
 
+def test_oe_history_allows_known_exclusions_but_keeps_their_counts(tmp_path) -> None:
+    base = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
+    rows = base.splitlines(keepends=True)
+    incomplete = (
+        b"".join(rows[1:]).replace(b"GAME001", b"GAME002").replace(b",complete,", b",partial,")
+    )
+    archive = SnapshotArchive(tmp_path)
+    archive.store(
+        RawSourceArtifact.create(
+            source_id=SOURCE_ID,
+            request_url=SOURCE_URL,
+            final_url=SOURCE_URL,
+            media_type="text/csv",
+            retrieved_at=START,
+            body=rows[0] + b"".join(rows[1:]) + incomplete,
+        )
+    )
+
+    audit = audit_oe_history(
+        archive.inspect(SOURCE_ID),
+        SourceRegistry.load_default(),
+        source_timezone="UTC",
+        criteria=OEHistoryCriteria(),
+    ).to_dict()
+
+    snapshot = audit["content_snapshots"][0]
+    assert snapshot["imported_game_count"] == 1
+    assert snapshot["rejected_game_count"] == 1
+    assert snapshot["known_exclusion_game_count"] == 1
+    assert snapshot["blocking_issue_game_count"] == 0
+    assert snapshot["issue_counts"] == {"INCOMPLETE_GAME": 1}
+    assert audit["snapshot_import_issues"] == []
+    assert "SNAPSHOT_IMPORT_ISSUES_PRESENT" not in audit["blocking_reasons"]
+    assert audit["warnings"] == ["KNOWN_IMPORT_EXCLUSIONS_PRESENT"]
+
+
+def test_oe_history_defers_unknown_game_issues_to_the_benchmark_patch(tmp_path) -> None:
+    base = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
+    invalid = base.replace(
+        b",100,Blue,team,Blue Team,oe:team:blue,1,,0,",
+        b",100,Blue,team,Blue Team,oe:team:blue,0,,0,",
+    )
+    archive = SnapshotArchive(tmp_path)
+    archive.store(
+        RawSourceArtifact.create(
+            source_id=SOURCE_ID,
+            request_url=SOURCE_URL,
+            final_url=SOURCE_URL,
+            media_type="text/csv",
+            retrieved_at=START,
+            body=invalid,
+        )
+    )
+
+    audit = audit_oe_history(
+        archive.inspect(SOURCE_ID),
+        SourceRegistry.load_default(),
+        source_timezone="UTC",
+        criteria=OEHistoryCriteria(),
+    ).to_dict()
+
+    assert audit["content_snapshots"][0]["blocking_issue_game_count"] == 1
+    assert audit["snapshot_import_issues"] == []
+    assert "SNAPSHOT_IMPORT_ISSUES_PRESENT" not in audit["blocking_reasons"]
+    assert audit["warnings"] == ["BLOCKING_GAME_IMPORT_ISSUES_PRESENT"]
+
+
 def test_oe_history_does_not_count_cosmetic_file_changes_as_new_states(tmp_path) -> None:
     base = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
     archive = SnapshotArchive(tmp_path)

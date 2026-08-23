@@ -9,7 +9,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
 
-from pro_meta_intelligence.backtest import BacktestHarness
+from pro_meta_intelligence.backtest import (
+    BacktestHarness,
+    OEBlindSpotConfig,
+    benchmark_oe_blind_spots,
+)
 from pro_meta_intelligence.creator import CreatorBriefBuilder
 from pro_meta_intelligence.ingestion import load_synthetic_scenario
 from pro_meta_intelligence.ingestion.ddragon import DataDragonAdapter
@@ -142,6 +146,35 @@ def build_parser() -> argparse.ArgumentParser:
     oe_history.add_argument("--minimum-matured-cutoffs", type=int, default=2)
     oe_history.add_argument("--output", type=Path, help="optional JSON history audit path")
 
+    blind_spot = subparsers.add_parser(
+        "benchmark-oe-history",
+        help="run a leakage-safe Blind Spot Benchmark over matured OE archive cutoffs",
+    )
+    blind_spot.add_argument("--source-timezone", required=True)
+    blind_spot.add_argument("--registry", type=Path, help="optional source registry JSON")
+    blind_spot.add_argument("--region-map", type=Path, help="optional league-to-region JSON")
+    blind_spot.add_argument("--archive-dir", type=Path, default=Path("outputs/oracles-elixir/raw"))
+    blind_spot.add_argument("--minimum-retrievals", type=int, default=14)
+    blind_spot.add_argument("--minimum-unique-states", type=int, default=3)
+    blind_spot.add_argument("--minimum-collection-span-days", type=int, default=14)
+    blind_spot.add_argument("--maximum-gap-hours", type=int, default=48)
+    blind_spot.add_argument("--outcome-horizon-days", type=int, default=7)
+    blind_spot.add_argument("--minimum-matured-cutoffs", type=int, default=2)
+    blind_spot.add_argument("--top-k", type=int, default=10)
+    blind_spot.add_argument("--minimum-future-picks", type=int, default=2)
+    blind_spot.add_argument("--minimum-future-distinct-teams", type=int, default=2)
+    blind_spot.add_argument("--maximum-pre-cutoff-presence", type=float, default=0.1)
+    blind_spot.add_argument(
+        "--patch", help="optional fixed patch; latest at each cutoff if omitted"
+    )
+    blind_spot.add_argument("--recent-days", type=int, default=7)
+    blind_spot.add_argument("--prior-days", type=int, default=7)
+    blind_spot.add_argument("--minimum-recent-matches", type=int, default=5)
+    blind_spot.add_argument("--minimum-prior-matches", type=int, default=5)
+    blind_spot.add_argument("--minimum-region-matches", type=int, default=3)
+    blind_spot.add_argument("--minimum-current-picks", type=int, default=2)
+    blind_spot.add_argument("--output", type=Path, help="optional JSON benchmark report path")
+
     oe_sync = subparsers.add_parser(
         "sync-oe-feed",
         help="fetch or reuse the reviewed OE CSV and publish an audited Meta Radar feed",
@@ -231,6 +264,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _audit_oe(args)
     if args.command == "audit-oe-history":
         return _audit_oe_history(args)
+    if args.command == "benchmark-oe-history":
+        return _benchmark_oe_history(args)
     if args.command == "sync-oe-feed":
         return _sync_oe_feed(args)
     if args.command == "build-radar":
@@ -441,6 +476,40 @@ def _audit_oe_history(args: argparse.Namespace) -> int:
         args.output,
     )
     return 0 if audit.ready_for_historical_backtest else 2
+
+
+def _benchmark_oe_history(args: argparse.Namespace) -> int:
+    archive = SnapshotArchive(args.archive_dir)
+    source_id = OracleElixirPublishedDownloadAdapter.source_id
+    report = benchmark_oe_blind_spots(
+        archive.inspect(source_id),
+        _load_registry(args.registry),
+        source_timezone=args.source_timezone,
+        history_criteria=OEHistoryCriteria(
+            minimum_retrievals=args.minimum_retrievals,
+            minimum_unique_states=args.minimum_unique_states,
+            minimum_collection_span_days=args.minimum_collection_span_days,
+            maximum_gap_hours=args.maximum_gap_hours,
+            outcome_horizon_days=args.outcome_horizon_days,
+            minimum_matured_cutoffs=args.minimum_matured_cutoffs,
+        ),
+        config=OEBlindSpotConfig(
+            top_k=args.top_k,
+            minimum_future_picks=args.minimum_future_picks,
+            minimum_future_distinct_teams=args.minimum_future_distinct_teams,
+            maximum_pre_cutoff_presence=args.maximum_pre_cutoff_presence,
+            patch_id=args.patch,
+            recent_window_days=args.recent_days,
+            prior_window_days=args.prior_days,
+            minimum_recent_matches=args.minimum_recent_matches,
+            minimum_prior_matches=args.minimum_prior_matches,
+            minimum_region_matches=args.minimum_region_matches,
+            minimum_current_picks=args.minimum_current_picks,
+        ),
+        league_regions=_load_league_regions(args.region_map),
+    )
+    _emit(report.to_json(), args.output)
+    return 0 if report.benchmark_ready else 2
 
 
 def _sync_oe_feed(args: argparse.Namespace) -> int:

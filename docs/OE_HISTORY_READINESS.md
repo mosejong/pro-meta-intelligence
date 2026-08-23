@@ -42,7 +42,8 @@ atomically linked into their immutable final names, so a partially written CSV i
 a completed content hash.
 
 Byte integrity is necessary but insufficient. A correctly hashed file with the wrong CSV schema is
-reported separately as `IMPORT_VALIDATION_FAILED`. Game-level rejections are also blocking.
+reported separately as `IMPORT_VALIDATION_FAILED`. Unknown game-level contract violations are
+blocking; reviewed incomplete-game and missing-team exclusions are counted warnings.
 
 ## Default history gates
 
@@ -54,7 +55,14 @@ There is no composite readiness score. The starting operational defaults require
 - no collection gap longer than 48 hours,
 - a 7-day future-outcome horizon,
 - 2 cutoff snapshots with a later distinct normalized state at least 7 days away,
-- zero archive-integrity or import issues.
+- zero archive-integrity or file-level import failures.
+
+Known `INCOMPLETE_GAME` and `MISSING_TEAM_ID` exclusions are counted and warned but do not invalidate
+an otherwise usable normalized state. Other rejected-game contract codes are also retained as an
+audit warning rather than invalidating an entire annual state. `benchmark-oe-history` then blocks
+only a cutoff whose selected patch (or unattributed input) contains those contract issues. This
+matches current publication policy and prevents an old unrelated invalid row from disabling every
+later patch, while excluded games never enter features or outcomes.
 
 These are collection-operability defaults, not proof of statistical power. They can be overridden
 with the matching CLI options, while measured counts, gaps, and blocking reason codes remain visible.
@@ -69,8 +77,9 @@ the audit so cosmetic source changes cannot masquerade as new historical evidenc
 A cutoff is called matured only when another distinct, validated normalized state was retrieved
 after the configured outcome horizon and contains matches observed after that cutoff. A cosmetic
 change or retroactive correction to old rows cannot mature an outcome window. This prevents the
-harness from calling the newest snapshot evaluable before future outcomes exist. The audit does not
-yet run the candidate benchmark itself; it proves that reproducible inputs exist for materializing one.
+harness from calling the newest snapshot evaluable before future outcomes exist. Once the audit is
+ready, `benchmark-oe-history` consumes only these named cutoff/outcome hash pairs; see
+[`BLIND_SPOT_BENCHMARK.md`](BLIND_SPOT_BENCHMARK.md).
 
 Consecutive normalized states also produce a revision ledger with added, removed, revised, and
 unchanged match counts. Additions are expected for an annual append-oriented file. Removals and
