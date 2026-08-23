@@ -61,6 +61,11 @@ pick/ban order from OE, summarizes up to ten same-patch games per team, separate
 phase-one/phase-two behavior, exposes incomplete-ban and low-sample warnings, and retains exact
 match/event evidence. Opponent intent and private readiness remain explicit non-claims.
 
+The first Match-day Emergency Brief is also implemented as a deterministic Team Brief + Opponent
+Prep composition. It cross-checks exact champion-role overlaps, keeps global patch candidates
+separate from opponent responses, exports its evidence contract, and prints as a compact staff
+artifact. Natural-language generation remains a later Phase 7 capability.
+
 ## Phase 3 — Blind Spot Benchmark
 
 Define review-candidate labels and historical evaluation windows.
@@ -135,9 +140,10 @@ long-form scripts, chapters, and short-form summaries. It is an Analyst Studio, 
 content farm; publication remains a human decision and later misses become first-class
 post-evaluation material.
 
-Current foundation: deterministic, claim-locked topic briefs and an immutable Radar/Creator snapshot
-feed are implemented. Natural-language querying, provider-backed drafting, long-form script review,
-and post-outcome miss tracking remain future gates.
+Current foundation: deterministic, claim-locked topic briefs, an immutable Radar/Creator snapshot
+feed, and a deterministic three-minute Match-day Emergency Brief are implemented. Natural-language
+querying, provider-backed drafting, long-form script review, and post-outcome miss tracking remain
+future gates.
 
 Exit gate: generated answers remain grounded and traceable.
 

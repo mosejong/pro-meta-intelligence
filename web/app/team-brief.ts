@@ -86,7 +86,7 @@ export function buildTeamDecisionCard(entry: RadarEntry): TeamDecisionCard {
     decisionLabel: labels[decision],
     reason: `최근 ${entry.metrics.current_distinct_team_count}개 팀이 채택했고, 팀 수요 ${percentagePoint(entry.metrics.demand_velocity)} · 픽 점유율 ${percentagePoint(entry.metrics.pick_presence_delta)} 변화가 관측됐습니다.`,
     counterEvidence: counterEvidenceFor(entry),
-    practiceQuestion: `${entry.champion_id} ${roleName(entry.role)}을 현재 주력 조합의 밴픽 순서를 무너뜨리지 않고 넣을 수 있는가?${regionContext}`,
+    practiceQuestion: `${entry.champion_id} ${roleName(entry.role)} 포지션을 현재 주력 조합의 밴픽 순서를 무너뜨리지 않고 넣을 수 있는가?${regionContext}`,
     stopCondition: "두 번의 구조화된 테스트 후에도 픽 목적, 필요한 자원, 실패 시 복구 계획을 코칭스태프가 합의하지 못하면 이번 패치 큐에서 내립니다.",
   };
 }

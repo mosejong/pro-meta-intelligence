@@ -90,6 +90,8 @@ data path:
   conditions, print/PDF output, and machine-readable JSON handoff.
 - a selectable Opponent Prep Pack with same-patch side splits, phase-aware picks and bans, observed
   first rotations, quality warnings, and exact match evidence.
+- a three-minute Match-day Emergency Brief that cross-checks opponent preferences against global
+  champion-role signals, separates the patch test queue, and exports or prints with evidence.
 
 This is not yet evidence of predictive value. Real point-in-time daily snapshots must accumulate
 before Phase 3 can measure Recall@K, lead time, and false-alert behavior without hindsight leakage.
@@ -122,6 +124,7 @@ See also:
 - [`docs/CREATOR_BRIEF.md`](docs/CREATOR_BRIEF.md)
 - [`docs/TEAM_DECISION_BRIEF.md`](docs/TEAM_DECISION_BRIEF.md)
 - [`docs/OPPONENT_PREP.md`](docs/OPPONENT_PREP.md)
+- [`docs/EMERGENCY_BRIEF.md`](docs/EMERGENCY_BRIEF.md)
 - [`docs/COMPETITIVE_POSITIONING.md`](docs/COMPETITIVE_POSITIONING.md)
 - [`web/README.md`](web/README.md)
 - [`docs/PRODUCT_MODES.md`](docs/PRODUCT_MODES.md)

@@ -4,6 +4,7 @@
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isRadarReport, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport } from "./radar-types";
+import { buildEmergencyBrief } from "./emergency-brief";
 import { sampleReport } from "./sample-report";
 import { buildTeamBrief, serializeTeamBrief } from "./team-brief";
 
@@ -159,6 +160,7 @@ export function RadarDashboard() {
   const [eligibleOnly, setEligibleOnly] = useState(false);
   const [visibleLimit, setVisibleLimit] = useState(12);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [opponentId, setOpponentId] = useState(sampleReport.opponent_prep?.teams[0]?.team_id ?? "");
   const [feedState, setFeedState] = useState<FeedState>({
     kind: "connecting",
@@ -166,6 +168,8 @@ export function RadarDashboard() {
     detail: "발행 피드를 확인하는 중",
   });
   const fileInput = useRef<HTMLInputElement>(null);
+  const emergencyTrigger = useRef<HTMLButtonElement>(null);
+  const emergencyDialog = useRef<HTMLElement>(null);
   const manualOverride = useRef(false);
 
   const roles = useMemo(
@@ -182,6 +186,7 @@ export function RadarDashboard() {
   const selected = visibleEntries.find((entry) => keyOf(entry) === selectedKey) ?? visibleEntries[0] ?? report.entries[0];
   const selectedBrief = teamBrief.find((card) => keyOf(card.entry) === selectedKey) ?? teamBrief[0];
   const selectedOpponent = opponentTeams.find((team) => team.team_id === opponentId) ?? opponentTeams[0];
+  const emergencyBrief = selectedOpponent ? buildEmergencyBrief(report, selectedOpponent) : null;
   const quality = qualityState(report);
   const eligibleCount = report.entries.filter((entry) => entry.eligible_for_review).length;
 
@@ -223,13 +228,28 @@ export function RadarDashboard() {
   }, [loadPublishedFeed]);
 
   useEffect(() => {
-    if (!evidenceOpen) return;
+    if (!evidenceOpen && !emergencyOpen) return;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setEvidenceOpen(false);
+      if (event.key === "Escape") {
+        setEvidenceOpen(false);
+        setEmergencyOpen(false);
+      }
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [evidenceOpen]);
+  }, [emergencyOpen, evidenceOpen]);
+
+  useEffect(() => {
+    if (!emergencyOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const trigger = emergencyTrigger.current;
+    document.body.style.overflow = "hidden";
+    emergencyDialog.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      trigger?.focus();
+    };
+  }, [emergencyOpen]);
 
   async function loadReport(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -283,6 +303,23 @@ export function RadarDashboard() {
     anchor.download = `opponent-prep-${selectedOpponent.team_name.replace(/[^A-Za-z0-9가-힣_-]+/g, "-")}-${report.patch_id}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
+  }
+
+  function downloadEmergencyBrief() {
+    if (!emergencyBrief) return;
+    const blob = new Blob([JSON.stringify(emergencyBrief, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `match-day-brief-${emergencyBrief.opponent.team_name.replace(/[^A-Za-z0-9가-힣_-]+/g, "-")}-${report.patch_id}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function printEmergencyBrief() {
+    document.body.classList.add("print-emergency");
+    window.print();
+    window.setTimeout(() => document.body.classList.remove("print-emergency"), 0);
   }
 
   const regions = selected ? [
@@ -399,6 +436,7 @@ export function RadarDashboard() {
           </div>
           {selectedOpponent && <div className="opponent-controls">
             <label>상대팀<select value={selectedOpponent.team_id} onChange={(event) => setOpponentId(event.target.value)}>{opponentTeams.map((team) => <option key={team.team_id} value={team.team_id}>{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>)}</select></label>
+            <button ref={emergencyTrigger} className="emergency-open" type="button" onClick={() => setEmergencyOpen(true)}>3분 브리프</button>
             <button type="button" onClick={downloadOpponentPrep}>선택 팀 JSON</button>
           </div>}
         </div>
@@ -509,6 +547,64 @@ export function RadarDashboard() {
               <article><h3>계산식</h3><ul className="formula-list">{Object.entries(report.formulae).map(([name, formula]) => <li key={name}><b>{name.replaceAll("_", " ")}</b><span>{formula}</span></li>)}</ul></article>
               <article className="matches"><h3>Window match IDs</h3><div><p>RECENT</p>{report.evidence_index.recent_match_ids.map((id) => <code key={id}>{id}</code>)}</div><div><p>PRIOR</p>{report.evidence_index.prior_match_ids.map((id) => <code key={id}>{id}</code>)}</div></article>
             </div>
+          </section>
+        </div>
+      )}
+
+      {emergencyOpen && emergencyBrief && selectedOpponent && (
+        <div className="emergency-backdrop">
+          <button className="dialog-dismiss" type="button" onClick={() => setEmergencyOpen(false)} aria-label="매치데이 브리프 닫기" />
+          <section ref={emergencyDialog} className="emergency-dialog" role="dialog" aria-modal="true" aria-labelledby="emergency-title" tabIndex={-1}>
+            <header className="emergency-dialog-head">
+              <div><span>MATCH-DAY · 3 MIN READ</span><h2 id="emergency-title">{selectedOpponent.team_name} Emergency Brief</h2></div>
+              <button type="button" onClick={() => setEmergencyOpen(false)} aria-label="매치데이 브리프 닫기">×</button>
+            </header>
+
+            <div className="emergency-paper">
+              <section className="emergency-lead">
+                <div className="team-monogram" aria-hidden="true">{selectedOpponent.team_name.slice(0, 2).toUpperCase()}</div>
+                <div><span>PATCH {emergencyBrief.patch_id} · {selectedOpponent.leagues.join(" / ")}</span><h3>{emergencyBrief.headline}</h3><p>{selectedOpponent.game_count}경기 공개 드래프트 · 컷오프 {formatCutoff(emergencyBrief.cutoff)} KST</p></div>
+                <b className={`brief-quality ${emergencyBrief.opponent.evidence_quality.toLowerCase()}`}>{emergencyBrief.opponent.evidence_quality === "USABLE_WITH_LIMITS" ? "제한부 사용" : emergencyBrief.opponent.evidence_quality === "LOW_SAMPLE" ? "저표본" : "근거 누락"}</b>
+              </section>
+
+              <div className="emergency-columns">
+                <section className="emergency-alerts">
+                  <header><span>01</span><h3>즉시 확인할 드래프트 신호</h3></header>
+                  <div>{emergencyBrief.alerts.map((alert) => <article key={`${alert.type}:${alert.title}`}><b>{alert.type}</b><div><h4>{alert.title}</h4><p>{alert.detail}</p><small>{alert.evidence_ids.length}개 근거</small></div></article>)}</div>
+                </section>
+
+                <section className="emergency-overlaps">
+                  <header><span>02</span><h3>상대 선호 × 글로벌 메타</h3></header>
+                  <div>{emergencyBrief.meta_overlaps.length ? emergencyBrief.meta_overlaps.map((overlap) => <article key={`${overlap.champion_id}:${overlap.role}`}>
+                    <img src={championImageUrl(overlap.champion_id)} alt="" />
+                    <div><h4>{overlap.champion_id} · {roleLabels[overlap.role] ?? overlap.role}</h4><p>상대 {percent(overlap.opponent_game_rate)} · 레이더 #{overlap.radar_rank} · 수요 {points(overlap.demand_velocity)}</p></div>
+                    <b className={overlap.review_level.toLowerCase()}>{overlap.review_level === "HIGH_REVIEW" ? "우선 확인" : overlap.review_level === "REVIEW" ? "확인" : "맥락만"}</b>
+                  </article>) : <p className="emergency-empty">직접 교집합이 없습니다. 상대 선호와 글로벌 상승 신호를 억지로 연결하지 않습니다.</p>}</div>
+                </section>
+              </div>
+
+              <section className="emergency-questions">
+                <header><span>03</span><h3>회의에서 답할 네 가지</h3></header>
+                <ol>{emergencyBrief.staff_questions.map((question) => <li key={question}>{question}</li>)}</ol>
+              </section>
+
+              <section className="emergency-review-queue">
+                <header><span>04</span><div><h3>별도 패치 테스트 큐</h3><p>상대 대응 추천이 아니라 오늘의 글로벌 검토 후보입니다.</p></div></header>
+                <div>{emergencyBrief.patch_review_queue.map((candidate) => <article key={`${candidate.champion_id}:${candidate.role}`}>
+                  <img src={championImageUrl(candidate.champion_id)} alt="" />
+                  <div><span>{candidate.decision}</span><h4>{candidate.champion_id} · {roleLabels[candidate.role] ?? candidate.role}</h4><p>{candidate.practice_question}</p><small>반대 근거: {candidate.counter_evidence}</small></div>
+                </article>)}</div>
+              </section>
+
+              <section className="emergency-unknowns">
+                <header><span>05</span><h3>모르는 것</h3></header>
+                <ul>{emergencyBrief.unknowns.map((unknown) => <li key={unknown}>{unknown}</li>)}</ul>
+              </section>
+
+              <div className="emergency-source-line"><b>PUBLIC EVIDENCE ONLY</b><p>{emergencyBrief.boundary}</p><span>{emergencyBrief.evidence.opponent_match_ids.length} MATCHES · {emergencyBrief.evidence.opponent_draft_event_ids.length} EVENTS</span></div>
+            </div>
+
+            <div className="emergency-actions"><button type="button" onClick={printEmergencyBrief}>인쇄 / PDF</button><button type="button" onClick={downloadEmergencyBrief}>근거 포함 JSON</button></div>
           </section>
         </div>
       )}

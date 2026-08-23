@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { createServer } from "vite";
 
 const templateRoot = new URL("../", import.meta.url);
 
@@ -40,6 +42,7 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /JSON 내보내기/);
   assert.match(html, /출전 권고가 아닙니다/);
   assert.match(html, /OPPONENT PREP PACK/);
+  assert.match(html, /3분 브리프/);
   assert.match(html, /상대팀 드래프트 준비 자료/);
   assert.match(html, /상대가 한 밴/);
   assert.match(html, /상대가 받은 밴/);
@@ -53,6 +56,57 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /isn&#x27;t endorsed by Riot Games/i);
   assert.match(html, /https:\/\/meta-radar\.example\/meta-radar-hero-v2\.png/);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
+});
+
+test("builds a deterministic evidence-bounded match-day brief from the published feed", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+  assert.ok(t1);
+
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { buildEmergencyBrief } = await vite.ssrLoadModule("/app/emergency-brief.ts");
+    const first = buildEmergencyBrief(feed, t1);
+    const second = buildEmergencyBrief(feed, t1);
+
+    assert.deepEqual(first, second);
+    assert.equal(first.schema_version, "1");
+    assert.equal(first.artifact_type, "match-day-emergency-brief");
+    assert.equal(first.read_time_minutes, 3);
+    assert.equal(first.opponent.team_name, "T1");
+    assert.equal(first.opponent.game_count, 7);
+    assert.equal(first.opponent.evidence_quality, "USABLE_WITH_LIMITS");
+    assert.deepEqual(first.alerts.map((alert) => alert.type), ["PICK", "BAN", "ROTATION"]);
+    assert.ok(first.meta_overlaps.length > 0);
+    assert.ok(first.meta_overlaps.every((item) => item.evidence_ids.length > 0));
+    assert.equal(first.patch_review_queue.length, 3);
+    assert.equal(first.staff_questions.length, 4);
+    assert.ok(first.unknowns.some((item) => item.includes("스크림")));
+    assert.match(first.boundary, /not an automatic draft recommendation/i);
+    assert.deepEqual(first.evidence.opponent_match_ids, t1.evidence.match_ids);
+    assert.ok(first.evidence.source_versions.length > 0);
+
+    const lowSample = buildEmergencyBrief(feed, {
+      ...t1,
+      quality_flags: ["LOW_MATCH_SAMPLE"],
+    });
+    const incomplete = buildEmergencyBrief(feed, {
+      ...t1,
+      quality_flags: ["LOW_MATCH_SAMPLE", "INCOMPLETE_BAN_EVIDENCE"],
+    });
+    assert.equal(lowSample.opponent.evidence_quality, "LOW_SAMPLE");
+    assert.equal(incomplete.opponent.evidence_quality, "INCOMPLETE_EVIDENCE");
+    assert.ok(incomplete.unknowns.some((item) => item.includes("누락")));
+  } finally {
+    await vite.close();
+  }
 });
 
 test("ships a validated same-origin publication feed for automatic loading", async () => {

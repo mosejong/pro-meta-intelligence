@@ -27,6 +27,11 @@ published patch and inspect side samples, phase-one/phase-two picks and bans, ob
 rotations, quality warnings, and exact source match IDs. The output keeps observed behavior
 separate from inferred intent. See [`OPPONENT_PREP.md`](OPPONENT_PREP.md).
 
+Match-day Emergency Brief v1 joins those two public evidence views without blending their claims.
+It shows immediate opponent draft signals, exact champion-role intersections with the global Radar,
+four questions for staff, and a visibly separate patch test queue. The same brief supports a compact
+print/PDF view and deterministic JSON export. See [`EMERGENCY_BRIEF.md`](EMERGENCY_BRIEF.md).
+
 ### Competitive boundary
 
 The product does not compete for summoner lookup, builds, runes, generic champion tiers, schedules,
