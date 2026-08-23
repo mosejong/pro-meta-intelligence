@@ -30,6 +30,8 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /메타의 변화를/);
   assert.match(html, /지금 살펴볼 변화/);
   assert.match(html, /meta-radar-hero-v2\.png/);
+  assert.match(html, /cdn\/16\.16\.1\/img\/champion\/RekSai\.png/);
+  assert.match(html, /cdn\/16\.16\.1\/img\/champion\/DrMundo\.png/);
   assert.match(html, /JSON 불러오기/);
   assert.match(html, /FEED CONNECTING/);
   assert.match(html, /isn&#x27;t endorsed by Riot Games/i);

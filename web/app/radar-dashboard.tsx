@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element -- this dual vinext/Vite build uses stable Riot CDN and relative static assets */
+
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isRadarReport, type RadarEntry, type RadarReport } from "./radar-types";
 import { sampleReport } from "./sample-report";
@@ -12,6 +14,34 @@ const flagLabels: Record<string, string> = {
   UNMAPPED_LEAGUE_EVIDENCE: "미등록 리그 포함",
 };
 
+const DATA_DRAGON_VERSION = "16.16.1";
+const championAssetOverrides: Record<string, string> = {
+  "Cho'Gath": "Chogath",
+  "Kai'Sa": "Kaisa",
+  "Kha'Zix": "Khazix",
+  LeBlanc: "Leblanc",
+  Mundo: "DrMundo",
+  "Renata Glasc": "Renata",
+  Wukong: "MonkeyKing",
+};
+const roleLabels: Record<string, string> = {
+  TOP: "탑",
+  JUNGLE: "정글",
+  MID: "미드",
+  BOTTOM: "바텀",
+  SUPPORT: "서포터",
+};
+const regionLabels: Record<string, string> = {
+  GLOBAL: "전체",
+  BRAZIL: "브라질",
+  CHINA: "중국",
+  EMEA: "유럽권",
+  KOREA: "한국",
+  LATIN_AMERICA: "라틴",
+  NORTH_AMERICA: "북미",
+  PACIFIC: "태평양권",
+};
+
 type FeedState = {
   kind: "connecting" | "published" | "demo" | "uploaded";
   label: string;
@@ -20,6 +50,11 @@ type FeedState = {
 
 function keyOf(entry: RadarEntry) {
   return `${entry.champion_id}::${entry.role}`;
+}
+
+function championImageUrl(championId: string) {
+  const assetId = championAssetOverrides[championId] ?? championId.replace(/[.'\s]/g, "");
+  return `https://ddragon.leagueoflegends.com/cdn/${DATA_DRAGON_VERSION}/img/champion/${assetId}.png`;
 }
 
 function percent(value: number | null, digits = 0) {
@@ -89,7 +124,7 @@ export function RadarDashboard() {
   const [selectedKey, setSelectedKey] = useState(keyOf(sampleReport.entries[0]));
   const [role, setRole] = useState("ALL");
   const [eligibleOnly, setEligibleOnly] = useState(false);
-  const [visibleLimit, setVisibleLimit] = useState(18);
+  const [visibleLimit, setVisibleLimit] = useState(12);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [feedState, setFeedState] = useState<FeedState>({
     kind: "connecting",
@@ -124,7 +159,7 @@ export function RadarDashboard() {
       setSelectedKey(parsed.entries[0] ? keyOf(parsed.entries[0]) : "");
       setRole("ALL");
       setEligibleOnly(false);
-      setVisibleLimit(18);
+      setVisibleLimit(12);
       setFeedState({
         kind: parsed.fixture_only ? "demo" : "published",
         label: parsed.fixture_only ? "PUBLISHED DEMO FEED" : "LIVE PUBLISHED FEED",
@@ -169,7 +204,7 @@ export function RadarDashboard() {
       setSelectedKey(keyOf(parsed.entries[0]));
       setRole("ALL");
       setEligibleOnly(false);
-      setVisibleLimit(18);
+      setVisibleLimit(12);
       manualOverride.current = true;
       setFeedState({ kind: "uploaded", label: "LOCAL FILE", detail: file.name.toUpperCase() });
     } catch {
@@ -210,17 +245,14 @@ export function RadarDashboard() {
         <div className="hero-copy">
           <div className="kicker-row"><p className="eyebrow">패치 {report.patch_id} · 분석 스냅샷</p><span>{feedState.detail}</span></div>
           <h1>메타의 변화를<br /><em>읽기 쉽게, 근거와 함께.</em></h1>
-          <p className="lede">최근 경기와 바로 이전 구간을 비교해 어떤 챔피언이 여러 팀과 지역으로 퍼지는지 보여줍니다. 복잡한 종합 점수 대신 실제 픽 변화, 팀 수요, 지역 편차를 차례로 읽을 수 있습니다.</p>
-          <div className="hero-meta" aria-label="스냅샷 정보">
-            <span>분석 기준</span><strong>{formatCutoff(report.cutoff)} KST</strong>
-            <span>비교 구간</span><strong>최근 {report.windows.recent.days}일 / 이전 {report.windows.prior.days}일</strong>
-            <span>데이터</span><strong>{report.evidence_index.source_versions[0]?.source_id ?? "출처 없음"}</strong>
-            <span>상태</span><strong>{report.fixture_only ? "예시 데이터" : "검증된 실데이터"}</strong>
+          <p className="lede">어떤 캐릭터가 여러 팀과 지역으로 퍼지고 있는지만 먼저 보여줍니다. 카드를 누르면 세부 근거를 확인할 수 있습니다.</p>
+          <div className="hero-points" aria-label="분석 요약">
+            <span>최근 {report.windows.recent.days}일 vs 이전 {report.windows.prior.days}일</span>
+            <span>{report.fixture_only ? "예시 데이터" : "검증된 실데이터"}</span>
+            <span>{formatCutoff(report.cutoff)} KST</span>
           </div>
         </div>
         <figure className="hero-visual">
-          {/* A plain image keeps the same relative asset path in both vinext and GitHub Pages builds. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="meta-radar-hero-v2.png" width="1672" height="940" alt="지역별 데이터 흐름을 레이더로 탐지해 검토 후보를 찾는 과정" />
           <figcaption><b>신호 탐지 → 지역 비교 → 근거 확인</b><span>숫자를 읽기 전에 분석 흐름을 먼저 파악하세요.</span></figcaption>
         </figure>
@@ -243,35 +275,34 @@ export function RadarDashboard() {
         <div className="section-heading">
           <div><p className="eyebrow">01 · 신호 목록</p><h2>지금 살펴볼 변화</h2><p className="section-description">여러 팀으로 빠르게 퍼지거나 특정 지역에서 유난히 많이 등장한 후보부터 보여줍니다.</p></div>
           <div className="controls">
-            <label>포지션<select value={role} onChange={(event) => { setRole(event.target.value); setVisibleLimit(18); }}>{roles.map((item) => <option key={item}>{item === "ALL" ? "전체" : item}</option>)}</select></label>
+            <label>포지션<select value={role} onChange={(event) => { setRole(event.target.value); setVisibleLimit(12); }}>{roles.map((item) => <option key={item}>{item === "ALL" ? "전체" : (roleLabels[item] ?? item)}</option>)}</select></label>
             <label className="toggle"><input type="checkbox" checked={eligibleOnly} onChange={(event) => setEligibleOnly(event.target.checked)} /><span /> 기준 통과만</label>
           </div>
         </div>
 
         <div className="radar-grid">
           <div className="candidate-table" aria-label="메타 레이더 후보">
-            <div className="table-head"><span>챔피언 / 포지션</span><span>최근 픽 점유율</span><span>팀 수요 변화</span><span>지역 편차</span><span>판정</span></div>
+            <div className="list-guide"><strong>우선 검토 순서</strong><span>카드를 선택하면 오른쪽에서 지역별 근거를 볼 수 있습니다.</span></div>
             {displayedEntries.length ? displayedEntries.map((entry) => {
               const active = Boolean(selected && keyOf(entry) === keyOf(selected));
               const signal = signalFor(entry);
               return (
                 <button className={`candidate ${active ? "selected" : ""}`} type="button" key={keyOf(entry)} onClick={() => setSelectedKey(keyOf(entry))} aria-pressed={active}>
-                  <span className="champion"><b>{String(entry.rank).padStart(2, "0")}</b><span><strong>{entry.champion_id.toUpperCase()}</strong><small>{entry.role}</small></span></span>
-                  <span className="presence"><span><i style={{ width: `${Math.min(entry.metrics.current_pick_presence * 100, 100)}%` }} /></span><strong>{percent(entry.metrics.current_pick_presence)} <small>{points(entry.metrics.pick_presence_delta)}</small></strong></span>
-                  <strong className={entry.metrics.demand_velocity >= 0 ? "positive" : "negative"}>{points(entry.metrics.demand_velocity)}</strong>
-                  <span className="region-gap">{entry.metrics.most_divergent_region ?? "—"} {points(entry.metrics.most_divergent_region_delta)}</span>
+                  <span className="champion-portrait"><img src={championImageUrl(entry.champion_id)} alt={`${entry.champion_id} 캐릭터`} loading="lazy" /><b>{String(entry.rank).padStart(2, "0")}</b></span>
+                  <span className="champion"><strong>{entry.champion_id}</strong><small>{roleLabels[entry.role] ?? entry.role}</small></span>
+                  <span className="signal-metrics"><span><small>픽 점유율</small><strong>{percent(entry.metrics.current_pick_presence)} <em>{points(entry.metrics.pick_presence_delta)}</em></strong></span><span><small>팀 수요</small><strong className={entry.metrics.demand_velocity >= 0 ? "positive" : "negative"}>{points(entry.metrics.demand_velocity)}</strong></span></span>
                   <span className={`status ${entry.eligible_for_review ? "eligible" : "watch"}`}>{signal}</span>
                 </button>
               );
             }) : <div className="empty-state">현재 필터에 맞는 후보가 없습니다.</div>}
-            {visibleEntries.length > 0 && <div className="candidate-more"><p>전체 {visibleEntries.length}개 중 {Math.min(displayedEntries.length, visibleEntries.length)}개 표시</p>{displayedEntries.length < visibleEntries.length && <button type="button" onClick={() => setVisibleLimit((current) => current + 18)}>후보 더 보기 <span>＋</span></button>}</div>}
+            {visibleEntries.length > 0 && <div className="candidate-more"><p>전체 {visibleEntries.length}개 중 {Math.min(displayedEntries.length, visibleEntries.length)}개 표시</p>{displayedEntries.length < visibleEntries.length && <button type="button" onClick={() => setVisibleLimit((current) => current + 12)}>12개 더 보기 <span>＋</span></button>}</div>}
           </div>
 
           {selected ? <aside className="detail" id="evidence">
-            <div className="detail-head"><div><span>선택한 신호</span><h3>{selected.champion_id.toUpperCase()} · {selected.role}</h3></div><b>{String(selected.rank).padStart(2, "0")}</b></div>
+            <div className="detail-head"><div className="detail-identity"><img src={championImageUrl(selected.champion_id)} alt={`${selected.champion_id} 캐릭터`} /><div><span>선택한 신호</span><h3>{selected.champion_id} · {roleLabels[selected.role] ?? selected.role}</h3></div></div><b>{String(selected.rank).padStart(2, "0")}</b></div>
             <p className="verdict">{verdictFor(selected)}</p>
             <div className="region-bars" aria-label="지역별 픽 점유율">
-              {regions.map((region) => <div className={!region.sample_eligible ? "weak" : ""} key={region.region}><span>{region.region}</span><i><b style={{ width: `${Math.min(region.pick_presence * 100, 100)}%` }} /></i><strong>{percent(region.pick_presence)}</strong></div>)}
+              {regions.map((region) => <div className={!region.sample_eligible ? "weak" : ""} key={region.region}><span>{regionLabels[region.region] ?? region.region}</span><i><b style={{ width: `${Math.min(region.pick_presence * 100, 100)}%` }} /></i><strong>{percent(region.pick_presence)}</strong></div>)}
             </div>
             <dl className="evidence-stats">
               <div><dt>채택한 팀</dt><dd>{selected.metrics.current_distinct_team_count} / {report.windows.recent.active_team_count}</dd></div>
@@ -296,7 +327,7 @@ export function RadarDashboard() {
       </section>
       <footer><span>종합 점수 없음</span><p>팀 수요 속도 → 픽 점유율 변화 → 지역 편차 순서로 읽습니다.</p><b>SCHEMA v{report.schema_version}</b></footer>
       <section className="legal-notice" aria-label="Riot Games 비제휴 고지">
-        Pro Meta Intelligence isn&apos;t endorsed by Riot Games and doesn&apos;t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
+        캐릭터 이미지는 Riot Games Data Dragon을 통해 제공됩니다. Pro Meta Intelligence isn&apos;t endorsed by Riot Games and doesn&apos;t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
       </section>
 
       {evidenceOpen && selected && (
