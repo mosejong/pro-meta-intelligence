@@ -30,3 +30,14 @@ npm test
 ```
 
 The production build targets Cloudflare-compatible ESM through vinext and the Sites Vite plugin.
+
+## Independent public URL
+
+The same dashboard also ships as a static GitHub Pages build at
+`https://mosejong.github.io/pro-meta-intelligence/`. This address has no application login and no
+ChatGPT-branded hostname. It loads the bundled feed relative to the project path, so the Sites and
+GitHub Pages deployments share the same dashboard and data contract.
+
+```bash
+npm run test:pages
+```

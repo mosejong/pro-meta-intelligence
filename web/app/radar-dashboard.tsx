@@ -102,7 +102,8 @@ export function RadarDashboard() {
   const loadPublishedFeed = useCallback(async () => {
     if (manualOverride.current) return;
     try {
-      const response = await fetch("/feed/current.json", { cache: "no-store" });
+      const feedUrl = new URL("feed/current.json", document.baseURI);
+      const response = await fetch(feedUrl, { cache: "no-store" });
       if (!response.ok) throw new Error(`feed returned ${response.status}`);
       const parsed: unknown = await response.json();
       if (!isRadarReport(parsed)) throw new Error("unsupported report");
