@@ -2,7 +2,7 @@ name: Deploy independent dashboard
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/independent-public-site]
     paths:
       - "web/**"
       - ".github/workflows/pages.yml"
