@@ -33,10 +33,10 @@ function points(value: number | null) {
 }
 
 function signalFor(entry: RadarEntry) {
-  if (!entry.eligible_for_review) return "WATCH";
-  if (entry.metrics.demand_velocity >= 0.2) return "RISING";
-  if (entry.metrics.demand_velocity > 0) return "SPREADING";
-  return "HOLD";
+  if (!entry.eligible_for_review) return "관찰";
+  if (entry.metrics.demand_velocity >= 0.2) return "급상승";
+  if (entry.metrics.demand_velocity > 0) return "확산 중";
+  return "유지";
 }
 
 function verdictFor(entry: RadarEntry) {
@@ -89,6 +89,7 @@ export function RadarDashboard() {
   const [selectedKey, setSelectedKey] = useState(keyOf(sampleReport.entries[0]));
   const [role, setRole] = useState("ALL");
   const [eligibleOnly, setEligibleOnly] = useState(false);
+  const [visibleLimit, setVisibleLimit] = useState(18);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [feedState, setFeedState] = useState<FeedState>({
     kind: "connecting",
@@ -106,6 +107,7 @@ export function RadarDashboard() {
     () => report.entries.filter((entry) => (role === "ALL" || entry.role === role) && (!eligibleOnly || entry.eligible_for_review)),
     [eligibleOnly, report, role],
   );
+  const displayedEntries = visibleEntries.slice(0, visibleLimit);
   const selected = visibleEntries.find((entry) => keyOf(entry) === selectedKey) ?? visibleEntries[0] ?? report.entries[0];
   const quality = qualityState(report);
   const eligibleCount = report.entries.filter((entry) => entry.eligible_for_review).length;
@@ -122,6 +124,7 @@ export function RadarDashboard() {
       setSelectedKey(parsed.entries[0] ? keyOf(parsed.entries[0]) : "");
       setRole("ALL");
       setEligibleOnly(false);
+      setVisibleLimit(18);
       setFeedState({
         kind: parsed.fixture_only ? "demo" : "published",
         label: parsed.fixture_only ? "PUBLISHED DEMO FEED" : "LIVE PUBLISHED FEED",
@@ -166,6 +169,7 @@ export function RadarDashboard() {
       setSelectedKey(keyOf(parsed.entries[0]));
       setRole("ALL");
       setEligibleOnly(false);
+      setVisibleLimit(18);
       manualOverride.current = true;
       setFeedState({ kind: "uploaded", label: "LOCAL FILE", detail: file.name.toUpperCase() });
     } catch {
@@ -188,9 +192,9 @@ export function RadarDashboard() {
           <span><strong>PRO META</strong><small>INTELLIGENCE</small></span>
         </a>
         <nav aria-label="주요 메뉴">
-          <a className="active" href="#radar">META RADAR</a>
-          <a href="#evidence">EVIDENCE</a>
-          <a href="#method">METHOD</a>
+          <a className="active" href="#radar">메타 레이더</a>
+          <a href="#evidence">선택 근거</a>
+          <a href="#method">읽는 법</a>
         </nav>
         <div className="topbar-actions">
           <span className={`snapshot-state ${feedState.kind}`} title={feedState.detail} aria-live="polite"><i />{feedState.label}</span>
@@ -203,45 +207,51 @@ export function RadarDashboard() {
       </header>
 
       <section className="hero" id="top">
-        <div>
-          <div className="kicker-row"><p className="eyebrow">PATCH {report.patch_id} · ANALYST SNAPSHOT</p><span>{feedState.detail}</span></div>
-          <h1>변화를 먼저 보고,<br /><em>근거까지 바로 확인합니다.</em></h1>
-          <p className="lede">같은 패치의 인접 구간을 비교하는 설명 가능한 메타 레이더입니다. 숨은 점수 없이 픽 점유율, 팀 수요, 지역 편차와 표본 경고를 그대로 보여줍니다.</p>
+        <div className="hero-copy">
+          <div className="kicker-row"><p className="eyebrow">패치 {report.patch_id} · 분석 스냅샷</p><span>{feedState.detail}</span></div>
+          <h1>메타의 변화를<br /><em>읽기 쉽게, 근거와 함께.</em></h1>
+          <p className="lede">최근 경기와 바로 이전 구간을 비교해 어떤 챔피언이 여러 팀과 지역으로 퍼지는지 보여줍니다. 복잡한 종합 점수 대신 실제 픽 변화, 팀 수요, 지역 편차를 차례로 읽을 수 있습니다.</p>
+          <div className="hero-meta" aria-label="스냅샷 정보">
+            <span>분석 기준</span><strong>{formatCutoff(report.cutoff)} KST</strong>
+            <span>비교 구간</span><strong>최근 {report.windows.recent.days}일 / 이전 {report.windows.prior.days}일</strong>
+            <span>데이터</span><strong>{report.evidence_index.source_versions[0]?.source_id ?? "출처 없음"}</strong>
+            <span>상태</span><strong>{report.fixture_only ? "예시 데이터" : "검증된 실데이터"}</strong>
+          </div>
         </div>
-        <div className="hero-meta" aria-label="스냅샷 정보">
-          <span>CUTOFF</span><strong>{formatCutoff(report.cutoff)} KST</strong>
-          <span>WINDOW</span><strong>{report.windows.recent.days} DAYS VS PREVIOUS {report.windows.prior.days}</strong>
-          <span>SOURCE</span><strong>{report.evidence_index.source_versions[0]?.source_id ?? "NO SOURCE"}</strong>
-          <span>MODE</span><strong>{report.fixture_only ? "FIXTURE / DEMO" : "IMPORTED SNAPSHOT"}</strong>
-        </div>
+        <figure className="hero-visual">
+          {/* A plain image keeps the same relative asset path in both vinext and GitHub Pages builds. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="meta-radar-hero-v2.png" width="1672" height="940" alt="지역별 데이터 흐름을 레이더로 탐지해 검토 후보를 찾는 과정" />
+          <figcaption><b>신호 탐지 → 지역 비교 → 근거 확인</b><span>숫자를 읽기 전에 분석 흐름을 먼저 파악하세요.</span></figcaption>
+        </figure>
       </section>
 
       <section className="summary" aria-label="요약 지표">
-        <article><span>REVIEW CANDIDATES</span><strong>{String(eligibleCount).padStart(2, "0")}</strong><small>표본 기준 통과</small></article>
-        <article><span>MATCHES</span><strong>{String(report.windows.recent.match_count).padStart(2, "0")} <b>/ {String(report.windows.prior.match_count).padStart(2, "0")}</b></strong><small>최근 / 이전 구간</small></article>
-        <article><span>ACTIVE TEAMS</span><strong>{String(report.windows.recent.active_team_count).padStart(2, "0")}</strong><small>최근 구간 고유 팀</small></article>
-        <article><span>DATA QUALITY</span><strong className={`quality ${quality.label === "CHECK" ? "caution" : quality.label === "AUDITED" ? "audited" : ""}`}>{quality.label}</strong><small>제외 경기 {quality.excluded} · 계약 위반 {quality.blocking} · 미등록 리그 {quality.unknown}</small></article>
+        <article><span>검토할 후보</span><strong>{String(eligibleCount).padStart(2, "0")}</strong><small>최소 표본 기준 통과</small></article>
+        <article><span>비교 경기 수</span><strong>{String(report.windows.recent.match_count).padStart(2, "0")} <b>/ {String(report.windows.prior.match_count).padStart(2, "0")}</b></strong><small>최근 구간 / 이전 구간</small></article>
+        <article><span>활성 팀</span><strong>{String(report.windows.recent.active_team_count).padStart(2, "0")}</strong><small>최근 구간의 고유 팀</small></article>
+        <article><span>데이터 품질</span><strong className={`quality ${quality.label === "CHECK" ? "caution" : quality.label === "AUDITED" ? "audited" : ""}`}>{quality.label === "AUDITED" ? "검토 완료" : quality.label === "PASS" ? "통과" : "확인 필요"}</strong><small>제외 {quality.excluded} · 위반 {quality.blocking} · 미등록 {quality.unknown}</small></article>
       </section>
 
       {quality.publication && quality.importQuality && <section className={`audit-notice ${quality.publication.ready_for_radar ? "ready" : "blocked"}`} aria-label="발행 데이터 품질 감사" role="status">
-        <div><span>PUBLICATION AUDIT</span><strong>{quality.importQuality.imported_game_count} / {quality.importQuality.discovered_game_count} GAMES USED</strong></div>
+        <div><span>발행 데이터 감사</span><strong>전체 {quality.importQuality.discovered_game_count}경기 중 {quality.importQuality.imported_game_count}경기 사용</strong></div>
         <p>{quality.importQuality.known_exclusion_game_count}개 경기는 불완전 기록 또는 팀 ID 누락으로 완전히 제외했습니다. 분석에 포함된 경기의 계약 위반은 {quality.importQuality.blocking_issue_game_count}건이며, 미등록 리그는 {quality.unknown}개입니다.</p>
-        <b>{quality.publication.ready_for_radar ? "READY WITH DISCLOSED EXCLUSIONS" : "PUBLICATION BLOCKED"}</b>
+        <b>{quality.publication.ready_for_radar ? "제외 내역 공개 · 분석 가능" : "발행 차단"}</b>
       </section>}
 
       <section className="workspace" id="radar">
         <div className="section-heading">
-          <div><p className="eyebrow">01 · SIGNAL BOARD</p><h2>검토 후보</h2></div>
+          <div><p className="eyebrow">01 · 신호 목록</p><h2>지금 살펴볼 변화</h2><p className="section-description">여러 팀으로 빠르게 퍼지거나 특정 지역에서 유난히 많이 등장한 후보부터 보여줍니다.</p></div>
           <div className="controls">
-            <label>ROLE<select value={role} onChange={(event) => setRole(event.target.value)}>{roles.map((item) => <option key={item}>{item}</option>)}</select></label>
+            <label>포지션<select value={role} onChange={(event) => { setRole(event.target.value); setVisibleLimit(18); }}>{roles.map((item) => <option key={item}>{item === "ALL" ? "전체" : item}</option>)}</select></label>
             <label className="toggle"><input type="checkbox" checked={eligibleOnly} onChange={(event) => setEligibleOnly(event.target.checked)} /><span /> 기준 통과만</label>
           </div>
         </div>
 
         <div className="radar-grid">
           <div className="candidate-table" aria-label="메타 레이더 후보">
-            <div className="table-head"><span>CHAMPION / ROLE</span><span>PICK PRESENCE</span><span>DEMAND Δ</span><span>REGION GAP</span><span>STATUS</span></div>
-            {visibleEntries.length ? visibleEntries.map((entry) => {
+            <div className="table-head"><span>챔피언 / 포지션</span><span>최근 픽 점유율</span><span>팀 수요 변화</span><span>지역 편차</span><span>판정</span></div>
+            {displayedEntries.length ? displayedEntries.map((entry) => {
               const active = Boolean(selected && keyOf(entry) === keyOf(selected));
               const signal = signalFor(entry);
               return (
@@ -254,19 +264,20 @@ export function RadarDashboard() {
                 </button>
               );
             }) : <div className="empty-state">현재 필터에 맞는 후보가 없습니다.</div>}
+            {visibleEntries.length > 0 && <div className="candidate-more"><p>전체 {visibleEntries.length}개 중 {Math.min(displayedEntries.length, visibleEntries.length)}개 표시</p>{displayedEntries.length < visibleEntries.length && <button type="button" onClick={() => setVisibleLimit((current) => current + 18)}>후보 더 보기 <span>＋</span></button>}</div>}
           </div>
 
           {selected ? <aside className="detail" id="evidence">
-            <div className="detail-head"><div><span>SELECTED SIGNAL</span><h3>{selected.champion_id.toUpperCase()} · {selected.role}</h3></div><b>{String(selected.rank).padStart(2, "0")}</b></div>
+            <div className="detail-head"><div><span>선택한 신호</span><h3>{selected.champion_id.toUpperCase()} · {selected.role}</h3></div><b>{String(selected.rank).padStart(2, "0")}</b></div>
             <p className="verdict">{verdictFor(selected)}</p>
             <div className="region-bars" aria-label="지역별 픽 점유율">
               {regions.map((region) => <div className={!region.sample_eligible ? "weak" : ""} key={region.region}><span>{region.region}</span><i><b style={{ width: `${Math.min(region.pick_presence * 100, 100)}%` }} /></i><strong>{percent(region.pick_presence)}</strong></div>)}
             </div>
             <dl className="evidence-stats">
-              <div><dt>DISTINCT TEAMS</dt><dd>{selected.metrics.current_distinct_team_count} / {report.windows.recent.active_team_count}</dd></div>
-              <div><dt>TEAM CONCENTRATION</dt><dd>{percent(selected.metrics.team_concentration)}</dd></div>
-              <div><dt>EVIDENCE EVENTS</dt><dd>{selected.evidence_event_ids.length}</dd></div>
-              <div><dt>SAMPLE ELIGIBLE</dt><dd className={selected.eligible_for_review ? "positive" : "negative"}>{selected.eligible_for_review ? "YES" : "NO"}</dd></div>
+              <div><dt>채택한 팀</dt><dd>{selected.metrics.current_distinct_team_count} / {report.windows.recent.active_team_count}</dd></div>
+              <div><dt>팀 편중도</dt><dd>{percent(selected.metrics.team_concentration)}</dd></div>
+              <div><dt>근거 이벤트</dt><dd>{selected.evidence_event_ids.length}</dd></div>
+              <div><dt>표본 기준</dt><dd className={selected.eligible_for_review ? "positive" : "negative"}>{selected.eligible_for_review ? "통과" : "미달"}</dd></div>
             </dl>
             {selected.quality_flags.length > 0 && <div className="flag-list">{selected.quality_flags.map((flag) => <span key={flag}>{flagLabels[flag] ?? flag}</span>)}</div>}
             <button className="evidence-button" type="button" onClick={() => setEvidenceOpen(true)}>근거 레코드 보기 <span>→</span></button>
@@ -275,7 +286,7 @@ export function RadarDashboard() {
       </section>
 
       <section className="method" id="method">
-        <div><p className="eyebrow">02 · READING THE RADAR</p><h2>점수 대신, 판단 단서.</h2></div>
+        <div><p className="eyebrow">02 · 레이더 읽는 법</p><h2>점수 하나보다, 네 가지 판단 단서.</h2></div>
         <div className="method-grid">
           <article><b>01</b><h3>팀 수요 속도</h3><p>한 팀의 반복 사용이 아니라, 서로 다른 팀으로 채택이 넓어지는지 봅니다.</p></article>
           <article><b>02</b><h3>픽 점유율 변화</h3><p>동일 패치 안에서 최근 구간과 바로 이전 구간의 경기 점유율을 비교합니다.</p></article>
@@ -283,7 +294,7 @@ export function RadarDashboard() {
           <article><b>04</b><h3>근거와 경고</h3><p>모든 후보에서 원본 이벤트와 표본 부족 여부를 함께 확인합니다.</p></article>
         </div>
       </section>
-      <footer><span>NO COMPOSITE SCORE</span><p>Demand velocity → Pick presence delta → Regional divergence 순으로 정렬</p><b>SCHEMA v{report.schema_version}</b></footer>
+      <footer><span>종합 점수 없음</span><p>팀 수요 속도 → 픽 점유율 변화 → 지역 편차 순서로 읽습니다.</p><b>SCHEMA v{report.schema_version}</b></footer>
       <section className="legal-notice" aria-label="Riot Games 비제휴 고지">
         Pro Meta Intelligence isn&apos;t endorsed by Riot Games and doesn&apos;t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
       </section>

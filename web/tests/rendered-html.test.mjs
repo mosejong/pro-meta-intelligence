@@ -25,13 +25,15 @@ test("server-renders the Meta Radar analyst surface", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>Meta Radar · Pro Meta Intelligence<\/title>/i);
-  assert.match(html, /변화를 먼저 보고/);
   assert.match(html, /REKSAI/i);
-  assert.match(html, /NO COMPOSITE SCORE/);
+  assert.match(html, /종합 점수 없음/);
+  assert.match(html, /메타의 변화를/);
+  assert.match(html, /지금 살펴볼 변화/);
+  assert.match(html, /meta-radar-hero-v2\.png/);
   assert.match(html, /JSON 불러오기/);
   assert.match(html, /FEED CONNECTING/);
   assert.match(html, /isn&#x27;t endorsed by Riot Games/i);
-  assert.match(html, /https:\/\/meta-radar\.example\/og\.png/);
+  assert.match(html, /https:\/\/meta-radar\.example\/meta-radar-hero-v2\.png/);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
 });
 
