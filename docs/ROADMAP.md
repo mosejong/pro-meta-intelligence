@@ -51,6 +51,11 @@ closing the Phase 2 runtime and output-size gate. The reviewed league-region map
 issue policy now permit a real 16.16 publication with explicit exclusion disclosure. Phase 2's
 current-data publication path is operational; predictive usefulness still belongs to Phase 3.
 
+The first Team Mode action layer is also implemented: the dashboard turns the five highest eligible
+signals into deterministic review cards with evidence, counterevidence, a practice question, a stop
+condition, and an explicit public/private data boundary. This is an operational brief, not evidence
+that the ordering predicts future adoption.
+
 ## Phase 3 — Blind Spot Benchmark
 
 Define review-candidate labels and historical evaluation windows.

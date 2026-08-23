@@ -28,7 +28,17 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /REKSAI/i);
   assert.match(html, /종합 점수 없음/);
   assert.match(html, /메타의 변화를/);
-  assert.match(html, /지금 살펴볼 변화/);
+  assert.match(html, /전체 메타 신호 탐색/);
+  assert.match(html, /TEAM DECISION BRIEF/);
+  assert.match(html, /오늘 코칭스태프가 검토할 5가지/);
+  assert.match(html, /반대 근거/);
+  assert.match(html, /스크림 질문/);
+  assert.match(html, /중단 조건/);
+  assert.match(html, /우선 검토/);
+  assert.match(html, /팀 데이터 경계/);
+  assert.match(html, /인쇄 \/ PDF/);
+  assert.match(html, /JSON 내보내기/);
+  assert.match(html, /출전 권고가 아닙니다/);
   assert.match(html, /meta-radar-hero-v2\.png/);
   assert.match(html, /cdn\/16\.16\.1\/img\/champion\/RekSai\.png/);
   assert.match(html, /cdn\/16\.16\.1\/img\/champion\/DrMundo\.png/);

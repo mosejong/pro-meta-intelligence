@@ -5,6 +5,7 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isRadarReport, type RadarEntry, type RadarReport } from "./radar-types";
 import { sampleReport } from "./sample-report";
+import { buildTeamBrief, serializeTeamBrief } from "./team-brief";
 
 const flagLabels: Record<string, string> = {
   INSUFFICIENT_RECENT_MATCHES: "최근 경기 표본 부족",
@@ -142,8 +143,10 @@ export function RadarDashboard() {
     () => report.entries.filter((entry) => (role === "ALL" || entry.role === role) && (!eligibleOnly || entry.eligible_for_review)),
     [eligibleOnly, report, role],
   );
+  const teamBrief = useMemo(() => buildTeamBrief(report), [report]);
   const displayedEntries = visibleEntries.slice(0, visibleLimit);
   const selected = visibleEntries.find((entry) => keyOf(entry) === selectedKey) ?? visibleEntries[0] ?? report.entries[0];
+  const selectedBrief = teamBrief.find((card) => keyOf(card.entry) === selectedKey) ?? teamBrief[0];
   const quality = qualityState(report);
   const eligibleCount = report.entries.filter((entry) => entry.eligible_for_review).length;
 
@@ -214,6 +217,17 @@ export function RadarDashboard() {
     }
   }
 
+  function downloadTeamBrief() {
+    const payload = JSON.stringify(serializeTeamBrief(report), null, 2);
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `team-decision-brief-${report.patch_id}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
   const regions = selected ? [
     { region: "GLOBAL", pick_presence: selected.metrics.current_pick_presence, sample_eligible: true },
     ...selected.region_presence,
@@ -227,7 +241,8 @@ export function RadarDashboard() {
           <span><strong>PRO META</strong><small>INTELLIGENCE</small></span>
         </a>
         <nav aria-label="주요 메뉴">
-          <a className="active" href="#radar">메타 레이더</a>
+          <a className="active" href="#team-brief">팀 브리프</a>
+          <a href="#radar">메타 레이더</a>
           <a href="#evidence">선택 근거</a>
           <a href="#method">읽는 법</a>
         </nav>
@@ -271,9 +286,55 @@ export function RadarDashboard() {
         <b>{quality.publication.ready_for_radar ? "제외 내역 공개 · 분석 가능" : "발행 차단"}</b>
       </section>}
 
+      <section className="team-brief" id="team-brief">
+        <div className="section-heading brief-heading">
+          <div>
+            <p className="eyebrow">01 · TEAM DECISION BRIEF</p>
+            <h2>오늘 코칭스태프가 검토할 5가지</h2>
+            <p className="section-description">단순 순위가 아니라 찬성 근거, 반대 근거, 스크림 질문과 중단 조건까지 한 장에 묶었습니다.</p>
+          </div>
+          <div className="brief-actions">
+            <button type="button" onClick={() => window.print()}>인쇄 / PDF</button>
+            <button type="button" onClick={downloadTeamBrief}>JSON 내보내기</button>
+          </div>
+        </div>
+
+        {selectedBrief ? <div className="brief-layout">
+          <div className="brief-queue" aria-label="팀 검토 큐">
+            <div className="brief-queue-label"><span>PATCH {report.patch_id}</span><b>REVIEW QUEUE</b></div>
+            {teamBrief.map((card, index) => {
+              const active = keyOf(card.entry) === keyOf(selectedBrief.entry);
+              return <button type="button" className={active ? "active" : ""} key={keyOf(card.entry)} onClick={() => setSelectedKey(keyOf(card.entry))} aria-pressed={active}>
+                <span className="brief-rank">{String(index + 1).padStart(2, "0")}</span>
+                <img src={championImageUrl(card.entry.champion_id)} alt="" />
+                <span className="brief-name"><strong>{card.entry.champion_id}</strong><small>{roleLabels[card.entry.role] ?? card.entry.role}</small></span>
+                <b className={`decision-chip ${card.decision.toLowerCase()}`}>{card.decisionLabel}</b>
+              </button>;
+            })}
+          </div>
+
+          <article className="decision-sheet">
+            <header>
+              <div className="decision-champion">
+                <img src={championImageUrl(selectedBrief.entry.champion_id)} alt={`${selectedBrief.entry.champion_id} 챔피언`} />
+                <div><span>검토 카드 #{String(selectedBrief.entry.rank).padStart(2, "0")}</span><h3>{selectedBrief.entry.champion_id} · {roleLabels[selectedBrief.entry.role] ?? selectedBrief.entry.role}</h3></div>
+              </div>
+              <b className={`decision-chip ${selectedBrief.decision.toLowerCase()}`}>{selectedBrief.decisionLabel}</b>
+            </header>
+            <div className="decision-cells">
+              <section className="evidence-for"><span>왜 지금 보나</span><p>{selectedBrief.reason}</p></section>
+              <section className="evidence-against"><span>반대 근거</span><p>{selectedBrief.counterEvidence}</p></section>
+              <section className="practice-question"><span>스크림 질문</span><p>{selectedBrief.practiceQuestion}</p></section>
+              <section className="stop-condition"><span>중단 조건</span><p>{selectedBrief.stopCondition}</p></section>
+            </div>
+            <div className="decision-boundary"><b>팀 데이터 경계</b><p>선수 숙련도 · 스크림 결과 · 팀 의도는 공개 경기로 추측하지 않습니다. 현재 카드는 검토 시작점이며 출전 권고가 아닙니다.</p><span>{selectedBrief.entry.evidence_event_ids.length} EVIDENCE EVENTS</span></div>
+          </article>
+        </div> : <div className="brief-empty">검토 기준을 통과한 공개 경기 신호가 없습니다.</div>}
+      </section>
+
       <section className="workspace" id="radar">
         <div className="section-heading">
-          <div><p className="eyebrow">01 · 신호 목록</p><h2>지금 살펴볼 변화</h2><p className="section-description">여러 팀으로 빠르게 퍼지거나 특정 지역에서 유난히 많이 등장한 후보부터 보여줍니다.</p></div>
+          <div><p className="eyebrow">02 · 신호 목록</p><h2>전체 메타 신호 탐색</h2><p className="section-description">팀 브리프의 결론을 직접 검증하거나 다른 역할의 후보를 탐색할 때 사용합니다.</p></div>
           <div className="controls">
             <label>포지션<select value={role} onChange={(event) => { setRole(event.target.value); setVisibleLimit(12); }}>{roles.map((item) => <option key={item}>{item === "ALL" ? "전체" : (roleLabels[item] ?? item)}</option>)}</select></label>
             <label className="toggle"><input type="checkbox" checked={eligibleOnly} onChange={(event) => setEligibleOnly(event.target.checked)} /><span /> 기준 통과만</label>
@@ -317,7 +378,7 @@ export function RadarDashboard() {
       </section>
 
       <section className="method" id="method">
-        <div><p className="eyebrow">02 · 레이더 읽는 법</p><h2>점수 하나보다, 네 가지 판단 단서.</h2></div>
+        <div><p className="eyebrow">03 · 레이더 읽는 법</p><h2>점수 하나보다, 네 가지 판단 단서.</h2></div>
         <div className="method-grid">
           <article><b>01</b><h3>팀 수요 속도</h3><p>한 팀의 반복 사용이 아니라, 서로 다른 팀으로 채택이 넓어지는지 봅니다.</p></article>
           <article><b>02</b><h3>픽 점유율 변화</h3><p>동일 패치 안에서 최근 구간과 바로 이전 구간의 경기 점유율을 비교합니다.</p></article>

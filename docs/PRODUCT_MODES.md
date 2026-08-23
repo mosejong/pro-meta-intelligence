@@ -16,6 +16,19 @@ For analysts, coaches, and players. Outputs stay compressed and operational:
 - estimated review/test cost without pretending to know private mastery,
 - uncertainty and sample limitations.
 
+The implemented Team Decision Brief v1 turns the five highest eligible public signals into a
+meeting-ready queue. Every card pairs evidence with counterevidence, a structured practice
+question, and a stop condition. It supports print/PDF and a JSON handoff while explicitly marking
+player familiarity, scrim results, and team intent as unavailable until an authorized private
+adapter is connected. See [`TEAM_DECISION_BRIEF.md`](TEAM_DECISION_BRIEF.md).
+
+### Competitive boundary
+
+The product does not compete for summoner lookup, builds, runes, generic champion tiers, schedules,
+standings, or static tournament tables. Those are discovery/statistics surfaces. Pro Meta
+Intelligence owns the narrower workflow from an auditable early signal to a review decision,
+practice question, rejection condition, and later backtested outcome.
+
 ### Creator Mode / Analyst Studio
 
 For evidence-backed public analysis. A future Creator adapter may transform an approved analysis
@@ -103,7 +116,8 @@ cost through measured improvements over the non-LLM baseline.
 3. Add the source registry and narrowly allowlisted collection jobs.
 4. Measure whether expert/creator inputs add value.
 5. Add AI-derived translation and synthesis with BYO-key controls.
-6. Expose Team Mode and Creator Mode as different presentations of the same evidence snapshot.
+6. Extend the implemented Team Mode and Creator Mode presentations without splitting their shared
+   evidence snapshot.
 
 This sequence keeps public-product and content-creation options open without weakening the current
 no-LLM, no-crawler Phase 1 acceptance criteria.

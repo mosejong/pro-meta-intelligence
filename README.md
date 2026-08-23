@@ -85,7 +85,9 @@ data path:
 - a synthetic adoption/false-positive scenario,
 - reviewed Oracle's Elixir acquisition, validation, and immutable local archiving,
 - explicit current-patch publication readiness with disclosed exclusions,
-- an explainable real-data Meta Radar/Creator snapshot feed and public static dashboard.
+- an explainable real-data Meta Radar/Creator snapshot feed and public static dashboard,
+- a meeting-ready Team Decision Brief with evidence, counterevidence, practice questions, stop
+  conditions, print/PDF output, and machine-readable JSON handoff.
 
 This is not yet evidence of predictive value. Real point-in-time daily snapshots must accumulate
 before Phase 3 can measure Recall@K, lead time, and false-alert behavior without hindsight leakage.
@@ -116,6 +118,8 @@ See also:
 - [`docs/SNAPSHOT_FEED.md`](docs/SNAPSHOT_FEED.md)
 - [`docs/FEED_JOB.md`](docs/FEED_JOB.md)
 - [`docs/CREATOR_BRIEF.md`](docs/CREATOR_BRIEF.md)
+- [`docs/TEAM_DECISION_BRIEF.md`](docs/TEAM_DECISION_BRIEF.md)
+- [`docs/COMPETITIVE_POSITIONING.md`](docs/COMPETITIVE_POSITIONING.md)
 - [`web/README.md`](web/README.md)
 - [`docs/PRODUCT_MODES.md`](docs/PRODUCT_MODES.md)
 
