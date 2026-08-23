@@ -140,6 +140,11 @@ python -m pro_meta_intelligence audit-oe-history \
   --archive-dir outputs/oracles-elixir/raw \
   --source-timezone UTC \
   --output outputs/oracles-elixir/history-readiness.json
+python -m pro_meta_intelligence benchmark-oe \
+  --input path/to/2026_LoL_esports_match_data_from_OraclesElixir.csv \
+  --source-timezone UTC \
+  --radar-output outputs/oracles-elixir/radar-2026.json \
+  --output outputs/oracles-elixir/benchmark-2026.json
 ```
 
 Raw responses are stored under the ignored `outputs/ddragon/` directory by content hash. A raw
@@ -167,6 +172,10 @@ Historical backtests have a stricter contract. `audit-oe-history` verifies every
 record and raw file, deeply imports each distinct content version at its earliest retrieval time,
 measures collection gaps, and counts cutoffs with a later outcome window. It performs no network
 request and never treats repeated unchanged bytes as a new historical state.
+
+`benchmark-oe` measures import, Radar construction, serialization, throughput, and output size over
+a caller-supplied real file. Its committed report contains only aggregate evidence and a source hash;
+provider rows stay outside Git. See [`docs/OE_REAL_FILE_BENCHMARK.md`](docs/OE_REAL_FILE_BENCHMARK.md).
 
 ## Explainable Meta Radar
 

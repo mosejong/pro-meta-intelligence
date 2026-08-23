@@ -45,8 +45,10 @@ Exit gate: metrics are reproducible and explainable from raw records.
 
 Current implementation status: the machine-readable patch snapshot, formulas, sample guards,
 provenance, deterministic multi-region fixture, and interactive analyst page are implemented.
-The annual coverage audit and fail-closed unattended publication gate are implemented. Full-year
-real-file performance validation remains before Phase 2 is complete.
+The annual coverage audit and fail-closed unattended publication gate are implemented. A
+provider-published 62.9 MB annual file has been benchmarked end to end without committing raw rows,
+closing the Phase 2 runtime and output-size gate. Unattended real-data publication remains
+fail-closed while import-issue severity and the reviewed league-region map are incomplete.
 
 ## Phase 3 — Blind Spot Benchmark
 

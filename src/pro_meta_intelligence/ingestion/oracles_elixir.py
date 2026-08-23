@@ -388,12 +388,15 @@ def _normalize_game(
 
 
 def _require_consistent_game_fields(rows: list[dict[str, str]]) -> None:
-    for field in ("gameid", "league", "year", "split", "date", "game", "patch"):
+    for field in ("gameid", "league", "year", "date", "game", "patch"):
         values = {row[field].strip() for row in rows}
         if len(values) != 1 or not next(iter(values)):
             raise _GameValidationError(
                 "INCONSISTENT_GAME_FIELD", f"field {field} is blank or inconsistent"
             )
+    split_values = {row["split"].strip() for row in rows}
+    if len(split_values) != 1:
+        raise _GameValidationError("INCONSISTENT_GAME_FIELD", "field split is inconsistent")
 
 
 def _parse_source_datetime(value: str, source_tz: tzinfo) -> datetime:

@@ -95,6 +95,42 @@ def test_audit_oe_coverage_cli_writes_machine_readable_readiness(tmp_path) -> No
     assert payload["selected_patch_id"] == "16.15"
 
 
+def test_benchmark_oe_cli_emits_bounded_pipeline_measurements(tmp_path) -> None:
+    output = tmp_path / "oe-benchmark.json"
+    radar_output = tmp_path / "radar.json"
+
+    assert (
+        main(
+            [
+                "benchmark-oe",
+                "--input",
+                str(FIXTURES / "oracles_elixir_game.csv"),
+                "--source-timezone",
+                "UTC",
+                "--retrieved-at",
+                "2026-08-22T03:00:00Z",
+                "--radar-output",
+                str(radar_output),
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    radar = json.loads(radar_output.read_text(encoding="utf-8"))
+    assert payload["benchmark_kind"] == "LOCAL_OE_META_RADAR_PIPELINE"
+    assert payload["input"]["row_count"] == 12
+    assert payload["input"]["imported_game_count"] == 1
+    assert payload["input"]["raw_dataset_embedded"] is False
+    assert payload["timings_seconds"]["total"] >= 0
+    assert payload["throughput"]["rows_per_import_second"] > 0
+    assert payload["radar_output"]["json_byte_length"] == len(radar_output.read_bytes())
+    assert payload["radar_output"]["written"] is True
+    assert radar["patch_id"] == "16.15"
+
+
 def test_audit_oe_history_cli_fails_closed_for_an_empty_archive(tmp_path) -> None:
     output = tmp_path / "oe-history.json"
 

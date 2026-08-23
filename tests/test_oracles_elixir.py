@@ -77,6 +77,37 @@ def test_import_rejects_incomplete_game_without_partial_records(tmp_path) -> Non
     assert dict(imported.report.issue_counts) == {"INCOMPLETE_GAME": 1}
 
 
+def test_import_accepts_a_consistently_blank_optional_split(tmp_path) -> None:
+    rows = list(csv.DictReader(FIXTURE.open(encoding="utf-8", newline="")))
+    for row in rows:
+        row["split"] = ""
+    path = tmp_path / "blank-split.csv"
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=rows[0])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    imported = import_fixture(path)
+
+    assert imported.report.rejected_game_count == 0
+    assert imported.matches[0].tournament == "2026 LCK"
+
+
+def test_import_rejects_an_inconsistent_optional_split(tmp_path) -> None:
+    rows = list(csv.DictReader(FIXTURE.open(encoding="utf-8", newline="")))
+    rows[0]["split"] = ""
+    path = tmp_path / "inconsistent-split.csv"
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=rows[0])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    imported = import_fixture(path)
+
+    assert imported.matches == ()
+    assert dict(imported.report.issue_counts) == {"INCONSISTENT_GAME_FIELD": 1}
+
+
 def test_import_rejects_team_pick_list_that_does_not_match_players(tmp_path) -> None:
     rows = list(csv.DictReader(FIXTURE.open(encoding="utf-8", newline="")))
     rows[10]["pick5"] = rows[10]["pick4"]

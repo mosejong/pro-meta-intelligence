@@ -149,7 +149,8 @@ The deterministic multi-region scenario covers:
 
 - Current Oracle's Elixir annual files still cannot reconstruct availability before retrieval.
 - The checked-in default region map is intentionally small and overrideable.
-- Full-year runtime and output-size benchmarks remain pending on a locally downloaded real file.
+- The full-year runtime and output-size benchmark is recorded in
+  [`OE_REAL_FILE_BENCHMARK.md`](OE_REAL_FILE_BENCHMARK.md); raw provider rows remain outside Git.
 - Ban deltas remain pending a validated role-aware contract.
 - This report measures adoption patterns, not champion strength, draft correctness, or causality.
 - The next benchmark must freeze meaningful review/adoption labels before inspecting holdout results.

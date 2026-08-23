@@ -50,6 +50,10 @@ The importer emits ten pick events. It converts each team's `pick1-pick5` order 
 pick slots using `firstPick`, then joins champions back to player rows for roles. It does not emit
 bans because banned champions have no reliable role in this source.
 
+The `split` column must exist because it is part of the reviewed file schema, but a consistently
+blank value within one game is accepted. It only enriches the display tournament name and is not
+needed for match identity or pick normalization. Mixed blank/non-blank values still reject the game.
+
 ## Point-in-time behavior
 
 The annual CSV is mutable and updated daily. SHA-256 identifies the exact bytes imported. The local
@@ -88,8 +92,9 @@ never written into provenance by default.
   exact reviewed official file ID and retrieval URL.
 - Google Drive can temporarily return a quota page. This is reported as source unavailable and is
   never archived or interpreted as CSV.
-- Full annual-file performance has not yet been benchmarked in CI; fixtures preserve the real 2026
-  structural contract without committing provider data.
+- Full annual-file performance has been measured locally and documented in
+  [`OE_REAL_FILE_BENCHMARK.md`](OE_REAL_FILE_BENCHMARK.md); CI continues to use structural fixtures
+  because the provider dataset is not redistributed.
 - The official timezone semantics still require provider confirmation.
 - Current files cannot reconstruct historical availability before the recorded retrieval time.
 - Historical archive continuity and outcome maturity are measured by `audit-oe-history`; the audit

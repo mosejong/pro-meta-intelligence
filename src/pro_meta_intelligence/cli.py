@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import platform
 from collections import Counter
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
+from time import perf_counter
 
 from pro_meta_intelligence.backtest import BacktestHarness
 from pro_meta_intelligence.creator import CreatorBriefBuilder
@@ -169,6 +171,16 @@ def build_parser() -> argparse.ArgumentParser:
     _add_radar_arguments(radar)
     radar.add_argument("--output", type=Path, help="optional JSON radar report path")
 
+    benchmark = subparsers.add_parser(
+        "benchmark-oe",
+        help="measure the local OE import and Meta Radar pipeline without publishing raw data",
+    )
+    _add_radar_arguments(benchmark)
+    benchmark.add_argument(
+        "--radar-output", type=Path, help="optional generated Meta Radar JSON path"
+    )
+    benchmark.add_argument("--output", type=Path, help="optional benchmark summary path")
+
     creator = subparsers.add_parser(
         "build-creator-brief",
         help="turn an approved Meta Radar JSON report into a claim-locked Creator brief",
@@ -222,6 +234,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _sync_oe_feed(args)
     if args.command == "build-radar":
         return _build_radar(args)
+    if args.command == "benchmark-oe":
+        return _benchmark_oe(args)
     if args.command == "build-creator-brief":
         return _build_creator_brief(args)
     if args.command == "refresh-feed":
@@ -553,6 +567,100 @@ def _build_radar(args: argparse.Namespace) -> int:
     return 0
 
 
+def _benchmark_oe(args: argparse.Namespace) -> int:
+    """Measure the real local pipeline while emitting only bounded aggregate evidence."""
+
+    total_started = perf_counter()
+    retrieved_at = parse_datetime(args.retrieved_at) if args.retrieved_at else datetime.now(UTC)
+
+    import_started = perf_counter()
+    imported = _load_oe_import(args, retrieved_at=retrieved_at)
+    import_seconds = perf_counter() - import_started
+
+    radar_started = perf_counter()
+    league_regions = _load_league_regions(args.region_map)
+    radar = MetaRadar().build(
+        imported.matches,
+        imported.draft_events,
+        _meta_radar_config(args, retrieved_at),
+        league_regions,
+    )
+    radar_seconds = perf_counter() - radar_started
+    radar_payload = dict(radar.to_dict())
+    radar_payload["input"] = {
+        "authenticity": "UNVERIFIED_CALLER_SUPPLIED_FILE",
+        "network_collection_performed": False,
+        "import_report": imported.report.to_dict(),
+    }
+
+    serialization_started = perf_counter()
+    radar_json = json.dumps(radar_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+    serialization_seconds = perf_counter() - serialization_started
+
+    output_write_seconds = 0.0
+    if args.radar_output:
+        write_started = perf_counter()
+        _emit(radar_json, args.radar_output)
+        output_write_seconds = perf_counter() - write_started
+
+    total_seconds = perf_counter() - total_started
+    report = imported.report
+    windows = radar_payload["windows"]
+    entries = radar_payload["entries"]
+    quality = radar_payload["quality"]
+    benchmark = {
+        "schema_version": "1",
+        "benchmark_kind": "LOCAL_OE_META_RADAR_PIPELINE",
+        "environment": {
+            "python_version": platform.python_version(),
+            "platform": platform.platform(),
+        },
+        "input": {
+            "source_id": "oracles-elixir-match-data",
+            "source_version": report.source_version,
+            "retrieved_at": report.retrieved_at.isoformat(),
+            "byte_length": report.byte_length,
+            "row_count": report.row_count,
+            "discovered_game_count": report.discovered_game_count,
+            "imported_game_count": report.imported_game_count,
+            "rejected_game_count": report.rejected_game_count,
+            "issue_counts": dict(report.issue_counts),
+            "raw_dataset_embedded": False,
+        },
+        "timings_seconds": {
+            "total": round(total_seconds, 6),
+            "import": round(import_seconds, 6),
+            "radar_build": round(radar_seconds, 6),
+            "serialization": round(serialization_seconds, 6),
+            "radar_output_write": round(output_write_seconds, 6),
+        },
+        "throughput": {
+            "rows_per_import_second": _rate(report.row_count, import_seconds),
+            "games_per_import_second": _rate(report.discovered_game_count, import_seconds),
+        },
+        "radar_output": {
+            "patch_id": radar_payload["patch_id"],
+            "entry_count": len(entries),
+            "eligible_entry_count": sum(1 for entry in entries if entry["eligible_for_review"]),
+            "recent_match_count": windows["recent"]["match_count"],
+            "prior_match_count": windows["prior"]["match_count"],
+            "unknown_league_count": len(quality["unknown_leagues"]),
+            "json_byte_length": len(radar_json.encode("utf-8")),
+            "written": args.radar_output is not None,
+        },
+        "limitations": [
+            "timings are workstation-specific and must not be compared across unlike hosts",
+            "the benchmark does not redistribute or embed the provider's raw dataset",
+            "a current annual snapshot cannot reconstruct availability before retrieved_at",
+            "import rejection and unknown-league counts remain explicit quality evidence",
+        ],
+    }
+    _emit(json.dumps(benchmark, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    if args.fail_on_import_issues and report.issue_counts:
+        return 2
+    return 0
+
+
 def _radar_payload(
     args: argparse.Namespace,
     *,
@@ -560,17 +668,7 @@ def _radar_payload(
 ) -> tuple[dict[str, object], bool]:
     retrieved_at = parse_datetime(args.retrieved_at) if args.retrieved_at else datetime.now(UTC)
     imported = imported or _load_oe_import(args, retrieved_at=retrieved_at)
-    cutoff = parse_datetime(args.cutoff) if args.cutoff else retrieved_at
-    config = MetaRadarConfig(
-        cutoff=cutoff,
-        patch_id=args.patch,
-        recent_window_days=args.recent_days,
-        prior_window_days=args.prior_days,
-        minimum_recent_matches=args.minimum_recent_matches,
-        minimum_prior_matches=args.minimum_prior_matches,
-        minimum_region_matches=args.minimum_region_matches,
-        minimum_current_picks=args.minimum_current_picks,
-    )
+    config = _meta_radar_config(args, retrieved_at)
     league_regions = _load_league_regions(args.region_map)
     radar = MetaRadar().build(imported.matches, imported.draft_events, config, league_regions)
     payload = dict(radar.to_dict())
@@ -580,6 +678,24 @@ def _radar_payload(
         "import_report": imported.report.to_dict(),
     }
     return payload, bool(imported.report.issue_counts)
+
+
+def _meta_radar_config(args: argparse.Namespace, retrieved_at: datetime) -> MetaRadarConfig:
+    cutoff = parse_datetime(args.cutoff) if args.cutoff else retrieved_at
+    return MetaRadarConfig(
+        cutoff=cutoff,
+        patch_id=args.patch,
+        recent_window_days=args.recent_days,
+        prior_window_days=args.prior_days,
+        minimum_recent_matches=args.minimum_recent_matches,
+        minimum_prior_matches=args.minimum_prior_matches,
+        minimum_region_matches=args.minimum_region_matches,
+        minimum_current_picks=args.minimum_current_picks,
+    )
+
+
+def _rate(count: int, seconds: float) -> float:
+    return round(count / seconds, 3) if seconds > 0 else 0.0
 
 
 def _build_creator_brief(args: argparse.Namespace) -> int:
@@ -776,6 +892,6 @@ def _load_registry(path: Path | None) -> SourceRegistry:
 def _emit(output: str, destination: Path | None) -> None:
     if destination:
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(output, encoding="utf-8")
+        destination.write_text(output, encoding="utf-8", newline="\n")
     else:
         print(output, end="")
