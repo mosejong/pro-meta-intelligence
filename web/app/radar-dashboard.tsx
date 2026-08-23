@@ -70,7 +70,18 @@ function formatCutoff(value: string) {
 function qualityState(report: RadarReport) {
   const critical = report.entries.filter((entry) => !entry.eligible_for_review).length;
   const unknown = report.quality.unknown_leagues.length;
-  return { label: critical || unknown ? "CHECK" : "PASS", critical, unknown };
+  const publication = report.publication_readiness;
+  const importQuality = publication?.selected_patch_import_quality;
+  const excluded = importQuality?.known_exclusion_game_count ?? 0;
+  const blocking = importQuality?.blocking_issue_game_count ?? 0;
+  const label = blocking || unknown || publication?.ready_for_radar === false
+    ? "CHECK"
+    : excluded
+      ? "AUDITED"
+      : critical
+        ? "CHECK"
+        : "PASS";
+  return { label, critical, unknown, excluded, blocking, importQuality, publication };
 }
 
 export function RadarDashboard() {
@@ -209,8 +220,14 @@ export function RadarDashboard() {
         <article><span>REVIEW CANDIDATES</span><strong>{String(eligibleCount).padStart(2, "0")}</strong><small>표본 기준 통과</small></article>
         <article><span>MATCHES</span><strong>{String(report.windows.recent.match_count).padStart(2, "0")} <b>/ {String(report.windows.prior.match_count).padStart(2, "0")}</b></strong><small>최근 / 이전 구간</small></article>
         <article><span>ACTIVE TEAMS</span><strong>{String(report.windows.recent.active_team_count).padStart(2, "0")}</strong><small>최근 구간 고유 팀</small></article>
-        <article><span>DATA QUALITY</span><strong className={quality.label === "PASS" ? "quality" : "quality caution"}>{quality.label}</strong><small>경고 후보 {quality.critical} · 미등록 리그 {quality.unknown}</small></article>
+        <article><span>DATA QUALITY</span><strong className={`quality ${quality.label === "CHECK" ? "caution" : quality.label === "AUDITED" ? "audited" : ""}`}>{quality.label}</strong><small>제외 경기 {quality.excluded} · 계약 위반 {quality.blocking} · 미등록 리그 {quality.unknown}</small></article>
       </section>
+
+      {quality.publication && quality.importQuality && <section className={`audit-notice ${quality.publication.ready_for_radar ? "ready" : "blocked"}`} aria-label="발행 데이터 품질 감사" role="status">
+        <div><span>PUBLICATION AUDIT</span><strong>{quality.importQuality.imported_game_count} / {quality.importQuality.discovered_game_count} GAMES USED</strong></div>
+        <p>{quality.importQuality.known_exclusion_game_count}개 경기는 불완전 기록 또는 팀 ID 누락으로 완전히 제외했습니다. 분석에 포함된 경기의 계약 위반은 {quality.importQuality.blocking_issue_game_count}건이며, 미등록 리그는 {quality.unknown}개입니다.</p>
+        <b>{quality.publication.ready_for_radar ? "READY WITH DISCLOSED EXCLUSIONS" : "PUBLICATION BLOCKED"}</b>
+      </section>}
 
       <section className="workspace" id="radar">
         <div className="section-heading">

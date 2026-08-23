@@ -479,6 +479,88 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
     assert current["input"]["authenticity"] == "REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD"
 
 
+def test_sync_oe_feed_publishes_with_audited_known_exclusions(tmp_path, monkeypatch) -> None:
+    retrieved_at = datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
+    base = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
+    rows = base.splitlines(keepends=True)
+    incomplete = b"".join(rows[1:]).replace(b"GAME001", b"GAME002")
+    incomplete = incomplete.replace(b"complete", b"partial", 1)
+    source_body = base + incomplete
+
+    class FakeDownloadAdapter:
+        source_id = "oracles-elixir-match-data"
+
+        def __init__(self, registry) -> None:
+            assert registry.get(self.source_id) is not None
+
+        def fetch_year(self, year, *, last_retrieved_at=None):
+            url = "https://drive.usercontent.google.com/download?id=reviewed"
+            return SimpleNamespace(
+                file=SimpleNamespace(year=year, filename="2026_test.csv"),
+                artifact=RawSourceArtifact.create(
+                    source_id=self.source_id,
+                    request_url=url,
+                    final_url=url,
+                    media_type="text/csv",
+                    retrieved_at=retrieved_at,
+                    body=source_body,
+                ),
+            )
+
+    monkeypatch.setattr(
+        "pro_meta_intelligence.cli.OracleElixirPublishedDownloadAdapter",
+        FakeDownloadAdapter,
+    )
+    output = tmp_path / "sync.json"
+    feed = tmp_path / "feed"
+
+    assert (
+        main(
+            [
+                "sync-oe-feed",
+                "--year",
+                "2026",
+                "--source-timezone",
+                "UTC",
+                "--archive-dir",
+                str(tmp_path / "raw"),
+                "--feed-dir",
+                str(feed),
+                "--run-dir",
+                str(tmp_path / "jobs"),
+                "--readiness-minimum-matches",
+                "1",
+                "--readiness-minimum-teams",
+                "2",
+                "--readiness-minimum-regions",
+                "1",
+                "--minimum-recent-matches",
+                "1",
+                "--minimum-prior-matches",
+                "1",
+                "--minimum-region-matches",
+                "1",
+                "--minimum-current-picks",
+                "1",
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+
+    audit = json.loads(output.read_text(encoding="utf-8"))
+    readiness = audit["result"]["readiness_audit"]
+    current = json.loads((feed / "current.json").read_text(encoding="utf-8"))
+    assert audit["result"]["status"] == "PUBLISHED"
+    assert readiness["ready_for_radar"] is True
+    assert readiness["blocking_reasons"] == []
+    assert readiness["warnings"] == ["PATCH_HAS_KNOWN_IMPORT_EXCLUSIONS"]
+    assert readiness["selected_patch_import_quality"]["known_exclusion_game_count"] == 1
+    assert current["publication_readiness"] == readiness
+    assert current["input"]["import_report"]["rejected_game_count"] == 1
+
+
 def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
     tmp_path, monkeypatch
 ) -> None:

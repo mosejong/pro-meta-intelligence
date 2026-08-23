@@ -66,11 +66,15 @@ Remaining rejections are preserved rather than silently repaired:
 - `INCOMPLETE_GAME`: 109
 - `INVALID_FIRST_PICK`: 15
 
-## Remaining publication blockers
+## Publication follow-up
 
-The benchmark proves that annual-file runtime and output size are operationally small enough for the
-current local pipeline. It does not make the unattended feed ready. The measured Radar still exposes
-15 unmapped league IDs, and the coverage policy currently treats every rejected game as blocking.
-The next data-quality increment should freeze a reviewed league-region map and classify which import
-issues block the selected patch versus which are explicit annual exclusions. Until then publication
-continues to fail closed.
+The next quality increment resolved the blockers found by this benchmark. The reviewed region map
+now covers every league on patch 16.16, and import issues are attributed by patch, league, and code.
+For 16.16 the importer discovered 260 games, imported 236, and disclosed 24 known exclusions: 14
+incomplete games and 10 games with missing team IDs. It found zero selected-patch contract issues
+and zero unknown leagues, so the real feed passed the version 2 readiness gate.
+
+The 15 `INVALID_FIRST_PICK` issues remain visible in the annual audit but occur outside the selected
+patch. They warn on current publication and remain blocking evidence when an affected historical
+state is evaluated. This distinction makes current publication usable without weakening the
+point-in-time historical contract.

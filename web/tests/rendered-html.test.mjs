@@ -35,11 +35,20 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
 });
 
-test("ships a valid same-origin demo feed for automatic loading", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+test("ships a validated same-origin publication feed for automatic loading", async () => {
+  const feedText = await readFile(new URL("public/feed/current.json", templateRoot), "utf8");
+  const feed = JSON.parse(feedText);
   assert.equal(feed.schema_version, "1");
-  assert.equal(feed.fixture_only, true);
+  assert.equal(feed.fixture_only, false);
+  assert.equal(feed.patch_id, "16.16");
+  assert.equal(feed.publication_readiness.ready_for_radar, true);
+  assert.deepEqual(feed.publication_readiness.blocking_reasons, []);
+  assert.equal(
+    feed.publication_readiness.selected_patch_import_quality.known_exclusion_game_count,
+    24,
+  );
   assert.ok(feed.entries.length > 0);
+  assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
 });
 
 test("starter preview files are removed", async () => {

@@ -59,6 +59,19 @@ export type RadarReport = {
     recent_match_ids: string[];
     source_versions: Array<{ source_id: string; source_version: string; content_hash: string }>;
   };
+  publication_readiness?: {
+    ready_for_radar: boolean;
+    blocking_reasons: string[];
+    warnings: string[];
+    selected_patch_import_quality: {
+      patch_id: string;
+      imported_game_count: number;
+      known_exclusion_game_count: number;
+      blocking_issue_game_count: number;
+      discovered_game_count: number;
+      issue_counts: Record<string, number>;
+    } | null;
+  };
   entries: RadarEntry[];
 };
 
@@ -82,6 +95,7 @@ export function isRadarReport(value: unknown): value is RadarReport {
     !Array.isArray(report.evidence_index.source_versions) ||
     !Array.isArray(report.entries)
   ) return false;
+  if (report.publication_readiness !== undefined && !isPublicationReadiness(report.publication_readiness)) return false;
   return report.entries.every(isRadarEntry);
 }
 
@@ -132,4 +146,27 @@ function isRegionPresence(value: unknown) {
 
 function isNullableNumber(value: unknown) {
   return value === null || typeof value === "number";
+}
+
+function isPublicationReadiness(value: unknown) {
+  if (!isRecord(value)) return false;
+  if (
+    typeof value.ready_for_radar !== "boolean" ||
+    !Array.isArray(value.blocking_reasons) ||
+    !value.blocking_reasons.every((item) => typeof item === "string") ||
+    !Array.isArray(value.warnings) ||
+    !value.warnings.every((item) => typeof item === "string")
+  ) return false;
+  if (value.selected_patch_import_quality === null) return true;
+  if (!isRecord(value.selected_patch_import_quality)) return false;
+  const quality = value.selected_patch_import_quality;
+  return (
+    typeof quality.patch_id === "string" &&
+    typeof quality.imported_game_count === "number" &&
+    typeof quality.known_exclusion_game_count === "number" &&
+    typeof quality.blocking_issue_game_count === "number" &&
+    typeof quality.discovered_game_count === "number" &&
+    isRecord(quality.issue_counts) &&
+    Object.values(quality.issue_counts).every((count) => typeof count === "number")
+  );
 }

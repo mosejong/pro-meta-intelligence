@@ -19,18 +19,31 @@ returns exit code `0` when all gates pass and `2` when one or more gates fail.
 
 ## Measured output
 
-The JSON contains annual discovered/imported/rejected game counts and observed date bounds. Every
-patch lists match, pick-event, league, known-region, and distinct-team counts; observed date bounds;
-and any leagues missing from the reviewed league-to-region map. The latest patch is selected by the
-most recently observed match, matching Meta Radar behavior. `--patch` can select one explicitly.
+The version 2 JSON contains annual discovered/imported/rejected game counts and observed date
+bounds. Every patch lists match, pick-event, league, known-region, and distinct-team counts;
+observed date bounds; and any leagues missing from the reviewed league-to-region map. The latest
+patch is selected by the most recently observed match, matching Meta Radar behavior. `--patch` can
+select one explicitly.
+
+Import issues are aggregated by patch, league, and code before publication. The selected patch also
+exposes `imported_game_count`, `discovered_game_count`, known exclusions, blocking contract issues,
+and the exact aggregate issue context in `selected_patch_import_quality`. This makes a partial but
+usable patch distinguishable from a silently clean one.
 
 There is deliberately no composite quality score. Default publication gates are:
 
 - at least 20 validated matches on the selected patch,
 - at least 8 distinct teams,
 - at least 2 mapped regions,
-- zero rejected games,
+- zero blocking import-contract issues on the selected patch,
+- zero unattributed blocking import-contract issues,
 - zero unknown leagues on the selected patch.
+
+`INCOMPLETE_GAME` and `MISSING_TEAM_ID` are reviewed known exclusions. They may be excluded when the
+remaining validated sample still passes every breadth gate, but they produce visible warnings and
+counts. Every other current or future issue code defaults to blocking. Issues attributed only to an
+older patch produce annual warnings rather than blocking the current patch; the stricter historical
+audit still evaluates every archived state independently.
 
 The numeric thresholds can be changed with `--readiness-minimum-matches`,
 `--readiness-minimum-teams`, and `--readiness-minimum-regions`. Every failure remains visible in
@@ -39,8 +52,10 @@ The numeric thresholds can be changed with `--readiness-minimum-matches`,
 ## Unattended publication behavior
 
 `sync-oe-feed` runs this audit after source acquisition and normalization, under the same exclusive
-writer lock. `REJECTED_IMPORT_ISSUES` or `REJECTED_READINESS` is written to the immutable job audit,
-but no Radar/Creator snapshot is published and the existing `current.json` remains unchanged.
+writer lock. A failed gate writes `REJECTED_READINESS` to the immutable job audit, but no
+Radar/Creator snapshot is published and the existing `current.json` remains unchanged. A successful
+snapshot embeds the complete readiness audit, including any allowed exclusion warnings, so the web
+client does not need to infer publication quality.
 
 The standalone `refresh-feed` command remains a caller-controlled local path and does not apply the
 annual readiness gate automatically.

@@ -1,12 +1,31 @@
 {
   "schema_version": "1",
   "leagues": {
+    "AL": "EMEA",
     "CBLOL": "BRAZIL",
+    "CD": "BRAZIL",
+    "EBL": "EMEA",
+    "HLL": "EMEA",
+    "HM": "EMEA",
+    "KeSPA Cup": "KOREA",
     "LCK": "KOREA",
+    "LCKC": "KOREA",
     "LCP": "PACIFIC",
     "LCS": "NORTH_AMERICA",
     "LEC": "EMEA",
+    "LES": "EMEA",
+    "LFL": "EMEA",
+    "LIT": "EMEA",
     "LPL": "CHINA",
-    "PCS": "PACIFIC"
+    "LPLOL": "EMEA",
+    "LRN": "LATIN_AMERICA",
+    "LRS": "LATIN_AMERICA",
+    "NACL": "NORTH_AMERICA",
+    "NLC": "EMEA",
+    "PCS": "PACIFIC",
+    "PRM": "EMEA",
+    "RL": "EMEA",
+    "ROL": "EMEA",
+    "TCL": "EMEA"
   }
 }

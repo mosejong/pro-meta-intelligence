@@ -10,6 +10,10 @@ from pro_meta_intelligence.ingestion.oracles_elixir import OracleElixirImport
 from pro_meta_intelligence.models import DraftAction
 from pro_meta_intelligence.radar import LeagueRegionMap
 
+KNOWN_EXCLUSION_CODES = frozenset({"INCOMPLETE_GAME", "MISSING_TEAM_ID"})
+BLOCKING_ISSUE_DISPOSITION = "BLOCKING_CONTRACT_ISSUE"
+KNOWN_EXCLUSION_DISPOSITION = "KNOWN_EXCLUSION"
+
 
 @dataclass(frozen=True, slots=True)
 class OECoverageCriteria:
@@ -91,7 +95,46 @@ def audit_oe_coverage(
         if patch_id == selected_patch_id:
             selected = patch
 
+    issue_context = [
+        {
+            "patch_id": patch_id,
+            "league": league,
+            "code": code,
+            "count": count,
+            "disposition": _issue_disposition(code),
+        }
+        for patch_id, league, code, count in imported.report.issue_context_counts
+    ]
+    selected_issue_context = [
+        item for item in issue_context if item["patch_id"] == selected_patch_id
+    ]
+    selected_issue_counts = _sum_issue_counts(selected_issue_context)
+    selected_known_exclusion_count = sum(
+        item["count"]
+        for item in selected_issue_context
+        if item["disposition"] == KNOWN_EXCLUSION_DISPOSITION
+    )
+    selected_blocking_issue_count = sum(
+        item["count"]
+        for item in selected_issue_context
+        if item["disposition"] == BLOCKING_ISSUE_DISPOSITION
+    )
+    unattributed_blocking_issue_count = sum(
+        item["count"]
+        for item in issue_context
+        if item["patch_id"] is None and item["disposition"] == BLOCKING_ISSUE_DISPOSITION
+    )
+    annual_known_exclusion_count = sum(
+        item["count"]
+        for item in issue_context
+        if item["disposition"] == KNOWN_EXCLUSION_DISPOSITION
+    )
+    annual_blocking_issue_count = sum(
+        item["count"] for item in issue_context if item["disposition"] == BLOCKING_ISSUE_DISPOSITION
+    )
+
     reasons: list[str] = []
+    warnings: list[str] = []
     if not matches:
         reasons.append("NO_IMPORTED_MATCHES")
     elif selected is None:
@@ -105,11 +148,35 @@ def audit_oe_coverage(
             reasons.append("PATCH_REGION_COUNT_BELOW_MINIMUM")
         if selected["unknown_leagues"]:
             reasons.append("PATCH_HAS_UNKNOWN_LEAGUES")
-    if imported.report.rejected_game_count:
-        reasons.append("REJECTED_GAMES_PRESENT")
+    if selected_blocking_issue_count:
+        reasons.append("PATCH_HAS_BLOCKING_IMPORT_ISSUES")
+    if unattributed_blocking_issue_count:
+        reasons.append("UNATTRIBUTED_BLOCKING_IMPORT_ISSUES")
+    if selected_known_exclusion_count:
+        warnings.append("PATCH_HAS_KNOWN_IMPORT_EXCLUSIONS")
+    if annual_blocking_issue_count > selected_blocking_issue_count:
+        warnings.append("ANNUAL_BLOCKING_IMPORT_ISSUES_OUTSIDE_SELECTED_PATCH")
+    if annual_known_exclusion_count > selected_known_exclusion_count:
+        warnings.append("ANNUAL_KNOWN_IMPORT_EXCLUSIONS_OUTSIDE_SELECTED_PATCH")
+
+    selected_import_quality = None
+    if selected is not None:
+        selected_import_quality = {
+            "patch_id": selected_patch_id,
+            "imported_game_count": selected["match_count"],
+            "known_exclusion_game_count": selected_known_exclusion_count,
+            "blocking_issue_game_count": selected_blocking_issue_count,
+            "discovered_game_count": (
+                selected["match_count"]
+                + selected_known_exclusion_count
+                + selected_blocking_issue_count
+            ),
+            "issue_counts": selected_issue_counts,
+            "issue_context": selected_issue_context,
+        }
 
     payload = {
-        "schema_version": "1",
+        "schema_version": "2",
         "source_id": "oracles-elixir-match-data",
         "source_version": imported.report.source_version,
         "retrieved_at": imported.report.retrieved_at.isoformat(),
@@ -117,6 +184,9 @@ def audit_oe_coverage(
             "discovered_game_count": imported.report.discovered_game_count,
             "imported_game_count": imported.report.imported_game_count,
             "rejected_game_count": imported.report.rejected_game_count,
+            "known_exclusion_game_count": annual_known_exclusion_count,
+            "blocking_issue_game_count": annual_blocking_issue_count,
+            "issue_counts": dict(imported.report.issue_counts),
             "patch_count": len(patches),
             "league_count": len({match.league for match in matches}),
             "first_observed_at": (
@@ -129,14 +199,36 @@ def audit_oe_coverage(
         "patches": patches,
         "selected_patch_id": selected_patch_id,
         "selected_patch": selected,
+        "selected_patch_import_quality": selected_import_quality,
+        "issue_policy": {
+            "known_exclusion_codes": sorted(KNOWN_EXCLUSION_CODES),
+            "default_disposition": BLOCKING_ISSUE_DISPOSITION,
+            "scope": "SELECTED_PATCH_AND_UNATTRIBUTED_BLOCKING_ISSUES",
+        },
         "criteria": {
             "minimum_matches": criteria.minimum_matches,
             "minimum_distinct_teams": criteria.minimum_distinct_teams,
             "minimum_regions": criteria.minimum_regions,
-            "require_zero_rejected_games": True,
+            "require_zero_rejected_games": False,
+            "require_zero_selected_patch_blocking_import_issues": True,
+            "allow_known_exclusions_when_remaining_coverage_passes": True,
             "require_all_leagues_mapped": True,
         },
         "ready_for_radar": not reasons,
         "blocking_reasons": reasons,
+        "warnings": warnings,
     }
     return OECoverageAudit(payload)
+
+
+def _issue_disposition(code: str) -> str:
+    if code in KNOWN_EXCLUSION_CODES:
+        return KNOWN_EXCLUSION_DISPOSITION
+    return BLOCKING_ISSUE_DISPOSITION
+
+
+def _sum_issue_counts(context: list[dict[str, Any]]) -> dict[str, int]:
+    counts: Counter[str] = Counter()
+    for item in context:
+        counts[str(item["code"])] += int(item["count"])
+    return dict(sorted(counts.items()))

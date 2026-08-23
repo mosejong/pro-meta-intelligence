@@ -14,11 +14,19 @@ test("builds an independent static Meta Radar entry page", async () => {
 });
 
 test("copies the same-origin feed and social card", async () => {
-  const feed = JSON.parse(await readFile(new URL("feed/current.json", root), "utf8"));
+  const feedText = await readFile(new URL("feed/current.json", root), "utf8");
+  const feed = JSON.parse(feedText);
   const card = await readFile(new URL("og.png", root));
 
   assert.equal(feed.schema_version, "1");
-  assert.equal(feed.fixture_only, true);
+  assert.equal(feed.fixture_only, false);
+  assert.equal(feed.patch_id, "16.16");
+  assert.equal(feed.publication_readiness.ready_for_radar, true);
+  assert.equal(
+    feed.publication_readiness.selected_patch_import_quality.known_exclusion_game_count,
+    24,
+  );
   assert.ok(feed.entries.length > 0);
+  assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.ok(card.byteLength > 10_000);
 });

@@ -47,8 +47,9 @@ Current implementation status: the machine-readable patch snapshot, formulas, sa
 provenance, deterministic multi-region fixture, and interactive analyst page are implemented.
 The annual coverage audit and fail-closed unattended publication gate are implemented. A
 provider-published 62.9 MB annual file has been benchmarked end to end without committing raw rows,
-closing the Phase 2 runtime and output-size gate. Unattended real-data publication remains
-fail-closed while import-issue severity and the reviewed league-region map are incomplete.
+closing the Phase 2 runtime and output-size gate. The reviewed league-region map and selected-patch
+issue policy now permit a real 16.16 publication with explicit exclusion disclosure. Phase 2's
+current-data publication path is operational; predictive usefulness still belongs to Phase 3.
 
 ## Phase 3 — Blind Spot Benchmark
 

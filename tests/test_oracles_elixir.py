@@ -75,6 +75,14 @@ def test_import_rejects_incomplete_game_without_partial_records(tmp_path) -> Non
     assert imported.draft_events == ()
     assert imported.report.rejected_game_count == 1
     assert dict(imported.report.issue_counts) == {"INCOMPLETE_GAME": 1}
+    assert imported.report.issue_context_counts == (("16.15", "LCK", "INCOMPLETE_GAME", 1),)
+    assert imported.report.issues[0].to_dict() == {
+        "game_key": "LCK:GAME001",
+        "league": "LCK",
+        "patch_id": "16.15",
+        "code": "INCOMPLETE_GAME",
+        "detail": "datacompleteness is not complete",
+    }
 
 
 def test_import_accepts_a_consistently_blank_optional_split(tmp_path) -> None:

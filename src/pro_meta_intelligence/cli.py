@@ -496,7 +496,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             minimum_prior_matches=args.minimum_prior_matches,
             minimum_region_matches=args.minimum_region_matches,
             minimum_current_picks=args.minimum_current_picks,
-            fail_on_import_issues=True,
+            fail_on_import_issues=False,
             feed_dir=args.feed_dir,
             creator_top_k=args.creator_top_k,
             max_index_entries=args.max_index_entries,
@@ -511,16 +511,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             _load_league_regions(args.region_map),
             _readiness_criteria(args),
         )
-        if imported.report.issue_counts:
-            exit_code = 2
-            payload = {
-                "schema_version": "1",
-                "status": "REJECTED_IMPORT_ISSUES",
-                "published": False,
-                "import_report": imported.report.to_dict(),
-                "readiness_audit": coverage.to_dict(),
-            }
-        elif not coverage.ready_for_radar:
+        if not coverage.ready_for_radar:
             exit_code = 2
             payload = {
                 "schema_version": "1",
@@ -529,7 +520,11 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 "readiness_audit": coverage.to_dict(),
             }
         else:
-            exit_code, payload = _refresh_feed_payload(refresh_args, imported=imported)
+            exit_code, payload = _refresh_feed_payload(
+                refresh_args,
+                imported=imported,
+                publication_readiness=coverage.to_dict(),
+            )
             payload["readiness_audit"] = coverage.to_dict()
         payload["network_collection_performed"] = network_attempted
         payload["source_acquisition"] = {
@@ -715,6 +710,7 @@ def _refresh_feed_payload(
     args: argparse.Namespace,
     *,
     imported: OracleElixirImport | None = None,
+    publication_readiness: dict[str, object] | None = None,
 ) -> tuple[int, dict[str, object]]:
     radar, has_import_issues = _radar_payload(args, imported=imported)
     if args.fail_on_import_issues and has_import_issues:
@@ -725,6 +721,9 @@ def _refresh_feed_payload(
             "import_report": radar["input"]["import_report"],
         }
         return 2, payload
+
+    if publication_readiness is not None:
+        radar["publication_readiness"] = publication_readiness
 
     creator = CreatorBriefBuilder().build(radar, top_k=args.creator_top_k)
     published_at = parse_datetime(args.published_at) if args.published_at else datetime.now(UTC)

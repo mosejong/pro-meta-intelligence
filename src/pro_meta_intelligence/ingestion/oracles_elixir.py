@@ -72,11 +72,19 @@ class _GameValidationError(ValueError):
 @dataclass(frozen=True, slots=True)
 class ImportIssue:
     game_key: str
+    league: str
+    patch_id: str | None
     code: str
     detail: str
 
-    def to_dict(self) -> dict[str, str]:
-        return {"game_key": self.game_key, "code": self.code, "detail": self.detail}
+    def to_dict(self) -> dict[str, str | None]:
+        return {
+            "game_key": self.game_key,
+            "league": self.league,
+            "patch_id": self.patch_id,
+            "code": self.code,
+            "detail": self.detail,
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,6 +99,7 @@ class ImportReport:
     imported_game_count: int
     rejected_game_count: int
     issue_counts: tuple[tuple[str, int], ...]
+    issue_context_counts: tuple[tuple[str | None, str, str, int], ...]
     issues: tuple[ImportIssue, ...]
     truncated_issue_count: int
 
@@ -107,6 +116,15 @@ class ImportReport:
             "imported_game_count": self.imported_game_count,
             "rejected_game_count": self.rejected_game_count,
             "issue_counts": dict(self.issue_counts),
+            "issue_context_counts": [
+                {
+                    "patch_id": patch_id,
+                    "league": league,
+                    "code": code,
+                    "count": count,
+                }
+                for patch_id, league, code, count in self.issue_context_counts
+            ],
             "issues": [issue.to_dict() for issue in self.issues],
             "truncated_issue_count": self.truncated_issue_count,
         }
@@ -177,6 +195,9 @@ class OracleElixirCSVAdapter:
                 provenance=provenance,
             )
         issue_counts = Counter(issue.code for issue in issues)
+        issue_context_counts = Counter(
+            (issue.patch_id, issue.league, issue.code) for issue in issues
+        )
         report = ImportReport(
             source_version=content_hash,
             retrieved_at=retrieved_at,
@@ -188,6 +209,18 @@ class OracleElixirCSVAdapter:
             imported_game_count=len(matches),
             rejected_game_count=game_count - len(matches),
             issue_counts=tuple(sorted(issue_counts.items())),
+            issue_context_counts=tuple(
+                (*context, count)
+                for context, count in sorted(
+                    issue_context_counts.items(),
+                    key=lambda item: (
+                        item[0][0] is None,
+                        item[0][0] or "",
+                        item[0][1],
+                        item[0][2],
+                    ),
+                )
+            ),
             issues=tuple(issues[:MAX_ISSUE_DETAILS]),
             truncated_issue_count=max(0, len(issues) - MAX_ISSUE_DETAILS),
         )
@@ -231,7 +264,15 @@ class OracleElixirCSVAdapter:
                     provenance=provenance,
                 )
             except _GameValidationError as exc:
-                issues.append(ImportIssue(_display_key(current_key), exc.code, str(exc)))
+                issues.append(
+                    ImportIssue(
+                        game_key=_display_key(current_key),
+                        league=current_key[0],
+                        patch_id=_consistent_context_value(current_rows, "patch"),
+                        code=exc.code,
+                        detail=str(exc),
+                    )
+                )
             else:
                 matches.append(match)
                 events.extend(picks)
@@ -397,6 +438,14 @@ def _require_consistent_game_fields(rows: list[dict[str, str]]) -> None:
     split_values = {row["split"].strip() for row in rows}
     if len(split_values) != 1:
         raise _GameValidationError("INCONSISTENT_GAME_FIELD", "field split is inconsistent")
+
+
+def _consistent_context_value(rows: list[dict[str, str]], field: str) -> str | None:
+    values = {row[field].strip() for row in rows}
+    if len(values) != 1:
+        return None
+    value = next(iter(values))
+    return value or None
 
 
 def _parse_source_datetime(value: str, source_tz: tzinfo) -> datetime:

@@ -74,16 +74,21 @@ The public prototype will use only public or synthetic data. Any private team la
 
 ## Current implementation status
 
-Phase 1 now provides an executable, dependency-light evaluation foundation:
+The repository now combines the Phase 1 evaluation foundation with an operational Phase 2 current
+data path:
 
 - immutable typed records with separate `observed_at` and `available_at`,
 - reusable point-in-time filtering and strict future-data rejection,
 - offline adapters for patch, professional match, and high-Elo aggregate fixtures,
 - three transparent baselines,
 - deterministic top-K backtesting and JSON output,
-- a synthetic adoption/false-positive scenario.
+- a synthetic adoption/false-positive scenario,
+- reviewed Oracle's Elixir acquisition, validation, and immutable local archiving,
+- explicit current-patch publication readiness with disclosed exclusions,
+- an explainable real-data Meta Radar/Creator snapshot feed and public static dashboard.
 
-This is an evaluation skeleton, not a production data pipeline or a claim of predictive value.
+This is not yet evidence of predictive value. Real point-in-time daily snapshots must accumulate
+before Phase 3 can measure Recall@K, lead time, and false-alert behavior without hindsight leakage.
 
 ## Quick start
 
@@ -105,6 +110,7 @@ See also:
 - [`docs/SOURCE_REGISTRY.md`](docs/SOURCE_REGISTRY.md)
 - [`docs/ORACLES_ELIXIR_IMPORT.md`](docs/ORACLES_ELIXIR_IMPORT.md)
 - [`docs/OE_COVERAGE_AUDIT.md`](docs/OE_COVERAGE_AUDIT.md)
+- [`docs/LEAGUE_REGION_MAP.md`](docs/LEAGUE_REGION_MAP.md)
 - [`docs/OE_HISTORY_READINESS.md`](docs/OE_HISTORY_READINESS.md)
 - [`docs/META_RADAR.md`](docs/META_RADAR.md)
 - [`docs/SNAPSHOT_FEED.md`](docs/SNAPSHOT_FEED.md)
@@ -164,9 +170,11 @@ and normalizes it, and advances the Radar/Creator feed. If the provider is unava
 exists, it leaves the current public feed unchanged.
 
 Before an unattended publication, the annual coverage audit checks the selected patch's validated
-match, distinct-team, and mapped-region counts, plus rejected games and unknown leagues. It exposes
-the measurements and blocking reason codes rather than a composite score. A failed readiness gate
-is audited and leaves the existing public feed unchanged.
+match, distinct-team, and mapped-region counts, blocking import-contract issues, and unknown
+leagues. Reviewed incomplete games and missing team IDs may be excluded only when the remaining
+sample passes; their patch/league/code counts and warnings are embedded in the published feed. It
+exposes measurements and reason codes rather than a composite score. A failed readiness gate is
+audited and leaves the existing public feed unchanged.
 
 Historical backtests have a stricter contract. `audit-oe-history` verifies every archived metadata
 record and raw file, deeply imports each distinct content version at its earliest retrieval time,
@@ -197,11 +205,12 @@ so the report does not claim pick/ban presence.
 
 ## Analyst dashboard
 
-The `web/` app turns a Meta Radar JSON report into an interactive analyst surface. It includes
+The [public Meta Radar](https://mosejong.github.io/pro-meta-intelligence/) turns the currently
+published real provider snapshot into an interactive analyst surface. The `web/` app includes
 role and eligibility filters, selectable candidate evidence, quality warnings, regional comparison,
 and an evidence packet with event IDs, match IDs, source hashes, and formulas. It ships with a
-clearly marked deterministic demo snapshot and accepts local JSON through the browser; uploaded
-files are parsed on the device and are not sent to an application server.
+same-origin real feed plus a deterministic fallback snapshot, and accepts local JSON through the
+browser; uploaded files are parsed on the device and are not sent to an application server.
 
 ## Snapshot feed and Creator brief
 
