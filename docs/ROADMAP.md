@@ -56,6 +56,11 @@ signals into deterministic review cards with evidence, counterevidence, a practi
 condition, and an explicit public/private data boundary. This is an operational brief, not evidence
 that the ordering predicts future adoption.
 
+Opponent Prep Pack v1 is implemented on the same point-in-time feed. It preserves team names and
+pick/ban order from OE, summarizes up to ten same-patch games per team, separates Blue/Red and
+phase-one/phase-two behavior, exposes incomplete-ban and low-sample warnings, and retains exact
+match/event evidence. Opponent intent and private readiness remain explicit non-claims.
+
 ## Phase 3 — Blind Spot Benchmark
 
 Define review-candidate labels and historical evaluation windows.

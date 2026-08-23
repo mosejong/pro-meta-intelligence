@@ -97,9 +97,14 @@ class MatchRecord:
     observed_at: datetime
     available_at: datetime
     provenance: Provenance
+    blue_team_name: str | None = None
+    red_team_name: str | None = None
 
     def __post_init__(self) -> None:
         require_temporal_order(self.observed_at, self.available_at)
+        for value in (self.blue_team_name, self.red_team_name):
+            if value is not None and not value.strip():
+                raise ValueError("team names cannot be blank when supplied")
 
 
 @dataclass(frozen=True, slots=True)

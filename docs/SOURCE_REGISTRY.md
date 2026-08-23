@@ -56,11 +56,12 @@ IDs `1-10`, `100`, and `200`. A game is normalized only when all of the followin
 - one Blue and one Red team row with exactly one winner and first-pick side,
 - five unique player positions and stable team IDs per side,
 - `pick1` through `pick5` matching the five player champions,
+- available `ban1` through `ban5` values retained with unresolved role,
 - a game timestamp that does not occur after retrieval.
 
 Invalid games are rejected as a unit and included in a machine-readable QA report. Picks are mapped
-to global pick order and player roles. Bans are intentionally omitted because the file does not
-provide a reliable role for a banned champion.
+to global pick order and player roles. Bans are mapped to a separate global ban order with
+`role=UNKNOWN`; missing individual ban values remain explicit Opponent Prep quality warnings.
 
 ### `riot-data-dragon`
 

@@ -28,6 +28,7 @@ PLAYER_PARTICIPANT_IDS = frozenset(str(value) for value in range(1, 11))
 TEAM_PARTICIPANT_IDS = frozenset({"100", "200"})
 EXPECTED_PARTICIPANT_IDS = PLAYER_PARTICIPANT_IDS | TEAM_PARTICIPANT_IDS
 PICK_COLUMNS = tuple(f"pick{value}" for value in range(1, 6))
+BAN_COLUMNS = tuple(f"ban{value}" for value in range(1, 6))
 REQUIRED_COLUMNS = frozenset(
     {
         "gameid",
@@ -46,6 +47,7 @@ REQUIRED_COLUMNS = frozenset(
         "firstPick",
         "champion",
         "result",
+        *BAN_COLUMNS,
         *PICK_COLUMNS,
     }
 )
@@ -353,6 +355,8 @@ def _normalize_game(
         observed_at=observed_at,
         available_at=retrieved_at,
         provenance=provenance,
+        blue_team_name=side_rows[Side.BLUE]["teamname"].strip() or None,
+        red_team_name=side_rows[Side.RED]["teamname"].strip() or None,
     )
 
     role_by_side_champion: dict[tuple[Side, str], str] = {}
@@ -389,8 +393,28 @@ def _normalize_game(
     first_side = first_pick_sides[0]
     second_side = Side.RED if first_side is Side.BLUE else Side.BLUE
     pick_sequences = {first_side: (1, 4, 5, 8, 9), second_side: (2, 3, 6, 7, 10)}
-    picks: list[PickBanEvent] = []
+    draft_events: list[PickBanEvent] = []
+    ban_sequences = {first_side: (1, 3, 5, 8, 10), second_side: (2, 4, 6, 7, 9)}
     for side, team_row in side_rows.items():
+        for column, sequence in zip(BAN_COLUMNS, ban_sequences[side], strict=True):
+            champion = team_row[column].strip()
+            if not champion:
+                continue
+            draft_events.append(
+                PickBanEvent(
+                    event_id=f"{match_id}:ban:{sequence}",
+                    match_id=match_id,
+                    sequence=sequence,
+                    team_id=team_row["teamid"].strip(),
+                    side=side,
+                    action=DraftAction.BAN,
+                    champion_id=champion,
+                    role="UNKNOWN",
+                    observed_at=observed_at,
+                    available_at=retrieved_at,
+                    provenance=provenance,
+                )
+            )
         ordered_champions = [team_row[column].strip() for column in PICK_COLUMNS]
         player_champions = {
             champion for candidate_side, champion in role_by_side_champion if candidate_side is side
@@ -410,7 +434,7 @@ def _normalize_game(
                     "PICK_ROLE_MISMATCH",
                     f"{column} does not match a player champion on {side.value}",
                 )
-            picks.append(
+            draft_events.append(
                 PickBanEvent(
                     event_id=f"{match_id}:pick:{sequence}",
                     match_id=match_id,
@@ -425,7 +449,9 @@ def _normalize_game(
                     provenance=provenance,
                 )
             )
-    return match, tuple(sorted(picks, key=lambda event: event.sequence))
+    return match, tuple(
+        sorted(draft_events, key=lambda event: (event.action.value, event.sequence))
+    )
 
 
 def _require_consistent_game_fields(rows: list[dict[str, str]]) -> None:

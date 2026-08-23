@@ -23,7 +23,8 @@ feed/
 ```
 
 - Snapshot directories are immutable and content-addressed.
-- `current.json` is the newest Radar report by cutoff.
+- `current.json` is the newest Radar report by cutoff. It also embeds the matching
+  `opponent_prep` artifact so the public UI cannot mix team tendencies from a different cutoff.
 - `current-creator.json` is the matching Creator brief.
 - `index.json` lists recent versions and their hashes and relative paths.
 - Limiting index entries never deletes immutable snapshot directories.

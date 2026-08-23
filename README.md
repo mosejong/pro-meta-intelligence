@@ -88,6 +88,8 @@ data path:
 - an explainable real-data Meta Radar/Creator snapshot feed and public static dashboard,
 - a meeting-ready Team Decision Brief with evidence, counterevidence, practice questions, stop
   conditions, print/PDF output, and machine-readable JSON handoff.
+- a selectable Opponent Prep Pack with same-patch side splits, phase-aware picks and bans, observed
+  first rotations, quality warnings, and exact match evidence.
 
 This is not yet evidence of predictive value. Real point-in-time daily snapshots must accumulate
 before Phase 3 can measure Recall@K, lead time, and false-alert behavior without hindsight leakage.
@@ -119,6 +121,7 @@ See also:
 - [`docs/FEED_JOB.md`](docs/FEED_JOB.md)
 - [`docs/CREATOR_BRIEF.md`](docs/CREATOR_BRIEF.md)
 - [`docs/TEAM_DECISION_BRIEF.md`](docs/TEAM_DECISION_BRIEF.md)
+- [`docs/OPPONENT_PREP.md`](docs/OPPONENT_PREP.md)
 - [`docs/COMPETITIVE_POSITIONING.md`](docs/COMPETITIVE_POSITIONING.md)
 - [`web/README.md`](web/README.md)
 - [`docs/PRODUCT_MODES.md`](docs/PRODUCT_MODES.md)

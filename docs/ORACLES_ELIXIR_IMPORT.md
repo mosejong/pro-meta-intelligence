@@ -7,7 +7,8 @@ CSV files through a public Google Drive folder. The page states that files are f
 commentators, and fans, update once daily, and have no value in being downloaded more frequently.
 The 2026 file was visible as a 59.8 MB CSV. Its live header matched the fields used by this adapter,
 including `gameid`, `datacompleteness`, `league`, `date`, `patch`, `participantid`, `side`,
-`position`, `teamid`, `firstPick`, `champion`, and `pick1` through `pick5`.
+`position`, `teamid`, `teamname`, `firstPick`, `champion`, `ban1` through `ban5`, and `pick1`
+through `pick5`.
 
 `FETCH_PUBLISHED_CSV` is now enabled for the exact 2026 file ID verified in that official folder.
 The downloader does not enumerate Drive or accept caller-supplied URLs. It enforces the provider's
@@ -48,9 +49,11 @@ The source does not expose a stable series identifier in the reviewed schema. `s
 clearly named game-scoped placeholder rather than a fabricated series grouping. Series reconstruction
 is deferred until a separately validated contract exists.
 
-The importer emits ten pick events. It converts each team's `pick1-pick5` order into standard global
-pick slots using `firstPick`, then joins champions back to player rows for roles. It does not emit
-bans because banned champions have no reliable role in this source.
+The importer emits ten pick events and up to ten ban events. It converts each team's `pick1-pick5`
+and `ban1-ban5` orders into separate standard global slots using `firstPick`, then joins picked
+champions back to player rows for roles. Banned champions deliberately use `role=UNKNOWN`; a role
+is not inferred from draft context. A missing individual ban is omitted without discarding the
+otherwise valid game and is surfaced later as `INCOMPLETE_BAN_EVIDENCE`.
 
 The `split` column must exist because it is part of the reviewed file schema, but a consistently
 blank value within one game is accepted. It only enriches the display tournament name and is not

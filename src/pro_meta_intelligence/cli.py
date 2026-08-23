@@ -22,7 +22,8 @@ from pro_meta_intelligence.ingestion.oracles_elixir import (
     OracleElixirCSVAdapter,
     OracleElixirImport,
 )
-from pro_meta_intelligence.models import BacktestWindow
+from pro_meta_intelligence.models import BacktestWindow, DraftAction
+from pro_meta_intelligence.opponent import OpponentPrepBuilder, OpponentPrepConfig
 from pro_meta_intelligence.publishing import (
     FeedJobAlreadyRunning,
     FeedJobOperationResult,
@@ -330,7 +331,12 @@ def _import_oe(args: argparse.Namespace) -> int:
         "network_collection_performed": False,
         "normalization": {
             "match_count": len(imported.matches),
-            "pick_event_count": len(imported.draft_events),
+            "pick_event_count": sum(
+                event.action is DraftAction.PICK for event in imported.draft_events
+            ),
+            "ban_event_count": sum(
+                event.action is DraftAction.BAN for event in imported.draft_events
+            ),
             "league_counts": dict(
                 sorted(Counter(match.league for match in imported.matches).items())
             ),
@@ -667,6 +673,18 @@ def _radar_payload(
     league_regions = _load_league_regions(args.region_map)
     radar = MetaRadar().build(imported.matches, imported.draft_events, config, league_regions)
     payload = dict(radar.to_dict())
+    payload["opponent_prep"] = (
+        OpponentPrepBuilder()
+        .build(
+            imported.matches,
+            imported.draft_events,
+            OpponentPrepConfig(
+                cutoff=config.cutoff,
+                patch_id=str(payload["patch_id"]),
+            ),
+        )
+        .to_dict()
+    )
     payload["input"] = {
         "authenticity": getattr(args, "input_authenticity", "UNVERIFIED_CALLER_SUPPLIED_FILE"),
         "network_collection_performed": getattr(args, "source_network_collection_performed", False),

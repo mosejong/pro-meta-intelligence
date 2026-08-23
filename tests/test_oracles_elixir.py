@@ -10,7 +10,7 @@ from pro_meta_intelligence.ingestion.oracles_elixir import (
     OracleElixirSchemaError,
 )
 from pro_meta_intelligence.leakage import filter_available
-from pro_meta_intelligence.models import Side
+from pro_meta_intelligence.models import DraftAction, Side
 from pro_meta_intelligence.sources import SourcePolicyError, SourceRegistry, SourceStatus
 
 FIXTURE = Path(__file__).parent / "fixtures" / "oracles_elixir_game.csv"
@@ -26,11 +26,11 @@ def import_fixture(path: Path = FIXTURE):
     )
 
 
-def test_import_normalizes_complete_game_and_global_pick_sequence() -> None:
+def test_import_normalizes_complete_game_and_global_draft_sequences() -> None:
     imported = import_fixture()
 
     assert len(imported.matches) == 1
-    assert len(imported.draft_events) == 10
+    assert len(imported.draft_events) == 20
     match = imported.matches[0]
     assert match.match_id == "oe:LCK:GAME001"
     assert match.winner_team_id == "oe:team:red"
@@ -38,14 +38,37 @@ def test_import_normalizes_complete_game_and_global_pick_sequence() -> None:
     assert match.available_at == RETRIEVED_AT
     assert match.provenance.source_uri == "https://drive.google.com/example"
     assert match.provenance.content_hash.startswith("sha256:")
+    assert match.blue_team_name == "Blue Team"
+    assert match.red_team_name == "Red Team"
 
-    picks = imported.draft_events
+    picks = tuple(event for event in imported.draft_events if event.action is DraftAction.PICK)
+    bans = tuple(event for event in imported.draft_events if event.action is DraftAction.BAN)
     assert [event.sequence for event in picks] == list(range(1, 11))
     assert picks[0].champion_id == "Xin Zhao"
     assert picks[0].role == "JUNGLE"
     assert picks[0].side is Side.BLUE
     assert picks[1].champion_id == "Zaahen"
+    assert [event.sequence for event in bans] == list(range(1, 11))
+    assert bans[0].champion_id == "Yone"
+    assert bans[0].role == "UNKNOWN"
+    assert bans[1].champion_id == "Aurora"
     assert imported.report.rejected_game_count == 0
+
+
+def test_import_preserves_match_when_optional_ban_value_is_missing(tmp_path) -> None:
+    rows = list(csv.DictReader(FIXTURE.open(encoding="utf-8", newline="")))
+    rows[10]["ban5"] = ""
+    path = tmp_path / "missing-ban.csv"
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=rows[0])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    imported = import_fixture(path)
+
+    assert len(imported.matches) == 1
+    assert len(imported.draft_events) == 19
+    assert len([event for event in imported.draft_events if event.action is DraftAction.BAN]) == 9
 
 
 def test_current_snapshot_cannot_enter_an_earlier_historical_cutoff() -> None:

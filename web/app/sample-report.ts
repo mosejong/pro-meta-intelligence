@@ -31,6 +31,63 @@ export const sampleReport: RadarReport = {
     recent_match_ids: ["r-eu-1", "r-eu-2", "r-kr-1", "r-kr-2"],
     source_versions: [{ source_id: "synthetic-meta-radar-v1", source_version: "v1", content_hash: "fixture:meta-radar-v1" }],
   },
+  opponent_prep: {
+    schema_version: "1",
+    artifact_type: "opponent-prep-pack",
+    fixture_only: true,
+    cutoff: "2026-08-15T12:00:00+00:00",
+    patch_id: "16.14",
+    team_count: 2,
+    config: { maximum_games_per_team: 10, minimum_games_for_review: 3, top_champions: 5 },
+    boundary: "Synthetic public-match demonstration only.",
+    formulae: {
+      champion_game_rate: "distinct selected team games / selected team games",
+      side_win_rate: "wins on side / games on side",
+      first_pick_rate: "games owning global pick sequence 1 / selected team games",
+      phase_1: "pick or ban sequence <= 6 within that action type",
+      phase_2: "pick or ban sequence >= 7 within that action type",
+    },
+    evidence_index: {
+      source_versions: [{ source_id: "synthetic-meta-radar-v1", source_version: "v1", content_hash: "fixture:meta-radar-v1" }],
+    },
+    teams: [
+      {
+        team_id: "synthetic:team:alpha", team_name: "Seoul Phoenix", team_name_aliases: ["Seoul Phoenix"], leagues: ["LCK"],
+        game_count: 4, win_count: 3, win_rate: 0.75, first_pick_count: 2, first_pick_rate: 0.5,
+        side_stats: { BLUE: { game_count: 2, win_count: 2, win_rate: 1 }, RED: { game_count: 2, win_count: 1, win_rate: 0.5 } },
+        priority_picks: [
+          { champion_id: "RekSai", role: "JUNGLE", game_count: 2, game_rate: 0.5, phase_1_count: 2, phase_2_count: 0, evidence_event_ids: ["r-kr-1:RekSai:1", "r-kr-2:RekSai:1"] },
+          { champion_id: "Ahri", role: "MID", game_count: 2, game_rate: 0.5, phase_1_count: 1, phase_2_count: 1, evidence_event_ids: ["r-kr-1:Ahri:4", "r-kr-2:Ahri:7"] },
+          { champion_id: "Rumble", role: "TOP", game_count: 1, game_rate: 0.25, phase_1_count: 1, phase_2_count: 0, evidence_event_ids: ["r-kr-1:Rumble:5"] },
+        ],
+        frequent_bans: [
+          { champion_id: "Azir", game_count: 3, game_rate: 0.75, phase_1_count: 2, phase_2_count: 1, evidence_event_ids: ["b1", "b2", "b3"] },
+          { champion_id: "Vi", game_count: 2, game_rate: 0.5, phase_1_count: 2, phase_2_count: 0, evidence_event_ids: ["b4", "b5"] },
+        ],
+        received_bans: [
+          { champion_id: "RekSai", game_count: 2, game_rate: 0.5, phase_1_count: 2, phase_2_count: 0, evidence_event_ids: ["ob1", "ob2"] },
+          { champion_id: "Ahri", game_count: 1, game_rate: 0.25, phase_1_count: 0, phase_2_count: 1, evidence_event_ids: ["ob3"] },
+        ],
+        first_rotations: [
+          { side: "BLUE", champions: ["RekSai", "Ahri", "Rumble"], game_count: 2, evidence_match_ids: ["r-kr-1", "r-kr-2"] },
+          { side: "RED", champions: ["Ahri", "RekSai", "Mundo"], game_count: 1, evidence_match_ids: ["r-kr-3"] },
+        ],
+        quality_flags: [],
+        evidence: { match_ids: ["r-kr-1", "r-kr-2", "r-kr-3", "r-kr-4"], draft_event_ids: ["r-kr-1:RekSai:1", "r-kr-2:RekSai:1"], first_observed_at: "2026-08-09T12:00:00+00:00", last_observed_at: "2026-08-15T10:00:00+00:00" },
+      },
+      {
+        team_id: "synthetic:team:beta", team_name: "Berlin Forge", team_name_aliases: ["Berlin Forge"], leagues: ["LEC"],
+        game_count: 2, win_count: 1, win_rate: 0.5, first_pick_count: 1, first_pick_rate: 0.5,
+        side_stats: { BLUE: { game_count: 1, win_count: 1, win_rate: 1 }, RED: { game_count: 1, win_count: 0, win_rate: 0 } },
+        priority_picks: [{ champion_id: "Mundo", role: "JUNGLE", game_count: 2, game_rate: 1, phase_1_count: 1, phase_2_count: 1, evidence_event_ids: ["r-eu-1:Mundo:1", "r-eu-2:Mundo:1"] }],
+        frequent_bans: [{ champion_id: "RekSai", game_count: 1, game_rate: 0.5, phase_1_count: 1, phase_2_count: 0, evidence_event_ids: ["eu-b1"] }],
+        received_bans: [{ champion_id: "Mundo", game_count: 1, game_rate: 0.5, phase_1_count: 1, phase_2_count: 0, evidence_event_ids: ["eu-ob1"] }],
+        first_rotations: [{ side: "BLUE", champions: ["Mundo", "Syndra", "Jax"], game_count: 1, evidence_match_ids: ["r-eu-1"] }],
+        quality_flags: ["LOW_MATCH_SAMPLE"],
+        evidence: { match_ids: ["r-eu-1", "r-eu-2"], draft_event_ids: ["r-eu-1:Mundo:1", "r-eu-2:Mundo:1"], first_observed_at: "2026-08-10T12:00:00+00:00", last_observed_at: "2026-08-14T12:00:00+00:00" },
+      },
+    ],
+  },
   entries: [
     {
       rank: 1, champion_id: "RekSai", role: "JUNGLE", eligible_for_review: true, quality_flags: [],

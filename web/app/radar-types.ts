@@ -35,6 +35,65 @@ export type RadarEntry = {
   evidence_event_ids: string[];
 };
 
+export type OpponentChampionTendency = {
+  champion_id: string;
+  role?: string;
+  game_count: number;
+  game_rate: number;
+  phase_1_count: number;
+  phase_2_count: number;
+  evidence_event_ids: string[];
+};
+
+export type OpponentTeam = {
+  team_id: string;
+  team_name: string;
+  team_name_aliases: string[];
+  leagues: string[];
+  game_count: number;
+  win_count: number;
+  win_rate: number;
+  first_pick_count: number;
+  first_pick_rate: number;
+  side_stats: Record<string, { game_count: number; win_count: number; win_rate: number | null }>;
+  priority_picks: OpponentChampionTendency[];
+  frequent_bans: OpponentChampionTendency[];
+  received_bans: OpponentChampionTendency[];
+  first_rotations: Array<{
+    side: string;
+    champions: string[];
+    game_count: number;
+    evidence_match_ids: string[];
+  }>;
+  quality_flags: string[];
+  evidence: {
+    match_ids: string[];
+    draft_event_ids: string[];
+    first_observed_at: string;
+    last_observed_at: string;
+  };
+};
+
+export type OpponentPrep = {
+  schema_version: "1";
+  artifact_type: "opponent-prep-pack";
+  fixture_only: boolean;
+  cutoff: string;
+  patch_id: string;
+  team_count: number;
+  config: {
+    maximum_games_per_team: number;
+    minimum_games_for_review: number;
+    top_champions: number;
+  };
+  boundary: string;
+  formulae: Record<string, string>;
+  evidence_index: {
+    source_versions: Array<{ source_id: string; source_version: string; content_hash: string }>;
+  };
+  teams: OpponentTeam[];
+};
+
 export type RadarReport = {
   schema_version: "1";
   fixture_only: boolean;
@@ -72,6 +131,7 @@ export type RadarReport = {
       issue_counts: Record<string, number>;
     } | null;
   };
+  opponent_prep?: OpponentPrep;
   entries: RadarEntry[];
 };
 
@@ -96,6 +156,7 @@ export function isRadarReport(value: unknown): value is RadarReport {
     !Array.isArray(report.entries)
   ) return false;
   if (report.publication_readiness !== undefined && !isPublicationReadiness(report.publication_readiness)) return false;
+  if (report.opponent_prep !== undefined && !isOpponentPrep(report.opponent_prep)) return false;
   return report.entries.every(isRadarEntry);
 }
 
@@ -168,5 +229,88 @@ function isPublicationReadiness(value: unknown) {
     typeof quality.discovered_game_count === "number" &&
     isRecord(quality.issue_counts) &&
     Object.values(quality.issue_counts).every((count) => typeof count === "number")
+  );
+}
+
+function isOpponentPrep(value: unknown) {
+  if (!isRecord(value)) return false;
+  if (
+    value.schema_version !== "1" ||
+    value.artifact_type !== "opponent-prep-pack" ||
+    typeof value.fixture_only !== "boolean" ||
+    typeof value.cutoff !== "string" ||
+    typeof value.patch_id !== "string" ||
+    typeof value.team_count !== "number" ||
+    !isRecord(value.config) ||
+    typeof value.config.maximum_games_per_team !== "number" ||
+    typeof value.config.minimum_games_for_review !== "number" ||
+    typeof value.config.top_champions !== "number" ||
+    typeof value.boundary !== "string" ||
+    !isRecord(value.formulae) ||
+    !isRecord(value.evidence_index) ||
+    !Array.isArray(value.evidence_index.source_versions) ||
+    !Array.isArray(value.teams)
+  ) return false;
+  return value.team_count === value.teams.length && value.teams.every(isOpponentTeam);
+}
+
+function isOpponentTeam(team: unknown) {
+  if (!isRecord(team)) return false;
+  if (!(
+    isRecord(team) &&
+    typeof team.team_id === "string" &&
+    typeof team.team_name === "string" &&
+    Array.isArray(team.team_name_aliases) && team.team_name_aliases.every((item) => typeof item === "string") &&
+    typeof team.game_count === "number" &&
+    typeof team.win_count === "number" &&
+    typeof team.win_rate === "number" &&
+    typeof team.first_pick_count === "number" &&
+    typeof team.first_pick_rate === "number" &&
+    Array.isArray(team.leagues) && team.leagues.every((item) => typeof item === "string") &&
+    Array.isArray(team.priority_picks) && team.priority_picks.every(isOpponentTendency) &&
+    Array.isArray(team.frequent_bans) && team.frequent_bans.every(isOpponentTendency) &&
+    Array.isArray(team.received_bans) && team.received_bans.every(isOpponentTendency) &&
+    Array.isArray(team.first_rotations) && team.first_rotations.every(isOpponentRotation) &&
+    Array.isArray(team.quality_flags) && team.quality_flags.every((item) => typeof item === "string") &&
+    isRecord(team.side_stats) &&
+    isRecord(team.evidence) &&
+    Array.isArray(team.evidence.match_ids) && team.evidence.match_ids.every((item) => typeof item === "string") &&
+    Array.isArray(team.evidence.draft_event_ids) && team.evidence.draft_event_ids.every((item) => typeof item === "string") &&
+    typeof team.evidence.first_observed_at === "string" &&
+    typeof team.evidence.last_observed_at === "string"
+  )) return false;
+  return ["BLUE", "RED"].every((side) => {
+    const stat = team.side_stats[side];
+    return Boolean(
+      isRecord(stat) &&
+      typeof stat.game_count === "number" &&
+      typeof stat.win_count === "number" &&
+      isNullableNumber(stat.win_rate)
+    );
+  });
+}
+
+function isOpponentTendency(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    typeof value.champion_id === "string" &&
+    (value.role === undefined || typeof value.role === "string") &&
+    typeof value.game_count === "number" &&
+    typeof value.game_rate === "number" &&
+    typeof value.phase_1_count === "number" &&
+    typeof value.phase_2_count === "number" &&
+    Array.isArray(value.evidence_event_ids) &&
+    value.evidence_event_ids.every((item) => typeof item === "string")
+  );
+}
+
+function isOpponentRotation(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    typeof value.side === "string" &&
+    Array.isArray(value.champions) && value.champions.every((item) => typeof item === "string") &&
+    typeof value.game_count === "number" &&
+    Array.isArray(value.evidence_match_ids) &&
+    value.evidence_match_ids.every((item) => typeof item === "string")
   );
 }

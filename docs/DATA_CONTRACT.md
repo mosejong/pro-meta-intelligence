@@ -42,6 +42,8 @@ start_time
 patch_id
 blue_team_id
 red_team_id
+blue_team_name_if_available
+red_team_name_if_available
 winner_team_id
 source_id
 available_at
@@ -57,6 +59,9 @@ action_type  # PICK/BAN
 champion_id
 role_if_resolved
 ```
+
+For OE bans, `role_if_resolved=UNKNOWN` is an explicit value rather than a role guess. Pick and ban
+sequences each use their own standard global `1-10` order.
 
 ### SoloQObservation
 ```text

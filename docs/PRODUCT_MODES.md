@@ -22,6 +22,11 @@ question, and a stop condition. It supports print/PDF and a JSON handoff while e
 player familiarity, scrim results, and team intent as unavailable until an authorized private
 adapter is connected. See [`TEAM_DECISION_BRIEF.md`](TEAM_DECISION_BRIEF.md).
 
+Opponent Prep Pack v1 adds a second operational artifact: staff can select any team in the current
+published patch and inspect side samples, phase-one/phase-two picks and bans, observed first
+rotations, quality warnings, and exact source match IDs. The output keeps observed behavior
+separate from inferred intent. See [`OPPONENT_PREP.md`](OPPONENT_PREP.md).
+
 ### Competitive boundary
 
 The product does not compete for summoner lookup, builds, runes, generic champion tiers, schedules,

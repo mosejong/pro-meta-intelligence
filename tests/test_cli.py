@@ -61,6 +61,7 @@ def test_import_oe_cli_writes_qa_and_normalization_summary(tmp_path) -> None:
     assert payload["network_collection_performed"] is False
     assert payload["normalization"]["match_count"] == 1
     assert payload["normalization"]["pick_event_count"] == 10
+    assert payload["normalization"]["ban_event_count"] == 10
     assert payload["import_report"]["rejected_game_count"] == 0
 
 
@@ -248,6 +249,8 @@ def test_build_radar_cli_reuses_validated_oe_import(tmp_path) -> None:
     assert payload["windows"]["recent"]["match_count"] == 1
     assert payload["input"]["network_collection_performed"] is False
     assert payload["input"]["import_report"]["imported_game_count"] == 1
+    assert payload["opponent_prep"]["team_count"] == 2
+    assert payload["opponent_prep"]["teams"][0]["frequent_bans"]
 
 
 def test_build_creator_brief_cli_consumes_radar_json(tmp_path) -> None:
@@ -329,6 +332,8 @@ def test_refresh_feed_cli_is_idempotent_and_performs_no_network_collection(tmp_p
     assert first["network_collection_performed"] is False
     assert (feed / "current.json").is_file()
     assert (feed / "current-creator.json").is_file()
+    current = json.loads((feed / "current.json").read_text(encoding="utf-8"))
+    assert current["opponent_prep"]["artifact_type"] == "opponent-prep-pack"
 
     assert main(command) == 0
     second = json.loads(summary.read_text(encoding="utf-8"))

@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- this dual vinext/Vite build uses stable Riot CDN and relative static assets */
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { isRadarReport, type RadarEntry, type RadarReport } from "./radar-types";
+import { isRadarReport, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport } from "./radar-types";
 import { sampleReport } from "./sample-report";
 import { buildTeamBrief, serializeTeamBrief } from "./team-brief";
 
@@ -41,6 +41,11 @@ const regionLabels: Record<string, string> = {
   LATIN_AMERICA: "라틴",
   NORTH_AMERICA: "북미",
   PACIFIC: "태평양권",
+};
+const opponentFlagLabels: Record<string, string> = {
+  LOW_MATCH_SAMPLE: "경기 표본 부족",
+  INCOMPLETE_BAN_EVIDENCE: "일부 밴 기록 누락",
+  MISSING_TEAM_DISPLAY_NAME: "팀 표시명 누락",
 };
 
 type FeedState = {
@@ -120,6 +125,33 @@ function qualityState(report: RadarReport) {
   return { label, critical, unknown, excluded, blocking, importQuality, publication };
 }
 
+function ChampionTendencyList({ items, emptyLabel }: { items: OpponentChampionTendency[]; emptyLabel: string }) {
+  if (!items.length) return <p className="tendency-empty">{emptyLabel}</p>;
+  return <div className="tendency-list">{items.map((item) => <div className="tendency-item" key={`${item.champion_id}:${item.role ?? "BAN"}`}>
+    <img src={championImageUrl(item.champion_id)} alt="" loading="lazy" />
+    <span><strong>{item.champion_id}</strong><small>{item.role ? `${roleLabels[item.role] ?? item.role} · P1 ${item.phase_1_count} · P2 ${item.phase_2_count}` : `1페이즈 ${item.phase_1_count} · 2페이즈 ${item.phase_2_count}`}</small></span>
+    <b>{percent(item.game_rate)}</b>
+  </div>)}</div>;
+}
+
+function preparationQuestions(team: OpponentTeam) {
+  const topPick = team.priority_picks[0];
+  const topBan = team.frequent_bans[0];
+  const receivedBan = team.received_bans[0];
+  const rotation = team.first_rotations[0];
+  return [
+    topPick
+      ? `${topPick.champion_id}이 열렸을 때 ${roleLabels[topPick.role ?? ""] ?? topPick.role ?? "해당 역할"} 우선순위를 유지하는지, 어떤 조합에서 달라지는지 확인한다.`
+      : "반복 픽 표본이 쌓이기 전까지 특정 챔피언을 핵심 선호로 단정하지 않는다.",
+    topBan || receivedBan
+      ? `상대가 자주 밴한 ${topBan?.champion_id ?? "후보"}와 상대가 받은 ${receivedBan?.champion_id ?? "후보"}의 맥락을 분리해 우리 밴 예산을 검토한다.`
+      : "밴 기록이 부족하므로 상대 의도를 추정하지 말고 원본 드래프트를 먼저 확인한다.",
+    rotation
+      ? `${rotation.side === "BLUE" ? "블루" : "레드"}에서 ${rotation.champions.join(" → ")} 로테이션이 다시 나오면 준비한 응답 순서가 작동하는지 점검한다.`
+      : "반복된 1차 로테이션이 없어 단일 경기 패턴을 재현 가능성으로 오해하지 않는다.",
+  ];
+}
+
 export function RadarDashboard() {
   const [report, setReport] = useState<RadarReport>(sampleReport);
   const [selectedKey, setSelectedKey] = useState(keyOf(sampleReport.entries[0]));
@@ -127,6 +159,7 @@ export function RadarDashboard() {
   const [eligibleOnly, setEligibleOnly] = useState(false);
   const [visibleLimit, setVisibleLimit] = useState(12);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [opponentId, setOpponentId] = useState(sampleReport.opponent_prep?.teams[0]?.team_id ?? "");
   const [feedState, setFeedState] = useState<FeedState>({
     kind: "connecting",
     label: "FEED CONNECTING",
@@ -144,9 +177,11 @@ export function RadarDashboard() {
     [eligibleOnly, report, role],
   );
   const teamBrief = useMemo(() => buildTeamBrief(report), [report]);
+  const opponentTeams = report.opponent_prep?.teams ?? [];
   const displayedEntries = visibleEntries.slice(0, visibleLimit);
   const selected = visibleEntries.find((entry) => keyOf(entry) === selectedKey) ?? visibleEntries[0] ?? report.entries[0];
   const selectedBrief = teamBrief.find((card) => keyOf(card.entry) === selectedKey) ?? teamBrief[0];
+  const selectedOpponent = opponentTeams.find((team) => team.team_id === opponentId) ?? opponentTeams[0];
   const quality = qualityState(report);
   const eligibleCount = report.entries.filter((entry) => entry.eligible_for_review).length;
 
@@ -163,6 +198,7 @@ export function RadarDashboard() {
       setRole("ALL");
       setEligibleOnly(false);
       setVisibleLimit(12);
+      setOpponentId(parsed.opponent_prep?.teams[0]?.team_id ?? "");
       setFeedState({
         kind: parsed.fixture_only ? "demo" : "published",
         label: parsed.fixture_only ? "PUBLISHED DEMO FEED" : "LIVE PUBLISHED FEED",
@@ -208,6 +244,7 @@ export function RadarDashboard() {
       setRole("ALL");
       setEligibleOnly(false);
       setVisibleLimit(12);
+      setOpponentId(parsed.opponent_prep?.teams[0]?.team_id ?? "");
       manualOverride.current = true;
       setFeedState({ kind: "uploaded", label: "LOCAL FILE", detail: file.name.toUpperCase() });
     } catch {
@@ -228,6 +265,26 @@ export function RadarDashboard() {
     URL.revokeObjectURL(url);
   }
 
+  function downloadOpponentPrep() {
+    if (!report.opponent_prep || !selectedOpponent) return;
+    const payload = JSON.stringify({
+      schema_version: report.opponent_prep.schema_version,
+      artifact_type: report.opponent_prep.artifact_type,
+      cutoff: report.opponent_prep.cutoff,
+      patch_id: report.opponent_prep.patch_id,
+      boundary: report.opponent_prep.boundary,
+      source_versions: report.opponent_prep.evidence_index.source_versions,
+      team: selectedOpponent,
+    }, null, 2);
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `opponent-prep-${selectedOpponent.team_name.replace(/[^A-Za-z0-9가-힣_-]+/g, "-")}-${report.patch_id}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
   const regions = selected ? [
     { region: "GLOBAL", pick_presence: selected.metrics.current_pick_presence, sample_eligible: true },
     ...selected.region_presence,
@@ -242,6 +299,7 @@ export function RadarDashboard() {
         </a>
         <nav aria-label="주요 메뉴">
           <a className="active" href="#team-brief">팀 브리프</a>
+          <a href="#opponent-prep">상대 분석</a>
           <a href="#radar">메타 레이더</a>
           <a href="#evidence">선택 근거</a>
           <a href="#method">읽는 법</a>
@@ -332,9 +390,57 @@ export function RadarDashboard() {
         </div> : <div className="brief-empty">검토 기준을 통과한 공개 경기 신호가 없습니다.</div>}
       </section>
 
+      <section className="opponent-prep" id="opponent-prep">
+        <div className="section-heading opponent-heading">
+          <div>
+            <p className="eyebrow">02 · OPPONENT PREP PACK</p>
+            <h2>상대팀 드래프트 준비 자료</h2>
+            <p className="section-description">최근 동일 패치 경기만 사용해 진영, 1·2페이즈 픽/밴, 반복 로테이션을 근거 경기와 함께 정리합니다.</p>
+          </div>
+          {selectedOpponent && <div className="opponent-controls">
+            <label>상대팀<select value={selectedOpponent.team_id} onChange={(event) => setOpponentId(event.target.value)}>{opponentTeams.map((team) => <option key={team.team_id} value={team.team_id}>{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>)}</select></label>
+            <button type="button" onClick={downloadOpponentPrep}>선택 팀 JSON</button>
+          </div>}
+        </div>
+
+        {selectedOpponent ? <div className="opponent-pack">
+          <header className="opponent-profile">
+            <div className="team-monogram" aria-hidden="true">{selectedOpponent.team_name.slice(0, 2).toUpperCase()}</div>
+            <div><span>{selectedOpponent.leagues.join(" · ")} · PATCH {report.patch_id}</span><h3>{selectedOpponent.team_name}</h3><p>{formatCutoff(selectedOpponent.evidence.first_observed_at)}부터 {formatCutoff(selectedOpponent.evidence.last_observed_at)}까지</p></div>
+            <div className="opponent-flags">{selectedOpponent.quality_flags.length ? selectedOpponent.quality_flags.map((flag) => <b key={flag}>{opponentFlagLabels[flag] ?? flag}</b>) : <b className="clear">표본 경고 없음</b>}</div>
+          </header>
+
+          <div className="opponent-summary" aria-label="상대팀 표본 요약">
+            <article><span>분석 경기</span><strong>{selectedOpponent.game_count}</strong><small>최대 {report.opponent_prep?.config.maximum_games_per_team}경기</small></article>
+            <article><span>공개 경기 승률</span><strong>{percent(selectedOpponent.win_rate)}</strong><small>{selectedOpponent.win_count}승 · 결과는 픽 강도와 동일하지 않음</small></article>
+            <article><span>선픽 비율</span><strong>{percent(selectedOpponent.first_pick_rate)}</strong><small>{selectedOpponent.first_pick_count}경기에서 전체 1픽</small></article>
+            <article><span>근거 기록</span><strong>{selectedOpponent.evidence.draft_event_ids.length}</strong><small>{selectedOpponent.evidence.match_ids.length}개 원본 경기 ID</small></article>
+          </div>
+
+          <div className="opponent-content">
+            <div className="draft-tendencies">
+              <article><header><span>가져간 픽</span><b>게임 비율</b></header><ChampionTendencyList items={selectedOpponent.priority_picks} emptyLabel="반복 픽 기록 없음" /></article>
+              <article><header><span>상대가 한 밴</span><b>게임 비율</b></header><ChampionTendencyList items={selectedOpponent.frequent_bans} emptyLabel="밴 기록 없음" /></article>
+              <article><header><span>상대가 받은 밴</span><b>게임 비율</b></header><ChampionTendencyList items={selectedOpponent.received_bans} emptyLabel="상대 밴 기록 없음" /></article>
+            </div>
+
+            <div className="opponent-lower">
+              <article className="rotation-panel"><header><span>관측된 1차 로테이션</span><b>반복 횟수순 · 의도 추정 아님</b></header><div>{selectedOpponent.first_rotations.length ? selectedOpponent.first_rotations.map((rotation) => <div className="rotation" key={`${rotation.side}:${rotation.champions.join(":")}`}><b>{rotation.side === "BLUE" ? "BLUE" : "RED"}</b><span>{rotation.champions.map((champion) => <span className="rotation-champion" key={champion}><img src={championImageUrl(champion)} alt="" /><small>{champion}</small></span>)}</span><strong>{rotation.game_count}회</strong></div>) : <p className="tendency-empty">1차 로테이션 표본이 없습니다.</p>}</div></article>
+
+              <aside className="staff-checklist"><span>STAFF CHECKLIST</span><h3>회의에서 확인할 질문</h3><ol>{preparationQuestions(selectedOpponent).map((question) => <li key={question}>{question}</li>)}</ol></aside>
+            </div>
+
+            <div className="side-evidence-row">
+              <div className="side-cards">{(["BLUE", "RED"] as const).map((side) => { const stat = selectedOpponent.side_stats[side]; return <article className={side.toLowerCase()} key={side}><span>{side} SIDE</span><strong>{stat?.game_count ?? 0}G</strong><small>{stat?.win_rate === null || stat === undefined ? "표본 없음" : `${percent(stat.win_rate)} 공개 경기 승률`}</small></article>; })}</div>
+              <details className="opponent-evidence"><summary>근거 경기 ID와 데이터 경계 보기 <span>＋</span></summary><p>이 자료는 공개 경기에서 반복된 사실만 기술합니다. 밴의 의도, 코치의 지시, 선수 숙련도와 스크림 계획은 추정하지 않습니다.</p><div>{selectedOpponent.evidence.match_ids.map((id) => <code key={id}>{id}</code>)}</div></details>
+            </div>
+          </div>
+        </div> : <div className="brief-empty">현재 발행본에는 상대팀 드래프트 자료가 없습니다. 다음 검증된 피드부터 표시됩니다.</div>}
+      </section>
+
       <section className="workspace" id="radar">
         <div className="section-heading">
-          <div><p className="eyebrow">02 · 신호 목록</p><h2>전체 메타 신호 탐색</h2><p className="section-description">팀 브리프의 결론을 직접 검증하거나 다른 역할의 후보를 탐색할 때 사용합니다.</p></div>
+          <div><p className="eyebrow">03 · 신호 목록</p><h2>전체 메타 신호 탐색</h2><p className="section-description">팀 브리프의 결론을 직접 검증하거나 다른 역할의 후보를 탐색할 때 사용합니다.</p></div>
           <div className="controls">
             <label>포지션<select value={role} onChange={(event) => { setRole(event.target.value); setVisibleLimit(12); }}>{roles.map((item) => <option key={item}>{item === "ALL" ? "전체" : (roleLabels[item] ?? item)}</option>)}</select></label>
             <label className="toggle"><input type="checkbox" checked={eligibleOnly} onChange={(event) => setEligibleOnly(event.target.checked)} /><span /> 기준 통과만</label>
@@ -378,7 +484,7 @@ export function RadarDashboard() {
       </section>
 
       <section className="method" id="method">
-        <div><p className="eyebrow">03 · 레이더 읽는 법</p><h2>점수 하나보다, 네 가지 판단 단서.</h2></div>
+        <div><p className="eyebrow">04 · 레이더 읽는 법</p><h2>점수 하나보다, 네 가지 판단 단서.</h2></div>
         <div className="method-grid">
           <article><b>01</b><h3>팀 수요 속도</h3><p>한 팀의 반복 사용이 아니라, 서로 다른 팀으로 채택이 넓어지는지 봅니다.</p></article>
           <article><b>02</b><h3>픽 점유율 변화</h3><p>동일 패치 안에서 최근 구간과 바로 이전 구간의 경기 점유율을 비교합니다.</p></article>

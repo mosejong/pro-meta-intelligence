@@ -39,6 +39,12 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /인쇄 \/ PDF/);
   assert.match(html, /JSON 내보내기/);
   assert.match(html, /출전 권고가 아닙니다/);
+  assert.match(html, /OPPONENT PREP PACK/);
+  assert.match(html, /상대팀 드래프트 준비 자료/);
+  assert.match(html, /상대가 한 밴/);
+  assert.match(html, /상대가 받은 밴/);
+  assert.match(html, /회의에서 확인할 질문/);
+  assert.match(html, /Seoul Phoenix/);
   assert.match(html, /meta-radar-hero-v2\.png/);
   assert.match(html, /cdn\/16\.16\.1\/img\/champion\/RekSai\.png/);
   assert.match(html, /cdn\/16\.16\.1\/img\/champion\/DrMundo\.png/);
@@ -62,6 +68,16 @@ test("ships a validated same-origin publication feed for automatic loading", asy
     24,
   );
   assert.ok(feed.entries.length > 0);
+  assert.equal(feed.opponent_prep.artifact_type, "opponent-prep-pack");
+  assert.equal(feed.opponent_prep.fixture_only, false);
+  assert.equal(feed.opponent_prep.team_count, 138);
+  const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+  assert.ok(t1);
+  assert.equal(t1.game_count, 7);
+  assert.ok(t1.priority_picks.length > 0);
+  assert.ok(t1.frequent_bans.length > 0);
+  assert.ok(t1.received_bans.length > 0);
+  assert.ok(t1.evidence.match_ids.length > 0);
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
 });
 
