@@ -43,6 +43,11 @@ Both the own-team and opponent selectors support instant filtering across team n
 and league labels. The selected record stays visible while a new search is in progress, and changing
 the own team clears stale search state before recalculating the opponent queue.
 
+T1 is the default opponent target for the product. Initial load, feed refresh, and local report import
+select the exact T1 organization when it is present. After an own team is selected, T1 remains pinned
+at the front of the visible preparation queue unless T1 itself is the own team. This presentation pin
+does not modify the opponent-priority score, official-schedule evidence, or exported facts.
+
 ## Checks
 
 ```bash

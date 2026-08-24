@@ -57,7 +57,7 @@ export const sampleReport: RadarReport = {
     fixture_only: true,
     cutoff: "2026-08-15T12:00:00+00:00",
     patch_id: "16.14",
-    team_count: 2,
+    team_count: 3,
     config: { maximum_games_per_team: 10, minimum_games_for_review: 3, top_champions: 5 },
     boundary: "Synthetic public-match demonstration only.",
     formulae: {
@@ -71,6 +71,30 @@ export const sampleReport: RadarReport = {
       source_versions: [{ source_id: "synthetic-meta-radar-v1", source_version: "v1", content_hash: "fixture:meta-radar-v1" }],
     },
     teams: [
+      {
+        team_id: "synthetic:team:t1", team_name: "T1", team_name_aliases: ["T1", "T1 Esports"], leagues: ["LCK"],
+        game_count: 4, win_count: 3, win_rate: 0.75, first_pick_count: 3, first_pick_rate: 0.75,
+        side_stats: { BLUE: { game_count: 3, win_count: 2, win_rate: 0.6667 }, RED: { game_count: 1, win_count: 1, win_rate: 1 } },
+        priority_picks: [
+          { champion_id: "Azir", role: "MID", game_count: 3, game_rate: 0.75, phase_1_count: 2, phase_2_count: 1, evidence_event_ids: ["t1-r1:Azir:3", "t1-r2:Azir:5", "t1-r3:Azir:7"] },
+          { champion_id: "Vi", role: "JUNGLE", game_count: 2, game_rate: 0.5, phase_1_count: 2, phase_2_count: 0, evidence_event_ids: ["t1-r1:Vi:1", "t1-r4:Vi:2"] },
+          { champion_id: "Rumble", role: "TOP", game_count: 2, game_rate: 0.5, phase_1_count: 1, phase_2_count: 1, evidence_event_ids: ["t1-r2:Rumble:4", "t1-r3:Rumble:8"] },
+        ],
+        frequent_bans: [
+          { champion_id: "RekSai", game_count: 3, game_rate: 0.75, phase_1_count: 3, phase_2_count: 0, evidence_event_ids: ["t1-b1", "t1-b2", "t1-b3"] },
+          { champion_id: "Ahri", game_count: 2, game_rate: 0.5, phase_1_count: 1, phase_2_count: 1, evidence_event_ids: ["t1-b4", "t1-b5"] },
+        ],
+        received_bans: [
+          { champion_id: "Azir", game_count: 3, game_rate: 0.75, phase_1_count: 2, phase_2_count: 1, evidence_event_ids: ["t1-ob1", "t1-ob2", "t1-ob3"] },
+          { champion_id: "Vi", game_count: 1, game_rate: 0.25, phase_1_count: 1, phase_2_count: 0, evidence_event_ids: ["t1-ob4"] },
+        ],
+        first_rotations: [
+          { side: "BLUE", champions: ["Vi", "Azir", "Rumble"], game_count: 2, evidence_match_ids: ["t1-r1", "t1-r2"] },
+          { side: "RED", champions: ["Azir", "Vi", "Rumble"], game_count: 1, evidence_match_ids: ["t1-r3"] },
+        ],
+        quality_flags: [],
+        evidence: { match_ids: ["t1-r1", "t1-r2", "t1-r3", "t1-r4"], draft_event_ids: ["t1-r1:Azir:3", "t1-r1:Vi:1", "t1-r2:Rumble:4"], first_observed_at: "2026-08-09T10:00:00+00:00", last_observed_at: "2026-08-15T11:00:00+00:00" },
+      },
       {
         team_id: "synthetic:team:alpha", team_name: "Seoul Phoenix", team_name_aliases: ["Seoul Phoenix"], leagues: ["LCK"],
         game_count: 4, win_count: 3, win_rate: 0.75, first_pick_count: 2, first_pick_rate: 0.5,

@@ -281,6 +281,8 @@ h1 em { font-style: normal; color: var(--violet); }
 .priority-queue button:nth-last-child(-n+2) { border-bottom: 0; }
 .priority-queue button.active { background: #e9ffab; box-shadow: inset 5px 0 0 var(--violet); }
 .priority-queue button.scheduled:not(.active) { box-shadow: inset 4px 0 0 var(--signal); }
+.priority-queue button.target-locked:not(.active) { background: #eeebff; box-shadow: inset 5px 0 0 var(--violet); }
+.priority-queue button.target-locked .priority-order { color: var(--violet); font-weight: 850; letter-spacing: -.05em; }
 .priority-queue button:hover, .priority-queue button:focus-visible { background: #efede5; outline: 2px solid var(--violet); outline-offset: -3px; }
 .priority-tier { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; padding: 5px 6px; border: 1px solid var(--ink); font: 800 9px var(--font-geist-mono); white-space: nowrap; }
 .priority-tier.p1 { background: var(--signal); color: var(--ink); }

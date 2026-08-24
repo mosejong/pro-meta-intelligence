@@ -13,6 +13,7 @@ import { buildTeamContext } from "./team-context";
 import { buildTeamBrief, serializeTeamBrief } from "./team-brief";
 
 const MY_TEAM_STORAGE_KEY = "pmi:my-team-id";
+export const DEFAULT_TARGET_TEAM_NAME = "T1";
 
 const flagLabels: Record<string, string> = {
   INSUFFICIENT_RECENT_MATCHES: "최근 경기 표본 부족",
@@ -83,6 +84,21 @@ export function matchesTeamQuery(team: OpponentTeam, query: string) {
     .normalize("NFKD")
     .toLocaleLowerCase("en-US");
   return terms.every((term) => searchable.includes(term));
+}
+
+function normalizedTeamIdentity(value: string) {
+  return value.normalize("NFKD").toLocaleLowerCase("en-US").replace(/[^\p{L}\p{N}]/gu, "");
+}
+
+export function findDefaultTargetTeam(teams: OpponentTeam[]) {
+  const target = normalizedTeamIdentity(DEFAULT_TARGET_TEAM_NAME);
+  return teams
+    .filter((team) => [team.team_name, ...team.team_name_aliases].some((name) => normalizedTeamIdentity(name) === target))
+    .sort((left, right) => (
+      Number(normalizedTeamIdentity(right.team_name) === target) - Number(normalizedTeamIdentity(left.team_name) === target) ||
+      right.game_count - left.game_count ||
+      left.team_name.localeCompare(right.team_name)
+    ))[0];
 }
 
 function pinSelectedTeam(teams: OpponentTeam[], selected: OpponentTeam | undefined) {
@@ -215,7 +231,7 @@ export function RadarDashboard() {
   const [schedule, setSchedule] = useState<ScheduleSnapshot | null>(null);
   const [scheduleCheckedAt, setScheduleCheckedAt] = useState<string | null>(null);
   const [scheduleState, setScheduleState] = useState<"connecting" | "connected" | "stale" | "unavailable">("connecting");
-  const [opponentId, setOpponentId] = useState(sampleReport.opponent_prep?.teams[0]?.team_id ?? "");
+  const [opponentId, setOpponentId] = useState(findDefaultTargetTeam(sampleReport.opponent_prep?.teams ?? [])?.team_id ?? sampleReport.opponent_prep?.teams[0]?.team_id ?? "");
   const [feedState, setFeedState] = useState<FeedState>({
     kind: "connecting",
     label: "FEED CONNECTING",
@@ -247,10 +263,20 @@ export function RadarDashboard() {
   const rankedOpponentTeams = useMemo(() => teamContext
     ? opponentPriorities.map((priority) => priority.team)
     : opponentTeams, [opponentPriorities, opponentTeams, teamContext]);
+  const defaultTargetTeam = useMemo(() => findDefaultTargetTeam(opponentTeams), [opponentTeams]);
+  const defaultOpponentTarget = useMemo(() => findDefaultTargetTeam(rankedOpponentTeams), [rankedOpponentTeams]);
   const displayedEntries = visibleEntries.slice(0, visibleLimit);
   const selected = visibleEntries.find((entry) => keyOf(entry) === selectedKey) ?? visibleEntries[0] ?? report.entries[0];
   const selectedBrief = teamBrief.find((card) => keyOf(card.entry) === selectedKey) ?? teamBrief[0];
-  const selectedOpponent = rankedOpponentTeams.find((team) => team.team_id === opponentId) ?? rankedOpponentTeams[0];
+  const selectedOpponent = rankedOpponentTeams.find((team) => team.team_id === opponentId) ?? defaultOpponentTarget ?? rankedOpponentTeams[0];
+  const selectedPriority = opponentPriorities.find((priority) => priority.team.team_id === selectedOpponent?.team_id);
+  const defaultTargetPriority = opponentPriorities.find((priority) => priority.team.team_id === defaultOpponentTarget?.team_id);
+  const priorityQueueItems = useMemo(() => [defaultTargetPriority, selectedPriority, ...opponentPriorities]
+    .flatMap((priority) => priority ? [priority] : [])
+    .filter((priority, index, items) => items.findIndex((item) => item.team.team_id === priority.team.team_id) === index)
+    .slice(0, 4), [defaultTargetPriority, opponentPriorities, selectedPriority]);
+  const isDefaultTargetSelected = Boolean(selectedOpponent && defaultTargetTeam && selectedOpponent.team_id === defaultTargetTeam.team_id);
+  const isOwnTeamDefaultTarget = Boolean(selectedMyTeam && defaultTargetTeam && selectedMyTeam.team_id === defaultTargetTeam.team_id);
   const myTeamSearchResults = useMemo(() => opponentTeams
     .filter((team) => matchesTeamQuery(team, myTeamSearch))
     .sort((left, right) => left.team_name.localeCompare(right.team_name)), [myTeamSearch, opponentTeams]);
@@ -266,7 +292,6 @@ export function RadarDashboard() {
     () => pinSelectedTeam(opponentSearchResults, selectedOpponent),
     [opponentSearchResults, selectedOpponent],
   );
-  const selectedPriority = opponentPriorities.find((priority) => priority.team.team_id === selectedOpponent?.team_id);
   const emergencyBrief = selectedOpponent ? buildEmergencyBrief(report, selectedOpponent, selectedMyTeam, effectiveSchedule, scheduleCheckedAt) : null;
   const matchupBattlecard = useMemo(() => (
     selectedMyTeam && selectedOpponent && selectedMyTeam.team_id !== selectedOpponent.team_id
@@ -317,7 +342,7 @@ export function RadarDashboard() {
       setRole("ALL");
       setEligibleOnly(false);
       setVisibleLimit(12);
-      setOpponentId(publishedReport.opponent_prep?.teams[0]?.team_id ?? "");
+      setOpponentId(findDefaultTargetTeam(publishedReport.opponent_prep?.teams ?? [])?.team_id ?? publishedReport.opponent_prep?.teams[0]?.team_id ?? "");
       setFeedState({
         kind: publishedReport.fixture_only ? "demo" : "published",
         label: publishedReport.fixture_only ? "PUBLISHED DEMO FEED" : "LIVE PUBLISHED FEED",
@@ -386,7 +411,7 @@ export function RadarDashboard() {
       setRole("ALL");
       setEligibleOnly(false);
       setVisibleLimit(12);
-      setOpponentId(parsed.opponent_prep?.teams[0]?.team_id ?? "");
+      setOpponentId(findDefaultTargetTeam(parsed.opponent_prep?.teams ?? [])?.team_id ?? parsed.opponent_prep?.teams[0]?.team_id ?? "");
       manualOverride.current = true;
       setFeedState({ kind: "uploaded", label: "LOCAL FILE", detail: file.name.toUpperCase() });
     } catch {
@@ -486,7 +511,7 @@ export function RadarDashboard() {
         </a>
         <nav aria-label="주요 메뉴">
           <a className="active" href="#team-brief">오늘 결정</a>
-          <a href="#opponent-prep">상대전</a>
+          <a href="#opponent-prep">T1 상대전</a>
           <a href="#creator-export">콘텐츠</a>
           <a href="#radar">전체 탐색</a>
         </nav>
@@ -507,7 +532,7 @@ export function RadarDashboard() {
           <p className="lede">티어표가 아니라 회의 시작점입니다. 지금 테스트할 후보, 더 지켜볼 후보, 보류할 근거를 공개 경기 데이터로 압축했습니다.</p>
           <div className="decision-hero-actions">
             <a href="#team-brief">3분 브리프 보기</a>
-            <a href="#opponent-prep">상대팀 준비 자료</a>
+            <a href="#opponent-prep">T1 분석 바로가기</a>
           </div>
           <div className="hero-points" aria-label="분석 기준">
             <span>최근 {report.windows.recent.days}일 vs 이전 {report.windows.prior.days}일</span>
@@ -558,7 +583,7 @@ export function RadarDashboard() {
 
       <nav className="decision-flow" aria-label="팀 분석 진행 단계">
         <a className={selectedMyTeam ? "complete" : "active"} href="#team-setup"><b>1</b><span><small>내 팀</small><strong>{selectedMyTeam?.team_name ?? "선택 필요"}</strong></span></a>
-        <a className={selectedMyTeam ? "complete" : "locked"} href="#opponent-prep"><b>2</b><span><small>준비할 상대</small><strong>{selectedMyTeam ? selectedOpponent?.team_name ?? "순위 계산 중" : "팀 선택 후 자동 계산"}</strong></span></a>
+        <a className={selectedMyTeam ? "complete" : "locked"} href="#opponent-prep"><b>2</b><span><small>준비할 상대</small><strong>{selectedMyTeam ? `${selectedOpponent?.team_name ?? "순위 계산 중"}${isDefaultTargetSelected ? " · 기본 타깃" : ""}` : `${DEFAULT_TARGET_TEAM_NAME} 기본 타깃`}</strong></span></a>
         <a className={matchupBattlecard ? "ready" : "locked"} href="#draft-battlecard"><b>3</b><span><small>드래프트 배틀카드</small><strong>{matchupBattlecard ? "확인 준비 완료" : "상대 선택 후 생성"}</strong></span></a>
       </nav>
 
@@ -638,15 +663,15 @@ export function RadarDashboard() {
       <section className="opponent-prep" id="opponent-prep">
         <div className="section-heading opponent-heading">
           <div>
-            <p className="eyebrow">02 · MY TEAM → OPPONENT PRIORITY</p>
-            <h2>내 팀 기준 상대 준비 순서</h2>
-            <p className="section-description">공식 대진 일정, 동일 리그, 양 팀의 픽 충돌, 현재 메타와의 겹침, 공개 경기 표본을 합쳐 먼저 볼 상대를 정합니다. 미확정 대진과 스크림은 추정하지 않습니다.</p>
+            <p className="eyebrow">02 · {defaultTargetTeam ? `${DEFAULT_TARGET_TEAM_NAME} TARGET DESK` : "MY TEAM → OPPONENT PRIORITY"}</p>
+            <h2>{defaultTargetTeam ? isOwnTeamDefaultTarget ? "T1 시점 상대 준비실" : "T1 공략 준비실" : "내 팀 기준 상대 준비 순서"}</h2>
+            <p className="section-description">{defaultTargetTeam ? "T1을 기본 분석 상대로 고정하고, 내 팀 공개 픽과 T1의 픽·밴·글로벌 메타 교집합을 먼저 봅니다. 다른 상대를 선택해도 점수 기반 순위는 유지됩니다." : "공식 대진 일정, 동일 리그, 양 팀의 픽 충돌, 현재 메타와의 겹침, 공개 경기 표본을 합쳐 먼저 볼 상대를 정합니다."}</p>
           </div>
           {selectedOpponent && <div className="opponent-controls">
             <div className="opponent-picker">
               <label htmlFor="opponent-search">상대 검색</label>
               <div><input id="opponent-search" type="search" value={opponentSearch} onChange={(event) => setOpponentSearch(event.target.value)} placeholder="팀명 또는 리그" autoComplete="off" /><select value={selectedOpponent.team_id} onChange={(event) => { setOpponentId(event.target.value); setOpponentSearch(""); }} aria-label="준비할 상대 선택">{opponentOptions.map((team) => { const priority = opponentPriorities.find((item) => item.team.team_id === team.team_id); return <option key={team.team_id} value={team.team_id}>{priority ? `${priority.tier} · ${priority.score}점 · ` : ""}{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>; })}</select></div>
-              <small aria-live="polite">{opponentSearch ? `${opponentSearchResults.length}개 검색 결과` : `${rankedOpponentTeams.length}개 상대 · 우선순위순`}</small>
+              <small aria-live="polite">{opponentSearch ? `${opponentSearchResults.length}개 검색 결과` : `${rankedOpponentTeams.length}개 상대 · ${defaultOpponentTarget ? "T1 기본 타깃 · " : ""}점수순`}</small>
             </div>
             <button ref={emergencyTrigger} className="emergency-open" type="button" onClick={() => setEmergencyOpen(true)}>3분 브리프</button>
             <button type="button" onClick={downloadOpponentPrep}>선택 팀 JSON</button>
@@ -662,19 +687,20 @@ export function RadarDashboard() {
             <p className="team-data-boundary">공개 경기 성향만 사용 · 선수 숙련도와 스크림 미포함</p>
           </article>
           <div className="priority-queue">
-            <header><div><span>OPPONENT PRIORITY QUEUE</span><h3>먼저 준비할 상대</h3></div><b>상위 4팀</b></header>
-            <div>{opponentPriorities.slice(0, 4).map((priority, index) => {
+            <header><div><span>{defaultOpponentTarget ? "T1 TARGET + OPPONENT PRIORITY" : "OPPONENT PRIORITY QUEUE"}</span><h3>{defaultOpponentTarget ? "고정 타깃과 우선 상대" : "먼저 준비할 상대"}</h3></div><b>{defaultOpponentTarget ? "T1 + 상위 3팀" : "상위 4팀"}</b></header>
+            <div>{priorityQueueItems.map((priority, index) => {
               const topPick = priority.team.priority_picks[0];
               const active = priority.team.team_id === selectedOpponent?.team_id;
-              return <button type="button" className={`${active ? "active" : ""} ${priority.next_meeting ? "scheduled" : ""}`} key={priority.team.team_id} onClick={() => setOpponentId(priority.team.team_id)} aria-pressed={active}>
+              const targetLocked = priority.team.team_id === defaultOpponentTarget?.team_id;
+              return <button type="button" className={`${active ? "active" : ""} ${priority.next_meeting ? "scheduled" : ""} ${targetLocked ? "target-locked" : ""}`} key={priority.team.team_id} onClick={() => setOpponentId(priority.team.team_id)} aria-pressed={active}>
                 <span className={`priority-tier ${priority.tier.toLowerCase()}`}>{priority.tier}</span>
-                <span className="priority-order">{String(index + 1).padStart(2, "0")}</span>
+                <span className="priority-order">{targetLocked ? "TGT" : String(index + 1).padStart(2, "0")}</span>
                 {topPick ? <img src={championImageUrl(topPick.champion_id)} alt="" /> : <span className="priority-placeholder" />}
                 <span className="priority-team"><strong>{priority.team.team_name}</strong><small>{priority.reasons.join(" · ")}</small></span>
                 <span className="priority-score"><strong>{priority.score}</strong><small>/ 100</small></span>
               </button>;
             })}</div>
-            <footer><b>정렬·점수</b><span>확정 대진은 경기 시간순 선배치 · 공식 대진 최대 30 · 동일 리그 30 · 상승 메타 최대 24 · 픽 충돌 최대 18 · 표본 최대 18 · 품질 경고 감점</span></footer>
+            <footer><b>타깃·점수</b><span>{defaultOpponentTarget ? "T1은 제품 기본 타깃으로 맨 앞에 표시하되 점수는 변경하지 않음 · " : ""}확정 대진은 경기 시간순 선배치 · 공식 대진 최대 30 · 동일 리그 30 · 상승 메타 최대 24 · 픽 충돌 최대 18 · 표본 최대 18 · 품질 경고 감점</span></footer>
           </div>
         </div> : <div className="team-priority-setup">
           <span>STEP 01</span><h3>내 팀을 선택하면 상대 우선순위가 열립니다.</h3><p>현재 발행본의 {opponentTeams.length}개 팀 중 소속 팀을 고르면, 자기 팀을 제외한 상대만 공개 근거로 다시 정렬합니다.</p><a href="#top">위에서 내 팀 선택 ↑</a>
@@ -683,7 +709,7 @@ export function RadarDashboard() {
         {matchupBattlecard ? <section className="draft-battlecard" id="draft-battlecard" aria-label={`${matchupBattlecard.own_team.team_name} 대 ${matchupBattlecard.opponent.team_name} 드래프트 배틀카드`}>
           <header className="battlecard-head">
             <div>
-              <span>DRAFT BATTLECARD · PUBLIC EVIDENCE</span>
+              <span>DRAFT BATTLECARD · {isDefaultTargetSelected ? "T1 TARGET" : "PUBLIC EVIDENCE"}</span>
               <h3>{matchupBattlecard.own_team.team_name} <em>vs</em> {matchupBattlecard.opponent.team_name}</h3>
               <p>픽·밴을 자동 추천하지 않고, 회의 전에 합의할 보호·충돌·견제·교환 질문만 압축합니다.</p>
             </div>
@@ -831,7 +857,7 @@ export function RadarDashboard() {
 
       <nav className="mobile-taskbar" aria-label="모바일 빠른 이동">
         <a href="#team-brief"><b>01</b><span>오늘</span></a>
-        <a href="#opponent-prep"><b>02</b><span>상대전</span></a>
+        <a href="#opponent-prep"><b>02</b><span>T1 상대전</span></a>
         <a href="#creator-export"><b>03</b><span>콘텐츠</span></a>
         <a href="#radar"><b>04</b><span>탐색</span></a>
       </nav>
