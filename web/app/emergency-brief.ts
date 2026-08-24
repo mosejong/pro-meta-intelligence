@@ -1,4 +1,5 @@
 import type { OpponentTeam, RadarEntry, RadarReport } from "./radar-types";
+import { scoreOpponent } from "./team-context";
 import { buildTeamBrief } from "./team-brief";
 
 export type EmergencyQuality = "USABLE_WITH_LIMITS" | "LOW_SAMPLE" | "INCOMPLETE_EVIDENCE";
@@ -23,6 +24,19 @@ export type EmergencyBrief = {
     game_count: number;
     evidence_quality: EmergencyQuality;
     quality_flags: string[];
+  };
+  own_team?: {
+    team_id: string;
+    team_name: string;
+    leagues: string[];
+    game_count: number;
+  };
+  priority_context?: {
+    score: number;
+    tier: "P1" | "P2" | "P3";
+    shared_leagues: string[];
+    contested_picks: string[];
+    reasons: string[];
   };
   headline: string;
   alerts: BriefAlert[];
@@ -144,11 +158,13 @@ function metaOverlaps(report: RadarReport, team: OpponentTeam) {
     .slice(0, 3);
 }
 
-function staffQuestions(team: OpponentTeam, overlaps: ReturnType<typeof metaOverlaps>) {
+function staffQuestions(team: OpponentTeam, overlaps: ReturnType<typeof metaOverlaps>, myTeam?: OpponentTeam) {
   const pick = team.priority_picks[0];
   const ban = team.frequent_bans[0];
   const received = team.received_bans[0];
   const rotation = team.first_rotations[0];
+  const ownPickKeys = new Set(myTeam?.priority_picks.map((item) => radarKey(item.champion_id, item.role ?? "UNKNOWN")) ?? []);
+  const contested = team.priority_picks.filter((item) => ownPickKeys.has(radarKey(item.champion_id, item.role ?? "UNKNOWN")));
   return [
     pick
       ? `${pick.champion_id} 1페이즈 오픈 시 우리 응답 순서와 허용 가능한 교환은 무엇인가?`
@@ -157,15 +173,19 @@ function staffQuestions(team: OpponentTeam, overlaps: ReturnType<typeof metaOver
     rotation
       ? `${rotation.champions.join(" → ")} 관측 순서가 다시 나오면 어느 시점에 계획을 전환할 것인가?`
       : "관측된 1차 로테이션이 없을 때 어떤 정보가 들어오기 전까지 기본 계획을 유지할 것인가?",
-    overlaps.length
+    contested.length
+      ? `${myTeam?.team_name ?? "우리 팀"}과 ${contested.slice(0, 2).map((item) => item.champion_id).join(" / ")} 우선순위가 충돌한다. 선픽·교환·밴 중 어느 자원을 먼저 쓸 것인가?`
+      : overlaps.length
       ? `${overlaps.map((item) => item.champion_id).join(" / ")}의 상대 선호와 글로벌 상승 신호가 겹친다. 표본 외에 추가 확인할 맥락은 무엇인가?`
       : "상대 선호와 글로벌 상승 신호의 직접 교집합이 없다. 억지로 연결하지 않고 무엇을 별도 추적할 것인가?",
   ];
 }
 
-function unknowns(team: OpponentTeam) {
+function unknowns(team: OpponentTeam, myTeam?: OpponentTeam) {
   const items = [
-    "우리 팀 선수 숙련도, 스크림 결과와 실제 밴픽 계획은 연결되지 않았습니다.",
+    myTeam
+      ? `${myTeam.team_name}의 공개 경기 성향만 연결했습니다. 선수 숙련도, 스크림 결과와 실제 밴픽 계획은 연결되지 않았습니다.`
+      : "우리 팀 선수 숙련도, 스크림 결과와 실제 밴픽 계획은 연결되지 않았습니다.",
     "공개 경기의 밴 기록만으로 특정 선수나 전략을 겨냥한 의도를 확정할 수 없습니다.",
   ];
   if (team.quality_flags.includes("LOW_MATCH_SAMPLE")) {
@@ -177,8 +197,9 @@ function unknowns(team: OpponentTeam) {
   return items;
 }
 
-export function buildEmergencyBrief(report: RadarReport, team: OpponentTeam): EmergencyBrief {
+export function buildEmergencyBrief(report: RadarReport, team: OpponentTeam, myTeam?: OpponentTeam): EmergencyBrief {
   const overlaps = metaOverlaps(report, team);
+  const priority = myTeam && myTeam.team_id !== team.team_id ? scoreOpponent(report, myTeam, team) : null;
   const topPick = team.priority_picks[0];
   const patchQueue = buildTeamBrief(report, 3).map((card) => ({
     champion_id: card.entry.champion_id,
@@ -202,14 +223,31 @@ export function buildEmergencyBrief(report: RadarReport, team: OpponentTeam): Em
       evidence_quality: evidenceQuality(team),
       quality_flags: team.quality_flags,
     },
+    ...(myTeam ? {
+      own_team: {
+        team_id: myTeam.team_id,
+        team_name: myTeam.team_name,
+        leagues: myTeam.leagues,
+        game_count: myTeam.game_count,
+      },
+    } : {}),
+    ...(priority ? {
+      priority_context: {
+        score: priority.score,
+        tier: priority.tier,
+        shared_leagues: priority.shared_leagues,
+        contested_picks: priority.contested_picks.map((item) => `${item.champion_id}::${item.role ?? "UNKNOWN"}`),
+        reasons: priority.reasons,
+      },
+    } : {}),
     headline: topPick
-      ? `${team.team_name}: ${topPick.champion_id} ${roleName(topPick.role ?? "UNKNOWN")} 우선순위와 밴 방향을 먼저 검토`
-      : `${team.team_name}: 반복 픽 표본 부족, 기본 메타 계획 유지`,
+      ? `${myTeam ? `${myTeam.team_name} 기준 · ` : ""}${team.team_name}: ${topPick.champion_id} ${roleName(topPick.role ?? "UNKNOWN")} 우선순위와 밴 방향을 먼저 검토`
+      : `${myTeam ? `${myTeam.team_name} 기준 · ` : ""}${team.team_name}: 반복 픽 표본 부족, 기본 메타 계획 유지`,
     alerts: buildAlerts(team),
     meta_overlaps: overlaps,
     patch_review_queue: patchQueue,
-    staff_questions: staffQuestions(team, overlaps),
-    unknowns: unknowns(team),
+    staff_questions: staffQuestions(team, overlaps, myTeam),
+    unknowns: unknowns(team, myTeam),
     evidence: {
       opponent_match_ids: team.evidence.match_ids,
       opponent_draft_event_ids: team.evidence.draft_event_ids,
