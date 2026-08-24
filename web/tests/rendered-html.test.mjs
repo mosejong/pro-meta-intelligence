@@ -47,6 +47,9 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /MY TEAM → OPPONENT PRIORITY/);
   assert.match(html, /MY TEAM LENS/);
   assert.match(html, /STEP 1 · MY TEAM LENS/);
+  assert.match(html, /팀명 또는 리그 검색/);
+  assert.match(html, /예: T1, LCK, G2/);
+  assert.match(html, /전체 \d+개 팀/);
   assert.match(html, /팀 분석 진행 단계/);
   assert.match(html, /드래프트 배틀카드/);
   assert.match(html, /공식 일정 연결 중/);
@@ -55,6 +58,8 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /보호 자원 · 픽 충돌 · 견제 검토 · 교환 시나리오/);
   assert.match(html, /선수 숙련도 · 스크림 · 내부 밴픽 계획은 추정하지 않음/);
   assert.match(html, /원본 상대 통계/);
+  assert.match(html, /상대 검색/);
+  assert.match(html, /개 상대 · 우선순위순/);
   assert.match(html, /픽·밴·사이드·로테이션 상세는 필요할 때만 펼쳐보세요/);
   assert.match(html, /모바일 빠른 이동/);
   assert.match(html, /HISTORY · WALK-FORWARD/);
@@ -288,6 +293,32 @@ test("builds an evidence-bounded own-team draft battlecard", async () => {
     assert.ok(first.evidence.match_ids.length >= Math.max(t1.evidence.match_ids.length, geng.evidence.match_ids.length));
     assert.ok(first.evidence.source_versions.length > 0);
     assert.match(first.boundary, /does not recommend an automatic pick or ban/i);
+  } finally {
+    await vite.close();
+  }
+});
+
+test("filters the large team list by name, alias, and league", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+  assert.ok(t1);
+
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { matchesTeamQuery } = await vite.ssrLoadModule("/app/radar-dashboard.tsx");
+    assert.equal(matchesTeamQuery(t1, "t1"), true);
+    assert.equal(matchesTeamQuery(t1, "LCK"), true);
+    assert.equal(matchesTeamQuery(t1, "  t1 lck  "), true);
+    assert.equal(matchesTeamQuery(t1, "LEC"), false);
+    assert.ok(feed.opponent_prep.teams.filter((team) => matchesTeamQuery(team, "LCK")).length > 1);
   } finally {
     await vite.close();
   }

@@ -75,6 +75,20 @@ function keyOf(entry: RadarEntry) {
   return `${entry.champion_id}::${entry.role}`;
 }
 
+export function matchesTeamQuery(team: OpponentTeam, query: string) {
+  const terms = query.trim().normalize("NFKD").toLocaleLowerCase("en-US").split(/\s+/).filter(Boolean);
+  if (!terms.length) return true;
+  const searchable = [team.team_name, ...team.team_name_aliases, ...team.leagues]
+    .join(" ")
+    .normalize("NFKD")
+    .toLocaleLowerCase("en-US");
+  return terms.every((term) => searchable.includes(term));
+}
+
+function pinSelectedTeam(teams: OpponentTeam[], selected: OpponentTeam | undefined) {
+  return selected && !teams.some((team) => team.team_id === selected.team_id) ? [selected, ...teams] : teams;
+}
+
 function percent(value: number | null, digits = 0) {
   return value === null ? "—" : `${(value * 100).toFixed(digits)}%`;
 }
@@ -196,6 +210,8 @@ export function RadarDashboard() {
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [myTeamId, setMyTeamId] = useState("");
+  const [myTeamSearch, setMyTeamSearch] = useState("");
+  const [opponentSearch, setOpponentSearch] = useState("");
   const [schedule, setSchedule] = useState<ScheduleSnapshot | null>(null);
   const [scheduleCheckedAt, setScheduleCheckedAt] = useState<string | null>(null);
   const [scheduleState, setScheduleState] = useState<"connecting" | "connected" | "stale" | "unavailable">("connecting");
@@ -235,6 +251,21 @@ export function RadarDashboard() {
   const selected = visibleEntries.find((entry) => keyOf(entry) === selectedKey) ?? visibleEntries[0] ?? report.entries[0];
   const selectedBrief = teamBrief.find((card) => keyOf(card.entry) === selectedKey) ?? teamBrief[0];
   const selectedOpponent = rankedOpponentTeams.find((team) => team.team_id === opponentId) ?? rankedOpponentTeams[0];
+  const myTeamSearchResults = useMemo(() => opponentTeams
+    .filter((team) => matchesTeamQuery(team, myTeamSearch))
+    .sort((left, right) => left.team_name.localeCompare(right.team_name)), [myTeamSearch, opponentTeams]);
+  const myTeamOptions = useMemo(
+    () => pinSelectedTeam(myTeamSearchResults, opponentTeams.find((team) => team.team_id === myTeamId)),
+    [myTeamId, myTeamSearchResults, opponentTeams],
+  );
+  const opponentSearchResults = useMemo(
+    () => rankedOpponentTeams.filter((team) => matchesTeamQuery(team, opponentSearch)),
+    [opponentSearch, rankedOpponentTeams],
+  );
+  const opponentOptions = useMemo(
+    () => pinSelectedTeam(opponentSearchResults, selectedOpponent),
+    [opponentSearchResults, selectedOpponent],
+  );
   const selectedPriority = opponentPriorities.find((priority) => priority.team.team_id === selectedOpponent?.team_id);
   const emergencyBrief = selectedOpponent ? buildEmergencyBrief(report, selectedOpponent, selectedMyTeam, effectiveSchedule, scheduleCheckedAt) : null;
   const matchupBattlecard = useMemo(() => (
@@ -368,6 +399,8 @@ export function RadarDashboard() {
   function selectMyTeam(teamId: string) {
     setMyTeamId(teamId);
     setOpponentId("");
+    setMyTeamSearch("");
+    setOpponentSearch("");
     if (teamId) window.localStorage.setItem(MY_TEAM_STORAGE_KEY, teamId);
     else window.localStorage.removeItem(MY_TEAM_STORAGE_KEY);
   }
@@ -509,12 +542,17 @@ export function RadarDashboard() {
           <p>{selectedMyTeam ? `${selectedMyTeam.leagues.join(" · ")} · 공개 경기 ${selectedMyTeam.game_count}개를 기준으로 상대 준비 순서를 다시 계산합니다.` : "선택 전에는 글로벌 메타만 표시합니다. 팀 선택값은 이 브라우저에만 저장됩니다."}</p>
           <em className={`schedule-state ${scheduleState}`}>{scheduleState === "connected" ? `공식 일정 연결 · ${schedule?.events.length ?? 0}경기` : scheduleState === "stale" ? "공식 일정 36시간 경과 · 우선순위에서 제외" : scheduleState === "connecting" ? "공식 일정 연결 중" : "공식 일정 미연결 · 분석 점수만 사용"}</em>
         </div>
-        <label>내 팀
-          <select value={myTeamId} onChange={(event) => selectMyTeam(event.target.value)}>
-            <option value="">내 팀 선택</option>
-            {opponentTeams.slice().sort((left, right) => left.team_name.localeCompare(right.team_name)).map((team) => <option key={team.team_id} value={team.team_id}>{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>)}
-          </select>
-        </label>
+        <div className="team-picker">
+          <label htmlFor="my-team-search">팀명 또는 리그 검색</label>
+          <div className="team-picker-fields">
+            <input id="my-team-search" type="search" value={myTeamSearch} onChange={(event) => setMyTeamSearch(event.target.value)} placeholder="예: T1, LCK, G2" autoComplete="off" />
+            <select id="my-team-select" value={myTeamId} onChange={(event) => selectMyTeam(event.target.value)} aria-label="내 팀 선택">
+              <option value="">내 팀 선택</option>
+              {myTeamOptions.map((team) => <option key={team.team_id} value={team.team_id}>{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>)}
+            </select>
+          </div>
+          <small aria-live="polite">{myTeamSearch ? `${myTeamSearchResults.length}개 검색 결과` : `전체 ${opponentTeams.length}개 팀`}{selectedMyTeam ? ` · 현재 ${selectedMyTeam.team_name}` : ""}</small>
+        </div>
         <a href="#opponent-prep">{selectedMyTeam ? "상대 우선순위 보기" : "분석 기준 설정"} <span>→</span></a>
       </section>
 
@@ -605,7 +643,11 @@ export function RadarDashboard() {
             <p className="section-description">공식 대진 일정, 동일 리그, 양 팀의 픽 충돌, 현재 메타와의 겹침, 공개 경기 표본을 합쳐 먼저 볼 상대를 정합니다. 미확정 대진과 스크림은 추정하지 않습니다.</p>
           </div>
           {selectedOpponent && <div className="opponent-controls">
-            <label>준비할 상대<select value={selectedOpponent.team_id} onChange={(event) => setOpponentId(event.target.value)}>{rankedOpponentTeams.map((team) => { const priority = opponentPriorities.find((item) => item.team.team_id === team.team_id); return <option key={team.team_id} value={team.team_id}>{priority ? `${priority.tier} · ${priority.score}점 · ` : ""}{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>; })}</select></label>
+            <div className="opponent-picker">
+              <label htmlFor="opponent-search">상대 검색</label>
+              <div><input id="opponent-search" type="search" value={opponentSearch} onChange={(event) => setOpponentSearch(event.target.value)} placeholder="팀명 또는 리그" autoComplete="off" /><select value={selectedOpponent.team_id} onChange={(event) => { setOpponentId(event.target.value); setOpponentSearch(""); }} aria-label="준비할 상대 선택">{opponentOptions.map((team) => { const priority = opponentPriorities.find((item) => item.team.team_id === team.team_id); return <option key={team.team_id} value={team.team_id}>{priority ? `${priority.tier} · ${priority.score}점 · ` : ""}{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>; })}</select></div>
+              <small aria-live="polite">{opponentSearch ? `${opponentSearchResults.length}개 검색 결과` : `${rankedOpponentTeams.length}개 상대 · 우선순위순`}</small>
+            </div>
             <button ref={emergencyTrigger} className="emergency-open" type="button" onClick={() => setEmergencyOpen(true)}>3분 브리프</button>
             <button type="button" onClick={downloadOpponentPrep}>선택 팀 JSON</button>
           </div>}

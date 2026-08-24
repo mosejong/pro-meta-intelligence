@@ -39,6 +39,10 @@ opponent, then read the Draft Battlecard. Historical collection gates and raw op
 side, rotation, and evidence tables stay collapsed until requested. Mobile users get a persistent
 four-destination task bar instead of losing navigation when the desktop header is hidden.
 
+Both the own-team and opponent selectors support instant filtering across team names, known aliases,
+and league labels. The selected record stays visible while a new search is in progress, and changing
+the own team clears stale search state before recalculating the opponent queue.
+
 ## Checks
 
 ```bash
