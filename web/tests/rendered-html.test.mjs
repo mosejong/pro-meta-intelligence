@@ -48,6 +48,9 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /MY TEAM LENS/);
   assert.match(html, /공식 일정 연결 중/);
   assert.match(html, /OPPONENT PRIORITY QUEUE|STEP 01/);
+  assert.match(html, /DRAFT BATTLECARD/);
+  assert.match(html, /보호 자원 · 픽 충돌 · 견제 검토 · 교환 시나리오/);
+  assert.match(html, /선수 숙련도 · 스크림 · 내부 밴픽 계획은 추정하지 않음/);
   assert.match(html, /HISTORY · WALK-FORWARD/);
   assert.match(html, /실데이터 검증 준비도/);
   assert.match(html, /일일 수집 계속/);
@@ -232,6 +235,51 @@ test("ranks opponents from an explicit own-team perspective without self-matches
     assert.equal(brief.priority_context.next_meeting.event_id, "lolesports:test-t1-geng");
     assert.match(brief.headline, /^T1 기준/);
     assert.ok(brief.unknowns.some((item) => item.includes("T1")));
+  } finally {
+    await vite.close();
+  }
+});
+
+test("builds an evidence-bounded own-team draft battlecard", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+  const geng = feed.opponent_prep.teams.find((team) => team.team_name === "Gen.G");
+  assert.ok(t1);
+  assert.ok(geng);
+
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { scoreOpponent } = await vite.ssrLoadModule("/app/team-context.ts");
+    const { buildMatchupBattlecard } = await vite.ssrLoadModule("/app/matchup-battlecard.ts");
+    const priority = scoreOpponent(feed, t1, geng);
+    const first = buildMatchupBattlecard(feed, t1, geng, priority);
+    const second = buildMatchupBattlecard(feed, t1, geng, priority);
+
+    assert.deepEqual(first, second);
+    assert.equal(first.schema_version, "1");
+    assert.equal(first.artifact_type, "public-draft-battlecard");
+    assert.equal(first.own_team.team_name, "T1");
+    assert.equal(first.opponent.team_name, "Gen.G");
+    assert.equal(first.priority_context.score, priority.score);
+    assert.equal(first.evidence_quality, "OBSERVED");
+    assert.ok(first.protect.some((item) => item.champion_id === "Vi"));
+    assert.ok(first.contested.some((item) => item.champion_id === "Caitlyn"));
+    assert.ok(first.deny_review.length > 0);
+    assert.ok(first.exchange);
+    assert.ok(first.exchange.evidence_ids.length > 0);
+    assert.ok([...first.protect, ...first.contested, ...first.deny_review].every((item) => item.evidence_ids.length > 0));
+    assert.ok(first.unknowns.some((item) => item.includes("스크림")));
+    assert.ok(first.evidence.match_ids.length >= Math.max(t1.evidence.match_ids.length, geng.evidence.match_ids.length));
+    assert.ok(first.evidence.source_versions.length > 0);
+    assert.match(first.boundary, /does not recommend an automatic pick or ban/i);
   } finally {
     await vite.close();
   }

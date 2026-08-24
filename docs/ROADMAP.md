@@ -61,6 +61,11 @@ pick/ban order from OE, summarizes up to ten same-patch games per team, separate
 phase-one/phase-two behavior, exposes incomplete-ban and low-sample warnings, and retains exact
 match/event evidence. Opponent intent and private readiness remain explicit non-claims.
 
+The own-team Draft Battlecard is implemented above that evidence layer. It compresses observed
+protect, exact champion-role contest, deny-review, and exchange-scenario questions into a visual
+staff artifact and evidence-bearing JSON. It does not turn public frequency into an automatic pick
+or ban recommendation.
+
 The first Match-day Emergency Brief is also implemented as a deterministic Team Brief + Opponent
 Prep composition. It cross-checks exact champion-role overlaps, keeps global patch candidates
 separate from opponent responses, exports its evidence contract, and prints as a compact staff

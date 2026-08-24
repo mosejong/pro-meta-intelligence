@@ -273,6 +273,58 @@ h1 em { font-style: normal; color: var(--violet); }
 .team-priority-setup h3 { margin: 7px 0 4px; font-size: 22px; }
 .team-priority-setup p { max-width: 720px; margin: 0; color: var(--muted); font-size: 13px; }
 .team-priority-setup a { margin-top: 18px; padding: 8px 10px; border: 1px solid var(--ink); background: white; font-size: 11px; font-weight: 800; }
+.draft-battlecard { margin: 0 0 30px; border: 1px solid var(--ink); background: #f8f6ef; box-shadow: 8px 8px 0 #cbc6ba; }
+.battlecard-head { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 20px; border-bottom: 1px solid var(--ink); background: var(--ink); color: white; }
+.battlecard-head > div:first-child > span { color: var(--signal); font: 800 9px var(--font-geist-mono); letter-spacing: .06em; }
+.battlecard-head h3 { margin: 4px 0 3px; font-size: 23px; letter-spacing: -.035em; }
+.battlecard-head h3 em { margin: 0 6px; color: #aaaeb0; font: 600 12px var(--font-geist-mono); }
+.battlecard-head p { margin: 0; color: #bfc1c3; font-size: 10px; line-height: 1.5; }
+.battlecard-head > div:last-child { display: flex; align-items: center; gap: 8px; }
+.battlecard-head button, .battlecard-quality { padding: 8px 10px; border: 1px solid #73767b; background: transparent; color: white; font-size: 9px; font-weight: 800; white-space: nowrap; }
+.battlecard-head button { cursor: pointer; }
+.battlecard-head button:hover, .battlecard-head button:focus-visible { border-color: var(--signal); background: var(--signal); color: var(--ink); outline: 2px solid white; outline-offset: 2px; }
+.battlecard-quality.observed { border-color: #8fc779; color: #b7e5a4; }
+.battlecard-quality.low_sample, .battlecard-quality.incomplete { border-color: #e58774; color: #f3a596; }
+.battlecard-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.battlecard-lane { min-width: 0; border-right: 1px solid var(--ink); border-bottom: 1px solid var(--ink); background: white; }
+.battlecard-lane:nth-child(even) { border-right: 0; }
+.battlecard-lane:nth-last-child(-n+2) { border-bottom: 0; }
+.battlecard-lane > header { display: grid; grid-template-columns: 1fr auto; align-items: center; min-height: 58px; padding: 10px 13px; border-bottom: 1px solid var(--line); background: #ebe8df; }
+.battlecard-lane > header span { grid-column: 1; color: var(--violet); font: 800 8px var(--font-geist-mono); }
+.battlecard-lane > header h4 { grid-column: 1; margin: 2px 0 0; font-size: 15px; }
+.battlecard-lane > header > b { grid-column: 2; grid-row: 1 / 3; display: grid; place-items: center; width: 31px; height: 31px; border: 1px solid var(--ink); background: white; font: 750 11px var(--font-geist-mono); }
+.battlecard-lane.protect > header { box-shadow: inset 5px 0 0 #648beb; }
+.battlecard-lane.contested > header { box-shadow: inset 5px 0 0 var(--signal); }
+.battlecard-lane.deny > header { box-shadow: inset 5px 0 0 #e07868; }
+.battlecard-lane.exchange > header { box-shadow: inset 5px 0 0 var(--violet); }
+.battlecard-lane > p { margin: 0; padding: 8px 13px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 9px; }
+.battlecard-signal-list { display: grid; }
+.battlecard-signal-list > article { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 96px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.battlecard-signal-list > article:last-child { border-bottom: 0; }
+.battlecard-signal-list img { width: 46px; height: 46px; border: 1px solid var(--ink); object-fit: cover; }
+.battlecard-signal-list strong, .battlecard-signal-list span, .battlecard-signal-list small { display: block; }
+.battlecard-signal-list strong { font-size: 12px; }
+.battlecard-signal-list span { margin-top: 1px; color: var(--violet); font: 700 8px var(--font-geist-mono); }
+.battlecard-signal-list small { margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.45; }
+.battlecard-signal-list p { grid-column: 1 / -1; margin: -2px 0 0; padding: 8px 9px; background: #f1efe8; color: #353936; font-size: 10px; line-height: 1.5; }
+.battlecard-empty { min-height: 96px; margin: 0; padding: 20px 14px !important; border: 0 !important; color: var(--muted); font-size: 10px !important; line-height: 1.6; }
+.battlecard-exchange { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 9px; padding: 13px; }
+.battlecard-exchange > div { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; padding: 8px; border: 1px solid var(--line); background: #f4f2eb; }
+.battlecard-exchange img { width: 42px; height: 42px; border: 1px solid var(--ink); object-fit: cover; }
+.battlecard-exchange small, .battlecard-exchange strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.battlecard-exchange small { color: var(--violet); font: 750 8px var(--font-geist-mono); }
+.battlecard-exchange strong { margin-top: 2px; font-size: 11px; }
+.battlecard-exchange > b { color: var(--violet); font: 800 15px var(--font-geist-mono); }
+.battlecard-exchange > p { grid-column: 1 / -1; margin: 0; padding: 9px; background: #eeeaff; font-size: 10px; line-height: 1.5; }
+.battlecard-boundary { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 18px; padding: 12px 14px; border-top: 1px solid var(--ink); background: #dedbd2; }
+.battlecard-boundary b { display: block; color: var(--violet); font-size: 9px; }
+.battlecard-boundary p { margin: 3px 0 0; color: var(--muted); font-size: 8px; line-height: 1.5; }
+.battlecard-boundary > span { font: 700 8px var(--font-geist-mono); white-space: nowrap; }
+.battlecard-setup { display: flex; align-items: center; justify-content: space-between; gap: 30px; margin: 0 0 30px; padding: 22px 25px; border: 1px dashed #8c8a84; background: #efede6; }
+.battlecard-setup span { color: var(--violet); font: 800 9px var(--font-geist-mono); }
+.battlecard-setup h3 { margin: 5px 0 3px; font-size: 17px; }
+.battlecard-setup p { margin: 0; color: var(--muted); font-size: 11px; }
+.battlecard-setup > b { max-width: 280px; padding: 8px 10px; border: 1px solid var(--line); background: white; color: var(--muted); font-size: 9px; line-height: 1.45; }
 .opponent-detail-label { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin: 0 0 10px; }
 .opponent-detail-label span { color: var(--violet); font: 800 9px var(--font-geist-mono); }
 .opponent-detail-label h3 { margin: 3px 0 0; font-size: 18px; }
@@ -526,6 +578,7 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
   .next-fixture { border-left: 1px solid var(--line); }
   .my-team-picks { border-left: 1px solid var(--line); }
   .team-data-boundary { grid-column: 2; border-left: 1px solid var(--line); }
+  .battlecard-head { align-items: flex-start; }
 }
 @media (max-width: 680px) {
   .team-lens { grid-template-columns: 1fr; padding: 16px 5vw; }
@@ -541,6 +594,15 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
   .priority-queue > footer { grid-template-columns: 1fr; gap: 2px; }
   .team-priority-setup { padding: 24px 20px; }
   .opponent-priority-status { align-items: flex-end; flex-direction: column; gap: 5px; }
+  .battlecard-head { align-items: stretch; flex-direction: column; padding: 16px; }
+  .battlecard-head > div:last-child { justify-content: space-between; }
+  .battlecard-grid { grid-template-columns: 1fr; }
+  .battlecard-lane, .battlecard-lane:nth-child(even), .battlecard-lane:nth-last-child(-n+2) { border-right: 0; border-bottom: 1px solid var(--ink); }
+  .battlecard-lane:last-child { border-bottom: 0; }
+  .battlecard-boundary { grid-template-columns: 1fr; gap: 6px; }
+  .battlecard-boundary > span { white-space: normal; }
+  .battlecard-setup { align-items: flex-start; flex-direction: column; gap: 14px; padding: 19px; }
+  .battlecard-setup > b { max-width: none; }
 }
 @media (max-width: 960px) {
   .creator-export-controls { grid-template-columns: 1fr 1fr; }

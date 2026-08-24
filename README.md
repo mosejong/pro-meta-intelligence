@@ -96,6 +96,8 @@ data path:
   champion-role signals, separates the patch test queue, and exports or prints with evidence.
 - an own-team lens that combines official upcoming fixtures with same-league relevance, contested
   picks, current meta overlap, sample strength, and data quality to rank which opponent to review first.
+- an own-team-versus-opponent Draft Battlecard that turns public draft overlap into four bounded
+  staff review lanes: protect, contest, deny review, and exchange scenario.
 - a Creator Export Lab that converts the same claim-locked evidence into 16:9 YouTube cards, 9:16
   short-form cards, and editor-ready scene JSON without uploading the generated files.
 
@@ -133,6 +135,7 @@ See also:
 - [`docs/TEAM_DECISION_BRIEF.md`](docs/TEAM_DECISION_BRIEF.md)
 - [`docs/OPPONENT_PREP.md`](docs/OPPONENT_PREP.md)
 - [`docs/EMERGENCY_BRIEF.md`](docs/EMERGENCY_BRIEF.md)
+- [`docs/DRAFT_BATTLECARD.md`](docs/DRAFT_BATTLECARD.md)
 - [`docs/COMPETITIVE_POSITIONING.md`](docs/COMPETITIVE_POSITIONING.md)
 - [`web/README.md`](web/README.md)
 - [`docs/PRODUCT_MODES.md`](docs/PRODUCT_MODES.md)
