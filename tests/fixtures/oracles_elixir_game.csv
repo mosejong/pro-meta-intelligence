@@ -1,13 +1,13 @@
-gameid,datacompleteness,league,year,split,date,game,patch,participantid,side,position,teamname,teamid,firstPick,champion,result,ban1,ban2,ban3,ban4,ban5,pick1,pick2,pick3,pick4,pick5
-GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,1,Blue,top,Blue Team,oe:team:blue,1,Gnar,0,,,,,,,,,,
-GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,2,Blue,jng,Blue Team,oe:team:blue,1,Xin Zhao,0,,,,,,,,,,
-GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,3,Blue,mid,Blue Team,oe:team:blue,1,Ahri,0,,,,,,,,,,
-GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,4,Blue,bot,Blue Team,oe:team:blue,1,Corki,0,,,,,,,,,,
-GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,5,Blue,sup,Blue Team,oe:team:blue,1,Leona,0,,,,,,,,,,
-GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,6,Red,top,Red Team,oe:team:red,0,Zaahen,1,,,,,,,,,,
-GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,7,Red,jng,Red Team,oe:team:red,0,Diana,1,,,,,,,,,,
-GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,8,Red,mid,Red Team,oe:team:red,0,Mel,1,,,,,,,,,,
-GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,9,Red,bot,Red Team,oe:team:red,0,Sivir,1,,,,,,,,,,
-GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,10,Red,sup,Red Team,oe:team:red,0,Braum,1,,,,,,,,,,
-GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,100,Blue,team,Blue Team,oe:team:blue,1,,0,Yone,Vi,Azir,Rakan,Varus,Xin Zhao,Gnar,Corki,Ahri,Leona
-GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,200,Red,team,Red Team,oe:team:red,0,,1,Aurora,Sejuani,Orianna,Nautilus,Rumble,Zaahen,Diana,Sivir,Mel,Braum
+gameid,datacompleteness,league,year,split,date,game,patch,participantid,side,position,playername,playerid,teamname,teamid,firstPick,champion,result,ban1,ban2,ban3,ban4,ban5,pick1,pick2,pick3,pick4,pick5
+GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,1,Blue,top,Atlas,oe:player:blue-top,Blue Team,oe:team:blue,1,Gnar,0,,,,,,,,,,
+GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,2,Blue,jng,Comet,oe:player:blue-jng,Blue Team,oe:team:blue,1,Xin Zhao,0,,,,,,,,,,
+GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,3,Blue,mid,Nova,oe:player:blue-mid,Blue Team,oe:team:blue,1,Ahri,0,,,,,,,,,,
+GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,4,Blue,bot,Pulse,oe:player:blue-bot,Blue Team,oe:team:blue,1,Corki,0,,,,,,,,,,
+GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,5,Blue,sup,Warden,oe:player:blue-sup,Blue Team,oe:team:blue,1,Leona,0,,,,,,,,,,
+GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,6,Red,top,Flint,oe:player:red-top,Red Team,oe:team:red,0,Zaahen,1,,,,,,,,,,
+GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,7,Red,jng,Shade,oe:player:red-jng,Red Team,oe:team:red,0,Diana,1,,,,,,,,,,
+GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,8,Red,mid,Ember,oe:player:red-mid,Red Team,oe:team:red,0,Mel,1,,,,,,,,,,
+GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,9,Red,bot,Arrow,oe:player:red-bot,Red Team,oe:team:red,0,Sivir,1,,,,,,,,,,
+GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,10,Red,sup,Aegis,oe:player:red-sup,Red Team,oe:team:red,0,Braum,1,,,,,,,,,,
+GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,100,Blue,team,,,Blue Team,oe:team:blue,1,,0,Yone,Vi,Azir,Rakan,Varus,Xin Zhao,Gnar,Corki,Ahri,Leona
+GAME001,complete,LCK,2026,Summer,2026-08-20 10:00:00,1,16.15,200,Red,team,,,Red Team,oe:team:red,0,,1,Aurora,Sejuani,Orianna,Nautilus,Rumble,Zaahen,Diana,Sivir,Mel,Braum

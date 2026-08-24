@@ -120,6 +120,8 @@ class PickBanEvent:
     observed_at: datetime
     available_at: datetime
     provenance: Provenance
+    player_id: str | None = None
+    player_name: str | None = None
 
     def __post_init__(self) -> None:
         require_temporal_order(self.observed_at, self.available_at)

@@ -45,6 +45,52 @@ export type OpponentChampionTendency = {
   evidence_event_ids: string[];
 };
 
+export type OpponentPlayerProfile = {
+  player_id: string;
+  player_name: string;
+  role: string;
+  roster_status?: "CURRENT" | "OTHER_OBSERVED";
+  game_count: number;
+  champions: Array<{
+    champion_id: string;
+    game_count: number;
+    game_rate: number;
+    evidence_event_ids: string[];
+  }>;
+  evidence_match_ids: string[];
+};
+
+export type OpponentRecentGame = {
+  match_id: string;
+  observed_at: string;
+  league: string;
+  tournament: string;
+  side: string;
+  opponent_team_id: string;
+  opponent_team_name: string;
+  result: "WIN" | "LOSS";
+  first_pick: boolean;
+  picks: Array<{
+    champion_id: string;
+    role: string;
+    player_id: string | null;
+    player_name: string | null;
+    sequence: number;
+    evidence_event_id: string;
+  }>;
+};
+
+export type OpponentPatchChange = {
+  champion_id: string;
+  role: string;
+  current_game_count: number;
+  previous_game_count: number;
+  current_game_rate: number;
+  previous_game_rate: number;
+  delta: number;
+  evidence_event_ids: string[];
+};
+
 export type OpponentTeam = {
   team_id: string;
   team_name: string;
@@ -65,6 +111,20 @@ export type OpponentTeam = {
     game_count: number;
     evidence_match_ids: string[];
   }>;
+  player_profiles?: OpponentPlayerProfile[];
+  recent_games?: OpponentRecentGame[];
+  patch_comparison?: {
+    status: "OBSERVED" | "NO_BASELINE";
+    previous_patch_id: string | null;
+    previous_game_count: number;
+    emerging: OpponentPatchChange[];
+    cooling: OpponentPatchChange[];
+  };
+  series_tracking?: {
+    provider_series_id_available: boolean;
+    series_count: number | null;
+    boundary: string;
+  };
   quality_flags: string[];
   evidence: {
     match_ids: string[];
@@ -80,11 +140,13 @@ export type OpponentPrep = {
   fixture_only: boolean;
   cutoff: string;
   patch_id: string;
+  previous_patch_id?: string | null;
   team_count: number;
   config: {
     maximum_games_per_team: number;
     minimum_games_for_review: number;
     top_champions: number;
+    profile_team_names?: string[];
   };
   boundary: string;
   formulae: Record<string, string>;
@@ -362,11 +424,13 @@ function isOpponentPrep(value: unknown) {
     typeof value.fixture_only !== "boolean" ||
     typeof value.cutoff !== "string" ||
     typeof value.patch_id !== "string" ||
+    !(value.previous_patch_id === undefined || value.previous_patch_id === null || typeof value.previous_patch_id === "string") ||
     typeof value.team_count !== "number" ||
     !isRecord(value.config) ||
     typeof value.config.maximum_games_per_team !== "number" ||
     typeof value.config.minimum_games_for_review !== "number" ||
     typeof value.config.top_champions !== "number" ||
+    !(value.config.profile_team_names === undefined || Array.isArray(value.config.profile_team_names) && value.config.profile_team_names.every((item) => typeof item === "string")) ||
     typeof value.boundary !== "string" ||
     !isRecord(value.formulae) ||
     !isRecord(value.evidence_index) ||
@@ -393,6 +457,10 @@ function isOpponentTeam(team: unknown) {
     Array.isArray(team.frequent_bans) && team.frequent_bans.every(isOpponentTendency) &&
     Array.isArray(team.received_bans) && team.received_bans.every(isOpponentTendency) &&
     Array.isArray(team.first_rotations) && team.first_rotations.every(isOpponentRotation) &&
+    (team.player_profiles === undefined || Array.isArray(team.player_profiles) && team.player_profiles.every(isOpponentPlayerProfile)) &&
+    (team.recent_games === undefined || Array.isArray(team.recent_games) && team.recent_games.every(isOpponentRecentGame)) &&
+    (team.patch_comparison === undefined || isOpponentPatchComparison(team.patch_comparison)) &&
+    (team.series_tracking === undefined || isOpponentSeriesTracking(team.series_tracking)) &&
     Array.isArray(team.quality_flags) && team.quality_flags.every((item) => typeof item === "string") &&
     isRecord(team.side_stats) &&
     isRecord(team.evidence) &&
@@ -434,5 +502,82 @@ function isOpponentRotation(value: unknown) {
     typeof value.game_count === "number" &&
     Array.isArray(value.evidence_match_ids) &&
     value.evidence_match_ids.every((item) => typeof item === "string")
+  );
+}
+
+function isOpponentPlayerProfile(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    typeof value.player_id === "string" &&
+    typeof value.player_name === "string" &&
+    typeof value.role === "string" &&
+    (value.roster_status === undefined || value.roster_status === "CURRENT" || value.roster_status === "OTHER_OBSERVED") &&
+    typeof value.game_count === "number" &&
+    Array.isArray(value.champions) && value.champions.every((champion) => (
+      isRecord(champion) &&
+      typeof champion.champion_id === "string" &&
+      typeof champion.game_count === "number" &&
+      typeof champion.game_rate === "number" &&
+      Array.isArray(champion.evidence_event_ids) && champion.evidence_event_ids.every((item) => typeof item === "string")
+    )) &&
+    Array.isArray(value.evidence_match_ids) && value.evidence_match_ids.every((item) => typeof item === "string")
+  );
+}
+
+function isOpponentRecentGame(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    typeof value.match_id === "string" &&
+    typeof value.observed_at === "string" &&
+    typeof value.league === "string" &&
+    typeof value.tournament === "string" &&
+    typeof value.side === "string" &&
+    typeof value.opponent_team_id === "string" &&
+    typeof value.opponent_team_name === "string" &&
+    (value.result === "WIN" || value.result === "LOSS") &&
+    typeof value.first_pick === "boolean" &&
+    Array.isArray(value.picks) && value.picks.every((pick) => (
+      isRecord(pick) &&
+      typeof pick.champion_id === "string" &&
+      typeof pick.role === "string" &&
+      (pick.player_id === null || typeof pick.player_id === "string") &&
+      (pick.player_name === null || typeof pick.player_name === "string") &&
+      typeof pick.sequence === "number" &&
+      typeof pick.evidence_event_id === "string"
+    ))
+  );
+}
+
+function isOpponentPatchChange(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    typeof value.champion_id === "string" &&
+    typeof value.role === "string" &&
+    typeof value.current_game_count === "number" &&
+    typeof value.previous_game_count === "number" &&
+    typeof value.current_game_rate === "number" &&
+    typeof value.previous_game_rate === "number" &&
+    typeof value.delta === "number" &&
+    Array.isArray(value.evidence_event_ids) && value.evidence_event_ids.every((item) => typeof item === "string")
+  );
+}
+
+function isOpponentPatchComparison(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    (value.status === "OBSERVED" || value.status === "NO_BASELINE") &&
+    (value.previous_patch_id === null || typeof value.previous_patch_id === "string") &&
+    typeof value.previous_game_count === "number" &&
+    Array.isArray(value.emerging) && value.emerging.every(isOpponentPatchChange) &&
+    Array.isArray(value.cooling) && value.cooling.every(isOpponentPatchChange)
+  );
+}
+
+function isOpponentSeriesTracking(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    typeof value.provider_series_id_available === "boolean" &&
+    (value.series_count === null || typeof value.series_count === "number") &&
+    typeof value.boundary === "string"
   );
 }

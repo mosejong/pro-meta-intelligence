@@ -98,6 +98,9 @@ data path:
   picks, current meta overlap, sample strength, and data quality to rank which opponent to review first.
 - a T1-first Target Desk presentation that opens on T1 and keeps T1 visible as the default opponent
   without changing the underlying schedule or evidence-based opponent score.
+- a T1 Target Profile that separates the latest observed five-player lineup from other same-patch
+  lineups, shows public player champion pools, recent games, and previous-patch shifts, and exports
+  the same evidence-bounded view for staff handoff.
 - an own-team-versus-opponent Draft Battlecard that turns public draft overlap into four bounded
   staff review lanes: protect, contest, deny review, and exchange scenario.
 - a Creator Export Lab that converts the same claim-locked evidence into 16:9 YouTube cards, 9:16

@@ -58,7 +58,7 @@ export const sampleReport: RadarReport = {
     cutoff: "2026-08-15T12:00:00+00:00",
     patch_id: "16.14",
     team_count: 3,
-    config: { maximum_games_per_team: 10, minimum_games_for_review: 3, top_champions: 5 },
+    config: { maximum_games_per_team: 10, minimum_games_for_review: 3, top_champions: 5, profile_team_names: ["T1"] },
     boundary: "Synthetic public-match demonstration only.",
     formulae: {
       champion_game_rate: "distinct selected team games / selected team games",
@@ -77,7 +77,7 @@ export const sampleReport: RadarReport = {
         side_stats: { BLUE: { game_count: 3, win_count: 2, win_rate: 0.6667 }, RED: { game_count: 1, win_count: 1, win_rate: 1 } },
         priority_picks: [
           { champion_id: "Azir", role: "MID", game_count: 3, game_rate: 0.75, phase_1_count: 2, phase_2_count: 1, evidence_event_ids: ["t1-r1:Azir:3", "t1-r2:Azir:5", "t1-r3:Azir:7"] },
-          { champion_id: "Vi", role: "JUNGLE", game_count: 2, game_rate: 0.5, phase_1_count: 2, phase_2_count: 0, evidence_event_ids: ["t1-r1:Vi:1", "t1-r4:Vi:2"] },
+          { champion_id: "Vi", role: "JUNGLE", game_count: 2, game_rate: 0.5, phase_1_count: 2, phase_2_count: 0, evidence_event_ids: ["t1-r1:Vi:1", "t1-r4:Vi:1"] },
           { champion_id: "Rumble", role: "TOP", game_count: 2, game_rate: 0.5, phase_1_count: 1, phase_2_count: 1, evidence_event_ids: ["t1-r2:Rumble:4", "t1-r3:Rumble:8"] },
         ],
         frequent_bans: [
@@ -92,6 +92,17 @@ export const sampleReport: RadarReport = {
           { side: "BLUE", champions: ["Vi", "Azir", "Rumble"], game_count: 2, evidence_match_ids: ["t1-r1", "t1-r2"] },
           { side: "RED", champions: ["Azir", "Vi", "Rumble"], game_count: 1, evidence_match_ids: ["t1-r3"] },
         ],
+        player_profiles: [
+          { player_id: "synthetic:t1:top", player_name: "TOP 데모", role: "TOP", roster_status: "CURRENT", game_count: 4, champions: [{ champion_id: "Rumble", game_count: 2, game_rate: 0.5, evidence_event_ids: ["t1-r2:Rumble:4", "t1-r3:Rumble:8"] }], evidence_match_ids: ["t1-r1", "t1-r2", "t1-r3", "t1-r4"] },
+          { player_id: "synthetic:t1:jungle", player_name: "JUNGLE 데모", role: "JUNGLE", roster_status: "CURRENT", game_count: 4, champions: [{ champion_id: "Vi", game_count: 2, game_rate: 0.5, evidence_event_ids: ["t1-r1:Vi:1", "t1-r4:Vi:1"] }], evidence_match_ids: ["t1-r1", "t1-r2", "t1-r3", "t1-r4"] },
+          { player_id: "synthetic:t1:mid", player_name: "MID 데모", role: "MID", roster_status: "CURRENT", game_count: 4, champions: [{ champion_id: "Azir", game_count: 3, game_rate: 0.75, evidence_event_ids: ["t1-r1:Azir:3", "t1-r2:Azir:5", "t1-r3:Azir:7"] }], evidence_match_ids: ["t1-r1", "t1-r2", "t1-r3", "t1-r4"] },
+        ],
+        recent_games: [
+          { match_id: "t1-r4", observed_at: "2026-08-15T11:00:00+00:00", league: "LCK", tournament: "Synthetic LCK", side: "BLUE", opponent_team_id: "synthetic:team:alpha", opponent_team_name: "Seoul Phoenix", result: "WIN", first_pick: true, picks: [{ champion_id: "Vi", role: "JUNGLE", player_id: "synthetic:t1:jungle", player_name: "JUNGLE 데모", sequence: 1, evidence_event_id: "t1-r4:Vi:1" }] },
+          { match_id: "t1-r3", observed_at: "2026-08-14T11:00:00+00:00", league: "LCK", tournament: "Synthetic LCK", side: "RED", opponent_team_id: "synthetic:team:alpha", opponent_team_name: "Seoul Phoenix", result: "WIN", first_pick: false, picks: [{ champion_id: "Azir", role: "MID", player_id: "synthetic:t1:mid", player_name: "MID 데모", sequence: 7, evidence_event_id: "t1-r3:Azir:7" }] },
+        ],
+        patch_comparison: { status: "NO_BASELINE", previous_patch_id: null, previous_game_count: 0, emerging: [], cooling: [] },
+        series_tracking: { provider_series_id_available: false, series_count: null, boundary: "Synthetic fixture has no stable series ID; games are not grouped into series." },
         quality_flags: [],
         evidence: { match_ids: ["t1-r1", "t1-r2", "t1-r3", "t1-r4"], draft_event_ids: ["t1-r1:Azir:3", "t1-r1:Vi:1", "t1-r2:Rumble:4"], first_observed_at: "2026-08-09T10:00:00+00:00", last_observed_at: "2026-08-15T11:00:00+00:00" },
       },

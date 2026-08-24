@@ -48,6 +48,12 @@ select the exact T1 organization when it is present. After an own team is select
 at the front of the visible preparation queue unless T1 itself is the own team. This presentation pin
 does not modify the opponent-priority score, official-schedule evidence, or exported facts.
 
+When the exact T1 record is selected, Target Profile adds the latest publicly observed five-player
+lineup, same-patch player champion pools, five recent games, and previous-patch champion-role
+changes. Other same-patch lineups stay counted but are separated from the latest five. The provider
+does not expose a stable series ID, so the interface labels these records as games and does not
+invent series groupings. The complete bounded profile is downloadable as JSON.
+
 ## Checks
 
 ```bash

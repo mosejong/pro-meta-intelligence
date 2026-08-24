@@ -173,8 +173,8 @@ def test_oe_history_allows_known_exclusions_but_keeps_their_counts(tmp_path) -> 
 def test_oe_history_defers_unknown_game_issues_to_the_benchmark_patch(tmp_path) -> None:
     base = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
     invalid = base.replace(
-        b",100,Blue,team,Blue Team,oe:team:blue,1,,0,",
-        b",100,Blue,team,Blue Team,oe:team:blue,0,,0,",
+        b",100,Blue,team,,,Blue Team,oe:team:blue,1,,0,",
+        b",100,Blue,team,,,Blue Team,oe:team:blue,0,,0,",
     )
     archive = SnapshotArchive(tmp_path)
     archive.store(

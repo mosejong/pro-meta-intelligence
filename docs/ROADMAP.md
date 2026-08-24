@@ -66,6 +66,11 @@ protect, exact champion-role contest, deny-review, and exchange-scenario questio
 staff artifact and evidence-bearing JSON. It does not turn public frequency into an automatic pick
 or ban recommendation.
 
+The T1 Target Profile is implemented as a bounded enrichment of Opponent Prep. It preserves public
+player identity on pick events, separates the latest observed T1 five-player lineup from other
+same-patch lineups, shows recent games and previous-patch champion-role deltas, and connects the
+own-team Battlecard without inferring a starting roster, series grouping, or private readiness.
+
 The first Match-day Emergency Brief is also implemented as a deterministic Team Brief + Opponent
 Prep composition. It cross-checks exact champion-role overlaps, keeps global patch candidates
 separate from opponent responses, exports its evidence contract, and prints as a compact staff
