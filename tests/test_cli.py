@@ -4,6 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from pro_meta_intelligence.cli import main
+from pro_meta_intelligence.ingestion import OracleElixirDownloadIntervalError
 from pro_meta_intelligence.sources import RawSourceArtifact, SnapshotArchive
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -247,7 +248,7 @@ def test_build_radar_cli_reuses_validated_oe_import(tmp_path) -> None:
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert payload["patch_id"] == "16.15"
     assert payload["windows"]["recent"]["match_count"] == 1
-    assert payload["input"]["network_collection_performed"] is False
+    assert "network_collection_performed" not in payload["input"]
     assert payload["input"]["import_report"]["imported_game_count"] == 1
     assert payload["opponent_prep"]["team_count"] == 2
     assert payload["opponent_prep"]["teams"][0]["frequent_bans"]
@@ -499,7 +500,8 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
 
         def fetch_year(self, year, *, last_retrieved_at=None):
             assert year == 2026
-            assert last_retrieved_at is None
+            if last_retrieved_at is not None:
+                raise OracleElixirDownloadIntervalError(last_retrieved_at + timedelta(days=1))
             url = "https://drive.usercontent.google.com/download?id=reviewed"
             return SimpleNamespace(
                 file=SimpleNamespace(year=year, filename="2026_test.csv"),
@@ -519,41 +521,37 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
     )
     output = tmp_path / "sync.json"
     feed = tmp_path / "feed"
+    command = [
+        "sync-oe-feed",
+        "--year",
+        "2026",
+        "--source-timezone",
+        "UTC",
+        "--archive-dir",
+        str(tmp_path / "raw"),
+        "--feed-dir",
+        str(feed),
+        "--run-dir",
+        str(tmp_path / "jobs"),
+        "--readiness-minimum-matches",
+        "1",
+        "--readiness-minimum-teams",
+        "2",
+        "--readiness-minimum-regions",
+        "1",
+        "--minimum-recent-matches",
+        "1",
+        "--minimum-prior-matches",
+        "1",
+        "--minimum-region-matches",
+        "1",
+        "--minimum-current-picks",
+        "1",
+        "--output",
+        str(output),
+    ]
 
-    assert (
-        main(
-            [
-                "sync-oe-feed",
-                "--year",
-                "2026",
-                "--source-timezone",
-                "UTC",
-                "--archive-dir",
-                str(tmp_path / "raw"),
-                "--feed-dir",
-                str(feed),
-                "--run-dir",
-                str(tmp_path / "jobs"),
-                "--readiness-minimum-matches",
-                "1",
-                "--readiness-minimum-teams",
-                "2",
-                "--readiness-minimum-regions",
-                "1",
-                "--minimum-recent-matches",
-                "1",
-                "--minimum-prior-matches",
-                "1",
-                "--minimum-region-matches",
-                "1",
-                "--minimum-current-picks",
-                "1",
-                "--output",
-                str(output),
-            ]
-        )
-        == 0
-    )
+    assert main(command) == 0
 
     audit = json.loads(output.read_text(encoding="utf-8"))
     current = json.loads((feed / "current.json").read_text(encoding="utf-8"))
@@ -563,12 +561,21 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
     assert audit["result"]["readiness_audit"]["ready_for_radar"] is True
     assert current["fixture_only"] is False
     assert current["input"]["authenticity"] == "REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD"
+    assert "network_collection_performed" not in current["input"]
     assert current["history_status"]["artifact_type"] == "oe-history-status"
     assert current["history_status"]["next_action"] == "KEEP_DAILY_COLLECTION"
     assert (
         json.loads((feed / "history-status.json").read_text(encoding="utf-8"))
         == current["history_status"]
     )
+
+    current_before_cache_reuse = (feed / "current.json").read_bytes()
+    assert main(command) == 0
+    reused = json.loads(output.read_text(encoding="utf-8"))
+    assert reused["result"]["source_acquisition"]["status"] == "REUSED_DAILY_CACHE"
+    assert reused["result"]["network_collection_performed"] is False
+    assert reused["result"]["created"] is False
+    assert (feed / "current.json").read_bytes() == current_before_cache_reuse
 
 
 def test_sync_oe_feed_publishes_with_audited_known_exclusions(tmp_path, monkeypatch) -> None:

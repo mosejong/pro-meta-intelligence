@@ -83,6 +83,9 @@ copies exactly two allowlisted artifacts:
 It stages those exact paths, rejects any unexpected staged file, creates no commit when bytes are
 unchanged, and performs a normal fast-forward push. It never force-pushes and never copies the raw
 archive, local audit files, source CSV, Creator working files, or unrelated developer changes.
+Whether a run downloaded the provider file or reused the daily cache remains in the local job audit,
+not `current.json`. The same source snapshot therefore produces byte-identical public evidence and
+does not create a timestamp-only or cache-status-only publication commit.
 
 Review the operation without creating a worktree or pushing:
 
