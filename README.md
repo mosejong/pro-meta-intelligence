@@ -96,6 +96,8 @@ data path:
   champion-role signals, separates the patch test queue, and exports or prints with evidence.
 - an own-team lens that combines official upcoming fixtures with same-league relevance, contested
   picks, current meta overlap, sample strength, and data quality to rank which opponent to review first.
+- a Creator Export Lab that converts the same claim-locked evidence into 16:9 YouTube cards, 9:16
+  short-form cards, and editor-ready scene JSON without uploading the generated files.
 
 This is not yet evidence of predictive value. Real point-in-time daily snapshots must accumulate
 before Phase 3 can measure Recall@K, lead time, and false-alert behavior without hindsight leakage.
@@ -124,6 +126,7 @@ See also:
 - [`docs/OE_HISTORY_READINESS.md`](docs/OE_HISTORY_READINESS.md)
 - [`docs/BLIND_SPOT_BENCHMARK.md`](docs/BLIND_SPOT_BENCHMARK.md)
 - [`docs/META_RADAR.md`](docs/META_RADAR.md)
+- [`docs/CREATOR_EXPORT_LAB.md`](docs/CREATOR_EXPORT_LAB.md)
 - [`docs/SNAPSHOT_FEED.md`](docs/SNAPSHOT_FEED.md)
 - [`docs/FEED_JOB.md`](docs/FEED_JOB.md)
 - [`docs/CREATOR_BRIEF.md`](docs/CREATOR_BRIEF.md)
