@@ -94,6 +94,28 @@ export type OpponentPrep = {
   teams: OpponentTeam[];
 };
 
+export type HistoryStatus = {
+  schema_version: "1";
+  artifact_type: "oe-history-status";
+  source_id: string;
+  as_of: string | null;
+  status: string;
+  history_ready: boolean;
+  benchmark_ready: boolean;
+  gates: Array<{
+    id: string;
+    current: number;
+    required: number;
+    unit: string;
+    passed: boolean;
+  }>;
+  blocking_reasons: string[];
+  warnings: string[];
+  next_action: string;
+  aggregate: Record<string, unknown> | null;
+  boundary: string;
+};
+
 export type RadarReport = {
   schema_version: "1";
   fixture_only: boolean;
@@ -131,6 +153,7 @@ export type RadarReport = {
       issue_counts: Record<string, number>;
     } | null;
   };
+  history_status?: HistoryStatus;
   opponent_prep?: OpponentPrep;
   entries: RadarEntry[];
 };
@@ -156,8 +179,39 @@ export function isRadarReport(value: unknown): value is RadarReport {
     !Array.isArray(report.entries)
   ) return false;
   if (report.publication_readiness !== undefined && !isPublicationReadiness(report.publication_readiness)) return false;
+  if (report.history_status !== undefined && !isHistoryStatus(report.history_status)) return false;
   if (report.opponent_prep !== undefined && !isOpponentPrep(report.opponent_prep)) return false;
   return report.entries.every(isRadarEntry);
+}
+
+export function isHistoryStatus(value: unknown): value is HistoryStatus {
+  if (!isRecord(value)) return false;
+  return (
+    value.schema_version === "1" &&
+    value.artifact_type === "oe-history-status" &&
+    typeof value.source_id === "string" &&
+    (value.as_of === null || typeof value.as_of === "string") &&
+    typeof value.status === "string" &&
+    typeof value.history_ready === "boolean" &&
+    typeof value.benchmark_ready === "boolean" &&
+    Array.isArray(value.gates) && value.gates.every(isHistoryGate) &&
+    Array.isArray(value.blocking_reasons) && value.blocking_reasons.every((item) => typeof item === "string") &&
+    Array.isArray(value.warnings) && value.warnings.every((item) => typeof item === "string") &&
+    typeof value.next_action === "string" &&
+    (value.aggregate === null || isRecord(value.aggregate)) &&
+    typeof value.boundary === "string"
+  );
+}
+
+function isHistoryGate(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.current === "number" &&
+    typeof value.required === "number" &&
+    typeof value.unit === "string" &&
+    typeof value.passed === "boolean",
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

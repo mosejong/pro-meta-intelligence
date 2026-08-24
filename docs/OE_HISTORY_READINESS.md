@@ -88,6 +88,12 @@ each cutoff instead of silently accepting retroactive corrections.
 
 ## Recommended operation
 
-Run `sync-oe-feed` at most once per provider-published daily interval. Run the history audit after a
-successful sync or on a separate weekly schedule. Keep the raw archive private; the command emits
-hashes and aggregate validation reports, not provider CSV contents.
+Run `sync-oe-feed` at most once per provider-published daily interval. Each sync now runs the history
+audit and walk-forward benchmark maintenance under the same writer lock, then atomically publishes a
+compact `web/public/feed/history-status.json`. A separate scheduled audit is optional diagnostics,
+not a requirement for keeping the public readiness indicator current.
+
+The public status contains only the four default gate measurements, reason codes, warnings, the next
+operational action, and aggregate benchmark metrics after the benchmark is genuinely ready. Keep the
+raw archive and detailed audit private under `outputs/`; neither provider rows nor local filesystem
+paths belong in the public feed.

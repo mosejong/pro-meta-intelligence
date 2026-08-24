@@ -85,7 +85,9 @@ Current foundation: immutable OE retrieval history can now be integrity-checked,
 and audited for continuity, distinct normalized states, and matured future-outcome cutoffs. The
 walk-forward Blind Spot Benchmark now pins separate candidate/outcome hashes and reports Recall@K,
 Precision@K, lead time, false alerts, evidence coverage, and first-class miss logs. Real daily
-snapshots still need to accumulate before the first non-fixture result is valid.
+snapshots still need to accumulate before the first non-fixture result is valid. Daily feed syncs now
+run that audit and benchmark maintenance automatically and publish a compact four-gate readiness
+status for the dashboard without exposing the private raw archive.
 
 ## Phase 4 — Expert / OTP Evidence + User-defined Intelligence Sources
 

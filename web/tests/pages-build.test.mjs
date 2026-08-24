@@ -16,6 +16,8 @@ test("builds an independent static Meta Radar entry page", async () => {
 test("copies the same-origin feed and social card", async () => {
   const feedText = await readFile(new URL("feed/current.json", root), "utf8");
   const feed = JSON.parse(feedText);
+  const historyText = await readFile(new URL("feed/history-status.json", root), "utf8");
+  const history = JSON.parse(historyText);
   const card = await readFile(new URL("og.png", root));
   const hero = await readFile(new URL("meta-radar-hero-v2.png", root));
 
@@ -28,7 +30,13 @@ test("copies the same-origin feed and social card", async () => {
     24,
   );
   assert.ok(feed.entries.length > 0);
+  assert.equal(history.artifact_type, "oe-history-status");
+  assert.equal(history.schema_version, "1");
+  assert.equal(history.gates.length, 4);
+  assert.equal(history.aggregate, null);
+  assert.deepEqual(feed.history_status, history);
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
+  assert.doesNotMatch(historyText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.ok(card.byteLength > 10_000);
   assert.ok(hero.byteLength > 1_000_000);
 });

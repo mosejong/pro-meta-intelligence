@@ -42,6 +42,9 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /JSON 내보내기/);
   assert.match(html, /출전 권고가 아닙니다/);
   assert.match(html, /OPPONENT PREP PACK/);
+  assert.match(html, /HISTORY · WALK-FORWARD/);
+  assert.match(html, /실데이터 검증 준비도/);
+  assert.match(html, /일일 수집 계속/);
   assert.match(html, /3분 브리프/);
   assert.match(html, /상대팀 드래프트 준비 자료/);
   assert.match(html, /상대가 한 밴/);

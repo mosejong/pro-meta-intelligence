@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- this dual vinext/Vite build uses stable Riot CDN and relative static assets */
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { isRadarReport, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport } from "./radar-types";
+import { isHistoryStatus, isRadarReport, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport } from "./radar-types";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { sampleReport } from "./sample-report";
 import { buildTeamBrief, serializeTeamBrief } from "./team-brief";
@@ -47,6 +47,26 @@ const opponentFlagLabels: Record<string, string> = {
   LOW_MATCH_SAMPLE: "경기 표본 부족",
   INCOMPLETE_BAN_EVIDENCE: "일부 밴 기록 누락",
   MISSING_TEAM_DISPLAY_NAME: "팀 표시명 누락",
+};
+const historyGateLabels: Record<string, string> = {
+  RETRIEVALS: "일일 수집",
+  UNIQUE_STATES: "고유 데이터 상태",
+  COLLECTION_SPAN: "수집 기간",
+  MATURED_CUTOFFS: "미래 결과 확보",
+};
+const historyUnitLabels: Record<string, string> = {
+  snapshots: "회",
+  states: "개",
+  days: "일",
+  cutoffs: "개",
+};
+const historyActionLabels: Record<string, string> = {
+  KEEP_DAILY_COLLECTION: "일일 수집 계속",
+  WAIT_FOR_DISTINCT_SOURCE_STATES: "새 경기 상태 대기",
+  WAIT_FOR_OUTCOME_HORIZON: "미래 결과 기간 대기",
+  REVIEW_SKIPPED_CUTOFFS: "제외된 평가 구간 검토",
+  REVIEW_BENCHMARK_RESULTS: "실데이터 결과 검토",
+  REVIEW_HISTORY_BLOCKERS: "차단 원인 검토",
 };
 
 type FeedState = {
@@ -198,16 +218,27 @@ export function RadarDashboard() {
       if (!response.ok) throw new Error(`feed returned ${response.status}`);
       const parsed: unknown = await response.json();
       if (!isRadarReport(parsed)) throw new Error("unsupported report");
-      setReport(parsed);
-      setSelectedKey(parsed.entries[0] ? keyOf(parsed.entries[0]) : "");
+      let publishedReport = parsed;
+      try {
+        const statusUrl = new URL("feed/history-status.json", document.baseURI);
+        const statusResponse = await fetch(statusUrl, { cache: "no-store" });
+        if (statusResponse.ok) {
+          const status: unknown = await statusResponse.json();
+          if (isHistoryStatus(status)) publishedReport = { ...parsed, history_status: status };
+        }
+      } catch {
+        // The Radar remains usable when the independently published status is unavailable.
+      }
+      setReport(publishedReport);
+      setSelectedKey(publishedReport.entries[0] ? keyOf(publishedReport.entries[0]) : "");
       setRole("ALL");
       setEligibleOnly(false);
       setVisibleLimit(12);
-      setOpponentId(parsed.opponent_prep?.teams[0]?.team_id ?? "");
+      setOpponentId(publishedReport.opponent_prep?.teams[0]?.team_id ?? "");
       setFeedState({
-        kind: parsed.fixture_only ? "demo" : "published",
-        label: parsed.fixture_only ? "PUBLISHED DEMO FEED" : "LIVE PUBLISHED FEED",
-        detail: parsed.fixture_only ? "자동 연결됨 · 합성 데이터" : "자동 연결됨 · 검증된 발행본",
+        kind: publishedReport.fixture_only ? "demo" : "published",
+        label: publishedReport.fixture_only ? "PUBLISHED DEMO FEED" : "LIVE PUBLISHED FEED",
+        detail: publishedReport.fixture_only ? "자동 연결됨 · 합성 데이터" : "자동 연결됨 · 검증된 발행본",
       });
     } catch {
       setFeedState({
@@ -379,6 +410,25 @@ export function RadarDashboard() {
         <div><span>발행 데이터 감사</span><strong>전체 {quality.importQuality.discovered_game_count}경기 중 {quality.importQuality.imported_game_count}경기 사용</strong></div>
         <p>{quality.importQuality.known_exclusion_game_count}개 경기는 불완전 기록 또는 팀 ID 누락으로 완전히 제외했습니다. 분석에 포함된 경기의 계약 위반은 {quality.importQuality.blocking_issue_game_count}건이며, 미등록 리그는 {quality.unknown}개입니다.</p>
         <b>{quality.publication.ready_for_radar ? "제외 내역 공개 · 분석 가능" : "발행 차단"}</b>
+      </section>}
+
+      {report.history_status && <section className={`history-readiness ${report.history_status.benchmark_ready ? "ready" : "collecting"}`} aria-label="과거 검증 데이터 준비 상태">
+        <header>
+          <div><span>HISTORY · WALK-FORWARD</span><h2>실데이터 검증 준비도</h2></div>
+          <p>{report.history_status.benchmark_ready ? "미래 데이터와 분리된 실제 백테스트 결과를 검토할 수 있습니다." : "과거 파일을 오늘 데이터로 재구성하지 않고, 실제 일일 스냅샷이 쌓이기를 기다립니다."}</p>
+          <b>{historyActionLabels[report.history_status.next_action] ?? report.history_status.next_action}</b>
+        </header>
+        <div className="history-gates">{report.history_status.gates.map((gate) => {
+          const progress = gate.required > 0 ? Math.min(100, (gate.current / gate.required) * 100) : 0;
+          const unit = historyUnitLabels[gate.unit] ?? gate.unit;
+          return <article className={gate.passed ? "passed" : ""} key={gate.id}>
+            <span>{historyGateLabels[gate.id] ?? gate.id}</span>
+            <strong>{gate.current}<small> / {gate.required}{unit}</small></strong>
+            <i aria-hidden="true"><b style={{ width: `${progress}%` }} /></i>
+            <em>{gate.passed ? "충족" : "수집 중"}</em>
+          </article>;
+        })}</div>
+        <footer><span>마지막 스냅샷 {report.history_status.as_of ? formatCutoff(report.history_status.as_of) : "아직 없음"}</span><p>준비도는 예측 성능이 아닙니다. Recall@K와 오탐률은 성숙한 미래 결과가 확보된 뒤에만 표시합니다.</p><b>{report.history_status.blocking_reasons.length} GATES OPEN</b></footer>
       </section>}
 
       <section className="team-brief" id="team-brief">

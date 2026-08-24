@@ -186,6 +186,13 @@ file when the daily interval permits, otherwise reuses only the newest verified 
 and normalizes it, and advances the Radar/Creator feed. If the provider is unavailable and no cache
 exists, it leaves the current public feed unchanged.
 
+The same sync also audits the immutable archive and attempts the walk-forward benchmark. It writes
+a compact, public-safe `web/public/feed/history-status.json` with four operational gates: retrievals,
+distinct normalized states, collection span, and matured future-outcome cutoffs. The dashboard reads
+that status independently from the main Radar feed, so collection progress can advance even when a
+new Radar publication is rejected or unchanged. Raw provider rows and the detailed private audit
+remain under the ignored `outputs/` archive.
+
 Before an unattended publication, the annual coverage audit checks the selected patch's validated
 match, distinct-team, and mapped-region counts, blocking import-contract issues, and unknown
 leagues. Reviewed incomplete games and missing team IDs may be excluded only when the remaining

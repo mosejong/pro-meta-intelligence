@@ -482,6 +482,12 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
     assert audit["result"]["readiness_audit"]["ready_for_radar"] is True
     assert current["fixture_only"] is False
     assert current["input"]["authenticity"] == "REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD"
+    assert current["history_status"]["artifact_type"] == "oe-history-status"
+    assert current["history_status"]["next_action"] == "KEEP_DAILY_COLLECTION"
+    assert (
+        json.loads((feed / "history-status.json").read_text(encoding="utf-8"))
+        == current["history_status"]
+    )
 
 
 def test_sync_oe_feed_publishes_with_audited_known_exclusions(tmp_path, monkeypatch) -> None:

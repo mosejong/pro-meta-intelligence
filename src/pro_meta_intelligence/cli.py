@@ -33,6 +33,8 @@ from pro_meta_intelligence.publishing import (
     FeedJobOperationResult,
     FeedJobRunner,
     SnapshotFeedPublisher,
+    build_history_status,
+    publish_history_status,
 )
 from pro_meta_intelligence.quality import (
     OECoverageCriteria,
@@ -517,7 +519,8 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
 
     def operation() -> FeedJobOperationResult:
         archive = SnapshotArchive(args.archive_dir)
-        adapter = OracleElixirPublishedDownloadAdapter(_load_registry(args.registry))
+        registry = _load_registry(args.registry)
+        adapter = OracleElixirPublishedDownloadAdapter(registry)
         latest = archive.latest(adapter.source_id)
         network_attempted = False
         acquisition_status: str
@@ -543,6 +546,24 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             )
             acquisition_error = str(error)
 
+        history_benchmark = benchmark_oe_blind_spots(
+            archive.inspect(adapter.source_id),
+            registry,
+            source_timezone=args.source_timezone,
+            history_criteria=OEHistoryCriteria(),
+            config=OEBlindSpotConfig(
+                recent_window_days=args.recent_days,
+                prior_window_days=args.prior_days,
+                minimum_recent_matches=args.minimum_recent_matches,
+                minimum_prior_matches=args.minimum_prior_matches,
+                minimum_region_matches=args.minimum_region_matches,
+                minimum_current_picks=args.minimum_current_picks,
+            ),
+            league_regions=_load_league_regions(args.region_map),
+        ).to_dict()
+        history_status = build_history_status(history_benchmark)
+        publish_history_status(args.feed_dir, history_status)
+
         if latest is None:
             payload = {
                 "schema_version": "1",
@@ -553,6 +574,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                     "status": acquisition_status,
                     "error": acquisition_error,
                 },
+                "history_status": history_status,
             }
             return FeedJobOperationResult(exit_code=4, payload=payload)
 
@@ -593,12 +615,14 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 "status": "REJECTED_READINESS",
                 "published": False,
                 "readiness_audit": coverage.to_dict(),
+                "history_status": history_status,
             }
         else:
             exit_code, payload = _refresh_feed_payload(
                 refresh_args,
                 imported=imported,
                 publication_readiness=coverage.to_dict(),
+                history_status=history_status,
             )
             payload["readiness_audit"] = coverage.to_dict()
         payload["network_collection_performed"] = network_attempted
@@ -608,6 +632,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             "retrieved_at": latest.retrieved_at.isoformat(),
             "content_hash": latest.content_hash,
         }
+        payload["history_status"] = history_status
         return FeedJobOperationResult(exit_code=exit_code, payload=payload)
 
     try:
@@ -798,6 +823,7 @@ def _refresh_feed_payload(
     *,
     imported: OracleElixirImport | None = None,
     publication_readiness: dict[str, object] | None = None,
+    history_status: dict[str, object] | None = None,
 ) -> tuple[int, dict[str, object]]:
     radar, has_import_issues = _radar_payload(args, imported=imported)
     if args.fail_on_import_issues and has_import_issues:
@@ -811,6 +837,8 @@ def _refresh_feed_payload(
 
     if publication_readiness is not None:
         radar["publication_readiness"] = publication_readiness
+    if history_status is not None:
+        radar["history_status"] = history_status
 
     creator = CreatorBriefBuilder().build(radar, top_k=args.creator_top_k)
     published_at = parse_datetime(args.published_at) if args.published_at else datetime.now(UTC)
