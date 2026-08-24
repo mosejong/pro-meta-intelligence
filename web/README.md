@@ -29,6 +29,11 @@ Creator Export Lab converts an eligible Radar candidate into a 1280×720 YouTube
 short-form card, or scene JSON. The browser generates the files locally. Experimental
 HTML-in-Canvas is used only when detected; all other browsers use the built-in Canvas 2D fallback.
 
+After selecting an own team, the Draft Battlecard compares that team's public priorities with the
+selected opponent. It presents protect, exact pick-contest, deny-review, and exchange-scenario
+questions, then exports the same evidence-bounded artifact as JSON. It never treats the result as an
+automatic pick/ban instruction.
+
 ## Checks
 
 ```bash

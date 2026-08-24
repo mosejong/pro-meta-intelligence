@@ -7,6 +7,7 @@ import { championImageUrl } from "./champion-assets";
 import { CreatorExportLab } from "./creator-export";
 import { isHistoryStatus, isRadarReport, isScheduleSnapshot, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport, type ScheduleSnapshot } from "./radar-types";
 import { buildEmergencyBrief } from "./emergency-brief";
+import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
 import { sampleReport } from "./sample-report";
 import { buildTeamContext } from "./team-context";
 import { buildTeamBrief, serializeTeamBrief } from "./team-brief";
@@ -177,6 +178,15 @@ function preparationQuestions(team: OpponentTeam) {
   ];
 }
 
+function BattlecardSignalList({ items, emptyLabel }: { items: BattlecardSignal[]; emptyLabel: string }) {
+  if (!items.length) return <p className="battlecard-empty">{emptyLabel}</p>;
+  return <div className="battlecard-signal-list">{items.slice(0, 2).map((item) => <article key={`${item.champion_id}:${item.role ?? "UNKNOWN"}`}>
+    <img src={championImageUrl(item.champion_id)} alt="" loading="lazy" />
+    <div><strong>{item.champion_id}</strong><span>{item.role ? roleLabels[item.role] ?? item.role : "역할 미상"} · 근거 {item.evidence_ids.length}건</span><small>{item.observation}</small></div>
+    <p>{item.staff_question}</p>
+  </article>)}</div>;
+}
+
 export function RadarDashboard() {
   const [report, setReport] = useState<RadarReport>(sampleReport);
   const [selectedKey, setSelectedKey] = useState(keyOf(sampleReport.entries[0]));
@@ -227,6 +237,11 @@ export function RadarDashboard() {
   const selectedOpponent = rankedOpponentTeams.find((team) => team.team_id === opponentId) ?? rankedOpponentTeams[0];
   const selectedPriority = opponentPriorities.find((priority) => priority.team.team_id === selectedOpponent?.team_id);
   const emergencyBrief = selectedOpponent ? buildEmergencyBrief(report, selectedOpponent, selectedMyTeam, effectiveSchedule, scheduleCheckedAt) : null;
+  const matchupBattlecard = useMemo(() => (
+    selectedMyTeam && selectedOpponent && selectedMyTeam.team_id !== selectedOpponent.team_id
+      ? buildMatchupBattlecard(report, selectedMyTeam, selectedOpponent, selectedPriority)
+      : null
+  ), [report, selectedMyTeam, selectedOpponent, selectedPriority]);
   const nextOwnEvent = teamContext?.own_upcoming_events[0];
   const quality = qualityState(report);
   const eligibleCount = report.entries.filter((entry) => entry.eligible_for_review).length;
@@ -402,6 +417,17 @@ export function RadarDashboard() {
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = `match-day-brief-${emergencyBrief.opponent.team_name.replace(/[^A-Za-z0-9가-힣_-]+/g, "-")}-${report.patch_id}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadMatchupBattlecard() {
+    if (!matchupBattlecard) return;
+    const blob = new Blob([JSON.stringify(matchupBattlecard, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `draft-battlecard-${matchupBattlecard.own_team.team_name.replace(/[^A-Za-z0-9가-힣_-]+/g, "-")}-vs-${matchupBattlecard.opponent.team_name.replace(/[^A-Za-z0-9가-힣_-]+/g, "-")}-${report.patch_id}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -604,6 +630,53 @@ export function RadarDashboard() {
         </div> : <div className="team-priority-setup">
           <span>STEP 01</span><h3>내 팀을 선택하면 상대 우선순위가 열립니다.</h3><p>현재 발행본의 {opponentTeams.length}개 팀 중 소속 팀을 고르면, 자기 팀을 제외한 상대만 공개 근거로 다시 정렬합니다.</p><a href="#top">위에서 내 팀 선택 ↑</a>
         </div>}
+
+        {matchupBattlecard ? <section className="draft-battlecard" aria-label={`${matchupBattlecard.own_team.team_name} 대 ${matchupBattlecard.opponent.team_name} 드래프트 배틀카드`}>
+          <header className="battlecard-head">
+            <div>
+              <span>DRAFT BATTLECARD · PUBLIC EVIDENCE</span>
+              <h3>{matchupBattlecard.own_team.team_name} <em>vs</em> {matchupBattlecard.opponent.team_name}</h3>
+              <p>픽·밴을 자동 추천하지 않고, 회의 전에 합의할 보호·충돌·견제·교환 질문만 압축합니다.</p>
+            </div>
+            <div><b className={`battlecard-quality ${matchupBattlecard.evidence_quality.toLowerCase()}`}>{matchupBattlecard.evidence_quality === "OBSERVED" ? "공개 표본 확인" : matchupBattlecard.evidence_quality === "LOW_SAMPLE" ? "낮은 표본" : "불완전 근거"}</b><button type="button" onClick={downloadMatchupBattlecard}>배틀카드 JSON</button></div>
+          </header>
+
+          <div className="battlecard-grid">
+            <article className="battlecard-lane protect">
+              <header><span>01 · PROTECT</span><h4>보호 자원</h4><b>{matchupBattlecard.protect.length}</b></header>
+              <p>우리 우선 픽과 상대의 관측 밴이 겹치는 지점</p>
+              <BattlecardSignalList items={matchupBattlecard.protect} emptyLabel="직접 겹치는 공개 밴 기록이 없습니다. 기본 대체 픽만 확인합니다." />
+            </article>
+            <article className="battlecard-lane contested">
+              <header><span>02 · CONTEST</span><h4>픽 충돌</h4><b>{matchupBattlecard.contested.length}</b></header>
+              <p>양 팀이 같은 챔피언·역할을 가져간 기록</p>
+              <BattlecardSignalList items={matchupBattlecard.contested} emptyLabel="동일 역할의 직접 픽 충돌이 관측되지 않았습니다." />
+            </article>
+            <article className="battlecard-lane deny">
+              <header><span>03 · DENY REVIEW</span><h4>견제 검토</h4><b>{matchupBattlecard.deny_review.length}</b></header>
+              <p>상대 선호와 글로벌 레이더를 함께 볼 후보</p>
+              <BattlecardSignalList items={matchupBattlecard.deny_review} emptyLabel="검토할 반복 픽 표본이 없습니다. 기본 메타 응답을 유지합니다." />
+            </article>
+            <article className="battlecard-lane exchange">
+              <header><span>04 · EXCHANGE</span><h4>교환 시나리오</h4><b>{matchupBattlecard.exchange ? "1" : "0"}</b></header>
+              <p>서로 다른 공개 우선 픽을 열었을 때의 검증 질문</p>
+              {matchupBattlecard.exchange ? <div className="battlecard-exchange">
+                <div><img src={championImageUrl(matchupBattlecard.exchange.own.champion_id)} alt="" /><span><small>우리 확보</small><strong>{matchupBattlecard.exchange.own.champion_id}</strong></span></div>
+                <b aria-hidden="true">⇄</b>
+                <div><img src={championImageUrl(matchupBattlecard.exchange.opponent.champion_id)} alt="" /><span><small>상대 허용</small><strong>{matchupBattlecard.exchange.opponent.champion_id}</strong></span></div>
+                <p>{matchupBattlecard.exchange.staff_question}</p>
+              </div> : <p className="battlecard-empty">비교 가능한 서로 다른 우선 픽 표본이 없습니다.</p>}
+            </article>
+          </div>
+
+          <footer className="battlecard-boundary">
+            <div><b>아직 모르는 것</b><p>{matchupBattlecard.unknowns.join(" · ")}</p></div>
+            <span>{matchupBattlecard.evidence.match_ids.length} MATCHES · {matchupBattlecard.evidence.source_versions.length} SOURCES</span>
+          </footer>
+        </section> : <section className="battlecard-setup" aria-label="드래프트 배틀카드 설정">
+          <div><span>DRAFT BATTLECARD</span><h3>내 팀을 선택하면 상대별 회의 카드가 생성됩니다.</h3><p>보호 자원 · 픽 충돌 · 견제 검토 · 교환 시나리오를 같은 공개 경기 근거에서 비교합니다.</p></div>
+          <b>선수 숙련도 · 스크림 · 내부 밴픽 계획은 추정하지 않음</b>
+        </section>}
 
         {selectedOpponent && <div className="opponent-detail-label"><div><span>{selectedMyTeam ? `${selectedMyTeam.team_name} → ${selectedOpponent.team_name}` : "GLOBAL → OPPONENT"}</span><h3>선택 상대 상세 분석</h3></div>{selectedPriority && <div className="opponent-priority-status">{selectedPriority.next_meeting && <span>{formatScheduleTime(selectedPriority.next_meeting.start_at)} KST · {selectedPriority.next_meeting.block}</span>}<b className={`priority-tier ${selectedPriority.tier.toLowerCase()}`}>{selectedPriority.tier} · {selectedPriority.score}점</b></div>}</div>}
 
