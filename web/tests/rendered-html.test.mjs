@@ -44,7 +44,10 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /인쇄 \/ PDF/);
   assert.match(html, /JSON 내보내기/);
   assert.match(html, /출전 권고가 아닙니다/);
-  assert.match(html, /MY TEAM → OPPONENT PRIORITY/);
+  assert.match(html, /T1 TARGET DESK/);
+  assert.match(html, /T1 공략 준비실/);
+  assert.match(html, /T1 분석 바로가기/);
+  assert.match(html, /T1 기본 타깃/);
   assert.match(html, /MY TEAM LENS/);
   assert.match(html, /STEP 1 · MY TEAM LENS/);
   assert.match(html, /팀명 또는 리그 검색/);
@@ -59,7 +62,7 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /선수 숙련도 · 스크림 · 내부 밴픽 계획은 추정하지 않음/);
   assert.match(html, /원본 상대 통계/);
   assert.match(html, /상대 검색/);
-  assert.match(html, /개 상대 · 우선순위순/);
+  assert.match(html, /개 상대 · T1 기본 타깃 · 점수순/);
   assert.match(html, /픽·밴·사이드·로테이션 상세는 필요할 때만 펼쳐보세요/);
   assert.match(html, /모바일 빠른 이동/);
   assert.match(html, /HISTORY · WALK-FORWARD/);
@@ -72,7 +75,7 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /PNG 저장/);
   assert.match(html, /CANVAS FALLBACK READY/);
   assert.match(html, /3분 브리프/);
-  assert.match(html, /내 팀 기준 상대 준비 순서/);
+  assert.match(html, /T1 공략 준비실/);
   assert.match(html, /상대가 한 밴/);
   assert.match(html, /상대가 받은 밴/);
   assert.match(html, /회의에서 확인할 질문/);
@@ -319,6 +322,30 @@ test("filters the large team list by name, alias, and league", async () => {
     assert.equal(matchesTeamQuery(t1, "  t1 lck  "), true);
     assert.equal(matchesTeamQuery(t1, "LEC"), false);
     assert.ok(feed.opponent_prep.teams.filter((team) => matchesTeamQuery(team, "LCK")).length > 1);
+  } finally {
+    await vite.close();
+  }
+});
+
+test("locks the exact T1 organization as the default opponent target", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { DEFAULT_TARGET_TEAM_NAME, findDefaultTargetTeam } = await vite.ssrLoadModule("/app/radar-dashboard.tsx");
+    const target = findDefaultTargetTeam(feed.opponent_prep.teams);
+    assert.equal(DEFAULT_TARGET_TEAM_NAME, "T1");
+    assert.ok(target);
+    assert.equal(target.team_name, "T1");
+    assert.equal(findDefaultTargetTeam(feed.opponent_prep.teams.slice().reverse()).team_id, target.team_id);
+    assert.equal(findDefaultTargetTeam([{ ...target, team_name: "T1 Academy", team_name_aliases: [] }]), undefined);
   } finally {
     await vite.close();
   }

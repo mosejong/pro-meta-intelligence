@@ -96,6 +96,8 @@ data path:
   champion-role signals, separates the patch test queue, and exports or prints with evidence.
 - an own-team lens that combines official upcoming fixtures with same-league relevance, contested
   picks, current meta overlap, sample strength, and data quality to rank which opponent to review first.
+- a T1-first Target Desk presentation that opens on T1 and keeps T1 visible as the default opponent
+  without changing the underlying schedule or evidence-based opponent score.
 - an own-team-versus-opponent Draft Battlecard that turns public draft overlap into four bounded
   staff review lanes: protect, contest, deny review, and exchange scenario.
 - a Creator Export Lab that converts the same claim-locked evidence into 16:9 YouTube cards, 9:16
