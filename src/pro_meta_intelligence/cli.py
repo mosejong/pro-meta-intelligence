@@ -33,6 +33,7 @@ from pro_meta_intelligence.publishing import (
     FeedJobOperationResult,
     FeedJobRunner,
     SnapshotFeedPublisher,
+    assess_oe_feed_health,
     build_history_status,
     publish_history_status,
 )
@@ -201,6 +202,17 @@ def build_parser() -> argparse.ArgumentParser:
     oe_sync.add_argument("--max-index-entries", type=int, default=50)
     oe_sync.add_argument("--output", type=Path, help="optional audited sync summary path")
 
+    oe_health = subparsers.add_parser(
+        "check-oe-feed-health",
+        help="fail closed when the unattended OE feed is broken or stale",
+    )
+    oe_health.add_argument("--run-dir", type=Path, default=Path("outputs/oe-feed-jobs"))
+    oe_health.add_argument("--feed-dir", type=Path, default=Path("web/public/feed"))
+    oe_health.add_argument("--maximum-job-age-hours", type=float, default=30)
+    oe_health.add_argument("--maximum-source-age-hours", type=float, default=50)
+    oe_health.add_argument("--now", help="explicit health-check time for deterministic operations")
+    oe_health.add_argument("--output", type=Path, help="optional JSON health report path")
+
     radar = subparsers.add_parser(
         "build-radar", help="build an explainable patch-level Meta Radar from a local OE CSV"
     )
@@ -270,6 +282,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _benchmark_oe_history(args)
     if args.command == "sync-oe-feed":
         return _sync_oe_feed(args)
+    if args.command == "check-oe-feed-health":
+        return _check_oe_feed_health(args)
     if args.command == "build-radar":
         return _build_radar(args)
     if args.command == "benchmark-oe":
@@ -881,6 +895,27 @@ def _run_feed_job(args: argparse.Namespace) -> int:
         exit_code = 3
     _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
     return exit_code
+
+
+def _check_oe_feed_health(args: argparse.Namespace) -> int:
+    report = assess_oe_feed_health(
+        _read_json_object(args.run_dir / "latest.json"),
+        _read_json_object(args.feed_dir / "current.json"),
+        _read_json_object(args.feed_dir / "history-status.json"),
+        checked_at=parse_datetime(args.now) if args.now else datetime.now(UTC),
+        maximum_job_age_hours=args.maximum_job_age_hours,
+        maximum_source_age_hours=args.maximum_source_age_hours,
+    )
+    _emit(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    return 0 if report["healthy"] else 2
+
+
+def _read_json_object(path: Path) -> dict[str, object] | None:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError, OSError, UnicodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def _load_feed_job_config(path: Path) -> dict[str, object]:

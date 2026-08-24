@@ -404,6 +404,87 @@ def test_run_feed_job_cli_refuses_existing_lock(tmp_path) -> None:
     }
 
 
+def test_check_oe_feed_health_cli_returns_scheduler_friendly_exit_codes(tmp_path) -> None:
+    run_dir = tmp_path / "runs"
+    feed_dir = tmp_path / "feed"
+    run_dir.mkdir()
+    feed_dir.mkdir()
+    (run_dir / "latest.json").write_text(
+        json.dumps(
+            {
+                "status": "SUCCEEDED",
+                "exit_code": 0,
+                "finished_at": "2026-08-24T11:55:00+00:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (feed_dir / "current.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1",
+                "fixture_only": False,
+                "patch_id": "16.16",
+                "publication_readiness": {"ready_for_radar": True},
+                "entries": [{"champion_id": "RekSai"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (feed_dir / "history-status.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1",
+                "artifact_type": "oe-history-status",
+                "as_of": "2026-08-24T11:30:00+00:00",
+                "status": "HISTORY_NOT_READY",
+                "history_ready": False,
+                "benchmark_ready": False,
+                "gates": [
+                    {
+                        "id": gate_id,
+                        "current": 1,
+                        "required": 2,
+                        "unit": "items",
+                        "passed": False,
+                    }
+                    for gate_id in (
+                        "RETRIEVALS",
+                        "UNIQUE_STATES",
+                        "COLLECTION_SPAN",
+                        "MATURED_CUTOFFS",
+                    )
+                ],
+                "next_action": "KEEP_DAILY_COLLECTION",
+            }
+        ),
+        encoding="utf-8",
+    )
+    output = tmp_path / "health.json"
+    command = [
+        "check-oe-feed-health",
+        "--run-dir",
+        str(run_dir),
+        "--feed-dir",
+        str(feed_dir),
+        "--now",
+        "2026-08-24T12:00:00Z",
+        "--output",
+        str(output),
+    ]
+
+    assert main(command) == 0
+    assert json.loads(output.read_text(encoding="utf-8"))["status"] == "HEALTHY"
+
+    (run_dir / "latest.json").unlink()
+    assert main(command) == 2
+    failed = json.loads(output.read_text(encoding="utf-8"))
+    assert failed["next_action"] == "INSPECT_LAST_JOB"
+
+    (run_dir / "latest.json").write_bytes(b"\xff")
+    assert main(command) == 2
+
+
 def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
     tmp_path, monkeypatch
 ) -> None:

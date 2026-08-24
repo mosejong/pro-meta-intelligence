@@ -193,6 +193,12 @@ that status independently from the main Radar feed, so collection progress can a
 new Radar publication is rejected or unchanged. Raw provider rows and the detailed private audit
 remain under the ignored `outputs/` archive.
 
+Production operators can turn those artifacts into a fail-closed freshness signal with
+`check-oe-feed-health`. The initial `HISTORY_NOT_READY` collection phase remains healthy, while a
+failed or stale job, stale source snapshot, invalid public feed, or missing history status returns a
+nonzero exit code. A reviewed Windows runner and Task Scheduler registration script are documented
+in [`docs/PRODUCTION_OPERATIONS.md`](docs/PRODUCTION_OPERATIONS.md).
+
 Before an unattended publication, the annual coverage audit checks the selected patch's validated
 match, distinct-team, and mapped-region counts, blocking import-contract issues, and unknown
 leagues. Reviewed incomplete games and missing team IDs may be excluded only when the remaining

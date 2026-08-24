@@ -27,3 +27,8 @@ the job, and `1` means an unexpected failure was audited.
 
 Use Windows Task Scheduler, cron, or CI to invoke this command. Do not schedule `refresh-feed`
 directly when concurrent starts are possible.
+
+For the network-enabled Oracle's Elixir production path, schedule `sync-oe-feed` plus
+`check-oe-feed-health` through the reviewed Windows wrapper instead. See
+[`PRODUCTION_OPERATIONS.md`](PRODUCTION_OPERATIONS.md). The older `run-feed-job` command remains the
+offline local-file publication path.
