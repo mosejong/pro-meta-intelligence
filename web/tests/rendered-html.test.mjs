@@ -48,6 +48,11 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /T1 공략 준비실/);
   assert.match(html, /T1 분석 바로가기/);
   assert.match(html, /T1 기본 타깃/);
+  assert.match(html, /T1 TARGET PROFILE/);
+  assert.match(html, /T1의 이번 패치에서 바뀐 것/);
+  assert.match(html, /최근 관측 라인업의 챔피언 풀/);
+  assert.match(html, /최근 경기 타임라인/);
+  assert.match(html, /T1 프로필 JSON/);
   assert.match(html, /MY TEAM LENS/);
   assert.match(html, /STEP 1 · MY TEAM LENS/);
   assert.match(html, /팀명 또는 리그 검색/);
@@ -301,6 +306,53 @@ test("builds an evidence-bounded own-team draft battlecard", async () => {
   }
 });
 
+test("builds a deterministic T1 target profile with players, patch shifts, and own-team context", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+  const geng = feed.opponent_prep.teams.find((team) => team.team_name === "Gen.G");
+  assert.ok(t1);
+  assert.ok(geng);
+
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { scoreOpponent } = await vite.ssrLoadModule("/app/team-context.ts");
+    const { buildMatchupBattlecard } = await vite.ssrLoadModule("/app/matchup-battlecard.ts");
+    const { buildTargetProfile, serializeTargetProfile } = await vite.ssrLoadModule("/app/target-profile.ts");
+    const priority = scoreOpponent(feed, geng, t1);
+    const battlecard = buildMatchupBattlecard(feed, geng, t1, priority);
+    const first = buildTargetProfile(feed, t1, battlecard);
+    const second = buildTargetProfile(feed, t1, battlecard);
+
+    assert.deepEqual(first, second);
+    assert.equal(first.artifact_type, "team-target-profile");
+    assert.equal(first.target.team_name, "T1");
+    assert.ok(first.players.length >= 5);
+    assert.equal(first.players.filter((player) => player.roster_status === "CURRENT").length, 5);
+    assert.ok(first.players.some((player) => player.roster_status === "OTHER_OBSERVED"));
+    assert.ok(first.players.every((player) => player.champions.length > 0));
+    assert.ok(first.recent_games.length > 0 && first.recent_games.length <= 5);
+    assert.ok(first.recent_games.every((game) => game.picks.every((pick) => pick.player_name)));
+    assert.equal(first.patch_shift.status, "OBSERVED");
+    assert.ok(first.patch_shift.previous_patch_id);
+    assert.equal(first.matchup.own_team_name, "Gen.G");
+    assert.equal(first.matchup.priority_score, priority.score);
+    assert.ok(first.matchup.staff_questions.length > 0);
+    assert.ok(first.evidence.match_ids.length > 0);
+    assert.match(first.boundary, /not a prediction/i);
+    assert.deepEqual(JSON.parse(serializeTargetProfile(first)), first);
+  } finally {
+    await vite.close();
+  }
+});
+
 test("filters the large team list by name, alias, and league", async () => {
   const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
   const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
@@ -375,6 +427,13 @@ test("ships a validated same-origin publication feed for automatic loading", asy
   assert.ok(t1.frequent_bans.length > 0);
   assert.ok(t1.received_bans.length > 0);
   assert.ok(t1.evidence.match_ids.length > 0);
+  assert.equal(t1.player_profiles.filter((player) => player.roster_status === "CURRENT").length, 5);
+  assert.ok(t1.player_profiles.some((player) => player.roster_status === "OTHER_OBSERVED"));
+  assert.equal(t1.recent_games.length, 5);
+  assert.equal(t1.patch_comparison.previous_patch_id, "16.15");
+  assert.equal(feed.opponent_prep.config.profile_team_names[0], "T1");
+  assert.equal(feed.opponent_prep.teams.filter((team) => team.player_profiles).length, 1);
+  assert.ok(feedText.length < 3_000_000, "target enrichment should not bloat every team payload");
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
 });
 

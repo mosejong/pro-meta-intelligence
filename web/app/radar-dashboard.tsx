@@ -11,6 +11,8 @@ import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlec
 import { sampleReport } from "./sample-report";
 import { buildTeamContext } from "./team-context";
 import { buildTeamBrief, serializeTeamBrief } from "./team-brief";
+import { buildTargetProfile, serializeTargetProfile } from "./target-profile";
+import { TargetProfilePanel } from "./target-profile-panel";
 
 const MY_TEAM_STORAGE_KEY = "pmi:my-team-id";
 export const DEFAULT_TARGET_TEAM_NAME = "T1";
@@ -298,6 +300,11 @@ export function RadarDashboard() {
       ? buildMatchupBattlecard(report, selectedMyTeam, selectedOpponent, selectedPriority)
       : null
   ), [report, selectedMyTeam, selectedOpponent, selectedPriority]);
+  const targetProfile = useMemo(() => (
+    selectedOpponent && isDefaultTargetSelected
+      ? buildTargetProfile(report, selectedOpponent, matchupBattlecard)
+      : null
+  ), [isDefaultTargetSelected, matchupBattlecard, report, selectedOpponent]);
   const nextOwnEvent = teamContext?.own_upcoming_events[0];
   const quality = qualityState(report);
   const eligibleCount = report.entries.filter((entry) => entry.eligible_for_review).length;
@@ -487,6 +494,17 @@ export function RadarDashboard() {
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = `draft-battlecard-${matchupBattlecard.own_team.team_name.replace(/[^A-Za-z0-9가-힣_-]+/g, "-")}-vs-${matchupBattlecard.opponent.team_name.replace(/[^A-Za-z0-9가-힣_-]+/g, "-")}-${report.patch_id}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadTargetProfile() {
+    if (!targetProfile) return;
+    const blob = new Blob([serializeTargetProfile(targetProfile)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `t1-target-profile-${report.patch_id}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -705,6 +723,8 @@ export function RadarDashboard() {
         </div> : <div className="team-priority-setup">
           <span>STEP 01</span><h3>내 팀을 선택하면 상대 우선순위가 열립니다.</h3><p>현재 발행본의 {opponentTeams.length}개 팀 중 소속 팀을 고르면, 자기 팀을 제외한 상대만 공개 근거로 다시 정렬합니다.</p><a href="#top">위에서 내 팀 선택 ↑</a>
         </div>}
+
+        {targetProfile && <TargetProfilePanel profile={targetProfile} onDownload={downloadTargetProfile} />}
 
         {matchupBattlecard ? <section className="draft-battlecard" id="draft-battlecard" aria-label={`${matchupBattlecard.own_team.team_name} 대 ${matchupBattlecard.opponent.team_name} 드래프트 배틀카드`}>
           <header className="battlecard-head">

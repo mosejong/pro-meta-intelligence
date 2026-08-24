@@ -59,8 +59,8 @@ def _build_benchmark_history(
     )
     if include_blocking_patch_issue:
         invalid = _game_rows("INVALID001", "2026-08-13 10:00:00").replace(
-            b",100,Blue,team,Blue Team,oe:team:blue,1,,0,",
-            b",100,Blue,team,Blue Team,oe:team:blue,0,,0,",
+            b",100,Blue,team,,,Blue Team,oe:team:blue,1,,0,",
+            b",100,Blue,team,,,Blue Team,oe:team:blue,0,,0,",
         )
         initial += invalid
     outcome = initial + b"".join(

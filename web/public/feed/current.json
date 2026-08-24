@@ -18981,6 +18981,9 @@
     "config": {
       "maximum_games_per_team": 10,
       "minimum_games_for_review": 3,
+      "profile_team_names": [
+        "T1"
+      ],
       "top_champions": 5
     },
     "cutoff": "2026-08-24T05:36:54.129494+00:00",
@@ -18997,11 +19000,14 @@
     "formulae": {
       "champion_game_rate": "distinct selected team games / selected team games",
       "first_pick_rate": "games owning global pick sequence 1 / selected team games",
+      "patch_game_rate_delta": "current patch champion-role game rate - previous available patch game rate",
       "phase_1": "pick or ban sequence <= 6 within that action type",
       "phase_2": "pick or ban sequence >= 7 within that action type",
+      "player_champion_game_rate": "distinct player games on champion / selected player games",
       "side_win_rate": "wins on side / games on side"
     },
     "patch_id": "16.16",
+    "previous_patch_id": "16.15",
     "schema_version": "1",
     "team_count": 139,
     "teams": [
@@ -20337,6 +20343,575 @@
           "KeSPA Cup",
           "LCK"
         ],
+        "patch_comparison": {
+          "cooling": [
+            {
+              "champion_id": "Ambessa",
+              "current_game_count": 0,
+              "current_game_rate": 0.0,
+              "delta": -0.3,
+              "evidence_event_ids": [
+                "oe:LCK:LOLTMNT01_438592:pick:6",
+                "oe:LCK:LOLTMNT01_443917:pick:10",
+                "oe:LCK:LOLTMNT01_444547:pick:6"
+              ],
+              "previous_game_count": 3,
+              "previous_game_rate": 0.3,
+              "role": "TOP"
+            },
+            {
+              "champion_id": "Jhin",
+              "current_game_count": 0,
+              "current_game_rate": 0.0,
+              "delta": -0.3,
+              "evidence_event_ids": [
+                "oe:LCK:LOLTMNT01_438592:pick:10",
+                "oe:LCK:LOLTMNT01_440328:pick:2",
+                "oe:LCK:LOLTMNT01_444860:pick:5"
+              ],
+              "previous_game_count": 3,
+              "previous_game_rate": 0.3,
+              "role": "BOTTOM"
+            },
+            {
+              "champion_id": "Pantheon",
+              "current_game_count": 0,
+              "current_game_rate": 0.0,
+              "delta": -0.3,
+              "evidence_event_ids": [
+                "oe:LCK:LOLTMNT01_440328:pick:7",
+                "oe:LCK:LOLTMNT01_444547:pick:3",
+                "oe:LCK:LOLTMNT01_444860:pick:9"
+              ],
+              "previous_game_count": 3,
+              "previous_game_rate": 0.3,
+              "role": "JUNGLE"
+            }
+          ],
+          "emerging": [
+            {
+              "champion_id": "Gwen",
+              "current_game_count": 2,
+              "current_game_rate": 0.222222,
+              "delta": 0.222222,
+              "evidence_event_ids": [
+                "oe:LCK:LOLTMNT02_456759:pick:8",
+                "oe:LCK:LOLTMNT02_457213:pick:10"
+              ],
+              "previous_game_count": 0,
+              "previous_game_rate": 0.0,
+              "role": "TOP"
+            },
+            {
+              "champion_id": "Skarner",
+              "current_game_count": 2,
+              "current_game_rate": 0.222222,
+              "delta": 0.222222,
+              "evidence_event_ids": [
+                "oe:KeSPA Cup:LOLTMNT02_449945:pick:3",
+                "oe:LCK:LOLTMNT02_457213:pick:6"
+              ],
+              "previous_game_count": 0,
+              "previous_game_rate": 0.0,
+              "role": "JUNGLE"
+            },
+            {
+              "champion_id": "Orianna",
+              "current_game_count": 2,
+              "current_game_rate": 0.222222,
+              "delta": 0.122222,
+              "evidence_event_ids": [
+                "oe:KeSPA Cup:LOLTMNT02_449976:pick:1",
+                "oe:LCK:LOLTMNT01_444860:pick:1",
+                "oe:LCK:LOLTMNT02_456749:pick:6"
+              ],
+              "previous_game_count": 1,
+              "previous_game_rate": 0.1,
+              "role": "MID"
+            }
+          ],
+          "previous_game_count": 10,
+          "previous_patch_id": "16.15",
+          "status": "OBSERVED"
+        },
+        "player_profiles": [
+          {
+            "champions": [
+              {
+                "champion_id": "Gwen",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_456759:pick:8",
+                  "oe:LCK:LOLTMNT02_457213:pick:10"
+                ],
+                "game_count": 2,
+                "game_rate": 0.4
+              },
+              {
+                "champion_id": "Jax",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457183:pick:7"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "K'Sante",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_456749:pick:7"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Vayne",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457197:pick:8"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              }
+            ],
+            "evidence_match_ids": [
+              "oe:LCK:LOLTMNT02_456749",
+              "oe:LCK:LOLTMNT02_456759",
+              "oe:LCK:LOLTMNT02_457183",
+              "oe:LCK:LOLTMNT02_457197",
+              "oe:LCK:LOLTMNT02_457213"
+            ],
+            "game_count": 5,
+            "player_id": "oe:player:a1f3b2bb3f36e5113237f92d76dc4c8",
+            "player_name": "Doran",
+            "role": "TOP",
+            "roster_status": "CURRENT"
+          },
+          {
+            "champions": [
+              {
+                "champion_id": "Jarvan IV",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457183:pick:6"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Skarner",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457213:pick:6"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Vi",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457197:pick:1"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Wukong",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_456759:pick:9"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              }
+            ],
+            "evidence_match_ids": [
+              "oe:LCK:LOLTMNT02_456749",
+              "oe:LCK:LOLTMNT02_456759",
+              "oe:LCK:LOLTMNT02_457183",
+              "oe:LCK:LOLTMNT02_457197",
+              "oe:LCK:LOLTMNT02_457213"
+            ],
+            "game_count": 5,
+            "player_id": "oe:player:f8b68f268106124fc4bc1c946adc9b0",
+            "player_name": "Oner",
+            "role": "JUNGLE",
+            "roster_status": "CURRENT"
+          },
+          {
+            "champions": [
+              {
+                "champion_id": "Ahri",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457183:pick:10"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Anivia",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457213:pick:7"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Orianna",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_456749:pick:6"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Rumble",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457197:pick:5"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              }
+            ],
+            "evidence_match_ids": [
+              "oe:LCK:LOLTMNT02_456749",
+              "oe:LCK:LOLTMNT02_456759",
+              "oe:LCK:LOLTMNT02_457183",
+              "oe:LCK:LOLTMNT02_457197",
+              "oe:LCK:LOLTMNT02_457213"
+            ],
+            "game_count": 5,
+            "player_id": "oe:player:e1edfc5cea461399a63cb813cf795cc",
+            "player_name": "Faker",
+            "role": "MID",
+            "roster_status": "CURRENT"
+          },
+          {
+            "champions": [
+              {
+                "champion_id": "Caitlyn",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457213:pick:2"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Ezreal",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_456749:pick:2"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Lucian",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_456759:pick:1"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Taliyah",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457197:pick:4"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              }
+            ],
+            "evidence_match_ids": [
+              "oe:LCK:LOLTMNT02_456749",
+              "oe:LCK:LOLTMNT02_456759",
+              "oe:LCK:LOLTMNT02_457183",
+              "oe:LCK:LOLTMNT02_457197",
+              "oe:LCK:LOLTMNT02_457213"
+            ],
+            "game_count": 5,
+            "player_id": "oe:player:5bbc2b92348d930ebd500cb9ce71bb7",
+            "player_name": "Peyz",
+            "role": "BOTTOM",
+            "roster_status": "CURRENT"
+          },
+          {
+            "champions": [
+              {
+                "champion_id": "Alistar",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457197:pick:9"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Karma",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_456749:pick:3"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Lulu",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457183:pick:3"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              },
+              {
+                "champion_id": "Lux",
+                "evidence_event_ids": [
+                  "oe:LCK:LOLTMNT02_457213:pick:3"
+                ],
+                "game_count": 1,
+                "game_rate": 0.2
+              }
+            ],
+            "evidence_match_ids": [
+              "oe:LCK:LOLTMNT02_456749",
+              "oe:LCK:LOLTMNT02_456759",
+              "oe:LCK:LOLTMNT02_457183",
+              "oe:LCK:LOLTMNT02_457197",
+              "oe:LCK:LOLTMNT02_457213"
+            ],
+            "game_count": 5,
+            "player_id": "oe:player:db79ce6ad35451c938fbe2995dabd37",
+            "player_name": "Keria",
+            "role": "SUPPORT",
+            "roster_status": "CURRENT"
+          },
+          {
+            "champions": [
+              {
+                "champion_id": "Gnar",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_452010:pick:1"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Olaf",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_451001:pick:5"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Rumble",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_449945:pick:6"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Varus",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_449976:pick:4"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              }
+            ],
+            "evidence_match_ids": [
+              "oe:KeSPA Cup:LOLTMNT02_449945",
+              "oe:KeSPA Cup:LOLTMNT02_449976",
+              "oe:KeSPA Cup:LOLTMNT02_451001",
+              "oe:KeSPA Cup:LOLTMNT02_452010"
+            ],
+            "game_count": 4,
+            "player_id": "oe:player:9fefcdafef82ae8de67c1187546d622",
+            "player_name": "Haetae",
+            "role": "TOP",
+            "roster_status": "OTHER_OBSERVED"
+          },
+          {
+            "champions": [
+              {
+                "champion_id": "Kindred",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_452010:pick:9"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Naafiri",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_449976:pick:5"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Skarner",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_449945:pick:3"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Vi",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_451001:pick:1"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              }
+            ],
+            "evidence_match_ids": [
+              "oe:KeSPA Cup:LOLTMNT02_449945",
+              "oe:KeSPA Cup:LOLTMNT02_449976",
+              "oe:KeSPA Cup:LOLTMNT02_451001",
+              "oe:KeSPA Cup:LOLTMNT02_452010"
+            ],
+            "game_count": 4,
+            "player_id": "oe:player:4d08cbf857994dc42e1b09205158e15",
+            "player_name": "Painter",
+            "role": "JUNGLE",
+            "roster_status": "OTHER_OBSERVED"
+          },
+          {
+            "champions": [
+              {
+                "champion_id": "Locke",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_451001:pick:9"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Orianna",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_449976:pick:1"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Syndra",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_452010:pick:8"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Viktor",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_449945:pick:2"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              }
+            ],
+            "evidence_match_ids": [
+              "oe:KeSPA Cup:LOLTMNT02_449945",
+              "oe:KeSPA Cup:LOLTMNT02_449976",
+              "oe:KeSPA Cup:LOLTMNT02_451001",
+              "oe:KeSPA Cup:LOLTMNT02_452010"
+            ],
+            "game_count": 4,
+            "player_id": "oe:player:3950b27e47e381e26f4678ced12bc45",
+            "player_name": "Guti",
+            "role": "MID",
+            "roster_status": "OTHER_OBSERVED"
+          },
+          {
+            "champions": [
+              {
+                "champion_id": "Corki",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_449945:pick:7"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Kai'Sa",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_451001:pick:8"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Mel",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_452010:pick:4"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Ziggs",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_449976:pick:8"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              }
+            ],
+            "evidence_match_ids": [
+              "oe:KeSPA Cup:LOLTMNT02_449945",
+              "oe:KeSPA Cup:LOLTMNT02_449976",
+              "oe:KeSPA Cup:LOLTMNT02_451001",
+              "oe:KeSPA Cup:LOLTMNT02_452010"
+            ],
+            "game_count": 4,
+            "player_id": "oe:player:31edd1e8359d849e250b854826b8c38",
+            "player_name": "Cypher",
+            "role": "BOTTOM",
+            "roster_status": "OTHER_OBSERVED"
+          },
+          {
+            "champions": [
+              {
+                "champion_id": "Camille",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_449945:pick:10"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Nautilus",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_452010:pick:5"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Pyke",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_449976:pick:9"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              },
+              {
+                "champion_id": "Shen",
+                "evidence_event_ids": [
+                  "oe:KeSPA Cup:LOLTMNT02_451001:pick:4"
+                ],
+                "game_count": 1,
+                "game_rate": 0.25
+              }
+            ],
+            "evidence_match_ids": [
+              "oe:KeSPA Cup:LOLTMNT02_449945",
+              "oe:KeSPA Cup:LOLTMNT02_449976",
+              "oe:KeSPA Cup:LOLTMNT02_451001",
+              "oe:KeSPA Cup:LOLTMNT02_452010"
+            ],
+            "game_count": 4,
+            "player_id": "oe:player:c8fe7c65a2ae0ab6ff62674ade6847d",
+            "player_name": "Cloud",
+            "role": "SUPPORT",
+            "roster_status": "OTHER_OBSERVED"
+          }
+        ],
         "priority_picks": [
           {
             "champion_id": "Orianna",
@@ -20467,6 +21042,278 @@
             "phase_2_count": 0
           }
         ],
+        "recent_games": [
+          {
+            "first_pick": true,
+            "league": "LCK",
+            "match_id": "oe:LCK:LOLTMNT02_456759",
+            "observed_at": "2026-08-23T08:59:45+00:00",
+            "opponent_team_id": "oe:team:3a1d18f46bcb3716ebcfcf4ef068934",
+            "opponent_team_name": "Hanwha Life Esports",
+            "picks": [
+              {
+                "champion_id": "Lucian",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_456759:pick:1",
+                "player_id": "oe:player:5bbc2b92348d930ebd500cb9ce71bb7",
+                "player_name": "Peyz",
+                "role": "BOTTOM",
+                "sequence": 1
+              },
+              {
+                "champion_id": "Milio",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_456759:pick:4",
+                "player_id": "oe:player:db79ce6ad35451c938fbe2995dabd37",
+                "player_name": "Keria",
+                "role": "SUPPORT",
+                "sequence": 4
+              },
+              {
+                "champion_id": "Ryze",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_456759:pick:5",
+                "player_id": "oe:player:e1edfc5cea461399a63cb813cf795cc",
+                "player_name": "Faker",
+                "role": "MID",
+                "sequence": 5
+              },
+              {
+                "champion_id": "Gwen",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_456759:pick:8",
+                "player_id": "oe:player:a1f3b2bb3f36e5113237f92d76dc4c8",
+                "player_name": "Doran",
+                "role": "TOP",
+                "sequence": 8
+              },
+              {
+                "champion_id": "Wukong",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_456759:pick:9",
+                "player_id": "oe:player:f8b68f268106124fc4bc1c946adc9b0",
+                "player_name": "Oner",
+                "role": "JUNGLE",
+                "sequence": 9
+              }
+            ],
+            "result": "LOSS",
+            "side": "RED",
+            "tournament": "2026 LCK Rounds 3-4"
+          },
+          {
+            "first_pick": false,
+            "league": "LCK",
+            "match_id": "oe:LCK:LOLTMNT02_456749",
+            "observed_at": "2026-08-23T08:07:42+00:00",
+            "opponent_team_id": "oe:team:3a1d18f46bcb3716ebcfcf4ef068934",
+            "opponent_team_name": "Hanwha Life Esports",
+            "picks": [
+              {
+                "champion_id": "Ezreal",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_456749:pick:2",
+                "player_id": "oe:player:5bbc2b92348d930ebd500cb9ce71bb7",
+                "player_name": "Peyz",
+                "role": "BOTTOM",
+                "sequence": 2
+              },
+              {
+                "champion_id": "Karma",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_456749:pick:3",
+                "player_id": "oe:player:db79ce6ad35451c938fbe2995dabd37",
+                "player_name": "Keria",
+                "role": "SUPPORT",
+                "sequence": 3
+              },
+              {
+                "champion_id": "Orianna",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_456749:pick:6",
+                "player_id": "oe:player:e1edfc5cea461399a63cb813cf795cc",
+                "player_name": "Faker",
+                "role": "MID",
+                "sequence": 6
+              },
+              {
+                "champion_id": "K'Sante",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_456749:pick:7",
+                "player_id": "oe:player:a1f3b2bb3f36e5113237f92d76dc4c8",
+                "player_name": "Doran",
+                "role": "TOP",
+                "sequence": 7
+              },
+              {
+                "champion_id": "Xin Zhao",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_456749:pick:10",
+                "player_id": "oe:player:f8b68f268106124fc4bc1c946adc9b0",
+                "player_name": "Oner",
+                "role": "JUNGLE",
+                "sequence": 10
+              }
+            ],
+            "result": "LOSS",
+            "side": "BLUE",
+            "tournament": "2026 LCK Rounds 3-4"
+          },
+          {
+            "first_pick": false,
+            "league": "LCK",
+            "match_id": "oe:LCK:LOLTMNT02_457213",
+            "observed_at": "2026-08-21T13:16:04+00:00",
+            "opponent_team_id": "oe:team:d723992568441c6bafa2658129eade7",
+            "opponent_team_name": "KT Rolster",
+            "picks": [
+              {
+                "champion_id": "Caitlyn",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457213:pick:2",
+                "player_id": "oe:player:5bbc2b92348d930ebd500cb9ce71bb7",
+                "player_name": "Peyz",
+                "role": "BOTTOM",
+                "sequence": 2
+              },
+              {
+                "champion_id": "Lux",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457213:pick:3",
+                "player_id": "oe:player:db79ce6ad35451c938fbe2995dabd37",
+                "player_name": "Keria",
+                "role": "SUPPORT",
+                "sequence": 3
+              },
+              {
+                "champion_id": "Skarner",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457213:pick:6",
+                "player_id": "oe:player:f8b68f268106124fc4bc1c946adc9b0",
+                "player_name": "Oner",
+                "role": "JUNGLE",
+                "sequence": 6
+              },
+              {
+                "champion_id": "Anivia",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457213:pick:7",
+                "player_id": "oe:player:e1edfc5cea461399a63cb813cf795cc",
+                "player_name": "Faker",
+                "role": "MID",
+                "sequence": 7
+              },
+              {
+                "champion_id": "Gwen",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457213:pick:10",
+                "player_id": "oe:player:a1f3b2bb3f36e5113237f92d76dc4c8",
+                "player_name": "Doran",
+                "role": "TOP",
+                "sequence": 10
+              }
+            ],
+            "result": "WIN",
+            "side": "BLUE",
+            "tournament": "2026 LCK Rounds 3-4"
+          },
+          {
+            "first_pick": true,
+            "league": "LCK",
+            "match_id": "oe:LCK:LOLTMNT02_457197",
+            "observed_at": "2026-08-21T12:21:05+00:00",
+            "opponent_team_id": "oe:team:d723992568441c6bafa2658129eade7",
+            "opponent_team_name": "KT Rolster",
+            "picks": [
+              {
+                "champion_id": "Vi",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457197:pick:1",
+                "player_id": "oe:player:f8b68f268106124fc4bc1c946adc9b0",
+                "player_name": "Oner",
+                "role": "JUNGLE",
+                "sequence": 1
+              },
+              {
+                "champion_id": "Taliyah",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457197:pick:4",
+                "player_id": "oe:player:5bbc2b92348d930ebd500cb9ce71bb7",
+                "player_name": "Peyz",
+                "role": "BOTTOM",
+                "sequence": 4
+              },
+              {
+                "champion_id": "Rumble",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457197:pick:5",
+                "player_id": "oe:player:e1edfc5cea461399a63cb813cf795cc",
+                "player_name": "Faker",
+                "role": "MID",
+                "sequence": 5
+              },
+              {
+                "champion_id": "Vayne",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457197:pick:8",
+                "player_id": "oe:player:a1f3b2bb3f36e5113237f92d76dc4c8",
+                "player_name": "Doran",
+                "role": "TOP",
+                "sequence": 8
+              },
+              {
+                "champion_id": "Alistar",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457197:pick:9",
+                "player_id": "oe:player:db79ce6ad35451c938fbe2995dabd37",
+                "player_name": "Keria",
+                "role": "SUPPORT",
+                "sequence": 9
+              }
+            ],
+            "result": "WIN",
+            "side": "RED",
+            "tournament": "2026 LCK Rounds 3-4"
+          },
+          {
+            "first_pick": false,
+            "league": "LCK",
+            "match_id": "oe:LCK:LOLTMNT02_457183",
+            "observed_at": "2026-08-21T11:24:11+00:00",
+            "opponent_team_id": "oe:team:d723992568441c6bafa2658129eade7",
+            "opponent_team_name": "KT Rolster",
+            "picks": [
+              {
+                "champion_id": "Yunara",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457183:pick:2",
+                "player_id": "oe:player:5bbc2b92348d930ebd500cb9ce71bb7",
+                "player_name": "Peyz",
+                "role": "BOTTOM",
+                "sequence": 2
+              },
+              {
+                "champion_id": "Lulu",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457183:pick:3",
+                "player_id": "oe:player:db79ce6ad35451c938fbe2995dabd37",
+                "player_name": "Keria",
+                "role": "SUPPORT",
+                "sequence": 3
+              },
+              {
+                "champion_id": "Jarvan IV",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457183:pick:6",
+                "player_id": "oe:player:f8b68f268106124fc4bc1c946adc9b0",
+                "player_name": "Oner",
+                "role": "JUNGLE",
+                "sequence": 6
+              },
+              {
+                "champion_id": "Jax",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457183:pick:7",
+                "player_id": "oe:player:a1f3b2bb3f36e5113237f92d76dc4c8",
+                "player_name": "Doran",
+                "role": "TOP",
+                "sequence": 7
+              },
+              {
+                "champion_id": "Ahri",
+                "evidence_event_id": "oe:LCK:LOLTMNT02_457183:pick:10",
+                "player_id": "oe:player:e1edfc5cea461399a63cb813cf795cc",
+                "player_name": "Faker",
+                "role": "MID",
+                "sequence": 10
+              }
+            ],
+            "result": "LOSS",
+            "side": "BLUE",
+            "tournament": "2026 LCK Rounds 3-4"
+          }
+        ],
+        "series_tracking": {
+          "boundary": "The provider snapshot has no stable series ID; games are not heuristically grouped into series.",
+          "provider_series_id_available": false,
+          "series_count": null
+        },
         "side_stats": {
           "BLUE": {
             "game_count": 6,

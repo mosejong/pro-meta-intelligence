@@ -43,6 +43,7 @@ omitted and every team pack containing that match receives `INCOMPLETE_BAN_EVIDE
 - bans made by the selected team,
 - bans made by its opponents in those matches,
 - observed phase-one pick rotations,
+- allowlisted target-only player profiles, recent-game timelines, and previous-patch deltas,
 - match IDs and draft-event IDs,
 - sample and missing-evidence flags.
 
@@ -62,6 +63,11 @@ sequence `1-6` within picks or bans; phase two is `7-10`. No learned score is us
 
 The web surface supports selection among every team in the published patch and downloads a bounded
 JSON handoff for the chosen team.
+
+The target-only enrichment currently allowlists exact `T1` identity matches. Player names and IDs
+come from public OE player rows. The latest observed match defines the five `CURRENT` players;
+additional same-patch players are retained as `OTHER_OBSERVED`. See
+[`T1_TARGET_PROFILE.md`](T1_TARGET_PROFILE.md) for the roster and series boundaries.
 
 ## Current real publication
 

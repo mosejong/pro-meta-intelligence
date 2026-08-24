@@ -55,6 +55,11 @@ champions back to player rows for roles. Banned champions deliberately use `role
 is not inferred from draft context. A missing individual ban is omitted without discarding the
 otherwise valid game and is surfaced later as `INCOMPLETE_BAN_EVIDENCE`.
 
+When the provider includes `playerid` and `playername`, the importer preserves both on pick events
+for the allowlisted target profile. Those fields remain optional at the file-contract boundary so
+older reviewed fixtures and provider-compatible exports still import; a missing player identity is
+shown as unavailable and is never reconstructed from a champion or role.
+
 The `split` column must exist because it is part of the reviewed file schema, but a consistently
 blank value within one game is accepted. It only enriches the display tournament name and is not
 needed for match identity or pick normalization. Mixed blank/non-blank values still reject the game.

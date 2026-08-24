@@ -359,7 +359,7 @@ def _normalize_game(
         red_team_name=side_rows[Side.RED]["teamname"].strip() or None,
     )
 
-    role_by_side_champion: dict[tuple[Side, str], str] = {}
+    player_by_side_champion: dict[tuple[Side, str], tuple[str, str | None, str | None]] = {}
     roles_by_side: dict[Side, set[str]] = {Side.BLUE: set(), Side.RED: set()}
     for row in player_rows:
         side = _parse_side(row["side"])
@@ -370,13 +370,17 @@ def _normalize_game(
                 "INVALID_PLAYER_PICK", "player rows require champion and known position"
             )
         lookup_key = (side, champion.casefold())
-        if lookup_key in role_by_side_champion:
+        if lookup_key in player_by_side_champion:
             raise _GameValidationError("DUPLICATE_CHAMPION", "duplicate champion on one team")
         if row["teamid"].strip() != side_rows[side]["teamid"].strip():
             raise _GameValidationError(
                 "PLAYER_TEAM_MISMATCH", "player team ID does not match the side's team row"
             )
-        role_by_side_champion[lookup_key] = role
+        player_by_side_champion[lookup_key] = (
+            role,
+            row.get("playerid", "").strip() or None,
+            row.get("playername", "").strip() or None,
+        )
         roles_by_side[side].add(role)
 
     expected_roles = set(ROLE_MAP.values())
@@ -417,7 +421,9 @@ def _normalize_game(
             )
         ordered_champions = [team_row[column].strip() for column in PICK_COLUMNS]
         player_champions = {
-            champion for candidate_side, champion in role_by_side_champion if candidate_side is side
+            champion
+            for candidate_side, champion in player_by_side_champion
+            if candidate_side is side
         }
         if (
             len(set(ordered_champions)) != 5
@@ -428,12 +434,13 @@ def _normalize_game(
             )
         for column, sequence in zip(PICK_COLUMNS, pick_sequences[side], strict=True):
             champion = team_row[column].strip()
-            role = role_by_side_champion.get((side, champion.casefold()))
-            if not champion or role is None:
+            player = player_by_side_champion.get((side, champion.casefold()))
+            if not champion or player is None:
                 raise _GameValidationError(
                     "PICK_ROLE_MISMATCH",
                     f"{column} does not match a player champion on {side.value}",
                 )
+            role, player_id, player_name = player
             draft_events.append(
                 PickBanEvent(
                     event_id=f"{match_id}:pick:{sequence}",
@@ -447,6 +454,8 @@ def _normalize_game(
                     observed_at=observed_at,
                     available_at=retrieved_at,
                     provenance=provenance,
+                    player_id=player_id,
+                    player_name=player_name,
                 )
             )
     return match, tuple(
