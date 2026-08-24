@@ -52,6 +52,10 @@ Example:
 4. Score recall, lead time, and false alerts.
 5. Advance the cutoff and repeat.
 
+The implemented Oracle's Elixir path is documented in
+[`BLIND_SPOT_BENCHMARK.md`](BLIND_SPOT_BENCHMARK.md). It consumes only matured hash pairs named by
+the immutable history audit and keeps the future outcome import out of candidate generation.
+
 Future information leakage is considered a critical failure.
 
 ## 5. Holdout Strategy

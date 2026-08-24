@@ -1,0 +1,131 @@
+import type { RadarReport } from "./radar-types";
+
+const baseRegion = [
+  { region: "EMEA", match_count: 2, pick_count: 0, pick_presence: 0, delta_from_global: -0.5, sample_eligible: true },
+  { region: "KOREA", match_count: 2, pick_count: 2, pick_presence: 1, delta_from_global: 0.5, sample_eligible: true },
+];
+
+export const sampleReport: RadarReport = {
+  schema_version: "1",
+  fixture_only: true,
+  cutoff: "2026-08-15T12:00:00+00:00",
+  patch_id: "16.14",
+  windows: {
+    prior: { start_exclusive: "2026-08-01T12:00:00+00:00", end_inclusive: "2026-08-08T12:00:00+00:00", days: 7, match_count: 4, active_team_count: 8 },
+    recent: { start_exclusive: "2026-08-08T12:00:00+00:00", end_inclusive: "2026-08-15T12:00:00+00:00", days: 7, match_count: 4, active_team_count: 8 },
+  },
+  thresholds: { minimum_recent_matches: 4, minimum_prior_matches: 4, minimum_region_matches: 2, minimum_current_picks: 2 },
+  league_regions: { LCK: "KOREA", LEC: "EMEA" },
+  quality: { unknown_leagues: [], future_match_count_excluded: 0, future_event_count_excluded: 1, available_other_patch_or_window_match_count_excluded: 0 },
+  formulae: {
+    pick_presence: "unique matches containing champion-role pick / window matches",
+    pick_presence_delta: "recent pick presence - prior pick presence",
+    demand: "distinct teams picking champion-role / active teams in window",
+    demand_velocity: "recent demand - prior demand",
+    team_concentration: "largest team champion-role pick count / all recent champion-role picks",
+    regional_divergence: "max(abs(eligible-region pick presence - global pick presence))",
+  },
+  ranking_policy: ["eligible_for_review first", "demand_velocity descending", "pick_presence_delta descending", "regional_divergence descending", "current_pick_presence descending", "champion_id and role ascending for deterministic ties"],
+  evidence_index: {
+    prior_match_ids: ["p-eu-1", "p-eu-2", "p-kr-1", "p-kr-2"],
+    recent_match_ids: ["r-eu-1", "r-eu-2", "r-kr-1", "r-kr-2"],
+    source_versions: [{ source_id: "synthetic-meta-radar-v1", source_version: "v1", content_hash: "fixture:meta-radar-v1" }],
+  },
+  history_status: {
+    schema_version: "1",
+    artifact_type: "oe-history-status",
+    source_id: "oracles-elixir-match-data",
+    as_of: "2026-08-15T12:00:00+00:00",
+    status: "HISTORY_NOT_READY",
+    history_ready: false,
+    benchmark_ready: false,
+    gates: [
+      { id: "RETRIEVALS", current: 1, required: 14, unit: "snapshots", passed: false },
+      { id: "UNIQUE_STATES", current: 1, required: 3, unit: "states", passed: false },
+      { id: "COLLECTION_SPAN", current: 0, required: 14, unit: "days", passed: false },
+      { id: "MATURED_CUTOFFS", current: 0, required: 2, unit: "cutoffs", passed: false },
+    ],
+    blocking_reasons: ["RETRIEVAL_COUNT_BELOW_MINIMUM", "COLLECTION_SPAN_BELOW_MINIMUM"],
+    warnings: [],
+    next_action: "KEEP_DAILY_COLLECTION",
+    aggregate: null,
+    boundary: "Synthetic operational readiness only; not evidence that the Radar predicts adoption.",
+  },
+  opponent_prep: {
+    schema_version: "1",
+    artifact_type: "opponent-prep-pack",
+    fixture_only: true,
+    cutoff: "2026-08-15T12:00:00+00:00",
+    patch_id: "16.14",
+    team_count: 2,
+    config: { maximum_games_per_team: 10, minimum_games_for_review: 3, top_champions: 5 },
+    boundary: "Synthetic public-match demonstration only.",
+    formulae: {
+      champion_game_rate: "distinct selected team games / selected team games",
+      side_win_rate: "wins on side / games on side",
+      first_pick_rate: "games owning global pick sequence 1 / selected team games",
+      phase_1: "pick or ban sequence <= 6 within that action type",
+      phase_2: "pick or ban sequence >= 7 within that action type",
+    },
+    evidence_index: {
+      source_versions: [{ source_id: "synthetic-meta-radar-v1", source_version: "v1", content_hash: "fixture:meta-radar-v1" }],
+    },
+    teams: [
+      {
+        team_id: "synthetic:team:alpha", team_name: "Seoul Phoenix", team_name_aliases: ["Seoul Phoenix"], leagues: ["LCK"],
+        game_count: 4, win_count: 3, win_rate: 0.75, first_pick_count: 2, first_pick_rate: 0.5,
+        side_stats: { BLUE: { game_count: 2, win_count: 2, win_rate: 1 }, RED: { game_count: 2, win_count: 1, win_rate: 0.5 } },
+        priority_picks: [
+          { champion_id: "RekSai", role: "JUNGLE", game_count: 2, game_rate: 0.5, phase_1_count: 2, phase_2_count: 0, evidence_event_ids: ["r-kr-1:RekSai:1", "r-kr-2:RekSai:1"] },
+          { champion_id: "Ahri", role: "MID", game_count: 2, game_rate: 0.5, phase_1_count: 1, phase_2_count: 1, evidence_event_ids: ["r-kr-1:Ahri:4", "r-kr-2:Ahri:7"] },
+          { champion_id: "Rumble", role: "TOP", game_count: 1, game_rate: 0.25, phase_1_count: 1, phase_2_count: 0, evidence_event_ids: ["r-kr-1:Rumble:5"] },
+        ],
+        frequent_bans: [
+          { champion_id: "Azir", game_count: 3, game_rate: 0.75, phase_1_count: 2, phase_2_count: 1, evidence_event_ids: ["b1", "b2", "b3"] },
+          { champion_id: "Vi", game_count: 2, game_rate: 0.5, phase_1_count: 2, phase_2_count: 0, evidence_event_ids: ["b4", "b5"] },
+        ],
+        received_bans: [
+          { champion_id: "RekSai", game_count: 2, game_rate: 0.5, phase_1_count: 2, phase_2_count: 0, evidence_event_ids: ["ob1", "ob2"] },
+          { champion_id: "Ahri", game_count: 1, game_rate: 0.25, phase_1_count: 0, phase_2_count: 1, evidence_event_ids: ["ob3"] },
+        ],
+        first_rotations: [
+          { side: "BLUE", champions: ["RekSai", "Ahri", "Rumble"], game_count: 2, evidence_match_ids: ["r-kr-1", "r-kr-2"] },
+          { side: "RED", champions: ["Ahri", "RekSai", "Mundo"], game_count: 1, evidence_match_ids: ["r-kr-3"] },
+        ],
+        quality_flags: [],
+        evidence: { match_ids: ["r-kr-1", "r-kr-2", "r-kr-3", "r-kr-4"], draft_event_ids: ["r-kr-1:RekSai:1", "r-kr-2:RekSai:1"], first_observed_at: "2026-08-09T12:00:00+00:00", last_observed_at: "2026-08-15T10:00:00+00:00" },
+      },
+      {
+        team_id: "synthetic:team:beta", team_name: "Berlin Forge", team_name_aliases: ["Berlin Forge"], leagues: ["LEC"],
+        game_count: 2, win_count: 1, win_rate: 0.5, first_pick_count: 1, first_pick_rate: 0.5,
+        side_stats: { BLUE: { game_count: 1, win_count: 1, win_rate: 1 }, RED: { game_count: 1, win_count: 0, win_rate: 0 } },
+        priority_picks: [{ champion_id: "Mundo", role: "JUNGLE", game_count: 2, game_rate: 1, phase_1_count: 1, phase_2_count: 1, evidence_event_ids: ["r-eu-1:Mundo:1", "r-eu-2:Mundo:1"] }],
+        frequent_bans: [{ champion_id: "RekSai", game_count: 1, game_rate: 0.5, phase_1_count: 1, phase_2_count: 0, evidence_event_ids: ["eu-b1"] }],
+        received_bans: [{ champion_id: "Mundo", game_count: 1, game_rate: 0.5, phase_1_count: 1, phase_2_count: 0, evidence_event_ids: ["eu-ob1"] }],
+        first_rotations: [{ side: "BLUE", champions: ["Mundo", "Syndra", "Jax"], game_count: 1, evidence_match_ids: ["r-eu-1"] }],
+        quality_flags: ["LOW_MATCH_SAMPLE"],
+        evidence: { match_ids: ["r-eu-1", "r-eu-2"], draft_event_ids: ["r-eu-1:Mundo:1", "r-eu-2:Mundo:1"], first_observed_at: "2026-08-10T12:00:00+00:00", last_observed_at: "2026-08-14T12:00:00+00:00" },
+      },
+    ],
+  },
+  entries: [
+    {
+      rank: 1, champion_id: "RekSai", role: "JUNGLE", eligible_for_review: true, quality_flags: [],
+      metrics: { current_pick_count: 2, prior_pick_count: 0, current_pick_presence: 0.5, prior_pick_presence: 0, pick_presence_delta: 0.5, current_distinct_team_count: 2, prior_distinct_team_count: 0, current_demand: 0.25, prior_demand: 0, demand_velocity: 0.25, team_concentration: 0.5, regional_divergence: 0.5, most_divergent_region: "KOREA", most_divergent_region_delta: 0.5 },
+      region_presence: baseRegion,
+      evidence_event_ids: ["r-kr-1:RekSai:1", "r-kr-2:RekSai:1"],
+    },
+    {
+      rank: 2, champion_id: "Mundo", role: "JUNGLE", eligible_for_review: true, quality_flags: [],
+      metrics: { current_pick_count: 2, prior_pick_count: 1, current_pick_presence: 0.5, prior_pick_presence: 0.25, pick_presence_delta: 0.25, current_distinct_team_count: 2, prior_distinct_team_count: 1, current_demand: 0.25, prior_demand: 0.125, demand_velocity: 0.125, team_concentration: 0.5, regional_divergence: 0.5, most_divergent_region: "EMEA", most_divergent_region_delta: 0.5 },
+      region_presence: [{ ...baseRegion[0], pick_count: 2, pick_presence: 1, delta_from_global: 0.5 }, { ...baseRegion[1], pick_count: 0, pick_presence: 0, delta_from_global: -0.5 }],
+      evidence_event_ids: ["p-eu-1:Mundo:1", "r-eu-1:Mundo:1", "r-eu-2:Mundo:1"],
+    },
+    {
+      rank: 3, champion_id: "Zyra", role: "JUNGLE", eligible_for_review: false, quality_flags: ["LOW_CURRENT_PICK_COUNT"],
+      metrics: { current_pick_count: 1, prior_pick_count: 2, current_pick_presence: 0.25, prior_pick_presence: 0.5, pick_presence_delta: -0.25, current_distinct_team_count: 1, prior_distinct_team_count: 2, current_demand: 0.125, prior_demand: 0.25, demand_velocity: -0.125, team_concentration: 1, regional_divergence: 0.25, most_divergent_region: "KOREA", most_divergent_region_delta: 0.25 },
+      region_presence: [{ ...baseRegion[0], delta_from_global: -0.25 }, { ...baseRegion[1], pick_count: 1, pick_presence: 0.5, delta_from_global: 0.25 }],
+      evidence_event_ids: ["p-eu-1:Zyra:2", "p-kr-1:Zyra:1", "r-kr-1:Zyra:2"],
+    },
+  ],
+};
