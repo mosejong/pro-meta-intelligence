@@ -367,6 +367,7 @@ export function RadarDashboard() {
 
   function selectMyTeam(teamId: string) {
     setMyTeamId(teamId);
+    setOpponentId("");
     if (teamId) window.localStorage.setItem(MY_TEAM_STORAGE_KEY, teamId);
     else window.localStorage.removeItem(MY_TEAM_STORAGE_KEY);
   }
@@ -451,12 +452,10 @@ export function RadarDashboard() {
           <span><strong>PRO META</strong><small>INTELLIGENCE</small></span>
         </a>
         <nav aria-label="주요 메뉴">
-          <a className="active" href="#team-brief">팀 브리프</a>
-          <a href="#opponent-prep">상대 분석</a>
-          <a href="#creator-export">Creator</a>
-          <a href="#radar">메타 레이더</a>
-          <a href="#evidence">선택 근거</a>
-          <a href="#method">읽는 법</a>
+          <a className="active" href="#team-brief">오늘 결정</a>
+          <a href="#opponent-prep">상대전</a>
+          <a href="#creator-export">콘텐츠</a>
+          <a href="#radar">전체 탐색</a>
         </nav>
         <div className="topbar-actions">
           <span className={`snapshot-state ${feedState.kind}`} title={feedState.detail} aria-live="polite"><i />{feedState.label}</span>
@@ -503,9 +502,9 @@ export function RadarDashboard() {
         <article><span>데이터 품질</span><strong className={`quality ${quality.label === "CHECK" ? "caution" : quality.label === "AUDITED" ? "audited" : ""}`}>{quality.label === "AUDITED" ? "검토 완료" : quality.label === "PASS" ? "통과" : "확인 필요"}</strong><small>제외 {quality.excluded} · 위반 {quality.blocking} · 미등록 {quality.unknown}</small></article>
       </section>
 
-      <section className={`team-lens ${selectedMyTeam ? "active" : "setup"}`} aria-label="내 팀 분석 기준">
+      <section className={`team-lens ${selectedMyTeam ? "active" : "setup"}`} id="team-setup" aria-label="내 팀 분석 기준">
         <div className="team-lens-copy">
-          <span>MY TEAM LENS</span>
+          <span>STEP 1 · MY TEAM LENS</span>
           <strong>{selectedMyTeam ? selectedMyTeam.team_name : "소속 팀을 먼저 선택하세요"}</strong>
           <p>{selectedMyTeam ? `${selectedMyTeam.leagues.join(" · ")} · 공개 경기 ${selectedMyTeam.game_count}개를 기준으로 상대 준비 순서를 다시 계산합니다.` : "선택 전에는 글로벌 메타만 표시합니다. 팀 선택값은 이 브라우저에만 저장됩니다."}</p>
           <em className={`schedule-state ${scheduleState}`}>{scheduleState === "connected" ? `공식 일정 연결 · ${schedule?.events.length ?? 0}경기` : scheduleState === "stale" ? "공식 일정 36시간 경과 · 우선순위에서 제외" : scheduleState === "connecting" ? "공식 일정 연결 중" : "공식 일정 미연결 · 분석 점수만 사용"}</em>
@@ -518,6 +517,12 @@ export function RadarDashboard() {
         </label>
         <a href="#opponent-prep">{selectedMyTeam ? "상대 우선순위 보기" : "분석 기준 설정"} <span>→</span></a>
       </section>
+
+      <nav className="decision-flow" aria-label="팀 분석 진행 단계">
+        <a className={selectedMyTeam ? "complete" : "active"} href="#team-setup"><b>1</b><span><small>내 팀</small><strong>{selectedMyTeam?.team_name ?? "선택 필요"}</strong></span></a>
+        <a className={selectedMyTeam ? "complete" : "locked"} href="#opponent-prep"><b>2</b><span><small>준비할 상대</small><strong>{selectedMyTeam ? selectedOpponent?.team_name ?? "순위 계산 중" : "팀 선택 후 자동 계산"}</strong></span></a>
+        <a className={matchupBattlecard ? "ready" : "locked"} href="#draft-battlecard"><b>3</b><span><small>드래프트 배틀카드</small><strong>{matchupBattlecard ? "확인 준비 완료" : "상대 선택 후 생성"}</strong></span></a>
+      </nav>
 
       {quality.publication && quality.importQuality && <section className={`audit-notice ${quality.publication.ready_for_radar ? "ready" : "blocked"}`} aria-label="발행 데이터 품질 감사" role="status">
         <div><span>발행 데이터 감사</span><strong>전체 {quality.importQuality.discovered_game_count}경기 중 {quality.importQuality.imported_game_count}경기 사용</strong></div>
@@ -571,24 +576,26 @@ export function RadarDashboard() {
         </div> : <div className="brief-empty">검토 기준을 통과한 공개 경기 신호가 없습니다.</div>}
       </section>
 
-      {report.history_status && <section className={`history-readiness ${report.history_status.benchmark_ready ? "ready" : "collecting"}`} aria-label="과거 검증 데이터 준비 상태">
-        <header>
+      {report.history_status && <details className={`history-readiness ${report.history_status.benchmark_ready ? "ready" : "collecting"}`} aria-label="과거 검증 데이터 준비 상태">
+        <summary className="history-summary">
           <div><span>HISTORY · WALK-FORWARD</span><h2>실데이터 검증 준비도</h2></div>
           <p>{report.history_status.benchmark_ready ? "미래 데이터와 분리된 실제 백테스트 결과를 검토할 수 있습니다." : "과거 파일을 오늘 데이터로 재구성하지 않고, 실제 일일 스냅샷이 쌓이기를 기다립니다."}</p>
-          <b>{historyActionLabels[report.history_status.next_action] ?? report.history_status.next_action}</b>
-        </header>
-        <div className="history-gates">{report.history_status.gates.map((gate) => {
-          const progress = gate.required > 0 ? Math.min(100, (gate.current / gate.required) * 100) : 0;
-          const unit = historyUnitLabels[gate.unit] ?? gate.unit;
-          return <article className={gate.passed ? "passed" : ""} key={gate.id}>
-            <span>{historyGateLabels[gate.id] ?? gate.id}</span>
-            <strong>{gate.current}<small> / {gate.required}{unit}</small></strong>
-            <i aria-hidden="true"><b style={{ width: `${progress}%` }} /></i>
-            <em>{gate.passed ? "충족" : "수집 중"}</em>
-          </article>;
-        })}</div>
-        <footer><span>마지막 스냅샷 {report.history_status.as_of ? formatCutoff(report.history_status.as_of) : "아직 없음"}</span><p>준비도는 예측 성능이 아닙니다. Recall@K와 오탐률은 성숙한 미래 결과가 확보된 뒤에만 표시합니다.</p><b>{report.history_status.blocking_reasons.length} GATES OPEN</b></footer>
-      </section>}
+          <div className="history-summary-action"><b>{historyActionLabels[report.history_status.next_action] ?? report.history_status.next_action}</b><span>{report.history_status.gates.filter((gate) => gate.passed).length}/{report.history_status.gates.length} 충족 · 상세 보기</span></div>
+        </summary>
+        <div className="history-detail">
+          <div className="history-gates">{report.history_status.gates.map((gate) => {
+            const progress = gate.required > 0 ? Math.min(100, (gate.current / gate.required) * 100) : 0;
+            const unit = historyUnitLabels[gate.unit] ?? gate.unit;
+            return <article className={gate.passed ? "passed" : ""} key={gate.id}>
+              <span>{historyGateLabels[gate.id] ?? gate.id}</span>
+              <strong>{gate.current}<small> / {gate.required}{unit}</small></strong>
+              <i aria-hidden="true"><b style={{ width: `${progress}%` }} /></i>
+              <em>{gate.passed ? "충족" : "수집 중"}</em>
+            </article>;
+          })}</div>
+          <footer><span>마지막 스냅샷 {report.history_status.as_of ? formatCutoff(report.history_status.as_of) : "아직 없음"}</span><p>준비도는 예측 성능이 아닙니다. Recall@K와 오탐률은 성숙한 미래 결과가 확보된 뒤에만 표시합니다.</p><b>{report.history_status.blocking_reasons.length} GATES OPEN</b></footer>
+        </div>
+      </details>}
 
       <section className="opponent-prep" id="opponent-prep">
         <div className="section-heading opponent-heading">
@@ -631,7 +638,7 @@ export function RadarDashboard() {
           <span>STEP 01</span><h3>내 팀을 선택하면 상대 우선순위가 열립니다.</h3><p>현재 발행본의 {opponentTeams.length}개 팀 중 소속 팀을 고르면, 자기 팀을 제외한 상대만 공개 근거로 다시 정렬합니다.</p><a href="#top">위에서 내 팀 선택 ↑</a>
         </div>}
 
-        {matchupBattlecard ? <section className="draft-battlecard" aria-label={`${matchupBattlecard.own_team.team_name} 대 ${matchupBattlecard.opponent.team_name} 드래프트 배틀카드`}>
+        {matchupBattlecard ? <section className="draft-battlecard" id="draft-battlecard" aria-label={`${matchupBattlecard.own_team.team_name} 대 ${matchupBattlecard.opponent.team_name} 드래프트 배틀카드`}>
           <header className="battlecard-head">
             <div>
               <span>DRAFT BATTLECARD · PUBLIC EVIDENCE</span>
@@ -673,14 +680,17 @@ export function RadarDashboard() {
             <div><b>아직 모르는 것</b><p>{matchupBattlecard.unknowns.join(" · ")}</p></div>
             <span>{matchupBattlecard.evidence.match_ids.length} MATCHES · {matchupBattlecard.evidence.source_versions.length} SOURCES</span>
           </footer>
-        </section> : <section className="battlecard-setup" aria-label="드래프트 배틀카드 설정">
+        </section> : <section className="battlecard-setup" id="draft-battlecard" aria-label="드래프트 배틀카드 설정">
           <div><span>DRAFT BATTLECARD</span><h3>내 팀을 선택하면 상대별 회의 카드가 생성됩니다.</h3><p>보호 자원 · 픽 충돌 · 견제 검토 · 교환 시나리오를 같은 공개 경기 근거에서 비교합니다.</p></div>
           <b>선수 숙련도 · 스크림 · 내부 밴픽 계획은 추정하지 않음</b>
         </section>}
 
-        {selectedOpponent && <div className="opponent-detail-label"><div><span>{selectedMyTeam ? `${selectedMyTeam.team_name} → ${selectedOpponent.team_name}` : "GLOBAL → OPPONENT"}</span><h3>선택 상대 상세 분석</h3></div>{selectedPriority && <div className="opponent-priority-status">{selectedPriority.next_meeting && <span>{formatScheduleTime(selectedPriority.next_meeting.start_at)} KST · {selectedPriority.next_meeting.block}</span>}<b className={`priority-tier ${selectedPriority.tier.toLowerCase()}`}>{selectedPriority.tier} · {selectedPriority.score}점</b></div>}</div>}
-
-        {selectedOpponent ? <div className="opponent-pack">
+        {selectedOpponent ? <details className="opponent-raw-disclosure">
+          <summary className="opponent-detail-label">
+            <div><span>{selectedMyTeam ? `${selectedMyTeam.team_name} → ${selectedOpponent.team_name}` : "GLOBAL → OPPONENT"}</span><h3>원본 상대 통계</h3><p>픽·밴·사이드·로테이션 상세는 필요할 때만 펼쳐보세요.</p></div>
+            <div className="opponent-priority-status">{selectedPriority?.next_meeting && <span>{formatScheduleTime(selectedPriority.next_meeting.start_at)} KST · {selectedPriority.next_meeting.block}</span>}{selectedPriority && <b className={`priority-tier ${selectedPriority.tier.toLowerCase()}`}>{selectedPriority.tier} · {selectedPriority.score}점</b>}<em>상세 펼치기 ＋</em></div>
+          </summary>
+          <div className="opponent-pack">
           <header className="opponent-profile">
             <div className="team-monogram" aria-hidden="true">{selectedOpponent.team_name.slice(0, 2).toUpperCase()}</div>
             <div><span>{selectedOpponent.leagues.join(" · ")} · PATCH {report.patch_id}</span><h3>{selectedOpponent.team_name}</h3><p>{selectedPriority ? selectedPriority.reasons.join(" · ") : "글로벌 목록에서 선택"} · {formatCutoff(selectedOpponent.evidence.first_observed_at)}부터 관측</p></div>
@@ -712,7 +722,8 @@ export function RadarDashboard() {
               <details className="opponent-evidence"><summary>근거 경기 ID와 데이터 경계 보기 <span>＋</span></summary><p>이 자료는 공개 경기에서 반복된 사실만 기술합니다. 밴의 의도, 코치의 지시, 선수 숙련도와 스크림 계획은 추정하지 않습니다.</p><div>{selectedOpponent.evidence.match_ids.map((id) => <code key={id}>{id}</code>)}</div></details>
             </div>
           </div>
-        </div> : <div className="brief-empty">현재 발행본에는 상대팀 드래프트 자료가 없습니다. 다음 검증된 피드부터 표시됩니다.</div>}
+        </div>
+        </details> : <div className="brief-empty">현재 발행본에는 상대팀 드래프트 자료가 없습니다. 다음 검증된 피드부터 표시됩니다.</div>}
       </section>
 
       <CreatorExportLab report={report} />
@@ -775,6 +786,13 @@ export function RadarDashboard() {
       <section className="legal-notice" aria-label="Riot Games 비제휴 고지">
         캐릭터 이미지는 Riot Games Data Dragon을 통해 제공됩니다. Pro Meta Intelligence isn&apos;t endorsed by Riot Games and doesn&apos;t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
       </section>
+
+      <nav className="mobile-taskbar" aria-label="모바일 빠른 이동">
+        <a href="#team-brief"><b>01</b><span>오늘</span></a>
+        <a href="#opponent-prep"><b>02</b><span>상대전</span></a>
+        <a href="#creator-export"><b>03</b><span>콘텐츠</span></a>
+        <a href="#radar"><b>04</b><span>탐색</span></a>
+      </nav>
 
       {evidenceOpen && selected && (
         <div className="dialog-backdrop">

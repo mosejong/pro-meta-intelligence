@@ -34,6 +34,11 @@ selected opponent. It presents protect, exact pick-contest, deny-review, and exc
 questions, then exports the same evidence-bounded artifact as JSON. It never treats the result as an
 automatic pick/ban instruction.
 
+The default reading flow is intentionally progressive: select the own team, review the prioritized
+opponent, then read the Draft Battlecard. Historical collection gates and raw opponent pick/ban,
+side, rotation, and evidence tables stay collapsed until requested. Mobile users get a persistent
+four-destination task bar instead of losing navigation when the desktop header is hidden.
+
 ## Checks
 
 ```bash

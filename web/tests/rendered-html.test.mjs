@@ -46,11 +46,17 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /출전 권고가 아닙니다/);
   assert.match(html, /MY TEAM → OPPONENT PRIORITY/);
   assert.match(html, /MY TEAM LENS/);
+  assert.match(html, /STEP 1 · MY TEAM LENS/);
+  assert.match(html, /팀 분석 진행 단계/);
+  assert.match(html, /드래프트 배틀카드/);
   assert.match(html, /공식 일정 연결 중/);
   assert.match(html, /OPPONENT PRIORITY QUEUE|STEP 01/);
   assert.match(html, /DRAFT BATTLECARD/);
   assert.match(html, /보호 자원 · 픽 충돌 · 견제 검토 · 교환 시나리오/);
   assert.match(html, /선수 숙련도 · 스크림 · 내부 밴픽 계획은 추정하지 않음/);
+  assert.match(html, /원본 상대 통계/);
+  assert.match(html, /픽·밴·사이드·로테이션 상세는 필요할 때만 펼쳐보세요/);
+  assert.match(html, /모바일 빠른 이동/);
   assert.match(html, /HISTORY · WALK-FORWARD/);
   assert.match(html, /실데이터 검증 준비도/);
   assert.match(html, /일일 수집 계속/);
@@ -76,6 +82,8 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
   assert.ok(html.indexOf('class="decision-hero"') < html.indexOf('class="team-brief"'));
   assert.ok(html.indexOf('class="team-lens setup"') < html.indexOf('class="team-brief"'));
+  assert.ok(html.indexOf('class="team-lens setup"') < html.indexOf('class="decision-flow"'));
+  assert.ok(html.indexOf('class="decision-flow"') < html.indexOf('class="team-brief"'));
   assert.ok(html.indexOf('class="team-brief"') < html.indexOf('class="history-readiness'));
   assert.ok(html.indexOf('class="history-readiness') < html.indexOf('class="opponent-prep"'));
   assert.ok(html.indexOf('class="opponent-prep"') < html.indexOf('class="creator-export"'));
