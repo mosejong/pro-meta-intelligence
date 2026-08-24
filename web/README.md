@@ -10,10 +10,12 @@ npm run dev
 ```
 
 Open `http://localhost:3000`. The dashboard first requests the same-origin
-`/feed/current.json`, checks the report schema, and rechecks it every five minutes. The bundled feed
-is the latest reviewed real provider snapshot and includes its publication-readiness audit. The UI
-shows excluded-game and blocking-issue counts instead of presenting a clean-looking result without
-its data limitations. Use **JSON 불러오기** for a temporary local override created by:
+`/feed/current.json` and `/feed/schedule.json`, checks both schemas, and rechecks them every five
+minutes. The bundled match feed is the latest reviewed real provider snapshot and includes its
+publication-readiness audit. The official schedule companion is used only to prioritize team review;
+it is excluded from scoring after 36 hours without a successful refresh. The UI shows excluded-game
+and blocking-issue counts instead of presenting a clean-looking result without its data limitations.
+Use **JSON 불러오기** for a temporary local override created by:
 
 ```bash
 python -m pro_meta_intelligence build-radar --input path/to/oracles-elixir.csv

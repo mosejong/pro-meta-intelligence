@@ -30,7 +30,9 @@ if (-not $PythonPath) {
 $resolvedPython = (Resolve-Path -LiteralPath $PythonPath).Path
 $runDir = Join-Path $resolvedRoot "outputs\oe-feed-jobs"
 $archiveDir = Join-Path $resolvedRoot "outputs\oracles-elixir\raw"
+$scheduleArchiveDir = Join-Path $resolvedRoot "outputs\lolesports\raw"
 $feedDir = Join-Path $resolvedRoot "web\public\feed"
+$scheduleOutput = Join-Path $feedDir "schedule.json"
 $syncOutput = Join-Path $runDir "latest-sync.json"
 $healthOutput = Join-Path $runDir "health.json"
 $schedulerLog = Join-Path $runDir "scheduler.log"
@@ -57,6 +59,20 @@ try {
     & $resolvedPython @syncArguments
     $syncExitCode = $LASTEXITCODE
 
+    $scheduleArguments = @(
+        "-m", "pro_meta_intelligence", "fetch-schedule",
+        "--league", "lck",
+        "--league", "lec",
+        "--league", "lpl",
+        "--league", "lcs",
+        "--league", "msi",
+        "--league", "worlds",
+        "--archive-dir", $scheduleArchiveDir,
+        "--output", $scheduleOutput
+    )
+    & $resolvedPython @scheduleArguments
+    $scheduleExitCode = $LASTEXITCODE
+
     $healthArguments = @(
         "-m", "pro_meta_intelligence", "check-oe-feed-health",
         "--run-dir", $runDir,
@@ -74,7 +90,7 @@ try {
             -PythonPath $resolvedPython
         $publishExitCode = $LASTEXITCODE
     }
-    Write-OperationLog "sync-finish sync_exit=$syncExitCode health_exit=$healthExitCode publish_exit=$publishExitCode"
+    Write-OperationLog "sync-finish sync_exit=$syncExitCode schedule_exit=$scheduleExitCode health_exit=$healthExitCode publish_exit=$publishExitCode"
 } catch {
     Write-OperationLog "runner-failed type=$($_.Exception.GetType().Name)"
     throw

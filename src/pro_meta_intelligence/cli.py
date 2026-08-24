@@ -17,6 +17,12 @@ from pro_meta_intelligence.backtest import (
 from pro_meta_intelligence.creator import CreatorBriefBuilder
 from pro_meta_intelligence.ingestion import load_synthetic_scenario
 from pro_meta_intelligence.ingestion.ddragon import DataDragonAdapter
+from pro_meta_intelligence.ingestion.http import HttpTransportError
+from pro_meta_intelligence.ingestion.lolesports_schedule import (
+    LoLEsportsScheduleAdapter,
+    ScheduleFetchIntervalError,
+    SchedulePayloadError,
+)
 from pro_meta_intelligence.ingestion.oe_download import (
     OracleElixirDownloadError,
     OracleElixirDownloadIntervalError,
@@ -76,6 +82,31 @@ def build_parser() -> argparse.ArgumentParser:
         "--archive-dir", type=Path, default=Path("outputs/ddragon"), help="raw archive root"
     )
     ddragon.add_argument("--output", type=Path, help="optional JSON summary path")
+
+    schedule = subparsers.add_parser(
+        "fetch-schedule",
+        help="fetch and normalize upcoming fixtures from the official LoL Esports schedule",
+    )
+    schedule.add_argument(
+        "--league",
+        action="append",
+        dest="leagues",
+        help="official league slug; repeat for multiple leagues",
+    )
+    schedule.add_argument("--locale", default="en-US", help="LoL Esports locale")
+    schedule.add_argument("--registry", type=Path, help="optional source registry JSON")
+    schedule.add_argument(
+        "--archive-dir",
+        type=Path,
+        default=Path("outputs/lolesports/raw"),
+        help="content-addressed raw schedule archive root",
+    )
+    schedule.add_argument(
+        "--output",
+        type=Path,
+        default=Path("web/public/feed/schedule.json"),
+        help="normalized public schedule snapshot",
+    )
 
     oe_import = subparsers.add_parser(
         "import-oe", help="validate and normalize a local Oracle's Elixir CSV snapshot"
@@ -270,6 +301,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _sources(args)
     if args.command == "fetch-ddragon":
         return _fetch_ddragon(args)
+    if args.command == "fetch-schedule":
+        return _fetch_schedule(args)
     if args.command == "import-oe":
         return _import_oe(args)
     if args.command == "fetch-oe":
@@ -364,6 +397,46 @@ def _fetch_ddragon(args: argparse.Namespace) -> int:
             }
         )
     _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    return 0
+
+
+def _fetch_schedule(args: argparse.Namespace) -> int:
+    registry = _load_registry(args.registry)
+    adapter = LoLEsportsScheduleAdapter(registry)
+    archive = SnapshotArchive(args.archive_dir)
+    latest = archive.latest(adapter.source_id)
+    leagues = args.leagues or ["lck", "lec", "lpl", "lcs", "msi", "worlds"]
+    try:
+        snapshot = adapter.fetch(
+            leagues,
+            locale=args.locale,
+            last_retrieved_at=latest.retrieved_at if latest else None,
+        )
+    except ScheduleFetchIntervalError as error:
+        payload = {
+            "schema_version": "1",
+            "status": "RATE_LIMITED",
+            "network_collection_performed": False,
+            "retry_at": error.retry_at.isoformat(),
+            "existing_snapshot_preserved": args.output.is_file(),
+        }
+        _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", None)
+        return 3
+    except (HttpTransportError, SchedulePayloadError) as error:
+        payload = {
+            "schema_version": "1",
+            "status": "SOURCE_UNAVAILABLE",
+            "network_collection_performed": True,
+            "error": str(error),
+            "existing_snapshot_preserved": args.output.is_file(),
+        }
+        _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", None)
+        return 4
+    archive.store(snapshot.artifact)
+    _emit(
+        json.dumps(snapshot.to_dict(), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        args.output,
+    )
     return 0
 
 

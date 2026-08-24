@@ -75,6 +75,10 @@ h1 em { font-style: normal; color: var(--violet); }
 .team-lens-copy > span { display: block; color: var(--violet); font: 800 9px var(--font-geist-mono); letter-spacing: .08em; }
 .team-lens-copy > strong { display: block; margin-top: 3px; font-size: 18px; letter-spacing: -.02em; }
 .team-lens-copy > p { margin: 2px 0 0; color: #4f544f; font-size: 11px; line-height: 1.55; }
+.schedule-state { display: inline-flex; align-items: center; gap: 5px; margin-top: 7px; color: #4f544f; font: 800 8px var(--font-geist-mono); font-style: normal; }
+.schedule-state::before { content: ""; width: 7px; height: 7px; border: 1px solid var(--ink); background: #aaa9a2; }
+.schedule-state.connected::before { background: var(--violet); }
+.schedule-state.connecting::before { background: #e2a63b; }
 .team-lens label { display: grid; gap: 4px; color: #4f544f; font-size: 10px; font-weight: 800; }
 .team-lens select { width: 100%; min-height: 42px; padding: 8px 34px 8px 11px; border: 1px solid var(--ink); background: white; font-size: 13px; font-weight: 700; }
 .team-lens > a { padding: 10px 12px; border: 1px solid var(--ink); background: var(--ink); color: white; font-size: 11px; font-weight: 800; white-space: nowrap; }
@@ -160,7 +164,7 @@ h1 em { font-style: normal; color: var(--violet); }
 .opponent-controls button:hover, .opponent-controls button:focus-visible { background: var(--signal); color: var(--ink); outline: 2px solid var(--ink); outline-offset: 2px; }
 .team-priority-board { display: grid; grid-template-columns: minmax(280px, .58fr) minmax(0, 1.42fr); gap: 16px; margin-bottom: 30px; }
 .my-team-card, .priority-queue { border: 1px solid var(--ink); background: #f8f6ef; }
-.my-team-card { display: grid; grid-template-rows: auto auto 1fr auto; }
+.my-team-card { display: grid; grid-template-rows: auto auto auto 1fr auto; }
 .my-team-card > header { display: flex; align-items: center; gap: 13px; min-height: 92px; padding: 14px; border-bottom: 1px solid var(--ink); background: var(--ink); color: white; }
 .my-team-card > header .team-monogram { width: 56px; height: 56px; background: var(--signal); color: var(--ink); }
 .my-team-card > header span { color: var(--signal); font: 750 8px var(--font-geist-mono); }
@@ -170,6 +174,11 @@ h1 em { font-style: normal; color: var(--violet); }
 .my-team-stats span { padding: 10px 9px; border-right: 1px solid var(--line); color: var(--muted); font-size: 9px; text-align: center; }
 .my-team-stats span:last-child { border-right: 0; }
 .my-team-stats b { display: block; color: var(--ink); font: 700 14px var(--font-geist-mono); }
+.next-fixture { display: grid; padding: 11px 12px; border-bottom: 1px solid var(--line); background: #ebe8df; }
+.next-fixture.scheduled { background: #e9ffab; box-shadow: inset 5px 0 0 var(--violet); }
+.next-fixture > span { color: var(--violet); font: 800 8px var(--font-geist-mono); }
+.next-fixture > strong { margin-top: 3px; font-size: 14px; }
+.next-fixture > small { margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.45; }
 .my-team-picks { padding: 12px; }
 .my-team-picks > span { display: block; margin-bottom: 8px; color: var(--muted); font-size: 9px; font-weight: 800; }
 .my-team-picks > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
@@ -188,6 +197,7 @@ h1 em { font-style: normal; color: var(--violet); }
 .priority-queue button:nth-child(even) { border-right: 0; }
 .priority-queue button:nth-last-child(-n+2) { border-bottom: 0; }
 .priority-queue button.active { background: #e9ffab; box-shadow: inset 5px 0 0 var(--violet); }
+.priority-queue button.scheduled:not(.active) { box-shadow: inset 4px 0 0 var(--signal); }
 .priority-queue button:hover, .priority-queue button:focus-visible { background: #efede5; outline: 2px solid var(--violet); outline-offset: -3px; }
 .priority-tier { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; padding: 5px 6px; border: 1px solid var(--ink); font: 800 9px var(--font-geist-mono); white-space: nowrap; }
 .priority-tier.p1 { background: var(--signal); color: var(--ink); }
@@ -215,6 +225,8 @@ h1 em { font-style: normal; color: var(--violet); }
 .opponent-detail-label span { color: var(--violet); font: 800 9px var(--font-geist-mono); }
 .opponent-detail-label h3 { margin: 3px 0 0; font-size: 18px; }
 .opponent-detail-label > .priority-tier { padding: 7px 9px; }
+.opponent-priority-status { display: flex; align-items: center; justify-content: end; gap: 9px; }
+.opponent-priority-status > span { color: var(--muted); font: 700 9px var(--font-geist-mono); }
 .opponent-pack { border: 1px solid var(--ink); background: #f8f6ef; }
 .opponent-profile { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 15px; min-height: 102px; padding: 17px 20px; border-bottom: 1px solid var(--ink); background: var(--ink); color: white; }
 .team-monogram { display: grid; place-items: center; width: 62px; height: 62px; background: var(--violet); color: white; font: 800 16px var(--font-geist-mono); letter-spacing: -.04em; }
@@ -456,18 +468,19 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
   .team-lens { grid-template-columns: 1fr minmax(270px, .8fr); }
   .team-lens > a { grid-column: 1 / -1; justify-self: start; }
   .team-priority-board { grid-template-columns: 1fr; }
-  .my-team-card { grid-template-columns: minmax(250px, .8fr) 1fr; grid-template-rows: auto auto; }
+  .my-team-card { grid-template-columns: minmax(250px, .8fr) 1fr; grid-template-rows: auto auto 1fr auto; }
   .my-team-card > header { grid-row: 1 / -1; }
   .my-team-stats { border-left: 1px solid var(--line); }
+  .next-fixture { border-left: 1px solid var(--line); }
   .my-team-picks { border-left: 1px solid var(--line); }
   .team-data-boundary { grid-column: 2; border-left: 1px solid var(--line); }
 }
 @media (max-width: 680px) {
   .team-lens { grid-template-columns: 1fr; padding: 16px 5vw; }
   .team-lens > a { grid-column: auto; }
-  .my-team-card { display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto 1fr auto; }
+  .my-team-card { display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr auto; }
   .my-team-card > header { grid-row: auto; }
-  .my-team-stats, .my-team-picks, .team-data-boundary { border-left: 0; }
+  .my-team-stats, .next-fixture, .my-team-picks, .team-data-boundary { border-left: 0; }
   .team-data-boundary { grid-column: auto; }
   .priority-queue > div { grid-template-columns: 1fr; }
   .priority-queue button, .priority-queue button:nth-child(even), .priority-queue button:nth-last-child(-n+2) { border-right: 0; border-bottom: 1px solid var(--line); }
@@ -475,6 +488,7 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
   .priority-queue button { grid-template-columns: auto 20px 40px minmax(80px, 1fr) auto; }
   .priority-queue > footer { grid-template-columns: 1fr; gap: 2px; }
   .team-priority-setup { padding: 24px 20px; }
+  .opponent-priority-status { align-items: flex-end; flex-direction: column; gap: 5px; }
 }
 @media print { .topbar, .decision-hero, .summary, .team-lens, .audit-notice, .history-readiness, .workspace, .method, footer, .legal-notice, .brief-actions { display: none !important; } body, .team-brief { background: white; } .team-brief { padding: 0; border: 0; } .brief-layout { grid-template-columns: 270px 1fr; gap: 10px; } .decision-cells section { min-height: 120px; } }
 @media print { body.print-emergency main > :not(.emergency-backdrop) { display: none !important; } body.print-emergency .emergency-backdrop { position: static; display: block; padding: 0; background: white; } body.print-emergency .dialog-dismiss, body.print-emergency .emergency-dialog-head button, body.print-emergency .emergency-actions { display: none !important; } body.print-emergency .emergency-dialog { width: 100%; max-height: none; overflow: visible; border: 0; box-shadow: none; } body.print-emergency .emergency-dialog-head { position: static; padding: 12px 16px; } body.print-emergency .emergency-paper { padding: 10px 0 0; } body.print-emergency .emergency-alerts article, body.print-emergency .emergency-overlaps article { break-inside: avoid; } }

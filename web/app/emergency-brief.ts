@@ -1,4 +1,4 @@
-import type { OpponentTeam, RadarEntry, RadarReport } from "./radar-types";
+import type { OpponentTeam, RadarEntry, RadarReport, ScheduleSnapshot } from "./radar-types";
 import { scoreOpponent } from "./team-context";
 import { buildTeamBrief } from "./team-brief";
 
@@ -37,6 +37,14 @@ export type EmergencyBrief = {
     shared_leagues: string[];
     contested_picks: string[];
     reasons: string[];
+    schedule_urgency: number;
+    next_meeting: {
+      event_id: string;
+      start_at: string;
+      league: string;
+      block: string;
+      best_of: number | null;
+    } | null;
   };
   headline: string;
   alerts: BriefAlert[];
@@ -197,9 +205,17 @@ function unknowns(team: OpponentTeam, myTeam?: OpponentTeam) {
   return items;
 }
 
-export function buildEmergencyBrief(report: RadarReport, team: OpponentTeam, myTeam?: OpponentTeam): EmergencyBrief {
+export function buildEmergencyBrief(
+  report: RadarReport,
+  team: OpponentTeam,
+  myTeam?: OpponentTeam,
+  schedule?: ScheduleSnapshot | null,
+  referenceAt?: string | null,
+): EmergencyBrief {
   const overlaps = metaOverlaps(report, team);
-  const priority = myTeam && myTeam.team_id !== team.team_id ? scoreOpponent(report, myTeam, team) : null;
+  const priority = myTeam && myTeam.team_id !== team.team_id
+    ? scoreOpponent(report, myTeam, team, schedule, referenceAt)
+    : null;
   const topPick = team.priority_picks[0];
   const patchQueue = buildTeamBrief(report, 3).map((card) => ({
     champion_id: card.entry.champion_id,
@@ -238,6 +254,14 @@ export function buildEmergencyBrief(report: RadarReport, team: OpponentTeam, myT
         shared_leagues: priority.shared_leagues,
         contested_picks: priority.contested_picks.map((item) => `${item.champion_id}::${item.role ?? "UNKNOWN"}`),
         reasons: priority.reasons,
+        schedule_urgency: priority.components.schedule_urgency,
+        next_meeting: priority.next_meeting ? {
+          event_id: priority.next_meeting.event_id,
+          start_at: priority.next_meeting.start_at,
+          league: priority.next_meeting.league,
+          block: priority.next_meeting.block,
+          best_of: priority.next_meeting.best_of,
+        } : null,
       },
     } : {}),
     headline: topPick

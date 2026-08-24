@@ -76,6 +76,31 @@
       "redistribution_policy": "DEFINE_PER_PRODUCT_REGISTRATION_BEFORE_ENABLEMENT",
       "availability_policy": "DEFINE_PER_ENDPOINT_BEFORE_ENABLEMENT",
       "notes": "Fail closed until endpoint scope, credential class, rate limits, and product registration are configured."
+    },
+    {
+      "source_id": "lol-esports-schedule",
+      "display_name": "Official LoL Esports Schedule",
+      "owner": "Riot Games",
+      "status": "ENABLED",
+      "access_method": "PERMITTED_PUBLIC_WEB",
+      "base_urls": ["https://lolesports.com"],
+      "allowed_operations": ["FETCH_SCHEDULE_HTML"],
+      "policy_urls": [
+        "https://lolesports.com/robots.txt",
+        "https://lolesports.com/en-US/leagues/lck",
+        "https://www.riotgames.com/en/terms-of-service",
+        "https://developer.riotgames.com/policies/general"
+      ],
+      "policy_reviewed_at": "2026-08-24T00:00:00Z",
+      "review_interval_days": 30,
+      "credential_requirement": "NONE_FOR_PUBLIC_SCHEDULE_PAGE",
+      "minimum_interval_seconds": 21600.0,
+      "maximum_response_bytes": 5242880,
+      "robots_policy": "ROBOTS_TXT_REVIEWED; USER_AGENT_STAR_HAS_NO_DISALLOW_RULES",
+      "retention_policy": "CONTENT_ADDRESSED_RAW_HTML; NORMALIZED FUTURE FIXTURES ONLY",
+      "redistribution_policy": "PUBLISH NORMALIZED SCHEDULE FACTS AND SOURCE URL; DO_NOT REPUBLISH RAW HTML",
+      "availability_policy": "RETRIEVAL_TIME_IS_AVAILABLE_AT; SOURCE DATETIME_IS_OBSERVED_AT",
+      "notes": "Narrow adapter for semantic schedule markup on official LoL Esports league pages. No undocumented API, login, link crawling, arbitrary URL input, or page enumeration is allowed. Internal ENABLED status is not Riot product approval."
     }
   ]
 }

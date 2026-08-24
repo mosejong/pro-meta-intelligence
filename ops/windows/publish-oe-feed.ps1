@@ -43,7 +43,11 @@ $resolvedPython = (Resolve-Path -LiteralPath $PythonPath).Path
 $runDir = Join-Path $resolvedRoot "outputs\oe-feed-jobs"
 $sourceFeedDir = Join-Path $resolvedRoot "web\public\feed"
 $healthOutput = Join-Path $runDir "publisher-health.json"
-$allowedPaths = @("web/public/feed/current.json", "web/public/feed/history-status.json")
+$allowedPaths = @(
+    "web/public/feed/current.json",
+    "web/public/feed/history-status.json",
+    "web/public/feed/schedule.json"
+)
 
 & $resolvedPython -m pro_meta_intelligence check-oe-feed-health `
     --run-dir $runDir `
@@ -58,7 +62,7 @@ if ($health.healthy -ne $true) {
 }
 
 $target = "$RemoteName/$PublishBranch via isolated worktree $publisherFullPath"
-if (-not $PSCmdlet.ShouldProcess($target, "Publish two allowlisted public feed artifacts")) {
+if (-not $PSCmdlet.ShouldProcess($target, "Publish three allowlisted public feed artifacts")) {
     return
 }
 

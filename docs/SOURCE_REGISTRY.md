@@ -11,7 +11,7 @@ crawler.
 
 ## Current official-policy review
 
-Reviewed on 2026-08-22:
+Reviewed on 2026-08-24:
 
 - Riot's [League of Legends developer documentation](https://developer.riotgames.com/docs/lol)
   documents the Data Dragon version index and versioned champion static-data files.
@@ -23,6 +23,10 @@ Reviewed on 2026-08-22:
   be identified from visible information.
 - Riot's [API Terms](https://developer.riotgames.com/terms) remain applicable to use of Riot developer
   materials.
+- Riot's published developer API list does not document a professional esports schedule endpoint.
+  The official [LoL Esports schedule](https://lolesports.com/en-US/leagues/lck) instead exposes
+  upcoming match cards in server-rendered semantic HTML, and its current
+  [robots.txt](https://lolesports.com/robots.txt) contains no disallow rule.
 - Oracle's Elixir's
   [official download page](https://master.d36liwrx5rvjnc.amplifyapp.com/tools/downloads) states that
   its CSV files are provided free for analysts, commentators, and fans, are updated once per day,
@@ -84,6 +88,23 @@ Present but `REVIEW_REQUIRED`, with no allowed operations. It remains blocked un
 key class, rate limits, retention rules, and public product registration are configured. No API key
 is read or stored by the current implementation.
 
+### `lol-esports-schedule`
+
+Enabled only for `FETCH_SCHEDULE_HTML`. Riot does not currently list a professional schedule API in
+its public developer API catalog, so this adapter requests only the official LoL Esports league
+schedule route. It constructs that route from a validated locale and a maximum of 12 league slugs;
+it cannot accept an arbitrary URL, navigate links, log in, or call an undocumented JSON endpoint.
+
+The adapter identifies itself with the project user agent, permits no more than one request every
+six hours across archived runs, limits the response to 5 MiB, requires HTML, and extracts only
+semantic future match facts: start time, teams, league, stage block, and best-of count. The exact
+response is archived before a normalized companion feed is written. A source error or interval
+denial preserves the last good published schedule rather than replacing it with an empty file.
+
+The dashboard treats a schedule snapshot older than 36 hours as stale and excludes it from opponent
+scoring. This conservative UI limit is intentionally shorter than the source-policy review window:
+policy validity does not imply that an individual snapshot is operationally fresh.
+
 Unregistered sources and operations are denied automatically.
 
 ## Raw and normalized time semantics
@@ -96,7 +117,7 @@ A Data Dragon response first becomes a `RawSourceArtifact` containing:
 - exact response bytes,
 - SHA-256 content hash.
 
-`SnapshotArchive` stores response bytes under the content hash (`.json` or `.csv`) and a separate
+`SnapshotArchive` stores response bytes under the content hash (`.json`, `.csv`, or `.html`) and a separate
 immutable metadata file for each retrieval timestamp. Re-fetching unchanged content reuses the raw
 bytes without losing the new retrieval event. Operational archive lookup verifies metadata schema,
 safe file references, byte length, and SHA-256 before returning a snapshot; corruption fails closed.
@@ -141,6 +162,8 @@ python -m pro_meta_intelligence sync-oe-feed --year 2026 --source-timezone UTC
 python -m pro_meta_intelligence audit-oe-history \
   --archive-dir outputs/oracles-elixir/raw \
   --source-timezone UTC
+python -m pro_meta_intelligence fetch-schedule \
+  --league lck --league lec --league lpl --league lcs --league msi --league worlds
 ```
 
 Fetch the current version index and champion catalog, then store both raw artifacts:
@@ -182,7 +205,7 @@ quality gates.
 - Riot match, ranked, or tournament API calls
 - API credential storage
 - arbitrary user-provided URLs
-- HTML crawling or robots parsing
+- arbitrary or recursive HTML crawling and automated link discovery
 - login/session automation
 - social, video, forum, or expert-source adapters
 - automatic patch-note interpretation

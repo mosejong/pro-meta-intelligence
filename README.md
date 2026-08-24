@@ -94,6 +94,8 @@ data path:
   first rotations, quality warnings, and exact match evidence.
 - a three-minute Match-day Emergency Brief that cross-checks opponent preferences against global
   champion-role signals, separates the patch test queue, and exports or prints with evidence.
+- an own-team lens that combines official upcoming fixtures with same-league relevance, contested
+  picks, current meta overlap, sample strength, and data quality to rank which opponent to review first.
 
 This is not yet evidence of predictive value. Real point-in-time daily snapshots must accumulate
 before Phase 3 can measure Recall@K, lead time, and false-alert behavior without hindsight leakage.
