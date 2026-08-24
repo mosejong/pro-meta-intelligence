@@ -18945,8 +18945,7 @@
       "source_timezone": "UTC",
       "source_version": "sha256:c672fa3a6dc16ca8d6b99571642525fd95d1471c12a97da8a93ccf2240d96b5f",
       "truncated_issue_count": 347
-    },
-    "network_collection_performed": false
+    }
   },
   "league_regions": {
     "AL": "EMEA",

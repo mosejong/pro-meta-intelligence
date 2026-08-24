@@ -614,7 +614,6 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             published_at=None,
             output=None,
             input_authenticity="REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD",
-            source_network_collection_performed=network_attempted,
         )
         imported = _load_oe_import(refresh_args)
         coverage = audit_oe_coverage(
@@ -795,7 +794,6 @@ def _radar_payload(
     )
     payload["input"] = {
         "authenticity": getattr(args, "input_authenticity", "UNVERIFIED_CALLER_SUPPLIED_FILE"),
-        "network_collection_performed": getattr(args, "source_network_collection_performed", False),
         "import_report": imported.report.to_dict(),
     }
     return payload, bool(imported.report.issue_counts)
