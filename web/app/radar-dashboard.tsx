@@ -3,6 +3,8 @@
 /* eslint-disable @next/next/no-img-element -- this dual vinext/Vite build uses stable Riot CDN and relative static assets */
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { championImageUrl } from "./champion-assets";
+import { CreatorExportLab } from "./creator-export";
 import { isHistoryStatus, isRadarReport, isScheduleSnapshot, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport, type ScheduleSnapshot } from "./radar-types";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { sampleReport } from "./sample-report";
@@ -19,16 +21,6 @@ const flagLabels: Record<string, string> = {
   UNMAPPED_LEAGUE_EVIDENCE: "미등록 리그 포함",
 };
 
-const DATA_DRAGON_VERSION = "16.16.1";
-const championAssetOverrides: Record<string, string> = {
-  "Cho'Gath": "Chogath",
-  "Kai'Sa": "Kaisa",
-  "Kha'Zix": "Khazix",
-  LeBlanc: "Leblanc",
-  Mundo: "DrMundo",
-  "Renata Glasc": "Renata",
-  Wukong: "MonkeyKing",
-};
 const roleLabels: Record<string, string> = {
   TOP: "탑",
   JUNGLE: "정글",
@@ -80,11 +72,6 @@ type FeedState = {
 
 function keyOf(entry: RadarEntry) {
   return `${entry.champion_id}::${entry.role}`;
-}
-
-function championImageUrl(championId: string) {
-  const assetId = championAssetOverrides[championId] ?? championId.replace(/[.'\s]/g, "");
-  return `https://ddragon.leagueoflegends.com/cdn/${DATA_DRAGON_VERSION}/img/champion/${assetId}.png`;
 }
 
 function percent(value: number | null, digits = 0) {
@@ -440,6 +427,7 @@ export function RadarDashboard() {
         <nav aria-label="주요 메뉴">
           <a className="active" href="#team-brief">팀 브리프</a>
           <a href="#opponent-prep">상대 분석</a>
+          <a href="#creator-export">Creator</a>
           <a href="#radar">메타 레이더</a>
           <a href="#evidence">선택 근거</a>
           <a href="#method">읽는 법</a>
@@ -654,9 +642,11 @@ export function RadarDashboard() {
         </div> : <div className="brief-empty">현재 발행본에는 상대팀 드래프트 자료가 없습니다. 다음 검증된 피드부터 표시됩니다.</div>}
       </section>
 
+      <CreatorExportLab report={report} />
+
       <section className="workspace" id="radar">
         <div className="section-heading">
-          <div><p className="eyebrow">03 · 신호 목록</p><h2>전체 메타 신호 탐색</h2><p className="section-description">팀 브리프의 결론을 직접 검증하거나 다른 역할의 후보를 탐색할 때 사용합니다.</p></div>
+          <div><p className="eyebrow">04 · 신호 목록</p><h2>전체 메타 신호 탐색</h2><p className="section-description">팀 브리프의 결론을 직접 검증하거나 다른 역할의 후보를 탐색할 때 사용합니다.</p></div>
           <div className="controls">
             <label>포지션<select value={role} onChange={(event) => { setRole(event.target.value); setVisibleLimit(12); }}>{roles.map((item) => <option key={item}>{item === "ALL" ? "전체" : (roleLabels[item] ?? item)}</option>)}</select></label>
             <label className="toggle"><input type="checkbox" checked={eligibleOnly} onChange={(event) => setEligibleOnly(event.target.checked)} /><span /> 기준 통과만</label>
@@ -700,7 +690,7 @@ export function RadarDashboard() {
       </section>
 
       <section className="method" id="method">
-        <div><p className="eyebrow">04 · 레이더 읽는 법</p><h2>점수 하나보다, 네 가지 판단 단서.</h2></div>
+        <div><p className="eyebrow">05 · 레이더 읽는 법</p><h2>점수 하나보다, 네 가지 판단 단서.</h2></div>
         <div className="method-grid">
           <article><b>01</b><h3>팀 수요 속도</h3><p>한 팀의 반복 사용이 아니라, 서로 다른 팀으로 채택이 넓어지는지 봅니다.</p></article>
           <article><b>02</b><h3>픽 점유율 변화</h3><p>동일 패치 안에서 최근 구간과 바로 이전 구간의 경기 점유율을 비교합니다.</p></article>

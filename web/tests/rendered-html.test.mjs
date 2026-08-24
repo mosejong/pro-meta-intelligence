@@ -51,6 +51,12 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /HISTORY · WALK-FORWARD/);
   assert.match(html, /실데이터 검증 준비도/);
   assert.match(html, /일일 수집 계속/);
+  assert.match(html, /CREATOR EXPORT LAB/);
+  assert.match(html, /분석을 바로 영상 장면으로/);
+  assert.match(html, /16:9 유튜브/);
+  assert.match(html, /9:16 쇼츠/);
+  assert.match(html, /PNG 저장/);
+  assert.match(html, /CANVAS FALLBACK READY/);
   assert.match(html, /3분 브리프/);
   assert.match(html, /내 팀 기준 상대 준비 순서/);
   assert.match(html, /상대가 한 밴/);
@@ -69,6 +75,45 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.ok(html.indexOf('class="team-lens setup"') < html.indexOf('class="team-brief"'));
   assert.ok(html.indexOf('class="team-brief"') < html.indexOf('class="history-readiness'));
   assert.ok(html.indexOf('class="history-readiness') < html.indexOf('class="opponent-prep"'));
+  assert.ok(html.indexOf('class="opponent-prep"') < html.indexOf('class="creator-export"'));
+  assert.ok(html.indexOf('class="creator-export"') < html.indexOf('class="workspace"'));
+});
+
+test("builds deterministic creator scenes for YouTube and Shorts exports", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const entry = feed.entries.find((item) => item.eligible_for_review);
+  assert.ok(entry);
+
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { buildCreatorScene, creatorCanvasSize } = await vite.ssrLoadModule("/app/creator-export.tsx");
+    const landscape = buildCreatorScene(feed, entry, "landscape");
+    const vertical = buildCreatorScene(feed, entry, "vertical");
+
+    assert.deepEqual(creatorCanvasSize("landscape"), { width: 1280, height: 720 });
+    assert.deepEqual(creatorCanvasSize("vertical"), { width: 1080, height: 1920 });
+    assert.equal(landscape.artifact_type, "creator-visual-scene");
+    assert.equal(landscape.aspect, "landscape");
+    assert.equal(vertical.aspect, "vertical");
+    assert.equal(landscape.champion_id, entry.champion_id);
+    assert.deepEqual(landscape.source_event_ids, entry.evidence_event_ids);
+    assert.equal(landscape.source_count, entry.evidence_event_ids.length);
+    assert.equal(landscape.evidence.length, 4);
+    assert.match(landscape.title, /왜 .* 지금 봐야 하나/);
+    assert.match(landscape.counterpoint, /공개 경기|집중|편차|품질 경고/);
+    assert.match(landscape.image_url, /^https:\/\/ddragon\.leagueoflegends\.com\/cdn\/img\/champion\/splash\//);
+    assert.match(landscape.boundary, /출전 권고가 아닙니다/);
+  } finally {
+    await vite.close();
+  }
 });
 
 test("builds a deterministic evidence-bounded match-day brief from the published feed", async () => {

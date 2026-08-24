@@ -25,6 +25,10 @@ Imported files stay in browser memory and are not uploaded or persisted. The ref
 from a local override to the published feed. Host access control is separate from application data:
 the dashboard itself has no ChatGPT, OpenAI, or product-account login flow.
 
+Creator Export Lab converts an eligible Radar candidate into a 1280×720 YouTube card, a 1080×1920
+short-form card, or scene JSON. The browser generates the files locally. Experimental
+HTML-in-Canvas is used only when detected; all other browsers use the built-in Canvas 2D fallback.
+
 ## Checks
 
 ```bash

@@ -145,8 +145,10 @@ content farm; publication remains a human decision and later misses become first
 post-evaluation material.
 
 Current foundation: deterministic, claim-locked topic briefs, an immutable Radar/Creator snapshot
-feed, and a deterministic three-minute Match-day Emergency Brief are implemented. Natural-language
-querying, provider-backed drafting, long-form script review, and post-outcome miss tracking remain
+feed, a deterministic three-minute Match-day Emergency Brief, and evidence-locked 16:9/9:16 visual
+scene exports are implemented. The visual exporter uses experimental HTML-in-Canvas only as an
+optional enhancement and retains a production fallback. Natural-language querying, multi-scene
+storyboards, provider-backed drafting, long-form script review, and post-outcome miss tracking remain
 future gates.
 
 Exit gate: generated answers remain grounded and traceable.

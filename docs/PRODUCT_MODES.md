@@ -60,7 +60,11 @@ product goal is an Analyst Studio, not unattended bulk content generation.
 
 Current foundation: eligible Meta Radar entries can be transformed without an LLM into versioned
 Creator briefs containing claim IDs, exact values, counterpoints, falsifiers, data-card specs,
-evidence event IDs, and an explicit human-review gate. Optional AI drafting remains a later adapter.
+evidence event IDs, and an explicit human-review gate. Creator Export Lab now turns the same evidence
+into 16:9 and 9:16 PNG cards plus scene JSON. It feature-detects experimental HTML-in-Canvas support
+and keeps a Canvas 2D production fallback, so Creator Mode does not depend on a single experimental
+browser. Optional AI drafting remains a later adapter. See
+[`CREATOR_EXPORT_LAB.md`](CREATOR_EXPORT_LAB.md).
 
 ## User-defined Intelligence Sources
 
