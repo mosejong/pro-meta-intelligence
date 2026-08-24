@@ -6,7 +6,10 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "
 import { isHistoryStatus, isRadarReport, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport } from "./radar-types";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { sampleReport } from "./sample-report";
+import { buildTeamContext } from "./team-context";
 import { buildTeamBrief, serializeTeamBrief } from "./team-brief";
+
+const MY_TEAM_STORAGE_KEY = "pmi:my-team-id";
 
 const flagLabels: Record<string, string> = {
   INSUFFICIENT_RECENT_MATCHES: "최근 경기 표본 부족",
@@ -181,6 +184,7 @@ export function RadarDashboard() {
   const [visibleLimit, setVisibleLimit] = useState(12);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [myTeamId, setMyTeamId] = useState("");
   const [opponentId, setOpponentId] = useState(sampleReport.opponent_prep?.teams[0]?.team_id ?? "");
   const [feedState, setFeedState] = useState<FeedState>({
     kind: "connecting",
@@ -202,12 +206,19 @@ export function RadarDashboard() {
   );
   const teamBrief = useMemo(() => buildTeamBrief(report), [report]);
   const todayDecisions = teamBrief.slice(0, 3);
-  const opponentTeams = report.opponent_prep?.teams ?? [];
+  const opponentTeams = useMemo(() => report.opponent_prep?.teams ?? [], [report.opponent_prep?.teams]);
+  const teamContext = useMemo(() => buildTeamContext(report, myTeamId), [myTeamId, report]);
+  const selectedMyTeam = teamContext?.my_team;
+  const opponentPriorities = useMemo(() => teamContext?.opponent_priorities ?? [], [teamContext]);
+  const rankedOpponentTeams = useMemo(() => teamContext
+    ? opponentPriorities.map((priority) => priority.team)
+    : opponentTeams, [opponentPriorities, opponentTeams, teamContext]);
   const displayedEntries = visibleEntries.slice(0, visibleLimit);
   const selected = visibleEntries.find((entry) => keyOf(entry) === selectedKey) ?? visibleEntries[0] ?? report.entries[0];
   const selectedBrief = teamBrief.find((card) => keyOf(card.entry) === selectedKey) ?? teamBrief[0];
-  const selectedOpponent = opponentTeams.find((team) => team.team_id === opponentId) ?? opponentTeams[0];
-  const emergencyBrief = selectedOpponent ? buildEmergencyBrief(report, selectedOpponent) : null;
+  const selectedOpponent = rankedOpponentTeams.find((team) => team.team_id === opponentId) ?? rankedOpponentTeams[0];
+  const selectedPriority = opponentPriorities.find((priority) => priority.team.team_id === selectedOpponent?.team_id);
+  const emergencyBrief = selectedOpponent ? buildEmergencyBrief(report, selectedOpponent, selectedMyTeam) : null;
   const quality = qualityState(report);
   const eligibleCount = report.entries.filter((entry) => entry.eligible_for_review).length;
 
@@ -260,6 +271,14 @@ export function RadarDashboard() {
   }, [loadPublishedFeed]);
 
   useEffect(() => {
+    const storedTeamId = window.localStorage.getItem(MY_TEAM_STORAGE_KEY);
+    const restore = window.setTimeout(() => {
+      if (storedTeamId) setMyTeamId(storedTeamId);
+    }, 0);
+    return () => window.clearTimeout(restore);
+  }, []);
+
+  useEffect(() => {
     if (!evidenceOpen && !emergencyOpen) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -306,6 +325,12 @@ export function RadarDashboard() {
     }
   }
 
+  function selectMyTeam(teamId: string) {
+    setMyTeamId(teamId);
+    if (teamId) window.localStorage.setItem(MY_TEAM_STORAGE_KEY, teamId);
+    else window.localStorage.removeItem(MY_TEAM_STORAGE_KEY);
+  }
+
   function downloadTeamBrief() {
     const payload = JSON.stringify(serializeTeamBrief(report), null, 2);
     const blob = new Blob([payload], { type: "application/json" });
@@ -326,6 +351,8 @@ export function RadarDashboard() {
       patch_id: report.opponent_prep.patch_id,
       boundary: report.opponent_prep.boundary,
       source_versions: report.opponent_prep.evidence_index.source_versions,
+      perspective_team: selectedMyTeam ?? null,
+      priority_context: selectedPriority ?? null,
       team: selectedOpponent,
     }, null, 2);
     const blob = new Blob([payload], { type: "application/json" });
@@ -418,6 +445,21 @@ export function RadarDashboard() {
         <article><span>데이터 품질</span><strong className={`quality ${quality.label === "CHECK" ? "caution" : quality.label === "AUDITED" ? "audited" : ""}`}>{quality.label === "AUDITED" ? "검토 완료" : quality.label === "PASS" ? "통과" : "확인 필요"}</strong><small>제외 {quality.excluded} · 위반 {quality.blocking} · 미등록 {quality.unknown}</small></article>
       </section>
 
+      <section className={`team-lens ${selectedMyTeam ? "active" : "setup"}`} aria-label="내 팀 분석 기준">
+        <div className="team-lens-copy">
+          <span>MY TEAM LENS</span>
+          <strong>{selectedMyTeam ? selectedMyTeam.team_name : "소속 팀을 먼저 선택하세요"}</strong>
+          <p>{selectedMyTeam ? `${selectedMyTeam.leagues.join(" · ")} · 공개 경기 ${selectedMyTeam.game_count}개를 기준으로 상대 준비 순서를 다시 계산합니다.` : "선택 전에는 글로벌 메타만 표시합니다. 팀 선택값은 이 브라우저에만 저장됩니다."}</p>
+        </div>
+        <label>내 팀
+          <select value={myTeamId} onChange={(event) => selectMyTeam(event.target.value)}>
+            <option value="">내 팀 선택</option>
+            {opponentTeams.slice().sort((left, right) => left.team_name.localeCompare(right.team_name)).map((team) => <option key={team.team_id} value={team.team_id}>{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>)}
+          </select>
+        </label>
+        <a href="#opponent-prep">{selectedMyTeam ? "상대 우선순위 보기" : "분석 기준 설정"} <span>→</span></a>
+      </section>
+
       {quality.publication && quality.importQuality && <section className={`audit-notice ${quality.publication.ready_for_radar ? "ready" : "blocked"}`} aria-label="발행 데이터 품질 감사" role="status">
         <div><span>발행 데이터 감사</span><strong>전체 {quality.importQuality.discovered_game_count}경기 중 {quality.importQuality.imported_game_count}경기 사용</strong></div>
         <p>{quality.importQuality.known_exclusion_game_count}개 경기는 불완전 기록 또는 팀 ID 누락으로 완전히 제외했습니다. 분석에 포함된 경기의 계약 위반은 {quality.importQuality.blocking_issue_game_count}건이며, 미등록 리그는 {quality.unknown}개입니다.</p>
@@ -492,21 +534,49 @@ export function RadarDashboard() {
       <section className="opponent-prep" id="opponent-prep">
         <div className="section-heading opponent-heading">
           <div>
-            <p className="eyebrow">02 · OPPONENT PREP PACK</p>
-            <h2>상대팀 드래프트 준비 자료</h2>
-            <p className="section-description">최근 동일 패치 경기만 사용해 진영, 1·2페이즈 픽/밴, 반복 로테이션을 근거 경기와 함께 정리합니다.</p>
+            <p className="eyebrow">02 · MY TEAM → OPPONENT PRIORITY</p>
+            <h2>내 팀 기준 상대 준비 순서</h2>
+            <p className="section-description">동일 리그, 양 팀의 픽 충돌, 현재 메타와의 겹침, 공개 경기 표본을 합쳐 먼저 볼 상대를 정합니다. 실제 대진 일정은 추정하지 않습니다.</p>
           </div>
           {selectedOpponent && <div className="opponent-controls">
-            <label>상대팀<select value={selectedOpponent.team_id} onChange={(event) => setOpponentId(event.target.value)}>{opponentTeams.map((team) => <option key={team.team_id} value={team.team_id}>{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>)}</select></label>
+            <label>준비할 상대<select value={selectedOpponent.team_id} onChange={(event) => setOpponentId(event.target.value)}>{rankedOpponentTeams.map((team) => { const priority = opponentPriorities.find((item) => item.team.team_id === team.team_id); return <option key={team.team_id} value={team.team_id}>{priority ? `${priority.tier} · ${priority.score}점 · ` : ""}{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>; })}</select></label>
             <button ref={emergencyTrigger} className="emergency-open" type="button" onClick={() => setEmergencyOpen(true)}>3분 브리프</button>
             <button type="button" onClick={downloadOpponentPrep}>선택 팀 JSON</button>
           </div>}
         </div>
 
+        {teamContext ? <div className="team-priority-board">
+          <article className="my-team-card">
+            <header><div className="team-monogram" aria-hidden="true">{selectedMyTeam?.team_name.slice(0, 2).toUpperCase()}</div><div><span>MY TEAM · ANALYSIS ANCHOR</span><h3>{selectedMyTeam?.team_name}</h3><p>{selectedMyTeam?.leagues.join(" · ")}</p></div></header>
+            <div className="my-team-stats"><span><b>{selectedMyTeam?.game_count}</b> 공개 경기</span><span><b>{percent(selectedMyTeam?.first_pick_rate ?? null)}</b> 선픽</span><span><b>{selectedMyTeam?.evidence.draft_event_ids.length}</b> 근거 기록</span></div>
+            <div className="my-team-picks"><span>관측된 우선 픽</span><div>{selectedMyTeam?.priority_picks.slice(0, 3).map((pick) => <div key={`${pick.champion_id}:${pick.role}`}><img src={championImageUrl(pick.champion_id)} alt="" /><strong>{pick.champion_id}</strong><small>{roleLabels[pick.role ?? ""] ?? pick.role}</small></div>)}</div></div>
+            <p className="team-data-boundary">공개 경기 성향만 사용 · 선수 숙련도와 스크림 미포함</p>
+          </article>
+          <div className="priority-queue">
+            <header><div><span>OPPONENT PRIORITY QUEUE</span><h3>먼저 준비할 상대</h3></div><b>상위 4팀</b></header>
+            <div>{opponentPriorities.slice(0, 4).map((priority, index) => {
+              const topPick = priority.team.priority_picks[0];
+              const active = priority.team.team_id === selectedOpponent?.team_id;
+              return <button type="button" className={active ? "active" : ""} key={priority.team.team_id} onClick={() => setOpponentId(priority.team.team_id)} aria-pressed={active}>
+                <span className={`priority-tier ${priority.tier.toLowerCase()}`}>{priority.tier}</span>
+                <span className="priority-order">{String(index + 1).padStart(2, "0")}</span>
+                {topPick ? <img src={championImageUrl(topPick.champion_id)} alt="" /> : <span className="priority-placeholder" />}
+                <span className="priority-team"><strong>{priority.team.team_name}</strong><small>{priority.reasons.join(" · ")}</small></span>
+                <span className="priority-score"><strong>{priority.score}</strong><small>/ 100</small></span>
+              </button>;
+            })}</div>
+            <footer><b>점수 구성</b><span>동일 리그 30 · 상승 메타 최대 24 · 픽 충돌 최대 18 · 표본 최대 18 · 품질 경고 감점</span></footer>
+          </div>
+        </div> : <div className="team-priority-setup">
+          <span>STEP 01</span><h3>내 팀을 선택하면 상대 우선순위가 열립니다.</h3><p>현재 발행본의 {opponentTeams.length}개 팀 중 소속 팀을 고르면, 자기 팀을 제외한 상대만 공개 근거로 다시 정렬합니다.</p><a href="#top">위에서 내 팀 선택 ↑</a>
+        </div>}
+
+        {selectedOpponent && <div className="opponent-detail-label"><div><span>{selectedMyTeam ? `${selectedMyTeam.team_name} → ${selectedOpponent.team_name}` : "GLOBAL → OPPONENT"}</span><h3>선택 상대 상세 분석</h3></div>{selectedPriority && <b className={`priority-tier ${selectedPriority.tier.toLowerCase()}`}>{selectedPriority.tier} · {selectedPriority.score}점</b>}</div>}
+
         {selectedOpponent ? <div className="opponent-pack">
           <header className="opponent-profile">
             <div className="team-monogram" aria-hidden="true">{selectedOpponent.team_name.slice(0, 2).toUpperCase()}</div>
-            <div><span>{selectedOpponent.leagues.join(" · ")} · PATCH {report.patch_id}</span><h3>{selectedOpponent.team_name}</h3><p>{formatCutoff(selectedOpponent.evidence.first_observed_at)}부터 {formatCutoff(selectedOpponent.evidence.last_observed_at)}까지</p></div>
+            <div><span>{selectedOpponent.leagues.join(" · ")} · PATCH {report.patch_id}</span><h3>{selectedOpponent.team_name}</h3><p>{selectedPriority ? selectedPriority.reasons.join(" · ") : "글로벌 목록에서 선택"} · {formatCutoff(selectedOpponent.evidence.first_observed_at)}부터 관측</p></div>
             <div className="opponent-flags">{selectedOpponent.quality_flags.length ? selectedOpponent.quality_flags.map((flag) => <b key={flag}>{opponentFlagLabels[flag] ?? flag}</b>) : <b className="clear">표본 경고 없음</b>}</div>
           </header>
 
@@ -618,14 +688,14 @@ export function RadarDashboard() {
           <button className="dialog-dismiss" type="button" onClick={() => setEmergencyOpen(false)} aria-label="매치데이 브리프 닫기" />
           <section ref={emergencyDialog} className="emergency-dialog" role="dialog" aria-modal="true" aria-labelledby="emergency-title" tabIndex={-1}>
             <header className="emergency-dialog-head">
-              <div><span>MATCH-DAY · 3 MIN READ</span><h2 id="emergency-title">{selectedOpponent.team_name} Emergency Brief</h2></div>
+              <div><span>MATCH-DAY · 3 MIN READ</span><h2 id="emergency-title">{selectedMyTeam ? `${selectedMyTeam.team_name} vs ${selectedOpponent.team_name}` : selectedOpponent.team_name} Emergency Brief</h2></div>
               <button type="button" onClick={() => setEmergencyOpen(false)} aria-label="매치데이 브리프 닫기">×</button>
             </header>
 
             <div className="emergency-paper">
               <section className="emergency-lead">
                 <div className="team-monogram" aria-hidden="true">{selectedOpponent.team_name.slice(0, 2).toUpperCase()}</div>
-                <div><span>PATCH {emergencyBrief.patch_id} · {selectedOpponent.leagues.join(" / ")}</span><h3>{emergencyBrief.headline}</h3><p>{selectedOpponent.game_count}경기 공개 드래프트 · 컷오프 {formatCutoff(emergencyBrief.cutoff)} KST</p></div>
+                <div><span>PATCH {emergencyBrief.patch_id} · {selectedOpponent.leagues.join(" / ")}</span><h3>{emergencyBrief.headline}</h3><p>{selectedPriority ? `${selectedPriority.tier} · 우선순위 ${selectedPriority.score}점 · ` : ""}{selectedOpponent.game_count}경기 공개 드래프트 · 컷오프 {formatCutoff(emergencyBrief.cutoff)} KST</p></div>
                 <b className={`brief-quality ${emergencyBrief.opponent.evidence_quality.toLowerCase()}`}>{emergencyBrief.opponent.evidence_quality === "USABLE_WITH_LIMITS" ? "제한부 사용" : emergencyBrief.opponent.evidence_quality === "LOW_SAMPLE" ? "저표본" : "근거 누락"}</b>
               </section>
 

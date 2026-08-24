@@ -44,12 +44,14 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /인쇄 \/ PDF/);
   assert.match(html, /JSON 내보내기/);
   assert.match(html, /출전 권고가 아닙니다/);
-  assert.match(html, /OPPONENT PREP PACK/);
+  assert.match(html, /MY TEAM → OPPONENT PRIORITY/);
+  assert.match(html, /MY TEAM LENS/);
+  assert.match(html, /OPPONENT PRIORITY QUEUE|STEP 01/);
   assert.match(html, /HISTORY · WALK-FORWARD/);
   assert.match(html, /실데이터 검증 준비도/);
   assert.match(html, /일일 수집 계속/);
   assert.match(html, /3분 브리프/);
-  assert.match(html, /상대팀 드래프트 준비 자료/);
+  assert.match(html, /내 팀 기준 상대 준비 순서/);
   assert.match(html, /상대가 한 밴/);
   assert.match(html, /상대가 받은 밴/);
   assert.match(html, /회의에서 확인할 질문/);
@@ -63,6 +65,7 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /https:\/\/meta-radar\.example\/meta-radar-hero-v2\.png/);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
   assert.ok(html.indexOf('class="decision-hero"') < html.indexOf('class="team-brief"'));
+  assert.ok(html.indexOf('class="team-lens setup"') < html.indexOf('class="team-brief"'));
   assert.ok(html.indexOf('class="team-brief"') < html.indexOf('class="history-readiness'));
   assert.ok(html.indexOf('class="history-readiness') < html.indexOf('class="opponent-prep"'));
 });
@@ -75,6 +78,7 @@ test("builds a deterministic evidence-bounded match-day brief from the published
   const vite = await createServer({
     root: fileURLToPath(templateRoot),
     configFile: false,
+    publicDir: false,
     server: { middlewareMode: true },
     appType: "custom",
     logLevel: "silent",
@@ -90,7 +94,7 @@ test("builds a deterministic evidence-bounded match-day brief from the published
     assert.equal(first.artifact_type, "match-day-emergency-brief");
     assert.equal(first.read_time_minutes, 3);
     assert.equal(first.opponent.team_name, "T1");
-    assert.equal(first.opponent.game_count, 7);
+    assert.equal(first.opponent.game_count, t1.game_count);
     assert.equal(first.opponent.evidence_quality, "USABLE_WITH_LIMITS");
     assert.deepEqual(first.alerts.map((alert) => alert.type), ["PICK", "BAN", "ROTATION"]);
     assert.ok(first.meta_overlaps.length > 0);
@@ -118,6 +122,48 @@ test("builds a deterministic evidence-bounded match-day brief from the published
   }
 });
 
+test("ranks opponents from an explicit own-team perspective without self-matches", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+  const geng = feed.opponent_prep.teams.find((team) => team.team_name === "Gen.G");
+  assert.ok(t1);
+  assert.ok(geng);
+
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { buildTeamContext, scoreOpponent } = await vite.ssrLoadModule("/app/team-context.ts");
+    const { buildEmergencyBrief } = await vite.ssrLoadModule("/app/emergency-brief.ts");
+    const context = buildTeamContext(feed, t1.team_id);
+    assert.ok(context);
+    assert.equal(context.my_team.team_name, "T1");
+    assert.equal(context.opponent_priorities.length, feed.opponent_prep.teams.length - 1);
+    assert.ok(context.opponent_priorities.every((item) => item.team.team_id !== t1.team_id));
+    assert.ok(context.opponent_priorities.every((item, index, items) => index === 0 || items[index - 1].score >= item.score));
+
+    const genGPriority = scoreOpponent(feed, t1, geng);
+    assert.ok(genGPriority.shared_leagues.includes("LCK"));
+    assert.equal(genGPriority.components.same_league, 30);
+    assert.equal(genGPriority.score, Object.values(genGPriority.components).reduce((sum, value) => sum + value, 0));
+    assert.match(genGPriority.reasons.join(" "), /LCK/);
+
+    const brief = buildEmergencyBrief(feed, geng, t1);
+    assert.equal(brief.own_team.team_name, "T1");
+    assert.equal(brief.priority_context.score, genGPriority.score);
+    assert.match(brief.headline, /^T1 기준/);
+    assert.ok(brief.unknowns.some((item) => item.includes("T1")));
+  } finally {
+    await vite.close();
+  }
+});
+
 test("ships a validated same-origin publication feed for automatic loading", async () => {
   const feedText = await readFile(new URL("public/feed/current.json", templateRoot), "utf8");
   const feed = JSON.parse(feedText);
@@ -133,10 +179,11 @@ test("ships a validated same-origin publication feed for automatic loading", asy
   assert.ok(feed.entries.length > 0);
   assert.equal(feed.opponent_prep.artifact_type, "opponent-prep-pack");
   assert.equal(feed.opponent_prep.fixture_only, false);
-  assert.equal(feed.opponent_prep.team_count, 138);
+  assert.equal(feed.opponent_prep.team_count, feed.opponent_prep.teams.length);
+  assert.ok(feed.opponent_prep.team_count >= 100);
   const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
   assert.ok(t1);
-  assert.equal(t1.game_count, 7);
+  assert.ok(t1.game_count >= feed.opponent_prep.config.minimum_games_for_review);
   assert.ok(t1.priority_picks.length > 0);
   assert.ok(t1.frequent_bans.length > 0);
   assert.ok(t1.received_bans.length > 0);
