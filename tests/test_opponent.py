@@ -118,15 +118,19 @@ def test_opponent_prep_compares_player_picks_with_the_previous_available_patch()
         for event in imported.draft_events
     )
 
-    report = OpponentPrepBuilder().build(
-        (previous_match, *imported.matches),
-        (*previous_events, *imported.draft_events),
-        OpponentPrepConfig(
-            cutoff=RETRIEVED_AT,
-            patch_id="16.15",
-            profile_team_names=("Blue Team",),
-        ),
-    ).to_dict()
+    report = (
+        OpponentPrepBuilder()
+        .build(
+            (previous_match, *imported.matches),
+            (*previous_events, *imported.draft_events),
+            OpponentPrepConfig(
+                cutoff=RETRIEVED_AT,
+                patch_id="16.15",
+                profile_team_names=("Blue Team",),
+            ),
+        )
+        .to_dict()
+    )
     blue = next(team for team in report["teams"] if team["team_id"] == "oe:team:blue")
 
     assert report["previous_patch_id"] == "16.14"

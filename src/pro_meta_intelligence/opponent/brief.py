@@ -97,7 +97,8 @@ class OpponentPrepBuilder:
                 team_id,
                 items,
                 [
-                    match for match in previous_matches
+                    match
+                    for match in previous_matches
                     if team_id in {match.blue_team_id, match.red_team_id}
                 ],
                 events_by_match,
@@ -155,8 +156,7 @@ class OpponentPrepBuilder:
                         "distinct player games on champion / selected player games"
                     ),
                     "patch_game_rate_delta": (
-                        "current patch champion-role game rate - previous available "
-                        "patch game rate"
+                        "current patch champion-role game rate - previous available patch game rate"
                     ),
                 },
                 "evidence_index": {
@@ -235,13 +235,17 @@ class OpponentPrepBuilder:
             _team_identity(name) in {_team_identity(target) for target in config.profile_team_names}
             for name in (team_name, *name_aliases)
         )
-        previous_selected = tuple(
-            sorted(
-                previous_matches,
-                key=lambda match: (match.observed_at, match.match_id),
-                reverse=True,
-            )[: config.maximum_games_per_team]
-        ) if profile_enabled else ()
+        previous_selected = (
+            tuple(
+                sorted(
+                    previous_matches,
+                    key=lambda match: (match.observed_at, match.match_id),
+                    reverse=True,
+                )[: config.maximum_games_per_team]
+            )
+            if profile_enabled
+            else ()
+        )
         previous_ids = {match.match_id for match in previous_selected}
         previous_picks = tuple(
             event
@@ -471,9 +475,9 @@ def _recent_games(
     events_by_match: dict[str, list[PickBanEvent]],
 ) -> list[dict[str, Any]]:
     payload = []
-    for match in sorted(
-        matches, key=lambda item: (item.observed_at, item.match_id), reverse=True
-    )[:5]:
+    for match in sorted(matches, key=lambda item: (item.observed_at, item.match_id), reverse=True)[
+        :5
+    ]:
         side = Side.BLUE if match.blue_team_id == team_id else Side.RED
         opponent_id = match.red_team_id if side is Side.BLUE else match.blue_team_id
         opponent_name = match.red_team_name if side is Side.BLUE else match.blue_team_name
