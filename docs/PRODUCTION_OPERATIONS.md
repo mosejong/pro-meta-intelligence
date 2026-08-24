@@ -1,6 +1,6 @@
 # Production operations
 
-The unattended Oracle's Elixir path has three separate responsibilities:
+The unattended production path has four separate responsibilities:
 
 1. `sync-oe-feed` performs policy-gated acquisition, archive audit, publication readiness, Radar and
    Creator publication, and walk-forward readiness maintenance under one writer lock.
@@ -8,6 +8,9 @@ The unattended Oracle's Elixir path has three separate responsibilities:
    signal.
 3. An operating-system scheduler invokes both through a reviewed wrapper. It does not bypass source
    intervals, commit raw provider data, or push repository changes.
+4. The same wrapper makes one policy-gated request for the official LoL Esports schedule after the
+   core sync. Schedule failure preserves the last good companion feed and does not mislabel the
+   independently healthy match-data Radar as an outage.
 
 ## Health command
 
@@ -46,8 +49,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\ops\windows\run-oe-sync.ps
 ```
 
 The wrapper prefers `.venv\Scripts\python.exe`, otherwise it uses `python` from `PATH`. It writes only
-ignored operational files under `outputs/oe-feed-jobs/` plus the reviewed public feed artifacts. Its
-exit code is nonzero when the sync or health check fails, which lets Task Scheduler record failure.
+ignored operational files under `outputs/oe-feed-jobs/` and immutable raw source archives plus the
+reviewed public feed artifacts. Its exit code is nonzero when the core sync or health check fails,
+which lets Task Scheduler record failure. The schedule command has a separate logged exit code and
+retains the previous schedule on failure.
 
 To register a task, review the action without changing the machine first:
 
@@ -75,10 +80,11 @@ first operational rollout observable and reversible.
 
 `publish-oe-feed.ps1` uses a locked, detached Git worktree outside the developer checkout. It first
 runs the health gate, fetches the remote publication branch, refuses a dirty publisher worktree, and
-copies exactly two allowlisted artifacts:
+copies exactly three allowlisted artifacts:
 
 - `web/public/feed/current.json`
 - `web/public/feed/history-status.json`
+- `web/public/feed/schedule.json`
 
 It stages those exact paths, rejects any unexpected staged file, creates no commit when bytes are
 unchanged, and performs a normal fast-forward push. It never force-pushes and never copies the raw

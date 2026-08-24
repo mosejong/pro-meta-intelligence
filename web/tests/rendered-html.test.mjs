@@ -46,6 +46,7 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /출전 권고가 아닙니다/);
   assert.match(html, /MY TEAM → OPPONENT PRIORITY/);
   assert.match(html, /MY TEAM LENS/);
+  assert.match(html, /공식 일정 연결 중/);
   assert.match(html, /OPPONENT PRIORITY QUEUE|STEP 01/);
   assert.match(html, /HISTORY · WALK-FORWARD/);
   assert.match(html, /실데이터 검증 준비도/);
@@ -141,22 +142,49 @@ test("ranks opponents from an explicit own-team perspective without self-matches
   try {
     const { buildTeamContext, scoreOpponent } = await vite.ssrLoadModule("/app/team-context.ts");
     const { buildEmergencyBrief } = await vite.ssrLoadModule("/app/emergency-brief.ts");
-    const context = buildTeamContext(feed, t1.team_id);
+    const schedule = {
+      schema_version: "1",
+      artifact_type: "pro-schedule-snapshot",
+      source_id: "lol-esports-schedule",
+      source_url: "https://lolesports.com/en-US/leagues/lck",
+      retrieved_at: "2026-08-24T00:00:00Z",
+      available_at: "2026-08-24T00:00:00Z",
+      content_hash: `sha256:${"a".repeat(64)}`,
+      locale: "en-US",
+      league_slugs: ["lck"],
+      events: [{
+        event_id: "lolesports:test-t1-geng",
+        start_at: "2026-08-26T08:00:00Z",
+        league: "LCK",
+        block: "Playoffs",
+        best_of: 5,
+        participants: [{ name: "T1", code: "T1" }, { name: "Gen.G Esports", code: "GEN" }],
+      }],
+      quality: { event_count: 1, tbd_participant_count: 0 },
+      boundary: "Official public schedule facts only.",
+    };
+    const context = buildTeamContext(feed, t1.team_id, schedule);
     assert.ok(context);
     assert.equal(context.my_team.team_name, "T1");
     assert.equal(context.opponent_priorities.length, feed.opponent_prep.teams.length - 1);
     assert.ok(context.opponent_priorities.every((item) => item.team.team_id !== t1.team_id));
-    assert.ok(context.opponent_priorities.every((item, index, items) => index === 0 || items[index - 1].score >= item.score));
+    assert.equal(context.opponent_priorities[0].team.team_id, geng.team_id);
+    assert.equal(context.opponent_priorities[0].next_meeting.event_id, "lolesports:test-t1-geng");
 
-    const genGPriority = scoreOpponent(feed, t1, geng);
+    const genGPriority = scoreOpponent(feed, t1, geng, schedule);
     assert.ok(genGPriority.shared_leagues.includes("LCK"));
     assert.equal(genGPriority.components.same_league, 30);
-    assert.equal(genGPriority.score, Object.values(genGPriority.components).reduce((sum, value) => sum + value, 0));
+    assert.equal(genGPriority.components.schedule_urgency, 30);
+    assert.equal(genGPriority.next_meeting.event_id, "lolesports:test-t1-geng");
+    assert.equal(genGPriority.days_until_meeting, 3);
+    assert.equal(genGPriority.score, Math.min(100, Object.values(genGPriority.components).reduce((sum, value) => sum + value, 0)));
     assert.match(genGPriority.reasons.join(" "), /LCK/);
+    assert.match(genGPriority.reasons[0], /공식 대진/);
 
-    const brief = buildEmergencyBrief(feed, geng, t1);
+    const brief = buildEmergencyBrief(feed, geng, t1, schedule);
     assert.equal(brief.own_team.team_name, "T1");
     assert.equal(brief.priority_context.score, genGPriority.score);
+    assert.equal(brief.priority_context.next_meeting.event_id, "lolesports:test-t1-geng");
     assert.match(brief.headline, /^T1 기준/);
     assert.ok(brief.unknowns.some((item) => item.includes("T1")));
   } finally {
@@ -189,6 +217,19 @@ test("ships a validated same-origin publication feed for automatic loading", asy
   assert.ok(t1.received_bans.length > 0);
   assert.ok(t1.evidence.match_ids.length > 0);
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
+});
+
+test("ships a normalized official schedule companion feed", async () => {
+  const schedule = JSON.parse(await readFile(new URL("public/feed/schedule.json", templateRoot), "utf8"));
+  assert.equal(schedule.schema_version, "1");
+  assert.equal(schedule.artifact_type, "pro-schedule-snapshot");
+  assert.equal(schedule.source_id, "lol-esports-schedule");
+  assert.match(schedule.source_url, /^https:\/\/lolesports\.com\//);
+  assert.ok(schedule.events.length > 0);
+  assert.equal(schedule.quality.event_count, schedule.events.length);
+  assert.ok(schedule.events.every((event) => event.participants.length === 2));
+  assert.ok(schedule.events.every((event) => Date.parse(event.start_at) >= Date.parse(schedule.retrieved_at)));
+  assert.doesNotMatch(JSON.stringify(schedule), /chatgpt|openai|gpt login|sign in/i);
 });
 
 test("starter preview files are removed", async () => {

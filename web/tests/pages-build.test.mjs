@@ -18,6 +18,8 @@ test("copies the same-origin feed and social card", async () => {
   const feed = JSON.parse(feedText);
   const historyText = await readFile(new URL("feed/history-status.json", root), "utf8");
   const history = JSON.parse(historyText);
+  const scheduleText = await readFile(new URL("feed/schedule.json", root), "utf8");
+  const schedule = JSON.parse(scheduleText);
   const card = await readFile(new URL("og.png", root));
   const hero = await readFile(new URL("meta-radar-hero-v2.png", root));
 
@@ -35,8 +37,11 @@ test("copies the same-origin feed and social card", async () => {
   assert.equal(history.gates.length, 4);
   assert.equal(history.aggregate, null);
   assert.deepEqual(feed.history_status, history);
+  assert.equal(schedule.artifact_type, "pro-schedule-snapshot");
+  assert.ok(schedule.events.length > 0);
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(historyText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
+  assert.doesNotMatch(scheduleText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.ok(card.byteLength > 10_000);
   assert.ok(hero.byteLength > 1_000_000);
 });

@@ -6,6 +6,12 @@ from pro_meta_intelligence.ingestion.fixtures import (
     SyntheticScenario,
     load_synthetic_scenario,
 )
+from pro_meta_intelligence.ingestion.lolesports_schedule import (
+    LoLEsportsScheduleAdapter,
+    ScheduleFetchIntervalError,
+    SchedulePayloadError,
+    ScheduleSnapshot,
+)
 from pro_meta_intelligence.ingestion.oe_download import (
     OracleElixirDownloadError,
     OracleElixirDownloadIntervalError,
@@ -25,6 +31,10 @@ __all__ = [
     "SyntheticScenario",
     "load_synthetic_scenario",
     "DataDragonAdapter",
+    "LoLEsportsScheduleAdapter",
+    "ScheduleFetchIntervalError",
+    "SchedulePayloadError",
+    "ScheduleSnapshot",
     "OracleElixirCSVAdapter",
     "OracleElixirImport",
     "OracleElixirSchemaError",

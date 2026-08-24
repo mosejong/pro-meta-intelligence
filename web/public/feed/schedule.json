@@ -1,0 +1,671 @@
+{
+  "artifact_type": "pro-schedule-snapshot",
+  "available_at": "2026-08-24T10:09:18.012735+00:00",
+  "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
+  "content_hash": "sha256:c679dfa3441fd549409738d7373e6f414648e46e7fd0bd6d0c04a78ec7fa2cb8",
+  "events": [
+    {
+      "best_of": 5,
+      "block": "Play-Ins",
+      "event_id": "lolesports:1963fc4a07845148a8ae",
+      "league": "LCK",
+      "participants": [
+        {
+          "code": "KT",
+          "name": "kt Rolster"
+        },
+        {
+          "code": "BRO",
+          "name": "HANJIN BRION"
+        }
+      ],
+      "start_at": "2026-08-26T08:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Play-Ins",
+      "event_id": "lolesports:032c186352c5ae85b497",
+      "league": "LCK",
+      "participants": [
+        {
+          "code": "NS",
+          "name": "NONGSHIM RED FORCE"
+        },
+        {
+          "code": "BFX",
+          "name": "BNK FEARX"
+        }
+      ],
+      "start_at": "2026-08-27T08:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Play In Knockouts",
+      "event_id": "lolesports:cd771094ae042e8c86cc",
+      "league": "LPL",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-08-28T06:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Play-Ins",
+      "event_id": "lolesports:8b640915b920fc619669",
+      "league": "LCK",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-08-28T08:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Play In Knockouts",
+      "event_id": "lolesports:63fe7229476cb1be9d5e",
+      "league": "LPL",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-08-28T09:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 6",
+      "event_id": "lolesports:4a1ff331b73613b44d4e",
+      "league": "LEC",
+      "participants": [
+        {
+          "code": "TH",
+          "name": "Team Heretics"
+        },
+        {
+          "code": "SHFT",
+          "name": "Shifters"
+        }
+      ],
+      "start_at": "2026-08-28T15:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 6",
+      "event_id": "lolesports:3bba467e65080c4ad583",
+      "league": "LEC",
+      "participants": [
+        {
+          "code": "VIT",
+          "name": "Team Vitality"
+        },
+        {
+          "code": "FNC",
+          "name": "Fnatic"
+        }
+      ],
+      "start_at": "2026-08-28T17:15:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:66353d20c76eae1e34ad",
+      "league": "LCK",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "T1",
+          "name": "T1"
+        }
+      ],
+      "start_at": "2026-08-29T08:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:c9b3ce0a0caff0a8ca09",
+      "league": "LPL",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-08-29T09:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 6",
+      "event_id": "lolesports:b76f89ba86ac564c67c8",
+      "league": "LEC",
+      "participants": [
+        {
+          "code": "SK",
+          "name": "SK Gaming"
+        },
+        {
+          "code": "KC",
+          "name": "Karmine Corp"
+        }
+      ],
+      "start_at": "2026-08-29T15:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 6",
+      "event_id": "lolesports:d1c0bea04c81b5aee0e5",
+      "league": "LEC",
+      "participants": [
+        {
+          "code": "NAVI",
+          "name": "Natus Vincere"
+        },
+        {
+          "code": "GX",
+          "name": "GIANTX"
+        }
+      ],
+      "start_at": "2026-08-29T17:15:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 6",
+      "event_id": "lolesports:d8bae74741c2bf1f30bb",
+      "league": "LCS",
+      "participants": [
+        {
+          "code": "SR",
+          "name": "Shopify Rebellion"
+        },
+        {
+          "code": "TLAW",
+          "name": "Team Liquid Alienware"
+        }
+      ],
+      "start_at": "2026-08-29T20:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 6",
+      "event_id": "lolesports:39325c92b66e626dfdaa",
+      "league": "LCS",
+      "participants": [
+        {
+          "code": "C9",
+          "name": "Cloud9 Kia"
+        },
+        {
+          "code": "LYON",
+          "name": "LYON"
+        }
+      ],
+      "start_at": "2026-08-29T23:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:d9aecf6d03e8559a3bb6",
+      "league": "LCK",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "DK",
+          "name": "Dplus KIA"
+        }
+      ],
+      "start_at": "2026-08-30T08:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:5e2ed181ec82b575f003",
+      "league": "LPL",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-08-30T09:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 6",
+      "event_id": "lolesports:06a58b6a0d0616c67f7f",
+      "league": "LEC",
+      "participants": [
+        {
+          "code": "VIT",
+          "name": "Team Vitality"
+        },
+        {
+          "code": "SHFT",
+          "name": "Shifters"
+        }
+      ],
+      "start_at": "2026-08-30T12:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 6",
+      "event_id": "lolesports:f2e6f6ca1d5c5ab45696",
+      "league": "LEC",
+      "participants": [
+        {
+          "code": "TH",
+          "name": "Team Heretics"
+        },
+        {
+          "code": "MKOI",
+          "name": "Movistar KOI"
+        }
+      ],
+      "start_at": "2026-08-30T14:15:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 6",
+      "event_id": "lolesports:4a9dd4539524a2b33974",
+      "league": "LEC",
+      "participants": [
+        {
+          "code": "GX",
+          "name": "GIANTX"
+        },
+        {
+          "code": "FNC",
+          "name": "Fnatic"
+        }
+      ],
+      "start_at": "2026-08-30T16:30:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 6",
+      "event_id": "lolesports:d239c748719a58eed365",
+      "league": "LCS",
+      "participants": [
+        {
+          "code": "LYON",
+          "name": "LYON"
+        },
+        {
+          "code": "TLAW",
+          "name": "Team Liquid Alienware"
+        }
+      ],
+      "start_at": "2026-08-30T20:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 6",
+      "event_id": "lolesports:c61d834762deea62983e",
+      "league": "LCS",
+      "participants": [
+        {
+          "code": "C9",
+          "name": "Cloud9 Kia"
+        },
+        {
+          "code": "SR",
+          "name": "Shopify Rebellion"
+        }
+      ],
+      "start_at": "2026-08-30T23:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:f5f19707f5c8696d8557",
+      "league": "LCK",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "GEN",
+          "name": "Gen.G Esports"
+        }
+      ],
+      "start_at": "2026-09-01T08:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:f52057f3e137646f5864",
+      "league": "LCK",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "HLE",
+          "name": "Hanwha Life Esports"
+        }
+      ],
+      "start_at": "2026-09-02T08:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:4921194b0c5dbae9404d",
+      "league": "LCK",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-03T08:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:01e0a33f6d7acb8802c5",
+      "league": "LPL",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-03T09:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:6df1002d103ca92dff0d",
+      "league": "LCK",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-04T08:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:da4ed599d1f831c994f9",
+      "league": "LPL",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-04T09:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:6df256ea5f6be8d72dda",
+      "league": "LPL",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-05T06:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:a2b0dbfa4ceb69b5d255",
+      "league": "LCK",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-05T08:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:7a167fd76101bb07a94a",
+      "league": "LPL",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-05T09:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 7",
+      "event_id": "lolesports:f84e6e6210914ffb8463",
+      "league": "LCS",
+      "participants": [
+        {
+          "code": "SEN",
+          "name": "Sentinels"
+        },
+        {
+          "code": "C9",
+          "name": "Cloud9 Kia"
+        }
+      ],
+      "start_at": "2026-09-05T20:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 7",
+      "event_id": "lolesports:7dd9212acf4ba75d46a0",
+      "league": "LCS",
+      "participants": [
+        {
+          "code": "DIG",
+          "name": "Dignitas"
+        },
+        {
+          "code": "TLAW",
+          "name": "Team Liquid Alienware"
+        }
+      ],
+      "start_at": "2026-09-05T23:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:189aa56fa34769b1e6c3",
+      "league": "LPL",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-06T06:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:b06edfa215d23195520a",
+      "league": "LCK",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-06T08:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:12fc97c3c03f4505e44c",
+      "league": "LPL",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-06T09:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 7",
+      "event_id": "lolesports:2564e6c6d3e8c5636a39",
+      "league": "LCS",
+      "participants": [
+        {
+          "code": "FLY",
+          "name": "FlyQuest"
+        },
+        {
+          "code": "SR",
+          "name": "Shopify Rebellion"
+        }
+      ],
+      "start_at": "2026-09-06T20:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Week 7",
+      "event_id": "lolesports:d606ad1115566d2ea935",
+      "league": "LCS",
+      "participants": [
+        {
+          "code": "DSG",
+          "name": "Disguised"
+        },
+        {
+          "code": "LYON",
+          "name": "LYON"
+        }
+      ],
+      "start_at": "2026-09-06T23:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:fa136b47dc03e77b7108",
+      "league": "LPL",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-07T09:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:08d1f73ab556c5cf80ff",
+      "league": "LPL",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-08T09:00:00+00:00"
+    }
+  ],
+  "league_slugs": [
+    "lck",
+    "lec",
+    "lpl",
+    "lcs",
+    "msi",
+    "worlds"
+  ],
+  "locale": "en-US",
+  "quality": {
+    "event_count": 38,
+    "tbd_participant_count": 38
+  },
+  "retrieved_at": "2026-08-24T10:09:18.012735+00:00",
+  "schema_version": "1",
+  "source_id": "lol-esports-schedule",
+  "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
+}

@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- this dual vinext/Vite build uses stable Riot CDN and relative static assets */
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { isHistoryStatus, isRadarReport, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport } from "./radar-types";
+import { isHistoryStatus, isRadarReport, isScheduleSnapshot, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport, type ScheduleSnapshot } from "./radar-types";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { sampleReport } from "./sample-report";
 import { buildTeamContext } from "./team-context";
@@ -132,6 +132,20 @@ function formatCutoff(value: string) {
   }).format(date);
 }
 
+function formatScheduleTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "short",
+    day: "numeric",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+}
+
 function qualityState(report: RadarReport) {
   const critical = report.entries.filter((entry) => !entry.eligible_for_review).length;
   const unknown = report.quality.unknown_leagues.length;
@@ -185,6 +199,9 @@ export function RadarDashboard() {
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [myTeamId, setMyTeamId] = useState("");
+  const [schedule, setSchedule] = useState<ScheduleSnapshot | null>(null);
+  const [scheduleCheckedAt, setScheduleCheckedAt] = useState<string | null>(null);
+  const [scheduleState, setScheduleState] = useState<"connecting" | "connected" | "stale" | "unavailable">("connecting");
   const [opponentId, setOpponentId] = useState(sampleReport.opponent_prep?.teams[0]?.team_id ?? "");
   const [feedState, setFeedState] = useState<FeedState>({
     kind: "connecting",
@@ -207,7 +224,11 @@ export function RadarDashboard() {
   const teamBrief = useMemo(() => buildTeamBrief(report), [report]);
   const todayDecisions = teamBrief.slice(0, 3);
   const opponentTeams = useMemo(() => report.opponent_prep?.teams ?? [], [report.opponent_prep?.teams]);
-  const teamContext = useMemo(() => buildTeamContext(report, myTeamId), [myTeamId, report]);
+  const effectiveSchedule = scheduleState === "connected" ? schedule : null;
+  const teamContext = useMemo(
+    () => buildTeamContext(report, myTeamId, effectiveSchedule, scheduleCheckedAt),
+    [effectiveSchedule, myTeamId, report, scheduleCheckedAt],
+  );
   const selectedMyTeam = teamContext?.my_team;
   const opponentPriorities = useMemo(() => teamContext?.opponent_priorities ?? [], [teamContext]);
   const rankedOpponentTeams = useMemo(() => teamContext
@@ -218,7 +239,8 @@ export function RadarDashboard() {
   const selectedBrief = teamBrief.find((card) => keyOf(card.entry) === selectedKey) ?? teamBrief[0];
   const selectedOpponent = rankedOpponentTeams.find((team) => team.team_id === opponentId) ?? rankedOpponentTeams[0];
   const selectedPriority = opponentPriorities.find((priority) => priority.team.team_id === selectedOpponent?.team_id);
-  const emergencyBrief = selectedOpponent ? buildEmergencyBrief(report, selectedOpponent, selectedMyTeam) : null;
+  const emergencyBrief = selectedOpponent ? buildEmergencyBrief(report, selectedOpponent, selectedMyTeam, effectiveSchedule, scheduleCheckedAt) : null;
+  const nextOwnEvent = teamContext?.own_upcoming_events[0];
   const quality = qualityState(report);
   const eligibleCount = report.entries.filter((entry) => entry.eligible_for_review).length;
 
@@ -240,6 +262,22 @@ export function RadarDashboard() {
         }
       } catch {
         // The Radar remains usable when the independently published status is unavailable.
+      }
+      try {
+        const scheduleUrl = new URL("feed/schedule.json", document.baseURI);
+        const scheduleResponse = await fetch(scheduleUrl, { cache: "no-store" });
+        if (!scheduleResponse.ok) throw new Error(`schedule returned ${scheduleResponse.status}`);
+        const schedulePayload: unknown = await scheduleResponse.json();
+        if (!isScheduleSnapshot(schedulePayload)) throw new Error("unsupported schedule");
+        const checkedAt = new Date().toISOString();
+        const ageHours = (Date.parse(checkedAt) - Date.parse(schedulePayload.retrieved_at)) / (60 * 60 * 1000);
+        setSchedule(schedulePayload);
+        setScheduleCheckedAt(checkedAt);
+        setScheduleState(ageHours <= 36 ? "connected" : "stale");
+      } catch {
+        setSchedule(null);
+        setScheduleCheckedAt(null);
+        setScheduleState("unavailable");
       }
       setReport(publishedReport);
       setSelectedKey(publishedReport.entries[0] ? keyOf(publishedReport.entries[0]) : "");
@@ -351,6 +389,12 @@ export function RadarDashboard() {
       patch_id: report.opponent_prep.patch_id,
       boundary: report.opponent_prep.boundary,
       source_versions: report.opponent_prep.evidence_index.source_versions,
+      schedule_source: schedule ? {
+        source_id: schedule.source_id,
+        source_url: schedule.source_url,
+        retrieved_at: schedule.retrieved_at,
+        content_hash: schedule.content_hash,
+      } : null,
       perspective_team: selectedMyTeam ?? null,
       priority_context: selectedPriority ?? null,
       team: selectedOpponent,
@@ -450,6 +494,7 @@ export function RadarDashboard() {
           <span>MY TEAM LENS</span>
           <strong>{selectedMyTeam ? selectedMyTeam.team_name : "소속 팀을 먼저 선택하세요"}</strong>
           <p>{selectedMyTeam ? `${selectedMyTeam.leagues.join(" · ")} · 공개 경기 ${selectedMyTeam.game_count}개를 기준으로 상대 준비 순서를 다시 계산합니다.` : "선택 전에는 글로벌 메타만 표시합니다. 팀 선택값은 이 브라우저에만 저장됩니다."}</p>
+          <em className={`schedule-state ${scheduleState}`}>{scheduleState === "connected" ? `공식 일정 연결 · ${schedule?.events.length ?? 0}경기` : scheduleState === "stale" ? "공식 일정 36시간 경과 · 우선순위에서 제외" : scheduleState === "connecting" ? "공식 일정 연결 중" : "공식 일정 미연결 · 분석 점수만 사용"}</em>
         </div>
         <label>내 팀
           <select value={myTeamId} onChange={(event) => selectMyTeam(event.target.value)}>
@@ -536,7 +581,7 @@ export function RadarDashboard() {
           <div>
             <p className="eyebrow">02 · MY TEAM → OPPONENT PRIORITY</p>
             <h2>내 팀 기준 상대 준비 순서</h2>
-            <p className="section-description">동일 리그, 양 팀의 픽 충돌, 현재 메타와의 겹침, 공개 경기 표본을 합쳐 먼저 볼 상대를 정합니다. 실제 대진 일정은 추정하지 않습니다.</p>
+            <p className="section-description">공식 대진 일정, 동일 리그, 양 팀의 픽 충돌, 현재 메타와의 겹침, 공개 경기 표본을 합쳐 먼저 볼 상대를 정합니다. 미확정 대진과 스크림은 추정하지 않습니다.</p>
           </div>
           {selectedOpponent && <div className="opponent-controls">
             <label>준비할 상대<select value={selectedOpponent.team_id} onChange={(event) => setOpponentId(event.target.value)}>{rankedOpponentTeams.map((team) => { const priority = opponentPriorities.find((item) => item.team.team_id === team.team_id); return <option key={team.team_id} value={team.team_id}>{priority ? `${priority.tier} · ${priority.score}점 · ` : ""}{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>; })}</select></label>
@@ -549,6 +594,7 @@ export function RadarDashboard() {
           <article className="my-team-card">
             <header><div className="team-monogram" aria-hidden="true">{selectedMyTeam?.team_name.slice(0, 2).toUpperCase()}</div><div><span>MY TEAM · ANALYSIS ANCHOR</span><h3>{selectedMyTeam?.team_name}</h3><p>{selectedMyTeam?.leagues.join(" · ")}</p></div></header>
             <div className="my-team-stats"><span><b>{selectedMyTeam?.game_count}</b> 공개 경기</span><span><b>{percent(selectedMyTeam?.first_pick_rate ?? null)}</b> 선픽</span><span><b>{selectedMyTeam?.evidence.draft_event_ids.length}</b> 근거 기록</span></div>
+            <div className={`next-fixture ${nextOwnEvent ? "scheduled" : "empty"}`}><span>NEXT OFFICIAL FIXTURE</span>{nextOwnEvent ? <><strong>{nextOwnEvent.participants.map((participant) => participant.code).join(" vs ")}</strong><small>{formatScheduleTime(nextOwnEvent.start_at)} KST · {nextOwnEvent.league} {nextOwnEvent.block} · {nextOwnEvent.best_of ? `Bo${nextOwnEvent.best_of}` : "형식 미정"}</small></> : <><strong>{scheduleState === "connected" ? "확정 상대 일정 없음" : scheduleState === "stale" ? "일정 갱신 필요" : "일정 미연결"}</strong><small>{scheduleState === "connected" ? "TBD가 확정되면 다음 수집에서 자동 반영" : scheduleState === "stale" ? "36시간이 지난 일정은 우선순위에서 제외" : "공개 경기 분석 점수만 유지"}</small></>}</div>
             <div className="my-team-picks"><span>관측된 우선 픽</span><div>{selectedMyTeam?.priority_picks.slice(0, 3).map((pick) => <div key={`${pick.champion_id}:${pick.role}`}><img src={championImageUrl(pick.champion_id)} alt="" /><strong>{pick.champion_id}</strong><small>{roleLabels[pick.role ?? ""] ?? pick.role}</small></div>)}</div></div>
             <p className="team-data-boundary">공개 경기 성향만 사용 · 선수 숙련도와 스크림 미포함</p>
           </article>
@@ -557,7 +603,7 @@ export function RadarDashboard() {
             <div>{opponentPriorities.slice(0, 4).map((priority, index) => {
               const topPick = priority.team.priority_picks[0];
               const active = priority.team.team_id === selectedOpponent?.team_id;
-              return <button type="button" className={active ? "active" : ""} key={priority.team.team_id} onClick={() => setOpponentId(priority.team.team_id)} aria-pressed={active}>
+              return <button type="button" className={`${active ? "active" : ""} ${priority.next_meeting ? "scheduled" : ""}`} key={priority.team.team_id} onClick={() => setOpponentId(priority.team.team_id)} aria-pressed={active}>
                 <span className={`priority-tier ${priority.tier.toLowerCase()}`}>{priority.tier}</span>
                 <span className="priority-order">{String(index + 1).padStart(2, "0")}</span>
                 {topPick ? <img src={championImageUrl(topPick.champion_id)} alt="" /> : <span className="priority-placeholder" />}
@@ -565,13 +611,13 @@ export function RadarDashboard() {
                 <span className="priority-score"><strong>{priority.score}</strong><small>/ 100</small></span>
               </button>;
             })}</div>
-            <footer><b>점수 구성</b><span>동일 리그 30 · 상승 메타 최대 24 · 픽 충돌 최대 18 · 표본 최대 18 · 품질 경고 감점</span></footer>
+            <footer><b>정렬·점수</b><span>확정 대진은 경기 시간순 선배치 · 공식 대진 최대 30 · 동일 리그 30 · 상승 메타 최대 24 · 픽 충돌 최대 18 · 표본 최대 18 · 품질 경고 감점</span></footer>
           </div>
         </div> : <div className="team-priority-setup">
           <span>STEP 01</span><h3>내 팀을 선택하면 상대 우선순위가 열립니다.</h3><p>현재 발행본의 {opponentTeams.length}개 팀 중 소속 팀을 고르면, 자기 팀을 제외한 상대만 공개 근거로 다시 정렬합니다.</p><a href="#top">위에서 내 팀 선택 ↑</a>
         </div>}
 
-        {selectedOpponent && <div className="opponent-detail-label"><div><span>{selectedMyTeam ? `${selectedMyTeam.team_name} → ${selectedOpponent.team_name}` : "GLOBAL → OPPONENT"}</span><h3>선택 상대 상세 분석</h3></div>{selectedPriority && <b className={`priority-tier ${selectedPriority.tier.toLowerCase()}`}>{selectedPriority.tier} · {selectedPriority.score}점</b>}</div>}
+        {selectedOpponent && <div className="opponent-detail-label"><div><span>{selectedMyTeam ? `${selectedMyTeam.team_name} → ${selectedOpponent.team_name}` : "GLOBAL → OPPONENT"}</span><h3>선택 상대 상세 분석</h3></div>{selectedPriority && <div className="opponent-priority-status">{selectedPriority.next_meeting && <span>{formatScheduleTime(selectedPriority.next_meeting.start_at)} KST · {selectedPriority.next_meeting.block}</span>}<b className={`priority-tier ${selectedPriority.tier.toLowerCase()}`}>{selectedPriority.tier} · {selectedPriority.score}점</b></div>}</div>}
 
         {selectedOpponent ? <div className="opponent-pack">
           <header className="opponent-profile">

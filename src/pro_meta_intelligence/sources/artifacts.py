@@ -110,7 +110,10 @@ class SnapshotArchive:
         if self.root not in source_dir.parents:
             raise ValueError("resolved source archive escaped archive root")
         source_dir.mkdir(parents=True, exist_ok=True)
-        extension = ".csv" if artifact.media_type == "text/csv" else ".json"
+        extension = {
+            "text/csv": ".csv",
+            "text/html": ".html",
+        }.get(artifact.media_type, ".json")
         data_path = source_dir / f"{digest}{extension}"
         retrieval_key = artifact.retrieved_at.astimezone(UTC).strftime("%Y%m%dT%H%M%S%fZ")
         metadata_path = source_dir / f"{digest}.{retrieval_key}.meta.json"

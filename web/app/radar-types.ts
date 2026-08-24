@@ -94,6 +94,38 @@ export type OpponentPrep = {
   teams: OpponentTeam[];
 };
 
+export type ScheduleParticipant = {
+  name: string;
+  code: string;
+};
+
+export type ScheduleEvent = {
+  event_id: string;
+  start_at: string;
+  league: string;
+  block: string;
+  best_of: number | null;
+  participants: [ScheduleParticipant, ScheduleParticipant];
+};
+
+export type ScheduleSnapshot = {
+  schema_version: "1";
+  artifact_type: "pro-schedule-snapshot";
+  source_id: string;
+  source_url: string;
+  retrieved_at: string;
+  available_at: string;
+  content_hash: string;
+  locale: string;
+  league_slugs: string[];
+  events: ScheduleEvent[];
+  quality: {
+    event_count: number;
+    tbd_participant_count: number;
+  };
+  boundary: string;
+};
+
 export type HistoryStatus = {
   schema_version: "1";
   artifact_type: "oe-history-status";
@@ -200,6 +232,42 @@ export function isHistoryStatus(value: unknown): value is HistoryStatus {
     typeof value.next_action === "string" &&
     (value.aggregate === null || isRecord(value.aggregate)) &&
     typeof value.boundary === "string"
+  );
+}
+
+export function isScheduleSnapshot(value: unknown): value is ScheduleSnapshot {
+  if (!isRecord(value) || !isRecord(value.quality)) return false;
+  return (
+    value.schema_version === "1" &&
+    value.artifact_type === "pro-schedule-snapshot" &&
+    typeof value.source_id === "string" &&
+    typeof value.source_url === "string" &&
+    typeof value.retrieved_at === "string" &&
+    typeof value.available_at === "string" &&
+    typeof value.content_hash === "string" &&
+    typeof value.locale === "string" &&
+    Array.isArray(value.league_slugs) && value.league_slugs.every((item) => typeof item === "string") &&
+    Array.isArray(value.events) && value.events.every(isScheduleEvent) &&
+    typeof value.quality.event_count === "number" &&
+    typeof value.quality.tbd_participant_count === "number" &&
+    typeof value.boundary === "string"
+  );
+}
+
+function isScheduleEvent(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    typeof value.event_id === "string" &&
+    typeof value.start_at === "string" &&
+    typeof value.league === "string" &&
+    typeof value.block === "string" &&
+    (value.best_of === null || typeof value.best_of === "number") &&
+    Array.isArray(value.participants) && value.participants.length === 2 &&
+    value.participants.every((participant) => (
+      isRecord(participant) &&
+      typeof participant.name === "string" &&
+      typeof participant.code === "string"
+    ))
   );
 }
 

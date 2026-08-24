@@ -34,10 +34,11 @@ print/PDF view and deterministic JSON export. See [`EMERGENCY_BRIEF.md`](EMERGEN
 
 ### Competitive boundary
 
-The product does not compete for summoner lookup, builds, runes, generic champion tiers, schedules,
-standings, or static tournament tables. Those are discovery/statistics surfaces. Pro Meta
-Intelligence owns the narrower workflow from an auditable early signal to a review decision,
-practice question, rejection condition, and later backtested outcome.
+The product does not compete for summoner lookup, builds, runes, generic champion tiers, schedule
+browsing, standings, or static tournament tables. Those are discovery/statistics surfaces. It uses
+an official upcoming fixture only as operational context for deciding which opponent needs review
+first. Pro Meta Intelligence owns the narrower workflow from an auditable early signal to a review
+decision, practice question, rejection condition, and later backtested outcome.
 
 ### Creator Mode / Analyst Studio
 

@@ -30,6 +30,7 @@ def test_sources_cli_reports_enabled_and_blocked_policy_state(tmp_path) -> None:
         for item in json.loads(output.read_text(encoding="utf-8"))["sources"]
     }
     assert sources["riot-data-dragon"]["status"] == "ENABLED"
+    assert sources["lol-esports-schedule"]["allowed_operations"] == ["FETCH_SCHEDULE_HTML"]
     assert sources["oracles-elixir-match-data"]["allowed_operations"] == [
         "FETCH_PUBLISHED_CSV",
         "IMPORT_LOCAL_CSV",
