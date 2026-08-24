@@ -199,6 +199,11 @@ failed or stale job, stale source snapshot, invalid public feed, or missing hist
 nonzero exit code. A reviewed Windows runner and Task Scheduler registration script are documented
 in [`docs/PRODUCTION_OPERATIONS.md`](docs/PRODUCTION_OPERATIONS.md).
 
+The reviewed Windows publisher can optionally copy only `current.json` and `history-status.json`
+into a locked detached worktree and fast-forward them to the publication branch. It refuses dirty
+state, unexpected staged paths, unhealthy feeds, and non-fast-forward pushes; raw archives never
+enter the publisher worktree.
+
 Before an unattended publication, the annual coverage audit checks the selected patch's validated
 match, distinct-team, and mapped-region counts, blocking import-contract issues, and unknown
 leagues. Reviewed incomplete games and missing team IDs may be excluded only when the remaining

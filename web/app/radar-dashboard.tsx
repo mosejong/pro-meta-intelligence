@@ -201,6 +201,7 @@ export function RadarDashboard() {
     [eligibleOnly, report, role],
   );
   const teamBrief = useMemo(() => buildTeamBrief(report), [report]);
+  const todayDecisions = teamBrief.slice(0, 3);
   const opponentTeams = report.opponent_prep?.teams ?? [];
   const displayedEntries = visibleEntries.slice(0, visibleLimit);
   const selected = visibleEntries.find((entry) => keyOf(entry) === selectedKey) ?? visibleEntries[0] ?? report.entries[0];
@@ -382,21 +383,32 @@ export function RadarDashboard() {
         <input ref={fileInput} className="visually-hidden" type="file" accept="application/json,.json" onChange={loadReport} aria-label="Meta Radar JSON 불러오기" />
       </header>
 
-      <section className="hero" id="top">
-        <div className="hero-copy">
-          <div className="kicker-row"><p className="eyebrow">패치 {report.patch_id} · 분석 스냅샷</p><span>{feedState.detail}</span></div>
-          <h1>메타의 변화를<br /><em>읽기 쉽게, 근거와 함께.</em></h1>
-          <p className="lede">어떤 캐릭터가 여러 팀과 지역으로 퍼지고 있는지만 먼저 보여줍니다. 카드를 누르면 세부 근거를 확인할 수 있습니다.</p>
-          <div className="hero-points" aria-label="분석 요약">
+      <section className="decision-hero" id="top">
+        <div className="decision-hero-copy">
+          <div className="kicker-row"><p className="eyebrow">PATCH {report.patch_id} · TEAM MODE</p><span>{feedState.detail}</span></div>
+          <h1>오늘 팀이<br /><em>결정할 3가지.</em></h1>
+          <p className="lede">티어표가 아니라 회의 시작점입니다. 지금 테스트할 후보, 더 지켜볼 후보, 보류할 근거를 공개 경기 데이터로 압축했습니다.</p>
+          <div className="decision-hero-actions">
+            <a href="#team-brief">3분 브리프 보기</a>
+            <a href="#opponent-prep">상대팀 준비 자료</a>
+          </div>
+          <div className="hero-points" aria-label="분석 기준">
             <span>최근 {report.windows.recent.days}일 vs 이전 {report.windows.prior.days}일</span>
             <span>{report.fixture_only ? "예시 데이터" : "검증된 실데이터"}</span>
             <span>{formatCutoff(report.cutoff)} KST</span>
           </div>
         </div>
-        <figure className="hero-visual">
-          <img src="meta-radar-hero-v2.png" width="1672" height="940" alt="지역별 데이터 흐름을 레이더로 탐지해 검토 후보를 찾는 과정" />
-          <figcaption><b>신호 탐지 → 지역 비교 → 근거 확인</b><span>숫자를 읽기 전에 분석 흐름을 먼저 파악하세요.</span></figcaption>
-        </figure>
+        <aside className="today-queue" aria-label="오늘의 팀 의사결정 3개">
+          <header><div><span>LIVE DECISION QUEUE</span><h2>먼저 볼 후보</h2></div><b>{todayDecisions.length} / 3</b></header>
+          {todayDecisions.length > 0 ? <div>{todayDecisions.map((card, index) => <a href="#team-brief" key={keyOf(card.entry)} onClick={() => setSelectedKey(keyOf(card.entry))}>
+            <span className="today-rank">{String(index + 1).padStart(2, "0")}</span>
+            <img src={championImageUrl(card.entry.champion_id)} alt="" />
+            <span className="today-name"><strong>{card.entry.champion_id}</strong><small>{roleLabels[card.entry.role] ?? card.entry.role} · {card.entry.metrics.current_distinct_team_count}팀 채택</small></span>
+            <span className="today-signal"><small>수요 변화</small><strong>{points(card.entry.metrics.demand_velocity)}</strong></span>
+            <b className={`decision-chip ${card.decision.toLowerCase()}`}>{card.decisionLabel}</b>
+          </a>)}</div> : <p className="today-empty">공개 경기 기준을 통과한 검토 후보가 아직 없습니다.</p>}
+          <footer><span>후보를 선택하면 찬성·반대 근거와 중단 조건으로 이동합니다.</span><b>근거 우선 · 출전 권고 아님</b></footer>
+        </aside>
       </section>
 
       <section className="summary" aria-label="요약 지표">
@@ -410,25 +422,6 @@ export function RadarDashboard() {
         <div><span>발행 데이터 감사</span><strong>전체 {quality.importQuality.discovered_game_count}경기 중 {quality.importQuality.imported_game_count}경기 사용</strong></div>
         <p>{quality.importQuality.known_exclusion_game_count}개 경기는 불완전 기록 또는 팀 ID 누락으로 완전히 제외했습니다. 분석에 포함된 경기의 계약 위반은 {quality.importQuality.blocking_issue_game_count}건이며, 미등록 리그는 {quality.unknown}개입니다.</p>
         <b>{quality.publication.ready_for_radar ? "제외 내역 공개 · 분석 가능" : "발행 차단"}</b>
-      </section>}
-
-      {report.history_status && <section className={`history-readiness ${report.history_status.benchmark_ready ? "ready" : "collecting"}`} aria-label="과거 검증 데이터 준비 상태">
-        <header>
-          <div><span>HISTORY · WALK-FORWARD</span><h2>실데이터 검증 준비도</h2></div>
-          <p>{report.history_status.benchmark_ready ? "미래 데이터와 분리된 실제 백테스트 결과를 검토할 수 있습니다." : "과거 파일을 오늘 데이터로 재구성하지 않고, 실제 일일 스냅샷이 쌓이기를 기다립니다."}</p>
-          <b>{historyActionLabels[report.history_status.next_action] ?? report.history_status.next_action}</b>
-        </header>
-        <div className="history-gates">{report.history_status.gates.map((gate) => {
-          const progress = gate.required > 0 ? Math.min(100, (gate.current / gate.required) * 100) : 0;
-          const unit = historyUnitLabels[gate.unit] ?? gate.unit;
-          return <article className={gate.passed ? "passed" : ""} key={gate.id}>
-            <span>{historyGateLabels[gate.id] ?? gate.id}</span>
-            <strong>{gate.current}<small> / {gate.required}{unit}</small></strong>
-            <i aria-hidden="true"><b style={{ width: `${progress}%` }} /></i>
-            <em>{gate.passed ? "충족" : "수집 중"}</em>
-          </article>;
-        })}</div>
-        <footer><span>마지막 스냅샷 {report.history_status.as_of ? formatCutoff(report.history_status.as_of) : "아직 없음"}</span><p>준비도는 예측 성능이 아닙니다. Recall@K와 오탐률은 성숙한 미래 결과가 확보된 뒤에만 표시합니다.</p><b>{report.history_status.blocking_reasons.length} GATES OPEN</b></footer>
       </section>}
 
       <section className="team-brief" id="team-brief">
@@ -476,6 +469,25 @@ export function RadarDashboard() {
           </article>
         </div> : <div className="brief-empty">검토 기준을 통과한 공개 경기 신호가 없습니다.</div>}
       </section>
+
+      {report.history_status && <section className={`history-readiness ${report.history_status.benchmark_ready ? "ready" : "collecting"}`} aria-label="과거 검증 데이터 준비 상태">
+        <header>
+          <div><span>HISTORY · WALK-FORWARD</span><h2>실데이터 검증 준비도</h2></div>
+          <p>{report.history_status.benchmark_ready ? "미래 데이터와 분리된 실제 백테스트 결과를 검토할 수 있습니다." : "과거 파일을 오늘 데이터로 재구성하지 않고, 실제 일일 스냅샷이 쌓이기를 기다립니다."}</p>
+          <b>{historyActionLabels[report.history_status.next_action] ?? report.history_status.next_action}</b>
+        </header>
+        <div className="history-gates">{report.history_status.gates.map((gate) => {
+          const progress = gate.required > 0 ? Math.min(100, (gate.current / gate.required) * 100) : 0;
+          const unit = historyUnitLabels[gate.unit] ?? gate.unit;
+          return <article className={gate.passed ? "passed" : ""} key={gate.id}>
+            <span>{historyGateLabels[gate.id] ?? gate.id}</span>
+            <strong>{gate.current}<small> / {gate.required}{unit}</small></strong>
+            <i aria-hidden="true"><b style={{ width: `${progress}%` }} /></i>
+            <em>{gate.passed ? "충족" : "수집 중"}</em>
+          </article>;
+        })}</div>
+        <footer><span>마지막 스냅샷 {report.history_status.as_of ? formatCutoff(report.history_status.as_of) : "아직 없음"}</span><p>준비도는 예측 성능이 아닙니다. Recall@K와 오탐률은 성숙한 미래 결과가 확보된 뒤에만 표시합니다.</p><b>{report.history_status.blocking_reasons.length} GATES OPEN</b></footer>
+      </section>}
 
       <section className="opponent-prep" id="opponent-prep">
         <div className="section-heading opponent-heading">

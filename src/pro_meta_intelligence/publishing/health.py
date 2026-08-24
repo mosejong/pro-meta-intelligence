@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from typing import Any
 
@@ -39,6 +40,7 @@ def assess_oe_feed_health(
         ),
         _publication_check(current_feed),
         _history_artifact_check(history_status),
+        _public_boundary_check(current_feed, history_status),
         _freshness_check(
             "SOURCE_SNAPSHOT_FRESHNESS",
             history_status.get("as_of") if isinstance(history_status, dict) else None,
@@ -156,6 +158,43 @@ def _history_artifact_check(history_status: dict[str, Any] | None) -> dict[str, 
     )
 
 
+def _public_boundary_check(
+    current_feed: dict[str, Any] | None,
+    history_status: dict[str, Any] | None,
+) -> dict[str, Any]:
+    blocked_paths: list[str] = []
+    if isinstance(current_feed, dict) and isinstance(history_status, dict):
+        for root_name, artifact in (("current", current_feed), ("history", history_status)):
+            for field_path, value in _string_leaves(artifact, root_name):
+                if _BLOCKED_PUBLIC_VALUE.search(value):
+                    blocked_paths.append(field_path)
+    else:
+        blocked_paths.append("missing-artifact")
+    return _check(
+        "PUBLIC_BOUNDARY_SAFE",
+        not blocked_paths,
+        {"blocked_field_count": len(blocked_paths), "blocked_field_paths": blocked_paths[:10]},
+        "no local path, provider CSV path, or product-login branding",
+    )
+
+
+def _string_leaves(value: object, path: str):
+    if isinstance(value, str):
+        yield path, value
+    elif isinstance(value, dict):
+        for key, child in value.items():
+            yield from _string_leaves(child, f"{path}.{key}")
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            yield from _string_leaves(child, f"{path}[{index}]")
+
+
+_BLOCKED_PUBLIC_VALUE = re.compile(
+    r"(?:[A-Za-z]:[\\/]|file://|\.csv(?:\b|$)|chatgpt|openai|gpt\s*(?:login|로그인)|sign in)",
+    re.IGNORECASE,
+)
+
+
 def _is_history_gate(value: object) -> bool:
     if not isinstance(value, dict):
         return False
@@ -206,6 +245,8 @@ def _next_action(failed: list[str], history_status: dict[str, Any] | None) -> st
         return "INSPECT_LAST_JOB"
     if "JOB_FRESHNESS" in failed or "SOURCE_SNAPSHOT_FRESHNESS" in failed:
         return "RUN_SYNC_NOW"
+    if "PUBLIC_BOUNDARY_SAFE" in failed:
+        return "HALT_PUBLICATION"
     if "PUBLIC_FEED_READY" in failed:
         return "RESTORE_PUBLIC_FEED"
     if "HISTORY_STATUS_VALID" in failed:

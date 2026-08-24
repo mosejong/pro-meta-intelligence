@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = incoming.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const image = `${protocol}://${host}/meta-radar-hero-v2.png`;
   const title = "Meta Radar · Pro Meta Intelligence";
-  const description = "프로 경기 픽 변화를 근거와 함께 탐색하는 설명 가능한 메타 레이더";
+  const description = "공개 경기 근거로 오늘 팀이 검토할 3가지와 상대 준비 자료를 압축하는 메타 인텔리전스";
 
   return {
     title,

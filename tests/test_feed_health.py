@@ -94,6 +94,7 @@ def test_health_fails_closed_when_operational_artifacts_are_missing() -> None:
         "JOB_FRESHNESS",
         "PUBLIC_FEED_READY",
         "HISTORY_STATUS_VALID",
+        "PUBLIC_BOUNDARY_SAFE",
         "SOURCE_SNAPSHOT_FRESHNESS",
     }
 
@@ -105,6 +106,24 @@ def test_health_rejects_structurally_incomplete_public_artifacts() -> None:
 
     assert "PUBLIC_FEED_READY" in report["failed_checks"]
     assert "HISTORY_STATUS_VALID" in report["failed_checks"]
+
+
+def test_health_blocks_private_paths_and_product_login_branding() -> None:
+    report = assess_oe_feed_health(
+        _latest_job(),
+        _feed(debug_path=r"C:\Users\operator\raw.csv"),
+        _history(boundary="GPT 로그인 / Sign in with OpenAI"),
+        checked_at=NOW,
+    )
+
+    boundary = next(check for check in report["checks"] if check["id"] == "PUBLIC_BOUNDARY_SAFE")
+    assert boundary["passed"] is False
+    assert boundary["observed"]["blocked_field_count"] == 2
+    assert boundary["observed"]["blocked_field_paths"] == [
+        "current.debug_path",
+        "history.boundary",
+    ]
+    assert report["next_action"] == "HALT_PUBLICATION"
 
 
 def test_health_rejects_naive_time_and_nonpositive_thresholds() -> None:

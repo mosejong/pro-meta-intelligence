@@ -68,9 +68,44 @@ seconds before the provider's exact 24-hour gate. `StartWhenAvailable` catches u
 downtime, overlapping runs are ignored, and the application-level writer lock remains the final
 concurrency guard.
 
-This local task collects and validates data but deliberately does not commit or push. Automatic Git
-publication needs a clean isolated worktree or a dedicated deployment worker; adding `git commit`
-to a developer's active checkout would risk mixing unrelated work into a production update.
+By default this local task collects and validates data but does not commit or push. That keeps the
+first operational rollout observable and reversible.
+
+## Isolated publication
+
+`publish-oe-feed.ps1` uses a locked, detached Git worktree outside the developer checkout. It first
+runs the health gate, fetches the remote publication branch, refuses a dirty publisher worktree, and
+copies exactly two allowlisted artifacts:
+
+- `web/public/feed/current.json`
+- `web/public/feed/history-status.json`
+
+It stages those exact paths, rejects any unexpected staged file, creates no commit when bytes are
+unchanged, and performs a normal fast-forward push. It never force-pushes and never copies the raw
+archive, local audit files, source CSV, Creator working files, or unrelated developer changes.
+
+Review the operation without creating a worktree or pushing:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\ops\windows\publish-oe-feed.ps1 -WhatIf
+```
+
+After this feature is merged into the publication branch, run one manual publication. Only then
+enable unattended publication on the scheduled task:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\ops\windows\register-oe-sync-task.ps1 -EnablePublish
+```
+
+The registration script passes `-Publish` to the normal sync wrapper. A failed sync, failed health
+gate, dirty publisher worktree, unexpected path, non-fast-forward remote update, or push rejection
+returns nonzero and leaves the developer checkout untouched.
+
+This design follows Git's documented linked-worktree isolation and locking model. It intentionally
+does not use GitHub Actions cache as the historical source archive: GitHub documents a seven-day
+default cache retention for public repositories, shorter than this project's minimum 14-day history
+gate. See the official [Git worktree documentation](https://git-scm.com/docs/git-worktree.html) and
+[GitHub cache settings documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository).
 
 ## Incident order
 

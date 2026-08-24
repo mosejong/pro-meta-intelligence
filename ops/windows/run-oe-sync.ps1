@@ -1,15 +1,19 @@
 [CmdletBinding()]
 param(
-    [string]$RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path,
+    [string]$RepositoryRoot = "",
     [string]$PythonPath = "",
     [int]$Year = (Get-Date).ToUniversalTime().Year,
     [double]$MaximumJobAgeHours = 30,
-    [double]$MaximumSourceAgeHours = 50
+    [double]$MaximumSourceAgeHours = 50,
+    [switch]$Publish
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+if (-not $RepositoryRoot) {
+    $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+}
 $resolvedRoot = (Resolve-Path -LiteralPath $RepositoryRoot).Path
 if (-not (Test-Path -LiteralPath (Join-Path $resolvedRoot "pyproject.toml"))) {
     throw "RepositoryRoot does not contain pyproject.toml: $resolvedRoot"
@@ -63,7 +67,14 @@ try {
     )
     & $resolvedPython @healthArguments
     $healthExitCode = $LASTEXITCODE
-    Write-OperationLog "sync-finish sync_exit=$syncExitCode health_exit=$healthExitCode"
+    $publishExitCode = 0
+    if ($Publish -and $syncExitCode -eq 0 -and $healthExitCode -eq 0) {
+        & (Join-Path $PSScriptRoot "publish-oe-feed.ps1") `
+            -RepositoryRoot $resolvedRoot `
+            -PythonPath $resolvedPython
+        $publishExitCode = $LASTEXITCODE
+    }
+    Write-OperationLog "sync-finish sync_exit=$syncExitCode health_exit=$healthExitCode publish_exit=$publishExitCode"
 } catch {
     Write-OperationLog "runner-failed type=$($_.Exception.GetType().Name)"
     throw
@@ -73,5 +84,11 @@ try {
 
 if ($syncExitCode -ne 0) {
     exit $syncExitCode
+}
+if ($healthExitCode -ne 0) {
+    exit $healthExitCode
+}
+if ($publishExitCode -ne 0) {
+    exit $publishExitCode
 }
 exit $healthExitCode

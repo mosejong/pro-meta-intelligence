@@ -1,15 +1,19 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path,
+    [string]$RepositoryRoot = "",
     [string]$PythonPath = "",
     [string]$TaskName = "Pro Meta Intelligence - OE Sync",
     [datetime]$FirstRunAt = (Get-Date).AddMinutes(5),
-    [int]$RepeatHours = 25
+    [int]$RepeatHours = 25,
+    [switch]$EnablePublish
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+if (-not $RepositoryRoot) {
+    $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+}
 if ($RepeatHours -lt 24) {
     throw "RepeatHours must be at least 24 to respect the reviewed provider interval."
 }
@@ -25,6 +29,9 @@ $arguments = @(
 if ($PythonPath) {
     $resolvedPython = (Resolve-Path -LiteralPath $PythonPath).Path
     $arguments += @("-PythonPath", ('"{0}"' -f $resolvedPython))
+}
+if ($EnablePublish) {
+    $arguments += "-Publish"
 }
 
 $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument ($arguments -join " ")

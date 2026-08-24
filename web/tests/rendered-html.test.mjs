@@ -29,7 +29,10 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /<title>Meta Radar · Pro Meta Intelligence<\/title>/i);
   assert.match(html, /REKSAI/i);
   assert.match(html, /종합 점수 없음/);
-  assert.match(html, /메타의 변화를/);
+  assert.match(html, /오늘 팀이/);
+  assert.match(html, /결정할 3가지/);
+  assert.match(html, /LIVE DECISION QUEUE/);
+  assert.match(html, /티어표가 아니라 회의 시작점입니다/);
   assert.match(html, /전체 메타 신호 탐색/);
   assert.match(html, /TEAM DECISION BRIEF/);
   assert.match(html, /오늘 코칭스태프가 검토할 5가지/);
@@ -59,6 +62,9 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /isn&#x27;t endorsed by Riot Games/i);
   assert.match(html, /https:\/\/meta-radar\.example\/meta-radar-hero-v2\.png/);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
+  assert.ok(html.indexOf('class="decision-hero"') < html.indexOf('class="team-brief"'));
+  assert.ok(html.indexOf('class="team-brief"') < html.indexOf('class="history-readiness'));
+  assert.ok(html.indexOf('class="history-readiness') < html.indexOf('class="opponent-prep"'));
 });
 
 test("builds a deterministic evidence-bounded match-day brief from the published feed", async () => {
