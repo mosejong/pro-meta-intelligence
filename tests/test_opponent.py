@@ -45,6 +45,7 @@ def test_opponent_prep_preserves_picks_bans_sides_and_evidence() -> None:
     assert report["schema_version"] == "1"
     assert report["artifact_type"] == "opponent-prep-pack"
     assert report["team_count"] == 2
+    assert report["config"]["player_profiles_for_all_teams"] is True
     blue = next(team for team in report["teams"] if team["team_id"] == "oe:team:blue")
     red = next(team for team in report["teams"] if team["team_id"] == "oe:team:red")
     assert blue["team_name"] == "Blue Team"
@@ -94,7 +95,85 @@ def test_opponent_prep_preserves_picks_bans_sides_and_evidence() -> None:
     assert blue["quality_flags"] == ["LOW_MATCH_SAMPLE"]
     assert blue["evidence"]["match_ids"] == ["oe:LCK:GAME001"]
     assert len(blue["evidence"]["draft_event_ids"]) == 20
+    assert {player["role"] for player in red["player_profiles"]} == {
+        "TOP",
+        "JUNGLE",
+        "MID",
+        "BOTTOM",
+        "SUPPORT",
+    }
+    assert {player["roster_status"] for player in red["player_profiles"]} == {"CURRENT"}
+    assert "recent_games" not in red
+    assert "patch_comparison" not in red
+    assert "series_tracking" not in red
+
+
+def test_opponent_prep_can_retain_target_only_player_profiles() -> None:
+    imported = imported_fixture()
+    report = (
+        OpponentPrepBuilder()
+        .build(
+            imported.matches,
+            imported.draft_events,
+            OpponentPrepConfig(
+                cutoff=RETRIEVED_AT,
+                patch_id="16.15",
+                profile_team_names=("Blue Team",),
+                player_profiles_for_all_teams=False,
+            ),
+        )
+        .to_dict()
+    )
+
+    blue = next(team for team in report["teams"] if team["team_id"] == "oe:team:blue")
+    red = next(team for team in report["teams"] if team["team_id"] == "oe:team:red")
+    assert blue["player_profiles"]
     assert "player_profiles" not in red
+
+
+def test_current_player_role_comes_from_latest_observed_match() -> None:
+    imported = imported_fixture()
+    base_match = imported.matches[0]
+    older_matches = tuple(
+        replace(
+            base_match,
+            match_id=f"oe:LCK:GAME00{index}",
+            series_id=f"oe:LCK:GAME00{index}:series-unavailable",
+            observed_at=base_match.observed_at - timedelta(days=4 - index),
+        )
+        for index in (2, 3)
+    )
+    older_events = tuple(
+        replace(
+            event,
+            event_id=event.event_id.replace("GAME001", match.match_id.rsplit(":", 1)[-1]),
+            match_id=match.match_id,
+            observed_at=match.observed_at,
+        )
+        for match in older_matches
+        for event in imported.draft_events
+    )
+    latest_events = tuple(
+        replace(event, role="MID")
+        if event.player_id == "oe:player:blue-top" and event.action is DraftAction.PICK
+        else event
+        for event in imported.draft_events
+    )
+
+    report = (
+        OpponentPrepBuilder()
+        .build(
+            (*older_matches, *imported.matches),
+            (*older_events, *latest_events),
+            OpponentPrepConfig(cutoff=RETRIEVED_AT, patch_id="16.15"),
+        )
+        .to_dict()
+    )
+    blue = next(team for team in report["teams"] if team["team_id"] == "oe:team:blue")
+    atlas = next(player for player in blue["player_profiles"] if player["player_name"] == "Atlas")
+
+    assert atlas["role"] == "MID"
+    assert "INCOMPLETE_CURRENT_PLAYER_PROFILE" in blue["quality_flags"]
 
 
 def test_opponent_prep_compares_player_picks_with_the_previous_available_patch() -> None:

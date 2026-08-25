@@ -43,7 +43,8 @@ omitted and every team pack containing that match receives `INCOMPLETE_BAN_EVIDE
 - bans made by the selected team,
 - bans made by its opponents in those matches,
 - observed phase-one pick rotations,
-- allowlisted target-only player profiles, recent-game timelines, and previous-patch deltas,
+- latest-public-match player profiles for every team,
+- allowlisted target-only recent-game timelines and previous-patch deltas,
 - match IDs and draft-event IDs,
 - sample and missing-evidence flags.
 
@@ -64,15 +65,20 @@ sequence `1-6` within picks or bans; phase two is `7-10`. No learned score is us
 The web surface supports selection among every team in the published patch and downloads a bounded
 JSON handoff for the chosen team.
 
-The target-only enrichment currently allowlists exact `T1` identity matches. Player names and IDs
-come from public OE player rows. The latest observed match defines the five `CURRENT` players;
-additional same-patch players are retained as `OTHER_OBSERVED`. See
+Player names and IDs come from public OE player rows for every team. The latest observed match
+defines the five `CURRENT` players and their current roles; additional same-patch players are
+retained as `OTHER_OBSERVED`. A missing player identity or five-role set is disclosed as
+`INCOMPLETE_CURRENT_PLAYER_PROFILE` rather than filled from a community roster.
+
+The deeper target-only enrichment still allowlists exact `T1` identity matches for recent-game
+timelines, previous-patch deltas, and series-boundary diagnostics. See
 [`T1_TARGET_PROFILE.md`](T1_TARGET_PROFILE.md) for the roster and series boundaries.
 
 ## Current real publication
 
-The audited 16.16 feed generated on the retained 2026 OE snapshot contains 236 accepted games and
-138 team packs. Fifty-six teams have fewer than three same-patch games and are flagged
+The audited 16.16 feed generated on the retained 2026 OE snapshot contains 283 accepted games and
+141 team packs. Fifty teams have fewer than three same-patch games and are flagged
 `LOW_MATCH_SAMPLE`; eight packs include at least one match with an absent ban value and are flagged
-`INCOMPLETE_BAN_EVIDENCE`. These packs remain selectable so absence is visible rather than silently
-filtered.
+`INCOMPLETE_BAN_EVIDENCE`. All 141 packs currently contain five latest-match role profiles, with no
+`INCOMPLETE_CURRENT_PLAYER_PROFILE` flags. These packs remain selectable so future absence is
+visible rather than silently filtered.

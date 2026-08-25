@@ -20,6 +20,7 @@ class OpponentPrepConfig:
     minimum_games_for_review: int = 3
     top_champions: int = 5
     profile_team_names: tuple[str, ...] = ("T1",)
+    player_profiles_for_all_teams: bool = True
 
     def __post_init__(self) -> None:
         require_aware(self.cutoff, "cutoff")
@@ -141,6 +142,7 @@ class OpponentPrepBuilder:
                     "minimum_games_for_review": config.minimum_games_for_review,
                     "top_champions": config.top_champions,
                     "profile_team_names": list(config.profile_team_names),
+                    "player_profiles_for_all_teams": config.player_profiles_for_all_teams,
                 },
                 "boundary": (
                     "Descriptive public match evidence only. Draft intent, scrim plans, player "
@@ -231,10 +233,11 @@ class OpponentPrepBuilder:
         }
         wins = sum(match.winner_team_id == team_id for match in selected)
         first_pick_count = len({event.match_id for event in picks if event.sequence == 1})
-        profile_enabled = any(
+        detailed_profile_enabled = any(
             _team_identity(name) in {_team_identity(target) for target in config.profile_team_names}
             for name in (team_name, *name_aliases)
         )
+        player_profile_enabled = config.player_profiles_for_all_teams or detailed_profile_enabled
         previous_selected = (
             tuple(
                 sorted(
@@ -243,7 +246,7 @@ class OpponentPrepBuilder:
                     reverse=True,
                 )[: config.maximum_games_per_team]
             )
-            if profile_enabled
+            if detailed_profile_enabled
             else ()
         )
         previous_ids = {match.match_id for match in previous_selected}
@@ -253,6 +256,16 @@ class OpponentPrepBuilder:
             for event in events_by_match.get(match_id, ())
             if event.team_id == team_id and event.action is DraftAction.PICK
         )
+        player_profiles = _player_profiles(picks) if player_profile_enabled else []
+        if player_profile_enabled:
+            current_profiles = [
+                item for item in player_profiles if item["roster_status"] == "CURRENT"
+            ]
+            current_roles = {item["role"] for item in current_profiles}
+            expected_roles = {"TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"}
+            if len(current_profiles) < 5 or not expected_roles.issubset(current_roles):
+                quality_flags.append("INCOMPLETE_CURRENT_PLAYER_PROFILE")
+
         payload = {
             "team_id": team_id,
             "team_name": team_name,
@@ -278,10 +291,11 @@ class OpponentPrepBuilder:
                 "last_observed_at": max(match.observed_at for match in selected).isoformat(),
             },
         }
-        if profile_enabled:
+        if player_profile_enabled:
+            payload["player_profiles"] = player_profiles
+        if detailed_profile_enabled:
             payload.update(
                 {
-                    "player_profiles": _player_profiles(picks),
                     "recent_games": _recent_games(team_id, selected, events_by_match),
                     "patch_comparison": _patch_comparison(
                         picks,
@@ -419,6 +433,13 @@ def _player_profiles(events: tuple[PickBanEvent, ...]) -> list[dict[str, Any]]:
         for event in events
         if latest_event is not None and event.match_id == latest_event.match_id
     }
+    current_roles = {
+        event.player_id or event.player_name: event.role
+        for event in events
+        if latest_event is not None
+        and event.match_id == latest_event.match_id
+        and (event.player_id or event.player_name)
+    }
     by_player: dict[str, list[PickBanEvent]] = defaultdict(list)
     for event in events:
         identity = event.player_id or event.player_name
@@ -433,7 +454,14 @@ def _player_profiles(events: tuple[PickBanEvent, ...]) -> list[dict[str, Any]]:
         for event in items:
             role_counts[event.role] += 1
             champion_events[event.champion_id].append(event)
-        role = sorted(role_counts, key=lambda value: (-role_counts[value], value))[0]
+        role = (
+            current_roles.get(identity)
+            or sorted(role_counts, key=lambda value: (-role_counts[value], value))[0]
+        )
+        representative = max(
+            items,
+            key=lambda event: (event.observed_at, event.match_id, event.sequence),
+        )
         champions = [
             {
                 "champion_id": champion_id,
@@ -448,8 +476,8 @@ def _player_profiles(events: tuple[PickBanEvent, ...]) -> list[dict[str, Any]]:
         champions.sort(key=lambda item: (-item["game_count"], item["champion_id"]))
         payload.append(
             {
-                "player_id": items[0].player_id or f"name:{identity.casefold()}",
-                "player_name": items[0].player_name or identity,
+                "player_id": representative.player_id or f"name:{identity.casefold()}",
+                "player_name": representative.player_name or identity,
                 "role": role,
                 "roster_status": "CURRENT" if identity in current_player_ids else "OTHER_OBSERVED",
                 "game_count": len(match_ids),

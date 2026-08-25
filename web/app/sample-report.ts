@@ -81,7 +81,7 @@ export const sampleReport: RadarReport = {
     cutoff: "2026-08-15T12:00:00+00:00",
     patch_id: "16.14",
     team_count: 3,
-    config: { maximum_games_per_team: 10, minimum_games_for_review: 3, top_champions: 5, profile_team_names: ["T1"] },
+    config: { maximum_games_per_team: 10, minimum_games_for_review: 3, top_champions: 5, profile_team_names: ["T1"], player_profiles_for_all_teams: false },
     boundary: "Synthetic public-match demonstration only.",
     formulae: {
       champion_game_rate: "distinct selected team games / selected team games",

@@ -86,8 +86,10 @@ used and every displayed champion keeps its own evidence IDs.
 The sum orders lanes into `P1` (60+), `P2` (30–59), and `P3` (below 30). This is a review queue, not
 a calibrated probability or lane-outcome prediction. Every lane keeps its contributing draft-event
 IDs, player names only when the current public profile exists, observed reasons, and staff questions.
-The player-profile enrichment remains target-bounded, so a confirmed fixture can correctly report
-`LIMITED` while retaining usable team-level draft collisions instead of inventing the missing side.
+Every team receives a bounded latest-public-match player profile, so a confirmed fixture can show
+both five-player role sets when the source contains them. The report still returns `LIMITED` when
+either five-role set is incomplete instead of filling the missing side from a schedule or community
+roster.
 
 ## Current published state
 
