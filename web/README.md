@@ -67,6 +67,13 @@ six-hour source interval. It publishes only the normalized schedule and T1 chang
 Control shows the last check, latest detected change, and retained-change count; a missing log is
 reported as unavailable rather than treated as “no change.”
 
+Once the fixture participant is confirmed and the selected own team is in that match, Match-Day
+Control adds a five-lane collision report. It orders lanes using disclosed public-draft components,
+shows available current-player names, separates shared picks, protect candidates, and opponent
+priorities, and writes the result into the downloadable Match-Day JSON. If either side lacks the
+target-only player enrichment, the report says `TEAM-LEVEL LIMITED`; it never fills missing players
+from schedule guesses or community rosters.
+
 ## Checks
 
 ```bash

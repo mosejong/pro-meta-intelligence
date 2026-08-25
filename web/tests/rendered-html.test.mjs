@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { createServer } from "vite";
 
 const templateRoot = new URL("../", import.meta.url);
@@ -52,6 +54,9 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /T1 MATCH-DAY CONTROL/);
   assert.match(html, /다음 T1 일정과 준비 상태/);
   assert.match(html, /MATCH-DAY JSON/);
+  assert.match(html, /5-LANE REPORT ARMED/);
+  assert.match(html, /상대 확정 시 라인별 충돌 보고서 자동 생성/);
+  assert.match(html, /WAITING FOR VERIFIED OPPONENT/);
   assert.match(html, /CHANGE LOG UNAVAILABLE/);
   assert.match(html, /T1의 이번 패치에서 바뀐 것/);
   assert.match(html, /최근 관측 라인업의 챔피언 풀/);
@@ -411,6 +416,7 @@ test("builds a T1 match-day brief without guessing a TBD bracket opponent", asyn
     assert.equal(first.fixture.best_of, 5);
     assert.ok(first.fixture.days_until > 0);
     assert.equal(first.readiness.status, "WAITING_FOR_OPPONENT");
+    assert.equal(first.confirmed_matchup, null);
     assert.equal(first.monitoring.status, "WATCHING");
     assert.equal(first.monitoring.latest_run_status, "INITIALIZED");
     assert.equal(first.monitoring.latest_change, null);
@@ -445,11 +451,64 @@ test("builds a T1 match-day brief without guessing a TBD bracket opponent", asyn
     assert.equal(confirmed.fixture.relationship, "CONFIRMED_HEAD_TO_HEAD");
     assert.equal(confirmed.readiness.status, "READY");
     assert.equal(confirmed.fixture.other_participant.name, "Gen.G Esports");
+    assert.ok(confirmed.confirmed_matchup);
+    assert.equal(confirmed.confirmed_matchup.artifact_type, "confirmed-opponent-lane-report");
+    assert.equal(confirmed.confirmed_matchup.status, "LIMITED");
+    assert.equal(confirmed.confirmed_matchup.own_team.team_name, "Gen.G");
+    assert.equal(confirmed.confirmed_matchup.opponent.team_name, "T1");
+    assert.equal(confirmed.confirmed_matchup.lanes.length, 5);
+    assert.deepEqual(
+      confirmed.confirmed_matchup.lanes.map((lane) => lane.review_rank),
+      [1, 2, 3, 4, 5],
+    );
+    assert.ok(confirmed.confirmed_matchup.lanes.every((lane, index, lanes) => index === 0 || lanes[index - 1].review_score >= lane.review_score));
+    assert.ok(confirmed.confirmed_matchup.lanes.every((lane) => lane.staff_questions.length > 0));
+    assert.ok(confirmed.confirmed_matchup.quality.opponent_current_player_count >= 5);
+    assert.equal(confirmed.confirmed_matchup.quality.own_current_player_count, 0);
+    assert.ok(confirmed.confirmed_matchup.quality.lanes_with_draft_signals > 0);
+    assert.ok(confirmed.confirmed_matchup.evidence.match_ids.length > 0);
+    assert.match(confirmed.confirmed_matchup.boundary, /do not predict lane outcome/i);
+    assert.ok(confirmed.confirmed_matchup.lanes.every((lane) => (
+      lane.review_score === Object.values(lane.components).reduce((sum, value) => sum + value, 0) &&
+      lane.review_score >= 0 && lane.review_score <= 100
+    )));
+    assert.deepEqual(JSON.parse(serializeTargetMatchDayBrief(confirmed)), confirmed);
+
+    const { TargetMatchDayPanel } = await vite.ssrLoadModule("/app/target-match-day-panel.tsx");
+    const confirmedHtml = renderToStaticMarkup(createElement(TargetMatchDayPanel, {
+      brief: confirmed,
+      onDownload() {},
+    }));
+    assert.match(confirmedHtml, /CONFIRMED OPPONENT COLLISION/);
+    assert.match(confirmedHtml, /Gen\.G vs T1/);
+    assert.match(confirmedHtml, /TEAM-LEVEL LIMITED/);
+    assert.match(confirmedHtml, /P1 검토 라인/);
+    assert.match(confirmedHtml, /공통 풀/);
+    assert.match(confirmedHtml, /보호 자원/);
+    assert.match(confirmedHtml, /상대 우선/);
+    assert.match(confirmedHtml, /STAFF CHECK/);
+    assert.match(confirmedHtml, /공개 데이터 경계/);
+    assert.match(confirmedHtml, /cdn\/16\.16\.1\/img\/champion\//);
+
+    const t1Perspective = buildTargetMatchDayBrief(
+      feed,
+      t1,
+      profile,
+      confirmedSchedule,
+      "2026-08-24T00:00:00Z",
+      t1,
+    );
+    assert.equal(t1Perspective.fixture.relationship, "TARGET_AS_OWN_TEAM");
+    assert.equal(t1Perspective.confirmed_matchup.own_team.team_name, "T1");
+    assert.equal(t1Perspective.confirmed_matchup.opponent.team_name, "Gen.G");
+    assert.ok(t1Perspective.confirmed_matchup.quality.own_current_player_count >= 5);
+    assert.equal(t1Perspective.confirmed_matchup.quality.opponent_current_player_count, 0);
 
     const unavailable = buildTargetMatchDayBrief(feed, t1, profile, null, feed.cutoff, geng);
     assert.equal(unavailable.fixture.relationship, "SCHEDULE_UNAVAILABLE");
     assert.equal(unavailable.readiness.status, "WAITING_FOR_FIXTURE");
     assert.equal(unavailable.fixture.event_id, null);
+    assert.equal(unavailable.confirmed_matchup, null);
   } finally {
     await vite.close();
   }

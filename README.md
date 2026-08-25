@@ -107,6 +107,9 @@ data path:
 - a policy-gated T1 schedule watch that checks the official schedule every eight hours, retains up
   to 50 normalized fixture changes, and surfaces opponent confirmation, time, format, and stage
   changes without force-pushing or publishing raw HTML.
+- a confirmed-opponent five-lane report that turns an exact official T1 fixture into a transparent
+  staff-review order using shared pools, ban pressure, role priority, phase-one frequency, available
+  public player profiles, and exact evidence IDs without presenting the score as win probability.
 - an own-team-versus-opponent Draft Battlecard that turns public draft overlap into four bounded
   staff review lanes: protect, contest, deny review, and exchange scenario.
 - a Creator Export Lab that converts the same claim-locked evidence into 16:9 YouTube cards, 9:16
