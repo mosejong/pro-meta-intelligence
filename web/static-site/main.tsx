@@ -1,5 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { productSpaceFromPath } from "../app/product-space";
 import { RadarDashboard } from "../app/radar-dashboard";
 import "../app/globals.css";
 
@@ -11,6 +12,6 @@ if (!root) {
 
 createRoot(root).render(
   <React.StrictMode>
-    <RadarDashboard />
+    <RadarDashboard initialSpace={productSpaceFromPath(window.location.pathname)} />
   </React.StrictMode>,
 );

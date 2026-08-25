@@ -22,21 +22,41 @@ async function render(path = "/") {
   );
 }
 
-test("server-renders the Meta Radar analyst surface", async () => {
+test("server-renders the onboarding home as a focused product entry", async () => {
   const response = await render();
+  assert.equal(response.status, 200);
+
+  const html = await response.text();
+  assert.match(html, /보고 싶은 분야부터/);
+  assert.match(html, /CHOOSE YOUR WORKSPACE/);
+  assert.match(html, /내 팀 기준 분석/);
+  assert.match(html, /T1 원페이지 브리프/);
+  assert.match(html, /CREATOR STUDIO/);
+  assert.match(html, /전체 메타 탐색/);
+  assert.match(html, /href="\.\/team\/"/);
+  assert.match(html, /href="\.\/t1\/"/);
+  assert.match(html, /href="\.\/creator\/"/);
+  assert.match(html, /href="\.\/radar\/"/);
+  assert.doesNotMatch(html, /chatgpt|openai|gpt login|sign in/i);
+});
+
+test("server-renders the team analyst surface", async () => {
+  const response = await render("/team");
   const styles = await readFile(new URL("app/globals.css", templateRoot), "utf8");
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Meta Radar · Pro Meta Intelligence<\/title>/i);
+  assert.match(html, /<title>팀 분석 · Pro Meta Intelligence<\/title>/i);
+  assert.match(html, /TEAM ROOM/);
+  assert.match(html, /내 팀 기준으로 결정하세요/);
   assert.match(html, /REKSAI/i);
-  assert.match(html, /종합 점수 없음/);
+  assert.match(html, /PUBLIC TEAM EVIDENCE/);
   assert.match(html, /오늘 팀이/);
   assert.match(html, /결정할 3가지/);
   assert.match(html, /LIVE DECISION QUEUE/);
   assert.match(html, /티어표가 아니라 회의 시작점입니다/);
-  assert.match(html, /<main class="quick-view">/);
+  assert.match(html, /<main class="section-space space-team">/);
   assert.match(html, /10-SECOND START/);
   assert.match(html, /원하는 결과부터 고르세요/);
   assert.match(html, /T1 다음 경기/);
@@ -45,7 +65,6 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /3개 공개 팀 중 하나를 고르면/);
   assert.match(html, /핵심만 표시 중/);
   assert.match(html, /전체 분석 보기/);
-  assert.match(html, /aria-pressed="false"[^>]*>전체 분석/);
   assert.match(html, /분석 링크 복사/);
   assert.match(html, /내 팀 선택 후 공유 가능/);
   assert.match(html, /ONE-PAGE · STAFF REVIEW/);
@@ -141,6 +160,22 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.ok(html.indexOf('class="history-readiness') < html.indexOf('class="opponent-prep"'));
   assert.ok(html.indexOf('class="opponent-prep"') < html.indexOf('class="creator-export"'));
   assert.ok(html.indexOf('class="creator-export"') < html.indexOf('class="workspace"'));
+});
+
+test("server-renders every focused workspace route", async () => {
+  const cases = [
+    ["/t1", "space-t1", "T1 DESK"],
+    ["/creator", "space-creator", "CREATOR STUDIO"],
+    ["/radar", "space-radar", "META RADAR"],
+  ];
+
+  for (const [path, className, marker] of cases) {
+    const response = await render(path);
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.match(html, new RegExp(`<main class="section-space ${className}">`));
+    assert.match(html, new RegExp(marker));
+  }
 });
 
 test("builds deterministic creator scenes for YouTube and Shorts exports", async () => {
@@ -597,12 +632,13 @@ test("builds a canonical share link that restores the analysis workspace", async
 
   try {
     const { buildWorkspaceUrl, parseWorkspaceSearch } = await vite.ssrLoadModule("/app/workspace-link.ts");
-    const shared = buildWorkspaceUrl("https://example.com/pro-meta-intelligence/?utm_source=test#top", {
+    const shared = buildWorkspaceUrl("https://example.com/pro-meta-intelligence/t1/?utm_source=test#top", {
       teamId: "gen-g",
       opponentId: "t1",
       viewMode: "FULL",
     });
     const url = new URL(shared);
+    assert.equal(url.pathname, "/pro-meta-intelligence/t1/");
     assert.equal(url.searchParams.get("team"), "gen-g");
     assert.equal(url.searchParams.get("opponent"), "t1");
     assert.equal(url.searchParams.get("view"), "full");
@@ -618,6 +654,31 @@ test("builds a canonical share link that restores the analysis workspace", async
       opponentId: "x",
       viewMode: null,
     });
+  } finally {
+    await vite.close();
+  }
+});
+
+test("maps direct paths and relative navigation across product spaces", async () => {
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { productSpaceFromPath, productSpaceHref } = await vite.ssrLoadModule("/app/product-space.ts");
+    assert.equal(productSpaceFromPath("/pro-meta-intelligence/"), "ONBOARDING");
+    assert.equal(productSpaceFromPath("/pro-meta-intelligence/team/"), "TEAM");
+    assert.equal(productSpaceFromPath("/pro-meta-intelligence/t1/index.html"), "T1");
+    assert.equal(productSpaceFromPath("/creator/"), "CREATOR");
+    assert.equal(productSpaceFromPath("/radar"), "RADAR");
+    assert.equal(productSpaceHref("ONBOARDING", "TEAM"), "./team/");
+    assert.equal(productSpaceHref("TEAM", "ONBOARDING"), "../");
+    assert.equal(productSpaceHref("CREATOR", "T1"), "../t1/");
   } finally {
     await vite.close();
   }

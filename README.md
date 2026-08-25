@@ -116,11 +116,10 @@ data path:
   staff review lanes: protect, contest, deny review, and exchange scenario.
 - a Creator Export Lab that converts the same claim-locked evidence into 16:9 YouTube cards, 9:16
   short-form cards, and editor-ready scene JSON without uploading the generated files.
-- a default Quick View that routes new users to T1 match day, own-team-vs-T1 preparation, or Creator
-  Studio in one choice while keeping raw tables, operational history, and the full Radar in an
-  optional analyst view.
-- account-free analysis links that restore the selected own team, opponent, and Quick/Full view so
-  staff and collaborators can open the same evidence workspace without copying private data.
+- a focused onboarding home that routes users into independent Team Room, T1 Desk, Creator Studio,
+  or full Meta Radar pages while every workspace keeps the same published evidence contract.
+- account-free analysis links that restore the selected own team and opponent in the focused T1
+  workspace so staff and collaborators can open the same evidence context without private data.
 - a printable T1 one-page brief that compresses the verified fixture, public pick/ban focus, review
   actions, readiness gates, and confirmed five-lane order without inferring a TBD opponent.
 

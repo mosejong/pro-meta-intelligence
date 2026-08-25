@@ -8,6 +8,8 @@ import { CreatorExportLab } from "./creator-export";
 import { isHistoryStatus, isRadarReport, isScheduleChangeLog, isScheduleSnapshot, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport, type ScheduleChangeLog, type ScheduleSnapshot } from "./radar-types";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
+import { ProductHome } from "./product-home";
+import { productRootHref, productSpaceHref, type ProductSpace } from "./product-space";
 import { sampleReport } from "./sample-report";
 import { buildTeamContext } from "./team-context";
 import { buildTeamBrief, serializeTeamBrief } from "./team-brief";
@@ -249,7 +251,7 @@ function BattlecardSignalList({ items, emptyLabel }: { items: BattlecardSignal[]
   </article>)}</div>;
 }
 
-export function RadarDashboard() {
+export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?: ProductSpace }) {
   const [report, setReport] = useState<RadarReport>(sampleReport);
   const [selectedKey, setSelectedKey] = useState(keyOf(sampleReport.entries[0]));
   const [role, setRole] = useState("ALL");
@@ -382,14 +384,15 @@ export function RadarDashboard() {
   const loadPublishedFeed = useCallback(async () => {
     if (manualOverride.current) return;
     try {
-      const feedUrl = new URL("feed/current.json", document.baseURI);
+      const publicationBase = new URL(productRootHref(initialSpace), document.baseURI);
+      const feedUrl = new URL("feed/current.json", publicationBase);
       const response = await fetch(feedUrl, { cache: "no-store" });
       if (!response.ok) throw new Error(`feed returned ${response.status}`);
       const parsed: unknown = await response.json();
       if (!isRadarReport(parsed)) throw new Error("unsupported report");
       let publishedReport = parsed;
       try {
-        const statusUrl = new URL("feed/history-status.json", document.baseURI);
+        const statusUrl = new URL("feed/history-status.json", publicationBase);
         const statusResponse = await fetch(statusUrl, { cache: "no-store" });
         if (statusResponse.ok) {
           const status: unknown = await statusResponse.json();
@@ -399,7 +402,7 @@ export function RadarDashboard() {
         // The Radar remains usable when the independently published status is unavailable.
       }
       try {
-        const scheduleUrl = new URL("feed/schedule.json", document.baseURI);
+        const scheduleUrl = new URL("feed/schedule.json", publicationBase);
         const scheduleResponse = await fetch(scheduleUrl, { cache: "no-store" });
         if (!scheduleResponse.ok) throw new Error(`schedule returned ${scheduleResponse.status}`);
         const schedulePayload: unknown = await scheduleResponse.json();
@@ -410,7 +413,7 @@ export function RadarDashboard() {
         setScheduleCheckedAt(checkedAt);
         setScheduleState(ageHours <= 36 ? "connected" : "stale");
         try {
-          const changesUrl = new URL("feed/schedule-changes.json", document.baseURI);
+          const changesUrl = new URL("feed/schedule-changes.json", publicationBase);
           const changesResponse = await fetch(changesUrl, { cache: "no-store" });
           if (!changesResponse.ok) throw new Error(`schedule changes returned ${changesResponse.status}`);
           const changesPayload: unknown = await changesResponse.json();
@@ -455,7 +458,7 @@ export function RadarDashboard() {
         detail: "발행 피드 없음 · 내장 데모 표시 중",
       });
     }
-  }, []);
+  }, [initialSpace]);
 
   useEffect(() => {
     const initial = window.setTimeout(() => void loadPublishedFeed(), 0);
@@ -563,7 +566,8 @@ export function RadarDashboard() {
 
   async function copyAnalysisLink() {
     if (!selectedMyTeam) return;
-    const shareUrl = buildWorkspaceUrl(window.location.href, {
+    const t1WorkspaceUrl = new URL(productSpaceHref(initialSpace, "T1"), window.location.href).toString();
+    const shareUrl = buildWorkspaceUrl(t1WorkspaceUrl, {
       teamId: selectedMyTeam.team_id,
       opponentId: selectedOpponent?.team_id ?? defaultTargetTeam?.team_id ?? null,
       viewMode,
@@ -685,23 +689,40 @@ export function RadarDashboard() {
     ...selected.region_presence,
   ] : [];
 
+  if (initialSpace === "ONBOARDING") {
+    return <ProductHome
+      currentSpace={initialSpace}
+      patchId={report.patch_id}
+      teamCount={opponentTeams.length}
+      reviewCount={eligibleCount}
+      fixtureTitle={quickFixtureTitle}
+      fixtureDetail={quickFixtureDetail}
+      feedLabel={feedState.label}
+    />;
+  }
+
+  const sectionCopy = {
+    TEAM: { index: "01", eyebrow: "TEAM ROOM", title: "내 팀 기준으로 결정하세요.", detail: "오늘 검토 후보, 상대 우선순위와 드래프트 충돌을 한 작업실에서 봅니다.", action: "내 팀 선택", target: "#team-setup" },
+    T1: { index: "02", eyebrow: "T1 DESK", title: "T1 준비 자료만 모았습니다.", detail: "공식 일정과 공개 픽·밴, 상대 확정 시 5라인 충돌까지 추정 없이 연결합니다.", action: "원페이지 열기", target: "#t1-brief" },
+    CREATOR: { index: "03", eyebrow: "CREATOR STUDIO", title: "근거를 콘텐츠 장면으로.", detail: "같은 검증 데이터를 유튜브·쇼츠 카드와 편집 JSON으로 변환합니다.", action: "장면 만들기", target: "#creator-export" },
+    RADAR: { index: "04", eyebrow: "META RADAR", title: "전체 신호와 경계를 탐색하세요.", detail: "지역 차이, 수요 변화, 표본 경고와 원본 이벤트를 분석가 관점으로 확인합니다.", action: "신호 탐색", target: "#radar" },
+  }[initialSpace];
+
   return (
-    <main className={viewMode === "QUICK" ? "quick-view" : "full-view"}>
+    <main className={`section-space space-${initialSpace.toLowerCase()}`}>
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="Pro Meta Intelligence 홈">
+        <a className="brand" href={productSpaceHref(initialSpace, "ONBOARDING")} aria-label="Pro Meta Intelligence 홈">
           <span className="brand-mark">PM</span>
           <span><strong>PRO META</strong><small>INTELLIGENCE</small></span>
         </a>
         <nav aria-label="주요 메뉴">
-          <a className="active" href="#quick-start">빠른 시작</a>
-          <a href="#team-brief">오늘 결정</a>
-          <a href="#t1-brief">T1 브리프</a>
-          <a href="#creator-export">콘텐츠</a>
-          {viewMode === "FULL" && <a href="#radar">전체 탐색</a>}
+          <a className={initialSpace === "TEAM" ? "active" : ""} href={productSpaceHref(initialSpace, "TEAM")}>팀 분석</a>
+          <a className={initialSpace === "T1" ? "active" : ""} href={productSpaceHref(initialSpace, "T1")}>T1 브리프</a>
+          <a className={initialSpace === "CREATOR" ? "active" : ""} href={productSpaceHref(initialSpace, "CREATOR")}>콘텐츠</a>
+          <a className={initialSpace === "RADAR" ? "active" : ""} href={productSpaceHref(initialSpace, "RADAR")}>메타 레이더</a>
         </nav>
         <div className="topbar-actions">
           <span className={`snapshot-state ${feedState.kind}`} title={feedState.detail} aria-live="polite"><i />{feedState.label}</span>
-          <button className="view-mode-button" type="button" onClick={toggleViewMode} aria-pressed={viewMode === "FULL"}>{viewMode === "QUICK" ? "전체 분석" : "간단 보기"}</button>
           <button className="refresh-button" type="button" onClick={() => { manualOverride.current = false; void loadPublishedFeed(); }} aria-label="발행 피드 새로고침">↻</button>
           <button className="load-button" type="button" onClick={() => fileInput.current?.click()}>
             JSON 불러오기 <span>↗</span>
@@ -710,7 +731,12 @@ export function RadarDashboard() {
         <input ref={fileInput} className="visually-hidden" type="file" accept="application/json,.json" onChange={loadReport} aria-label="Meta Radar JSON 불러오기" />
       </header>
 
-      <section className="decision-hero" id="top">
+      <section className="section-portal-hero" id="top">
+        <div><span>{sectionCopy.index} · {sectionCopy.eyebrow}</span><h1>{sectionCopy.title}</h1><p>{sectionCopy.detail}</p></div>
+        <a href={sectionCopy.target}>{sectionCopy.action} <b>→</b></a>
+      </section>
+
+      <section className="decision-hero">
         <div className="decision-hero-copy">
           <div className="kicker-row"><p className="eyebrow">PATCH {report.patch_id} · TEAM MODE</p><span>{feedState.detail}</span></div>
           <h1>오늘 팀이<br /><em>결정할 3가지.</em></h1>
@@ -797,7 +823,7 @@ export function RadarDashboard() {
             {shareState === "COPIED" ? "링크 복사 완료" : shareState === "FAILED" ? "복사 실패" : "분석 링크 복사"}
           </button>
           <a href="#opponent-prep">{selectedMyTeam ? "상대 우선순위 보기" : "분석 기준 설정"} <span>→</span></a>
-          <small>{selectedMyTeam ? "내 팀·상대·보기 모드를 로그인 없이 공유" : "내 팀 선택 후 공유 가능"}</small>
+          <small>{selectedMyTeam ? "내 팀·상대 선택을 계정 연결 없이 공유" : "내 팀 선택 후 공유 가능"}</small>
         </div>
       </section>
 
@@ -1098,16 +1124,17 @@ export function RadarDashboard() {
           <article><b>04</b><h3>근거와 경고</h3><p>모든 후보에서 원본 이벤트와 표본 부족 여부를 함께 확인합니다.</p></article>
         </div>
       </section>
-      <footer><span>종합 점수 없음</span><p>팀 수요 속도 → 픽 점유율 변화 → 지역 편차 순서로 읽습니다.</p><b>SCHEMA v{report.schema_version}</b></footer>
+      <footer className="site-footer"><span>{initialSpace === "TEAM" ? "PUBLIC TEAM EVIDENCE" : initialSpace === "T1" ? "TBD NEVER INFERRED" : initialSpace === "CREATOR" ? "HUMAN REVIEW REQUIRED" : "종합 점수 없음"}</span><p>{initialSpace === "TEAM" ? "공개 경기로 준비 순서를 만들되 스크림과 내부 계획은 추정하지 않습니다." : initialSpace === "T1" ? "확정된 일정·팀 ID와 공개 경기만 연결합니다." : initialSpace === "CREATOR" ? "생성된 장면은 발행 승인이 아니라 편집 시작점입니다." : "팀 수요 속도 → 픽 점유율 변화 → 지역 편차 순서로 읽습니다."}</p><b>SCHEMA v{report.schema_version}</b></footer>
       <section className="legal-notice" aria-label="Riot Games 비제휴 고지">
         캐릭터 이미지는 Riot Games Data Dragon을 통해 제공됩니다. Pro Meta Intelligence isn&apos;t endorsed by Riot Games and doesn&apos;t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
       </section>
 
       <nav className="mobile-taskbar" aria-label="모바일 빠른 이동">
-        <a href="#quick-start"><b>01</b><span>시작</span></a>
-        <a href="#team-brief"><b>02</b><span>오늘</span></a>
-        <a href="#t1-brief"><b>03</b><span>T1 브리프</span></a>
-        <a href="#creator-export"><b>04</b><span>콘텐츠</span></a>
+        <a href={productSpaceHref(initialSpace, "ONBOARDING")}><b>00</b><span>홈</span></a>
+        <a className={initialSpace === "TEAM" ? "active" : ""} href={productSpaceHref(initialSpace, "TEAM")}><b>01</b><span>팀</span></a>
+        <a className={initialSpace === "T1" ? "active" : ""} href={productSpaceHref(initialSpace, "T1")}><b>02</b><span>T1</span></a>
+        <a className={initialSpace === "CREATOR" ? "active" : ""} href={productSpaceHref(initialSpace, "CREATOR")}><b>03</b><span>콘텐츠</span></a>
+        <a className={initialSpace === "RADAR" ? "active" : ""} href={productSpaceHref(initialSpace, "RADAR")}><b>04</b><span>레이더</span></a>
       </nav>
 
       {evidenceOpen && selected && (

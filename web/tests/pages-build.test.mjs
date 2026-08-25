@@ -4,13 +4,22 @@ import test from "node:test";
 
 const root = new URL("../dist-pages/", import.meta.url);
 
-test("builds an independent static Meta Radar entry page", async () => {
-  const html = await readFile(new URL("index.html", root), "utf8");
+test("builds direct-loadable onboarding and field pages", async () => {
+  const pages = [
+    ["index.html", "Pro Meta Intelligence · 공개 팀 분석 플랫폼"],
+    ["team/index.html", "팀 분석 · Pro Meta Intelligence"],
+    ["t1/index.html", "T1 브리프 · Pro Meta Intelligence"],
+    ["creator/index.html", "Creator Studio · Pro Meta Intelligence"],
+    ["radar/index.html", "Meta Radar · Pro Meta Intelligence"],
+  ];
 
-  assert.match(html, /<title>Meta Radar · Pro Meta Intelligence<\/title>/);
-  assert.match(html, /mosejong\.github\.io\/pro-meta-intelligence\/meta-radar-hero-v2\.png/);
-  assert.match(html, /\/pro-meta-intelligence\/assets\/index-[^"']+\.js/);
-  assert.doesNotMatch(html, /chatgpt|openai|gpt login|sign in/i);
+  for (const [path, title] of pages) {
+    const html = await readFile(new URL(path, root), "utf8");
+    assert.match(html, new RegExp(`<title>${title}<\\/title>`));
+    assert.match(html, /mosejong\.github\.io\/pro-meta-intelligence\/meta-radar-hero-v2\.png/);
+    assert.match(html, /\/pro-meta-intelligence\/assets\/main-[^"']+\.js/);
+    assert.doesNotMatch(html, /chatgpt|openai|gpt login|sign in/i);
+  }
 });
 
 test("copies the same-origin feed and social card", async () => {
