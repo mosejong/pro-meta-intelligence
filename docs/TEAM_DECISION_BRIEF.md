@@ -49,12 +49,21 @@ they must remain visually and technically separated from the public evidence lay
 ## Output and workflow
 
 The page supports print/PDF output for meetings and a machine-readable
-`team-decision-brief-<patch>.json` download. A future persisted workflow can add:
+`team-decision-brief-<patch>.json` download. The device-local Decision Journal adds the human
+workflow:
 
 ```text
 INBOX -> REVIEWED -> SCRIM_REQUESTED -> ADOPTED | REJECTED | WATCH
 ```
 
-Those states are intentionally not simulated in the public prototype until a real persistence and
-authorization boundary exists.
+Each record is pinned to the exact patch, cutoff, champion-role candidate, public evidence IDs, and
+optional own-team selection. It is stored only in that browser's `localStorage` and can be exported
+as `team-decision-journal-<patch>.json`. There is no server sync, account, or claim that the selected
+state is a competitive outcome. Storage is capped at the 250 most recently updated records so a
+stale journal cannot grow without bound.
+
+The optional 280-character note is explicitly for non-sensitive meeting context. Scrim results,
+player evaluation, private draft plans, and other authorized team information do not belong in this
+device-local public prototype. A future shared team workflow still requires authenticated storage,
+access control, audit history, and a separate private-data adapter.
 

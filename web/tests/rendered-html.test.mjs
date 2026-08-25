@@ -88,6 +88,17 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /인쇄 \/ PDF/);
   assert.match(html, /JSON 내보내기/);
   assert.match(html, /출전 권고가 아닙니다/);
+  assert.match(html, /HUMAN DECISION · DEVICE LOCAL/);
+  assert.match(html, /이 후보를 어떻게 처리할지 기록/);
+  assert.match(html, /검토 대기/);
+  assert.match(html, /검토 완료/);
+  assert.match(html, /테스트 요청/);
+  assert.match(html, /채택/);
+  assert.match(html, /기각/);
+  assert.match(html, /계속 추적/);
+  assert.match(html, /비민감 회의 메모/);
+  assert.match(html, /JOURNAL JSON/);
+  assert.match(html, /현재 브라우저에만 저장/);
   assert.match(html, /T1 TARGET DESK/);
   assert.match(html, /T1 공략 준비실/);
   assert.match(html, /T1 분석 바로가기/);
@@ -195,6 +206,81 @@ test("server-renders a five-scene creator workflow with human review", async () 
   assert.match(html, /실제 공개 중복만 T1과 연결합니다/);
   assert.match(html, /T1 공개 중복/);
   assert.match(html, /글로벌 Radar/);
+});
+
+test("keeps human team decisions snapshot-scoped and validates local journal data", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+  assert.ok(t1);
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { buildTeamBrief } = await vite.ssrLoadModule("/app/team-brief.ts");
+    const {
+      createDecisionJournalEntry,
+      decisionJournalId,
+      MAX_DECISION_JOURNAL_ENTRIES,
+      parseDecisionJournal,
+      serializeDecisionJournal,
+      upsertDecisionJournalEntry,
+    } = await vite.ssrLoadModule("/app/decision-journal.ts");
+    const card = buildTeamBrief(feed)[0];
+    assert.ok(card);
+    assert.notEqual(decisionJournalId(feed, card), decisionJournalId(feed, card, t1));
+
+    const created = createDecisionJournalEntry(
+      feed,
+      card,
+      t1,
+      "SCRIM_REQUESTED",
+      ` 공개 근거만 확인 ${"x".repeat(300)} `,
+      "2026-08-25T10:00:00.000Z",
+    );
+    assert.equal(created.own_team.team_name, "T1");
+    assert.equal(created.human_state, "SCRIM_REQUESTED");
+    assert.equal(created.analyst_note.length, 280);
+    assert.deepEqual(created.evidence_event_ids, [...new Set(card.entry.evidence_event_ids)].sort());
+    assert.deepEqual(created.source_versions, feed.evidence_index.source_versions);
+
+    const adopted = createDecisionJournalEntry(
+      feed,
+      card,
+      t1,
+      "ADOPTED",
+      "공개 근거 검토 완료",
+      "2026-08-25T11:00:00.000Z",
+      created,
+    );
+    assert.equal(adopted.created_at, created.created_at);
+    assert.equal(adopted.updated_at, "2026-08-25T11:00:00.000Z");
+    const stored = upsertDecisionJournalEntry([created], adopted);
+    assert.equal(stored.length, 1);
+    assert.equal(stored[0].human_state, "ADOPTED");
+
+    const serialized = serializeDecisionJournal(stored, "2026-08-25T12:00:00.000Z");
+    const bundle = JSON.parse(serialized);
+    assert.equal(bundle.storage_scope, "DEVICE_LOCAL");
+    assert.match(bundle.boundary, /No server sync/);
+    assert.deepEqual(parseDecisionJournal(serialized), stored);
+    assert.deepEqual(parseDecisionJournal("not-json"), []);
+    bundle.entries[0].human_state = "UNVERIFIED_PRIVATE_RESULT";
+    assert.deepEqual(parseDecisionJournal(JSON.stringify(bundle)), []);
+    const oversized = Array.from({ length: MAX_DECISION_JOURNAL_ENTRIES + 5 }, (_, index) => ({
+      ...adopted,
+      decision_id: `${adopted.decision_id}:${index}`,
+      updated_at: `2026-08-25T11:${String(index % 60).padStart(2, "0")}:00.000Z`,
+    }));
+    assert.equal(upsertDecisionJournalEntry(oversized, adopted).length, MAX_DECISION_JOURNAL_ENTRIES);
+  } finally {
+    await vite.close();
+  }
 });
 
 test("builds deterministic creator scenes for YouTube and Shorts exports", async () => {

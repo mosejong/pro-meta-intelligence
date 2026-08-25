@@ -90,6 +90,9 @@ data path:
 - an explainable real-data Meta Radar/Creator snapshot feed and public static dashboard,
 - a meeting-ready Team Decision Brief with evidence, counterevidence, practice questions, stop
   conditions, print/PDF output, and machine-readable JSON handoff.
+- a device-local Team Decision Journal that pins human review, test, adopt, reject, or watch states
+  to the exact patch, cutoff, own-team lens, candidate, and public evidence without adding a login
+  or sending private notes to a server.
 - a selectable Opponent Prep Pack with same-patch side splits, phase-aware picks and bans, observed
   first rotations, quality warnings, and exact match evidence.
 - a three-minute Match-day Emergency Brief that cross-checks opponent preferences against global
