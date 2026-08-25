@@ -161,6 +161,11 @@ optional enhancement and retains a production fallback. Natural-language queryin
 storyboards, provider-backed drafting, long-form script review, and post-outcome miss tracking remain
 future gates.
 
+The T1-first product path also includes a normalized official-schedule Match-Day Control. It keeps
+TBD participants unresolved, verifies whether the selected own team is actually in the same event,
+and maintains separate readiness gates for the fixture, opponent identity, public draft sample,
+player profile, and historical series linkage.
+
 Exit gate: generated answers remain grounded and traceable.
 
 ## Phase 8 — Synthetic Private Team Demo

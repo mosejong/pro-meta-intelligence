@@ -54,6 +54,13 @@ changes. Other same-patch lineups stay counted but are separated from the latest
 does not expose a stable series ID, so the interface labels these records as games and does not
 invent series groupings. The complete bounded profile is downloadable as JSON.
 
+The pinned T1 Match-Day Control independently finds T1's next verified official fixture. It labels
+the other participant as TBD until the schedule source resolves it, distinguishes a confirmed
+head-to-head from a T1 fixture involving another team, and exposes each readiness gate instead of
+hiding missing data behind one score. Once the participant changes in the refreshed schedule, the
+same deterministic brief updates automatically. Its schedule event ID remains separate from
+historical game and series IDs, and the complete brief is downloadable as JSON.
+
 ## Checks
 
 ```bash
