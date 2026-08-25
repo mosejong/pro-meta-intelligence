@@ -15,6 +15,7 @@ import { buildTargetProfile, serializeTargetProfile } from "./target-profile";
 import { TargetProfilePanel } from "./target-profile-panel";
 import { buildTargetMatchDayBrief, serializeTargetMatchDayBrief } from "./target-match-day";
 import { TargetMatchDayPanel } from "./target-match-day-panel";
+import { T1OnePageBrief } from "./t1-one-page-brief";
 import { buildWorkspaceUrl, parseWorkspaceSearch, type WorkspaceViewMode } from "./workspace-link";
 
 const MY_TEAM_STORAGE_KEY = "pmi:my-team-id";
@@ -673,6 +674,12 @@ export function RadarDashboard() {
     window.setTimeout(() => document.body.classList.remove("print-emergency"), 0);
   }
 
+  function printT1OnePageBrief() {
+    document.body.classList.add("print-t1-one-page");
+    window.print();
+    window.setTimeout(() => document.body.classList.remove("print-t1-one-page"), 0);
+  }
+
   const regions = selected ? [
     { region: "GLOBAL", pick_presence: selected.metrics.current_pick_presence, sample_eligible: true },
     ...selected.region_presence,
@@ -688,7 +695,7 @@ export function RadarDashboard() {
         <nav aria-label="주요 메뉴">
           <a className="active" href="#quick-start">빠른 시작</a>
           <a href="#team-brief">오늘 결정</a>
-          <a href="#opponent-prep">T1 상대전</a>
+          <a href="#t1-brief">T1 브리프</a>
           <a href="#creator-export">콘텐츠</a>
           {viewMode === "FULL" && <a href="#radar">전체 탐색</a>}
         </nav>
@@ -709,7 +716,7 @@ export function RadarDashboard() {
           <h1>오늘 팀이<br /><em>결정할 3가지.</em></h1>
           <p className="lede">티어표가 아니라 회의 시작점입니다. 지금 테스트할 후보, 더 지켜볼 후보, 보류할 근거를 공개 경기 데이터로 압축했습니다.</p>
           <div className="decision-hero-actions">
-            <a href="#team-brief">3분 브리프 보기</a>
+            <a href="#t1-brief">원페이지 브리프</a>
             <a href="#opponent-prep">T1 분석 바로가기</a>
           </div>
           <div className="hero-points" aria-label="분석 기준">
@@ -738,7 +745,7 @@ export function RadarDashboard() {
           <b>{viewMode === "QUICK" ? "핵심만 표시 중" : "전체 근거 표시 중"}</b>
         </header>
         <div className="quick-start-grid">
-          <a className="match" href="#target-match-day">
+          <a className="match" href="#t1-brief">
             <span><b>01</b>T1 다음 경기</span>
             <strong>{quickFixtureTitle}</strong>
             <p>{quickFixtureDetail}</p>
@@ -799,6 +806,13 @@ export function RadarDashboard() {
         <a className={selectedMyTeam ? "complete" : "locked"} href="#opponent-prep"><b>2</b><span><small>준비할 상대</small><strong>{selectedMyTeam ? `${selectedOpponent?.team_name ?? "순위 계산 중"}${isDefaultTargetSelected ? " · 기본 타깃" : ""}` : `${DEFAULT_TARGET_TEAM_NAME} 기본 타깃`}</strong></span></a>
         <a className={matchupBattlecard ? "ready" : "locked"} href="#draft-battlecard"><b>3</b><span><small>드래프트 배틀카드</small><strong>{matchupBattlecard ? "확인 준비 완료" : "상대 선택 후 생성"}</strong></span></a>
       </nav>
+
+      {targetMatchDayBrief && pinnedTargetProfile && <T1OnePageBrief
+        brief={targetMatchDayBrief}
+        profile={pinnedTargetProfile}
+        onPrint={printT1OnePageBrief}
+        onDownload={downloadTargetMatchDayBrief}
+      />}
 
       {quality.publication && quality.importQuality && <section className={`audit-notice ${quality.publication.ready_for_radar ? "ready" : "blocked"}`} aria-label="발행 데이터 품질 감사" role="status">
         <div><span>발행 데이터 감사</span><strong>전체 {quality.importQuality.discovered_game_count}경기 중 {quality.importQuality.imported_game_count}경기 사용</strong></div>
@@ -1092,7 +1106,7 @@ export function RadarDashboard() {
       <nav className="mobile-taskbar" aria-label="모바일 빠른 이동">
         <a href="#quick-start"><b>01</b><span>시작</span></a>
         <a href="#team-brief"><b>02</b><span>오늘</span></a>
-        <a href="#opponent-prep"><b>03</b><span>T1 상대전</span></a>
+        <a href="#t1-brief"><b>03</b><span>T1 브리프</span></a>
         <a href="#creator-export"><b>04</b><span>콘텐츠</span></a>
       </nav>
 

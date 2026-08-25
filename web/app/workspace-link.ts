@@ -27,6 +27,6 @@ export function buildWorkspaceUrl(currentUrl: string, state: Omit<WorkspaceLinkS
   if (state.teamId) url.searchParams.set("team", state.teamId);
   if (state.opponentId) url.searchParams.set("opponent", state.opponentId);
   url.searchParams.set("view", state.viewMode.toLowerCase());
-  url.hash = state.teamId ? "opponent-prep" : "quick-start";
+  url.hash = state.teamId ? "t1-brief" : "quick-start";
   return url.toString();
 }
