@@ -24,12 +24,12 @@ $inspection = & python -m pro_meta_intelligence audit-oe-history `
 if ($LASTEXITCODE -notin @(0, 2)) {
     throw "Existing OE archive failed integrity inspection."
 }
-$previousErrorActionPreference = $ErrorActionPreference
-$ErrorActionPreference = "Continue"
-& gh release view $DraftTag --repo $Repository --json isDraft 2>$null | Out-Null
-$releaseLookupExitCode = $LASTEXITCODE
-$ErrorActionPreference = $previousErrorActionPreference
-if ($releaseLookupExitCode -eq 0) {
+$existingDraft = & gh api "repos/$Repository/releases" --paginate `
+    --jq ".[] | select(.draft == true and .tag_name == `"$DraftTag`") | .id"
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to inspect existing draft releases."
+}
+if ($existingDraft) {
     throw "Bootstrap draft release already exists: $DraftTag"
 }
 
@@ -47,6 +47,7 @@ $report = Join-Path $temporaryRoot "pack-report.json"
 $keyBytes = New-Object byte[] 32
 $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
 $releaseCreated = $false
+$releaseId = $null
 $completed = $false
 try {
     $rng.GetBytes($keyBytes)
@@ -66,20 +67,28 @@ try {
         throw "Failed to configure the GitHub archive secret."
     }
 
-    & gh release create $DraftTag `
-        --repo $Repository `
-        --draft `
-        --title "Encrypted OE history bootstrap" `
-        --notes "Temporary encrypted bootstrap. Delete after the first hosted artifact succeeds."
+    $releaseJson = & gh api --method POST "repos/$Repository/releases" `
+        -f tag_name=$DraftTag `
+        -f name="Encrypted OE history bootstrap" `
+        -f body="Temporary encrypted bootstrap. Delete after the first hosted artifact succeeds." `
+        -F draft=true
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create the bootstrap draft release."
     }
+    $release = $releaseJson | ConvertFrom-Json
+    $releaseId = $release.id
+    if (-not $releaseId) {
+        throw "GitHub did not return a bootstrap draft release ID."
+    }
     $releaseCreated = $true
-    & gh release upload $DraftTag $encrypted --repo $Repository
+    & gh api --method POST `
+        -H "Content-Type: application/octet-stream" `
+        --input $encrypted `
+        "https://uploads.github.com/repos/$Repository/releases/$releaseId/assets?name=oe-private-history-bootstrap.pmi"
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to upload the encrypted bootstrap asset."
     }
-    & gh api "repos/$Repository/releases/tags/$DraftTag" `
+    & gh api "repos/$Repository/releases/$releaseId" `
         --jq '.assets[] | select(.name == "oe-private-history-bootstrap.pmi") | {id, name, size, url}'
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to resolve the uploaded bootstrap asset ID."
@@ -87,8 +96,8 @@ try {
     $completed = $true
 }
 finally {
-    if ($releaseCreated -and -not $completed) {
-        & gh release delete $DraftTag --repo $Repository --yes --cleanup-tag 2>$null
+    if ($releaseCreated -and -not $completed -and $releaseId) {
+        & gh api --method DELETE "repos/$Repository/releases/$releaseId" 2>$null
     }
     $rng.Dispose()
     Remove-Item Env:OE_ARCHIVE_KEY -ErrorAction SilentlyContinue
