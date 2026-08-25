@@ -2,6 +2,7 @@
 
 import type { ProductSpace } from "./product-space";
 import { productRootHref, productSpaceHref } from "./product-space";
+import type { AIValidationStatus } from "./ai-validation";
 
 type ProductHomeProps = {
   currentSpace: ProductSpace;
@@ -11,9 +12,10 @@ type ProductHomeProps = {
   fixtureTitle: string;
   fixtureDetail: string;
   feedLabel: string;
+  aiValidation: AIValidationStatus | null;
 };
 
-export function ProductHome({ currentSpace, patchId, teamCount, reviewCount, fixtureTitle, fixtureDetail, feedLabel }: ProductHomeProps) {
+export function ProductHome({ currentSpace, patchId, teamCount, reviewCount, fixtureTitle, fixtureDetail, feedLabel, aiValidation }: ProductHomeProps) {
   const rootHref = productRootHref(currentSpace);
   return <main className="product-home">
     <header className="home-topbar">
@@ -25,6 +27,12 @@ export function ProductHome({ currentSpace, patchId, teamCount, reviewCount, fix
     <section className="home-hero">
       <div className="home-hero-copy"><span>PUBLIC EVIDENCE · TEAM DECISIONS</span><h1>보고 싶은 분야부터<br /><em>바로 시작하세요.</em></h1><p>복잡한 통계 한 화면 대신 목적별 작업실로 나눴습니다. 공개 경기 근거와 모르는 것의 경계는 모든 페이지에서 동일하게 유지됩니다.</p><div><a href={productSpaceHref(currentSpace, "T1")}>T1 원페이지 브리프</a><a href={productSpaceHref(currentSpace, "TEAM")}>내 팀 기준 분석</a></div><small>계정 연결 없음 · 공개 데이터만 사용 · 독립 분석 서비스</small></div>
       <figure><img src={`${rootHref}meta-radar-hero-v2.png`} alt="지역별 메타 신호가 분석 후보로 모이는 일러스트" /><figcaption><span>PATCH {patchId}</span><b>{reviewCount} REVIEW SIGNALS</b></figcaption></figure>
+    </section>
+
+    <section className={`home-ai-status ${aiValidation?.ai_features_enabled ? "validated" : "locked"}`} aria-label="AI 검증 상태">
+      <div><span>AI RELEASE GATE</span><h2>{aiValidation?.ai_features_enabled ? "사람 비교 검증 통과" : "검증 전 AI 기능 잠금"}</h2><p>정확도·치명적 오류·근거 경계·시간 절감을 같은 숨김 과제에서 사람과 비교합니다.</p></div>
+      <dl><div><dt>쌍대 표본</dt><dd>{aiValidation?.paired_holdout_case_count ?? 0} / {aiValidation?.policy.minimum_paired_holdout_cases ?? 30}</dd></div><div><dt>현재 경로</dt><dd>{aiValidation?.ai_features_enabled ? "검증 AI + 사람 승인" : "결정론적 분석"}</dd></div></dl>
+      <a href={productSpaceHref(currentSpace, "CREATOR")}>검증 기준 보기 →</a>
     </section>
 
     <section className="home-live-strip" aria-label="현재 공개 데이터 상태">

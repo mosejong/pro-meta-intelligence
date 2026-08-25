@@ -1,0 +1,119 @@
+{
+  "ai_features_enabled": false,
+  "artifact_type": "ai-human-validation-status",
+  "boundary": "AI output is withheld unless the same hidden cases show noninferior accuracy, zero critical errors, complete boundary retention, and measured human time savings.",
+  "dataset_fingerprint": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "evaluated_at": "2026-08-25T12:00:00+00:00",
+  "evaluation_mode": "PAIRED_HUMAN_HOLDOUT",
+  "failed_gates": [
+    "PAIRED_HOLDOUT_SAMPLE",
+    "CLAIM_ACCURACY_NONINFERIOR",
+    "EVIDENCE_ACCURACY_NONINFERIOR",
+    "BOUNDARY_RETENTION",
+    "HUMAN_TIME_SAVED",
+    "SYSTEM_VERSION_PINNED"
+  ],
+  "gates": [
+    {
+      "id": "PAIRED_HOLDOUT_SAMPLE",
+      "observed": 0,
+      "passed": false,
+      "required": { "minimum": 30, "split": "HOLDOUT" }
+    },
+    {
+      "id": "ZERO_CRITICAL_ERRORS",
+      "observed": 0,
+      "passed": true,
+      "required": { "maximum": 0 }
+    },
+    {
+      "id": "CLAIM_ACCURACY_NONINFERIOR",
+      "observed": { "ai_f1": 0.0, "delta": 0.0, "human_f1": 0.0 },
+      "passed": false,
+      "required": { "minimum_ai_f1": 0.9, "minimum_delta": -0.02 }
+    },
+    {
+      "id": "EVIDENCE_ACCURACY_NONINFERIOR",
+      "observed": { "ai_f1": 0.0, "delta": 0.0, "human_f1": 0.0 },
+      "passed": false,
+      "required": { "minimum_ai_f1": 0.9, "minimum_delta": -0.02 }
+    },
+    {
+      "id": "BOUNDARY_RETENTION",
+      "observed": 0.0,
+      "passed": false,
+      "required": { "minimum": 1.0 }
+    },
+    {
+      "id": "HUMAN_TIME_SAVED",
+      "observed": {
+        "accepted_without_edit_rate": 0.0,
+        "ai_faster_case_rate": 0.0,
+        "median_time_ratio": null
+      },
+      "passed": false,
+      "required": {
+        "maximum_median_time_ratio": 0.5,
+        "minimum_accepted_without_edit_rate": 0.8,
+        "minimum_ai_faster_case_rate": 0.8
+      }
+    },
+    {
+      "id": "SYSTEM_VERSION_PINNED",
+      "observed": false,
+      "passed": false,
+      "required": "provider, model, model_version, and prompt_version are nonempty"
+    }
+  ],
+  "metrics": {
+    "ai": {
+      "accepted_without_edit_rate": 0.0,
+      "boundary_recall": 0.0,
+      "claim_f1": 0.0,
+      "claim_precision": 0.0,
+      "claim_recall": 0.0,
+      "critical_error_count": 0,
+      "critical_error_rate": 0.0,
+      "evidence_f1": 0.0,
+      "evidence_precision": 0.0,
+      "evidence_recall": 0.0,
+      "median_duration_seconds": null
+    },
+    "human": {
+      "accepted_without_edit_rate": 0.0,
+      "boundary_recall": 0.0,
+      "claim_f1": 0.0,
+      "claim_precision": 0.0,
+      "claim_recall": 0.0,
+      "critical_error_count": 0,
+      "critical_error_rate": 0.0,
+      "evidence_f1": 0.0,
+      "evidence_precision": 0.0,
+      "evidence_recall": 0.0,
+      "median_duration_seconds": null
+    },
+    "paired_comparison": {
+      "ai_faster_case_rate": 0.0,
+      "claim_f1_delta": 0.0,
+      "evidence_f1_delta": 0.0,
+      "median_time_ratio": null
+    }
+  },
+  "next_action": "COLLECT_PAIRED_HUMAN_HOLDOUTS",
+  "paired_holdout_case_count": 0,
+  "policy": {
+    "maximum_critical_error_count": 0,
+    "maximum_median_time_ratio": 0.5,
+    "minimum_accepted_without_edit_rate": 0.8,
+    "minimum_claim_f1": 0.9,
+    "minimum_evidence_f1": 0.9,
+    "minimum_faster_case_rate": 0.8,
+    "minimum_paired_holdout_cases": 30,
+    "noninferiority_margin": 0.02,
+    "required_boundary_recall": 1.0
+  },
+  "schema_version": "1",
+  "status": "NOT_VALIDATED",
+  "system_fingerprint": null,
+  "task_type": "EVIDENCE_LOCKED_BRIEF"
+}

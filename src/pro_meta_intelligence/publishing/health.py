@@ -91,6 +91,7 @@ def assess_publication_watchdog(
     history_status: dict[str, Any] | None,
     decision_outcomes: dict[str, Any] | None,
     schedule_feed: dict[str, Any] | None,
+    ai_validation: dict[str, Any] | None,
     *,
     checked_at: datetime | None = None,
     maximum_radar_age_hours: float = 50,
@@ -119,6 +120,7 @@ def assess_publication_watchdog(
         _decision_outcomes_artifact_check(decision_outcomes),
         _history_outcomes_pair_check(history_status, decision_outcomes),
         _schedule_publication_check(schedule_feed),
+        _ai_validation_artifact_check(ai_validation),
         _freshness_check(
             "RADAR_PUBLICATION_FRESHNESS",
             current_feed.get("cutoff") if isinstance(current_feed, dict) else None,
@@ -138,6 +140,7 @@ def assess_publication_watchdog(
                 "history": history_status,
                 "decision_outcomes": decision_outcomes,
                 "schedule": schedule_feed,
+                "ai_validation": ai_validation,
             }
         ),
     ]
@@ -167,6 +170,9 @@ def assess_publication_watchdog(
             else None,
             "schedule_retrieved_at": schedule_feed.get("retrieved_at")
             if isinstance(schedule_feed, dict)
+            else None,
+            "ai_validation_status": ai_validation.get("status")
+            if isinstance(ai_validation, dict)
             else None,
         },
         "boundary": (
@@ -335,6 +341,135 @@ def _schedule_publication_check(schedule_feed: dict[str, Any] | None) -> dict[st
             and bool(re.fullmatch(r"sha256:[0-9a-f]{64}", content_hash)),
         },
         "versioned official schedule snapshot with events list and SHA-256 content hash",
+    )
+
+
+def _ai_validation_artifact_check(ai_validation: dict[str, Any] | None) -> dict[str, Any]:
+    expected_gate_ids = {
+        "PAIRED_HOLDOUT_SAMPLE",
+        "ZERO_CRITICAL_ERRORS",
+        "CLAIM_ACCURACY_NONINFERIOR",
+        "EVIDENCE_ACCURACY_NONINFERIOR",
+        "BOUNDARY_RETENTION",
+        "HUMAN_TIME_SAVED",
+        "SYSTEM_VERSION_PINNED",
+    }
+    if not isinstance(ai_validation, dict):
+        return _check(
+            "AI_VALIDATION_STATUS_VALID",
+            False,
+            {"present": False},
+            "public-safe, fail-closed AI validation status",
+        )
+    gates = ai_validation.get("gates")
+    gate_ids = (
+        {gate.get("id") for gate in gates if isinstance(gate, dict)}
+        if isinstance(gates, list)
+        else set()
+    )
+    gates_valid = (
+        isinstance(gates, list)
+        and len(gates) == len(expected_gate_ids)
+        and gate_ids == expected_gate_ids
+        and all(
+            isinstance(gate, dict)
+            and isinstance(gate.get("passed"), bool)
+            and "observed" in gate
+            and "required" in gate
+            for gate in gates
+        )
+    )
+    gates_by_id = (
+        {
+            gate["id"]: gate
+            for gate in gates
+            if isinstance(gate, dict) and isinstance(gate.get("id"), str)
+        }
+        if isinstance(gates, list)
+        else {}
+    )
+    status = ai_validation.get("status")
+    enabled = ai_validation.get("ai_features_enabled")
+    case_count = ai_validation.get("paired_holdout_case_count")
+    policy = ai_validation.get("policy")
+    minimum_cases = policy.get("minimum_paired_holdout_cases") if isinstance(policy, dict) else None
+    sample_gate = gates_by_id.get("PAIRED_HOLDOUT_SAMPLE")
+    sample_consistent = (
+        type(case_count) is int
+        and case_count >= 0
+        and type(minimum_cases) is int
+        and minimum_cases > 0
+        and isinstance(sample_gate, dict)
+        and sample_gate.get("observed") == case_count
+        and isinstance(sample_gate.get("required"), dict)
+        and sample_gate["required"].get("minimum") == minimum_cases
+        and sample_gate.get("passed") is (case_count >= minimum_cases)
+    )
+    failed_gates = ai_validation.get("failed_gates")
+    expected_failed_gates = (
+        [gate["id"] for gate in gates if isinstance(gate, dict) and gate.get("passed") is False]
+        if isinstance(gates, list)
+        else []
+    )
+    failure_list_consistent = failed_gates == expected_failed_gates
+    lifecycle_valid = (
+        (
+            status == "VALIDATED"
+            and enabled is True
+            and gates_valid
+            and sample_consistent
+            and all(gate["passed"] for gate in gates)
+        )
+        or (
+            status == "NOT_VALIDATED"
+            and enabled is False
+            and gates_valid
+            and sample_consistent
+            and sample_gate["passed"] is False
+            and any(not gate["passed"] for gate in gates)
+        )
+        or (
+            status == "REJECTED"
+            and enabled is False
+            and gates_valid
+            and sample_consistent
+            and sample_gate["passed"] is True
+            and any(not gate["passed"] for gate in gates)
+        )
+    )
+    dataset_fingerprint = ai_validation.get("dataset_fingerprint")
+    system_fingerprint = ai_validation.get("system_fingerprint")
+    fingerprints_valid = (
+        isinstance(dataset_fingerprint, str)
+        and bool(re.fullmatch(r"sha256:[0-9a-f]{64}", dataset_fingerprint))
+        and (
+            system_fingerprint is None
+            or isinstance(system_fingerprint, str)
+            and bool(re.fullmatch(r"sha256:[0-9a-f]{64}", system_fingerprint))
+        )
+        and (status != "VALIDATED" or system_fingerprint is not None)
+    )
+    passed = (
+        ai_validation.get("schema_version") == "1"
+        and ai_validation.get("artifact_type") == "ai-human-validation-status"
+        and ai_validation.get("evaluation_mode") == "PAIRED_HUMAN_HOLDOUT"
+        and type(ai_validation.get("paired_holdout_case_count")) is int
+        and ai_validation["paired_holdout_case_count"] >= 0
+        and failure_list_consistent
+        and lifecycle_valid
+        and fingerprints_valid
+    )
+    return _check(
+        "AI_VALIDATION_STATUS_VALID",
+        passed,
+        {
+            "status": status,
+            "ai_features_enabled": enabled,
+            "paired_holdout_case_count": case_count,
+            "gate_count": len(gates) if isinstance(gates, list) else 0,
+            "failure_list_consistent": failure_list_consistent,
+        },
+        "paired human holdout status that enables AI only when every release gate passes",
     )
 
 
@@ -680,6 +815,8 @@ def _public_watchdog_next_action(failed: list[str]) -> str:
         return "RESTORE_PAIRED_DECISION_OUTCOMES"
     if "SCHEDULE_FEED_READY" in failed:
         return "RESTORE_SCHEDULE_FEED"
+    if "AI_VALIDATION_STATUS_VALID" in failed:
+        return "RESTORE_FAIL_CLOSED_AI_STATUS"
     if "RADAR_PUBLICATION_FRESHNESS" in failed:
         return "RUN_OE_SYNC_NOW"
     if "SCHEDULE_PUBLICATION_FRESHNESS" in failed:

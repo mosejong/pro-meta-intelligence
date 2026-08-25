@@ -10,6 +10,7 @@ from pathlib import Path
 from time import perf_counter
 from typing import Any
 
+from pro_meta_intelligence.ai_validation import AIValidationPolicy, evaluate_ai_against_human
 from pro_meta_intelligence.backtest import (
     BacktestHarness,
     OEBlindSpotConfig,
@@ -233,6 +234,19 @@ def build_parser() -> argparse.ArgumentParser:
     decision_outcomes.add_argument("--feed-dir", type=Path, default=Path("web/public/feed"))
     decision_outcomes.add_argument("--output", type=Path, help="optional JSON summary path")
 
+    ai_validation = subparsers.add_parser(
+        "evaluate-ai-assistant",
+        help="compare structured AI outputs with humans on the same hidden holdout cases",
+    )
+    ai_validation.add_argument("--input", type=Path, required=True)
+    ai_validation.add_argument(
+        "--minimum-paired-cases",
+        type=int,
+        default=30,
+        help="minimum paired HOLDOUT cases required before AI can be enabled",
+    )
+    ai_validation.add_argument("--output", type=Path, help="public-safe aggregate report path")
+
     oe_sync = subparsers.add_parser(
         "sync-oe-feed",
         help="fetch or reuse the reviewed OE CSV and publish an audited Meta Radar feed",
@@ -371,6 +385,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _benchmark_oe_history(args)
     if args.command == "build-decision-outcomes":
         return _build_decision_outcomes(args)
+    if args.command == "evaluate-ai-assistant":
+        return _evaluate_ai_assistant(args)
     if args.command == "sync-oe-feed":
         return _sync_oe_feed(args)
     if args.command == "check-oe-feed-health":
@@ -1085,12 +1101,25 @@ def _check_publication_watchdog(args: argparse.Namespace) -> int:
         _read_json_object(args.feed_dir / "history-status.json"),
         _read_json_object(args.feed_dir / "decision-outcomes.json"),
         _read_json_object(args.feed_dir / "schedule.json"),
+        _read_json_object(args.feed_dir / "ai-validation.json"),
         checked_at=parse_datetime(args.now) if args.now else datetime.now(UTC),
         maximum_radar_age_hours=args.maximum_radar_age_hours,
         maximum_schedule_age_hours=args.maximum_schedule_age_hours,
     )
     _emit(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
     return 0 if report["healthy"] else 2
+
+
+def _evaluate_ai_assistant(args: argparse.Namespace) -> int:
+    run = _read_json_object(args.input)
+    if run is None:
+        raise ValueError(f"AI evaluation input must be a JSON object: {args.input}")
+    report = evaluate_ai_against_human(
+        run,
+        AIValidationPolicy(minimum_paired_holdout_cases=args.minimum_paired_cases),
+    )
+    _emit(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    return 0 if report["status"] == "VALIDATED" else 2
 
 
 def _build_decision_outcomes(args: argparse.Namespace) -> int:

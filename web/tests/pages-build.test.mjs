@@ -29,6 +29,8 @@ test("copies the same-origin feed and social card", async () => {
   const history = JSON.parse(historyText);
   const outcomesText = await readFile(new URL("feed/decision-outcomes.json", root), "utf8");
   const outcomes = JSON.parse(outcomesText);
+  const aiValidationText = await readFile(new URL("feed/ai-validation.json", root), "utf8");
+  const aiValidation = JSON.parse(aiValidationText);
   const scheduleText = await readFile(new URL("feed/schedule.json", root), "utf8");
   const schedule = JSON.parse(scheduleText);
   const scheduleChangesText = await readFile(new URL("feed/schedule-changes.json", root), "utf8");
@@ -56,6 +58,11 @@ test("copies the same-origin feed and social card", async () => {
   assert.equal(outcomes.as_of, history.as_of);
   assert.equal(outcomes.benchmark_ready, history.benchmark_ready);
   assert.deepEqual(outcomes.evaluations, []);
+  assert.equal(aiValidation.artifact_type, "ai-human-validation-status");
+  assert.equal(aiValidation.status, "NOT_VALIDATED");
+  assert.equal(aiValidation.ai_features_enabled, false);
+  assert.equal(aiValidation.paired_holdout_case_count, 0);
+  assert.equal(aiValidation.gates.length, 7);
   assert.equal(schedule.artifact_type, "pro-schedule-snapshot");
   assert.ok(schedule.events.length > 0);
   assert.equal(scheduleChanges.artifact_type, "pro-schedule-change-log");
@@ -69,6 +76,7 @@ test("copies the same-origin feed and social card", async () => {
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(historyText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(outcomesText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
+  assert.doesNotMatch(aiValidationText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(scheduleText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(scheduleChangesText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(creatorText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);

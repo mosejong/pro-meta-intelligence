@@ -3,7 +3,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_isolated_publisher_has_a_six_file_allowlist_and_no_force_push() -> None:
+def test_isolated_publisher_has_a_seven_file_allowlist_and_no_force_push() -> None:
     script = (ROOT / "ops" / "windows" / "publish-oe-feed.ps1").read_text(encoding="utf-8")
 
     assert '"web/public/feed/current.json"' in script
@@ -12,7 +12,8 @@ def test_isolated_publisher_has_a_six_file_allowlist_and_no_force_push() -> None
     assert '"web/public/feed/schedule-changes.json"' in script
     assert '"web/public/feed/current-creator.json"' in script
     assert '"web/public/feed/decision-outcomes.json"' in script
-    assert "Publish six allowlisted public feed artifacts" in script
+    assert '"web/public/feed/ai-validation.json"' in script
+    assert "Publish seven allowlisted public feed artifacts" in script
     assert "worktree add --detach --lock" in script
     assert 'push $RemoteName "HEAD:$PublishBranch"' in script
     assert "--force" not in script

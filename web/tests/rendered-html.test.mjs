@@ -33,6 +33,9 @@ test("server-renders the onboarding home as a focused product entry", async () =
   assert.match(html, /T1 원페이지 브리프/);
   assert.match(html, /CREATOR STUDIO/);
   assert.match(html, /전체 메타 탐색/);
+  assert.match(html, /AI RELEASE GATE/);
+  assert.match(html, /검증 전 AI 기능 잠금/);
+  assert.match(html, /결정론적 분석/);
   assert.match(html, /href="\.\/team\/"/);
   assert.match(html, /href="\.\/t1\/"/);
   assert.match(html, /href="\.\/creator\/"/);
@@ -1071,6 +1074,31 @@ test("ships a normalized official schedule companion feed", async () => {
   assert.ok(Array.isArray(changes.history));
   assert.doesNotMatch(JSON.stringify(schedule), /chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(changesText, /chatgpt|openai|gpt login|sign in/i);
+});
+
+test("ships a fail-closed human-paired AI validation status", async () => {
+  const text = await readFile(new URL("public/feed/ai-validation.json", templateRoot), "utf8");
+  const status = JSON.parse(text);
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+  try {
+    const { isAIValidationStatus } = await vite.ssrLoadModule("/app/ai-validation.ts");
+    assert.equal(isAIValidationStatus(status), true);
+  } finally {
+    await vite.close();
+  }
+  assert.equal(status.status, "NOT_VALIDATED");
+  assert.equal(status.ai_features_enabled, false);
+  assert.equal(status.paired_holdout_case_count, 0);
+  assert.equal(status.gates.length, 7);
+  assert.equal(status.next_action, "COLLECT_PAIRED_HUMAN_HOLDOUTS");
+  assert.doesNotMatch(text, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
 });
 
 test("starter preview files are removed", async () => {

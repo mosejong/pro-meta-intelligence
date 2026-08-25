@@ -57,7 +57,7 @@ stalled collector.
 
 `.github/workflows/production-watchdog.yml` checks the independently served GitHub Pages artifacts
 every six hours. It does not trust the repository checkout as proof of production health. The job
-downloads the live Radar, Creator, history, decision-outcome, and official-schedule heads with bounded response sizes,
+downloads the live Radar, Creator, history, decision-outcome, official-schedule, and AI-validation heads with bounded response sizes,
 retries transient HTTP failures, and runs `check-publication-watchdog` against those downloaded
 bytes.
 
@@ -67,6 +67,7 @@ The public watchdog fails closed when:
 - the Radar and Creator patch/cutoff pair differs;
 - the history status does not belong to the current Radar cutoff;
 - the decision-outcome contract is invalid or does not match the history `as_of` and readiness;
+- the AI validation status is missing, malformed, or enables AI before every paired-human gate passes;
 - Radar data is older than 50 hours or schedule data is older than 30 hours;
 - a public artifact contains a local path, provider CSV reference, or product-login branding; or
 - any required public endpoint cannot be downloaded.
@@ -133,7 +134,7 @@ first operational rollout observable and reversible.
 
 `publish-oe-feed.ps1` uses a locked, detached Git worktree outside the developer checkout. It first
 runs the health gate, fetches the remote publication branch, refuses a dirty publisher worktree, and
-copies exactly six allowlisted artifacts:
+copies exactly seven allowlisted artifacts:
 
 - `web/public/feed/current.json`
 - `web/public/feed/current-creator.json`
@@ -141,6 +142,7 @@ copies exactly six allowlisted artifacts:
 - `web/public/feed/decision-outcomes.json`
 - `web/public/feed/schedule.json`
 - `web/public/feed/schedule-changes.json`
+- `web/public/feed/ai-validation.json`
 
 It stages those exact paths, rejects any unexpected staged file, creates no commit when bytes are
 unchanged, and performs a normal fast-forward push. It never force-pushes and never copies the raw
