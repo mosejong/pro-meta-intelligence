@@ -14,6 +14,12 @@ The dashboard generates the deterministic `target-match-day-brief` artifact in t
 contains the fixture state, readiness checks, preparation questions, evidence IDs, and source
 hashes and can be downloaded as JSON.
 
+When the selected own team is part of the confirmed fixture, the same artifact also contains a
+`confirmed-opponent-lane-report`. It produces five deterministic lane records and orders them for
+staff review. If T1 is selected as the own team, the report resolves the confirmed other participant
+back to an exact published team identity; if another team is selected in a direct T1 fixture, T1 is
+the opponent. A TBD or unrelated fixture produces no lane report.
+
 ## Fixture relationship states
 
 - `CONFIRMED_HEAD_TO_HEAD`: the selected own team and T1 both appear in the same official event.
@@ -60,6 +66,29 @@ The UI presents these checks independently:
 A missing historical series ID does not hide the official future fixture. Conversely, the official
 fixture event ID is not retroactively treated as an Oracle's Elixir historical series ID.
 
+## Confirmed opponent lane report
+
+Each of `TOP`, `JUNGLE`, `MID`, `BOTTOM`, and `SUPPORT` receives a transparent review score composed
+of four bounded parts:
+
+- shared champion-role pool: `15 + 20 × mean(own rate, opponent rate)`, capped at 35,
+- opponent-ban overlap with the own team's role pick:
+  `12 + 18 × mean(own pick rate, opponent ban rate)`, capped at 30,
+- opponent role-pick frequency: `8 + 17 × opponent pick rate`, capped at 25,
+- opponent phase-one frequency: `4 + 2 × phase-one count`, capped at 10.
+
+A component is zero when its corresponding public signal is absent. The fixed nonzero base for an
+observed collision prevents a small recent-game denominator from making every concrete collision
+look operationally identical to no collision; the rate term still orders strength within that signal.
+When a lane has multiple champions in one component, the highest single-champion component value is
+used and every displayed champion keeps its own evidence IDs.
+
+The sum orders lanes into `P1` (60+), `P2` (30–59), and `P3` (below 30). This is a review queue, not
+a calibrated probability or lane-outcome prediction. Every lane keeps its contributing draft-event
+IDs, player names only when the current public profile exists, observed reasons, and staff questions.
+The player-profile enrichment remains target-bounded, so a confirmed fixture can correctly report
+`LIMITED` while retaining usable team-level draft collisions instead of inventing the missing side.
+
 ## Current published state
 
 At the 2026-08-25 schedule retrieval, the normalized official source contains a T1 LCK Playoffs
@@ -77,3 +106,5 @@ profile.
 - Schedule event IDs and historical game/series IDs remain separate namespaces.
 - Change alerts are normalized schedule differences, not a claim about why Riot or a tournament
   operator changed a fixture.
+- Lane review scores do not claim player form, matchup strength, win probability, or a required
+  pick/ban action.

@@ -1,3 +1,7 @@
+/* eslint-disable @next/next/no-img-element -- champion assets are served from Riot Data Dragon in both builds */
+
+import { championImageUrl } from "./champion-assets";
+import type { ConfirmedLaneSignal, LaneRole } from "./confirmed-opponent-lane-report";
 import type { TargetMatchDayBrief } from "./target-match-day";
 
 const statusLabels: Record<TargetMatchDayBrief["readiness"]["status"], string> = {
@@ -16,6 +20,40 @@ const relationshipLabels: Record<TargetMatchDayBrief["fixture"]["relationship"],
   NO_UPCOMING_FIXTURE: "예정 경기 없음",
   SCHEDULE_UNAVAILABLE: "일정 미연결",
 };
+
+const roleLabels: Record<LaneRole, string> = {
+  TOP: "탑",
+  JUNGLE: "정글",
+  MID: "미드",
+  BOTTOM: "바텀",
+  SUPPORT: "서포터",
+};
+
+function percentage(value: number | null) {
+  return value === null ? "—" : `${Math.round(value * 100)}%`;
+}
+
+function LaneSignalGroup({
+  label,
+  items,
+  mode,
+}: {
+  label: string;
+  items: ConfirmedLaneSignal[];
+  mode: "CONTESTED" | "PROTECT" | "OPPONENT";
+}) {
+  return <div className="lane-signal-group">
+    <span>{label}</span>
+    {items.length ? <div>{items.slice(0, 3).map((item) => <article key={`${mode}:${item.champion_id}`}>
+      <img src={championImageUrl(item.champion_id)} alt="" loading="lazy" />
+      <p><strong>{item.champion_id}</strong><small>{mode === "CONTESTED"
+        ? `우리 ${percentage(item.own_game_rate)} · 상대 ${percentage(item.opponent_game_rate)}`
+        : mode === "PROTECT"
+          ? `우리 ${percentage(item.own_game_rate)} · 상대 밴 ${percentage(item.opponent_ban_rate)}`
+          : `상대 ${percentage(item.opponent_game_rate)}`}</small></p>
+    </article>)}</div> : <em>직접 신호 없음</em>}
+  </div>;
+}
 
 function fixtureTime(value: string | null) {
   if (!value) return "시간 미정";
@@ -94,8 +132,43 @@ export function TargetMatchDayPanel({
       </article>
     </div>
 
+    {brief.confirmed_matchup ? <section className="confirmed-matchup" aria-label="확정 상대 라인별 충돌 보고서">
+      <header className="confirmed-matchup-head">
+        <div><span>CONFIRMED OPPONENT COLLISION</span><h4>{brief.confirmed_matchup.own_team.team_name} vs {brief.confirmed_matchup.opponent.team_name} · 라인 검토 순서</h4><p>공통 챔피언 풀, 상대 밴 압력, 역할 우선 픽과 1페이즈 빈도를 합쳐 먼저 볼 라인을 정렬합니다.</p></div>
+        <div><b className={brief.confirmed_matchup.status.toLowerCase()}>{brief.confirmed_matchup.status === "READY" ? "PLAYER + DRAFT READY" : "TEAM-LEVEL LIMITED"}</b><span>{brief.confirmed_matchup.quality.lanes_with_draft_signals}/5 LANES WITH SIGNALS</span></div>
+      </header>
+      <div className="confirmed-matchup-summary">
+        <article><span>P1 검토 라인</span><strong>{brief.confirmed_matchup.lanes.filter((lane) => lane.review_tier === "P1").length}</strong><small>60점 이상 · 승률 예측 아님</small></article>
+        <article><span>양쪽 선수 확인 라인</span><strong>{brief.confirmed_matchup.quality.lanes_with_player_names}</strong><small>최근 공개 경기의 CURRENT 표기</small></article>
+        <article><span>공개 근거 경기</span><strong>{brief.confirmed_matchup.evidence.match_ids.length}</strong><small>{brief.confirmed_matchup.evidence.draft_event_ids.length}개 드래프트 이벤트</small></article>
+      </div>
+      <div className="lane-collision-list">{brief.confirmed_matchup.lanes.map((lane) => <article className={`lane-collision ${lane.review_tier.toLowerCase()}`} key={lane.role}>
+        <header>
+          <span className="lane-review-rank">0{lane.review_rank}</span>
+          <div><small>{lane.review_tier} REVIEW</small><h5>{roleLabels[lane.role]}</h5></div>
+          <strong>{lane.review_score}<small>/100</small></strong>
+        </header>
+        <div className="lane-player-pair">
+          <p><span>{brief.confirmed_matchup.own_team.team_name}</span><strong>{lane.own_players.map((player) => player.player_name).join(" · ") || "선수 프로필 제한"}</strong></p>
+          <b>VS</b>
+          <p><span>{brief.confirmed_matchup.opponent.team_name}</span><strong>{lane.opponent_players.map((player) => player.player_name).join(" · ") || "선수 프로필 제한"}</strong></p>
+        </div>
+        <div className="lane-signal-groups">
+          <LaneSignalGroup label="공통 풀" items={lane.contested} mode="CONTESTED" />
+          <LaneSignalGroup label="보호 자원" items={lane.protect} mode="PROTECT" />
+          <LaneSignalGroup label="상대 우선" items={lane.opponent_priority} mode="OPPONENT" />
+        </div>
+        <div className="lane-review-question"><span>STAFF CHECK</span><p>{lane.staff_questions[0]}</p><small>{lane.evidence_ids.length}개 공개 근거 · {lane.reasons[0] ?? "직접 충돌 표본 제한"}</small></div>
+      </article>)}</div>
+      <footer><b>해석 경계</b><p>{brief.confirmed_matchup.quality.limitations.join(" · ")}</p><span>{brief.confirmed_matchup.priority_lane_order.map((role) => roleLabels[role]).join(" → ")}</span></footer>
+    </section> : <section className="confirmed-matchup-wait" aria-label="확정 상대 보고서 대기 상태">
+      <div><span>5-LANE REPORT ARMED</span><h4>상대 확정 시 라인별 충돌 보고서 자동 생성</h4></div>
+      <p>현재는 공식 상대가 확정되지 않았거나 선택한 내 팀의 직접 대진이 아닙니다. 브래킷을 추정하지 않고, 확정된 팀 ID만 공개 경기 데이터와 연결합니다.</p>
+      <b>WAITING FOR VERIFIED OPPONENT</b>
+    </section>}
+
     <footer className="target-match-day-boundary">
-      <div><b>현재 미확정</b><p>{brief.unknowns.join(" · ")}</p></div>
+      <div><b>{brief.confirmed_matchup ? "공개 데이터 경계" : "현재 미확정"}</b><p>{brief.unknowns.join(" · ")}</p></div>
       <span>{brief.evidence.schedule_event_id ? "SCHEDULE VERIFIED" : "SCHEDULE WAIT"} · {brief.evidence.opponent_match_ids.length} MATCHES</span>
     </footer>
   </section>;

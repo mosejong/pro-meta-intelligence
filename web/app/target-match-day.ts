@@ -1,3 +1,4 @@
+import { buildConfirmedOpponentMatchup, type ConfirmedOpponentMatchup } from "./confirmed-opponent-lane-report";
 import type { OpponentTeam, RadarReport, ScheduleChangeLog, ScheduleEvent, ScheduleParticipant, ScheduleSnapshot } from "./radar-types";
 import type { TargetProfile } from "./target-profile";
 
@@ -61,6 +62,7 @@ export type TargetMatchDayBrief = {
       summary: string;
     } | null;
   };
+  confirmed_matchup: ConfirmedOpponentMatchup | null;
   prepare_now: Array<{
     type: "PICK" | "BAN" | "PATCH_SHIFT" | "MATCHUP";
     title: string;
@@ -204,6 +206,14 @@ export function buildTargetMatchDayBrief(
   const readiness = readinessStatus(relationship);
   const seriesAvailable = target.series_tracking?.provider_series_id_available ?? false;
   const latestChange = scheduleChanges?.latest_run.changes[0] ?? scheduleChanges?.history[0] ?? null;
+  const confirmedMatchup = buildConfirmedOpponentMatchup(
+    report,
+    target,
+    ownTeam,
+    fixture,
+    relationship,
+    otherParticipant,
+  );
 
   return {
     schema_version: "1",
@@ -283,6 +293,7 @@ export function buildTargetMatchDayBrief(
         summary: latestChange.summary,
       } : null,
     },
+    confirmed_matchup: confirmedMatchup,
     prepare_now: prepareNow(target, profile),
     unknowns: [
       ...(relationship === "PARTICIPANT_TBD" ? ["공식 일정의 T1 상대가 아직 TBD입니다."] : []),
