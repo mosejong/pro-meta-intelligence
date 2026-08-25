@@ -33,6 +33,7 @@ $archiveDir = Join-Path $resolvedRoot "outputs\oracles-elixir\raw"
 $scheduleArchiveDir = Join-Path $resolvedRoot "outputs\lolesports\raw"
 $feedDir = Join-Path $resolvedRoot "web\public\feed"
 $scheduleOutput = Join-Path $feedDir "schedule.json"
+$scheduleChangesOutput = Join-Path $feedDir "schedule-changes.json"
 $syncOutput = Join-Path $runDir "latest-sync.json"
 $healthOutput = Join-Path $runDir "health.json"
 $schedulerLog = Join-Path $runDir "scheduler.log"
@@ -68,7 +69,9 @@ try {
         "--league", "msi",
         "--league", "worlds",
         "--archive-dir", $scheduleArchiveDir,
-        "--output", $scheduleOutput
+        "--output", $scheduleOutput,
+        "--changes-output", $scheduleChangesOutput,
+        "--watch-team", "T1"
     )
     & $resolvedPython @scheduleArguments
     $scheduleExitCode = $LASTEXITCODE

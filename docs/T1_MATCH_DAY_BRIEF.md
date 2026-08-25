@@ -28,6 +28,25 @@ hashes and can be downloaded as JSON.
 The relationship is recomputed whenever the five-minute schedule refresh succeeds. A TBD bracket
 slot is never resolved from standings, community posts, or name heuristics.
 
+## Schedule change watch
+
+The policy-gated schedule job runs at most once every eight hours and compares the newly normalized
+snapshot with the previously published one. `schedule-changes.json` records the latest comparison
+and retains up to 50 unique T1 changes. The dashboard reads it as a separate companion artifact so
+a missing change log cannot silently replace or invalidate the official fixture snapshot.
+
+Tracked changes include:
+
+- `PARTICIPANT_CONFIRMED` and `PARTICIPANT_CHANGED`,
+- `START_TIME_CHANGED`,
+- `FORMAT_CHANGED`,
+- `STAGE_CHANGED`,
+- `EVENT_ADDED`, `EVENT_REMOVED`, and the informational `EVENT_EXPIRED` state.
+
+Event correlation is deliberately narrow. `SAME_SLOT` requires the same start time, league, and
+block. `SAME_CONFIRMED_OPPONENT` can detect a time change only when the confirmed opponent and
+league match. These are disclosed operational correlation methods, not official series IDs.
+
 ## Readiness gates
 
 The UI presents these checks independently:
@@ -56,3 +75,5 @@ profile.
 - Public picks, bans, players, and patch shifts do not expose scrims, player readiness, or private
   draft intent.
 - Schedule event IDs and historical game/series IDs remain separate namespaces.
+- Change alerts are normalized schedule differences, not a claim about why Riot or a tournament
+  operator changed a fixture.

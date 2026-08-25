@@ -9,8 +9,11 @@ The unattended production path has four separate responsibilities:
 3. An operating-system scheduler invokes both through a reviewed wrapper. It does not bypass source
    intervals, commit raw provider data, or push repository changes.
 4. The same wrapper makes one policy-gated request for the official LoL Esports schedule after the
-   core sync. Schedule failure preserves the last good companion feed and does not mislabel the
-   independently healthy match-data Radar as an outage.
+   core sync and writes a T1 change log. Schedule failure preserves the last good companion feeds
+   and does not mislabel the independently healthy match-data Radar as an outage.
+5. A dedicated GitHub workflow can refresh only the official schedule and T1 change log every eight
+   hours. It respects the six-hour registry interval, validates the static publication, and pushes
+   only those two normalized artifacts.
 
 ## Health command
 
@@ -80,11 +83,12 @@ first operational rollout observable and reversible.
 
 `publish-oe-feed.ps1` uses a locked, detached Git worktree outside the developer checkout. It first
 runs the health gate, fetches the remote publication branch, refuses a dirty publisher worktree, and
-copies exactly three allowlisted artifacts:
+copies exactly four allowlisted artifacts:
 
 - `web/public/feed/current.json`
 - `web/public/feed/history-status.json`
 - `web/public/feed/schedule.json`
+- `web/public/feed/schedule-changes.json`
 
 It stages those exact paths, rejects any unexpected staged file, creates no commit when bytes are
 unchanged, and performs a normal fast-forward push. It never force-pushes and never copies the raw
@@ -92,6 +96,27 @@ archive, local audit files, source CSV, Creator working files, or unrelated deve
 Whether a run downloaded the provider file or reused the daily cache remains in the local job audit,
 not `current.json`. The same source snapshot therefore produces byte-identical public evidence and
 does not create a timestamp-only or cache-status-only publication commit.
+
+## GitHub schedule watch
+
+`.github/workflows/schedule-refresh.yml` runs at minute 17 every eight hours and can also be invoked
+manually. The `fetch-schedule` command reads the published snapshot time before making a request, so
+an early manual run fails closed at the registry interval even when the CI runner has no persisted
+raw archive. On success it:
+
+1. archives raw HTML only in the ephemeral ignored job workspace,
+2. writes `schedule.json` and `schedule-changes.json`,
+3. runs the GitHub Pages artifact tests,
+4. commits only those two public normalized files, and
+5. performs a normal non-force push to `main`, and
+6. deploys the already validated static artifact directly to GitHub Pages.
+
+The direct deploy is required because GitHub suppresses new workflow events from repository-token
+pushes. The schedule workflow therefore does not rely on its own bot commit to trigger the normal
+Pages workflow.
+
+A concurrent main update can reject the push; the workflow does not rebase or overwrite it. The next
+scheduled run can safely recompute the diff from the still-published snapshot.
 
 Review the operation without creating a worktree or pushing:
 

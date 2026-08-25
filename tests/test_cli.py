@@ -38,6 +38,139 @@ def test_sources_cli_reports_enabled_and_blocked_policy_state(tmp_path) -> None:
     assert sources["riot-web-api"]["status"] == "REVIEW_REQUIRED"
 
 
+def test_fetch_schedule_uses_published_snapshot_time_to_block_an_early_ci_request(
+    tmp_path, capsys
+) -> None:
+    output = tmp_path / "schedule.json"
+    changes = tmp_path / "schedule-changes.json"
+    original = {
+        "schema_version": "1",
+        "artifact_type": "pro-schedule-snapshot",
+        "retrieved_at": "2999-01-01T00:00:00+00:00",
+        "content_hash": f"sha256:{'a' * 64}",
+        "events": [],
+    }
+    output.write_text(json.dumps(original), encoding="utf-8")
+
+    assert (
+        main(
+            [
+                "fetch-schedule",
+                "--league",
+                "lck",
+                "--archive-dir",
+                str(tmp_path / "raw"),
+                "--output",
+                str(output),
+                "--changes-output",
+                str(changes),
+                "--watch-team",
+                "T1",
+            ]
+        )
+        == 3
+    )
+
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "RATE_LIMITED"
+    assert result["network_collection_performed"] is False
+    assert result["existing_snapshot_preserved"] is True
+    assert json.loads(output.read_text(encoding="utf-8")) == original
+    assert not changes.exists()
+
+
+def test_fetch_schedule_publishes_t1_change_log_with_the_new_snapshot(
+    tmp_path, monkeypatch
+) -> None:
+    output = tmp_path / "schedule.json"
+    changes = tmp_path / "schedule-changes.json"
+    previous = {
+        "schema_version": "1",
+        "artifact_type": "pro-schedule-snapshot",
+        "source_id": "lol-esports-schedule",
+        "retrieved_at": "2026-08-25T00:00:00+00:00",
+        "content_hash": f"sha256:{'a' * 64}",
+        "events": [
+            {
+                "event_id": "lolesports:old",
+                "start_at": "2026-08-29T08:00:00+00:00",
+                "league": "LCK",
+                "block": "Playoffs",
+                "best_of": 5,
+                "participants": [
+                    {"name": "TBD", "code": "TBD"},
+                    {"name": "T1", "code": "T1"},
+                ],
+            }
+        ],
+    }
+    current = {
+        **previous,
+        "retrieved_at": "2026-08-25T08:00:00+00:00",
+        "content_hash": f"sha256:{'b' * 64}",
+        "events": [
+            {
+                **previous["events"][0],
+                "event_id": "lolesports:new",
+                "participants": [
+                    {"name": "Gen.G Esports", "code": "GEN"},
+                    {"name": "T1", "code": "T1"},
+                ],
+            }
+        ],
+    }
+    output.write_text(json.dumps(previous), encoding="utf-8")
+    retrieved_at = datetime(2026, 8, 25, 8, 0, tzinfo=UTC)
+
+    class FakeScheduleAdapter:
+        source_id = "lol-esports-schedule"
+
+        def __init__(self, registry) -> None:
+            assert registry.get(self.source_id) is not None
+
+        def fetch(self, leagues, *, locale, last_retrieved_at=None):
+            assert leagues == ["lck"]
+            assert locale == "en-US"
+            assert last_retrieved_at == datetime(2026, 8, 25, 0, 0, tzinfo=UTC)
+            artifact = RawSourceArtifact.create(
+                source_id=self.source_id,
+                request_url="https://lolesports.com/en-US/leagues/lck",
+                final_url="https://lolesports.com/en-US/leagues/lck",
+                media_type="text/html",
+                retrieved_at=retrieved_at,
+                body=b"<html>normalized fixture</html>",
+            )
+            return SimpleNamespace(artifact=artifact, to_dict=lambda: current)
+
+    monkeypatch.setattr(
+        "pro_meta_intelligence.cli.LoLEsportsScheduleAdapter",
+        FakeScheduleAdapter,
+    )
+
+    assert (
+        main(
+            [
+                "fetch-schedule",
+                "--league",
+                "lck",
+                "--archive-dir",
+                str(tmp_path / "raw"),
+                "--output",
+                str(output),
+                "--changes-output",
+                str(changes),
+            ]
+        )
+        == 0
+    )
+
+    assert json.loads(output.read_text(encoding="utf-8")) == current
+    change_log = json.loads(changes.read_text(encoding="utf-8"))
+    assert change_log["latest_run"]["status"] == "CHANGED"
+    assert change_log["latest_run"]["changes"][0]["type"] == "PARTICIPANT_CONFIRMED"
+    assert change_log["current_snapshot"]["content_hash"] == current["content_hash"]
+
+
 def test_import_oe_cli_writes_qa_and_normalization_summary(tmp_path) -> None:
     output = tmp_path / "oe-import.json"
 

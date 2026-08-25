@@ -11,6 +11,7 @@ const publishedFiles = [
   "feed/current.json",
   "feed/history-status.json",
   "feed/schedule.json",
+  "feed/schedule-changes.json",
   "feed/current-creator.json",
   "feed/index.json",
 ];

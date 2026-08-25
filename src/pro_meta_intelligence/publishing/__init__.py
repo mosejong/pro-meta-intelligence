@@ -10,6 +10,7 @@ from pro_meta_intelligence.publishing.job import (
     FeedJobResult,
     FeedJobRunner,
 )
+from pro_meta_intelligence.publishing.schedule_changes import build_schedule_change_log
 
 __all__ = [
     "FeedJobAlreadyRunning",
@@ -20,5 +21,6 @@ __all__ = [
     "SnapshotFeedPublisher",
     "assess_oe_feed_health",
     "build_history_status",
+    "build_schedule_change_log",
     "publish_history_status",
 ]

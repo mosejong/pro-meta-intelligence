@@ -52,6 +52,7 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /T1 MATCH-DAY CONTROL/);
   assert.match(html, /다음 T1 일정과 준비 상태/);
   assert.match(html, /MATCH-DAY JSON/);
+  assert.match(html, /CHANGE LOG UNAVAILABLE/);
   assert.match(html, /T1의 이번 패치에서 바뀐 것/);
   assert.match(html, /최근 관측 라인업의 챔피언 풀/);
   assert.match(html, /최근 경기 타임라인/);
@@ -359,6 +360,7 @@ test("builds a deterministic T1 target profile with players, patch shifts, and o
 test("builds a T1 match-day brief without guessing a TBD bracket opponent", async () => {
   const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
   const schedule = JSON.parse(await readFile(new URL("public/feed/schedule.json", templateRoot), "utf8"));
+  const scheduleChanges = JSON.parse(await readFile(new URL("public/feed/schedule-changes.json", templateRoot), "utf8"));
   const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
   const geng = feed.opponent_prep.teams.find((team) => team.team_name === "Gen.G");
   assert.ok(t1);
@@ -391,8 +393,8 @@ test("builds a T1 match-day brief without guessing a TBD bracket opponent", asyn
       }],
       quality: { event_count: 1, tbd_participant_count: 1 },
     };
-    const first = buildTargetMatchDayBrief(feed, t1, profile, tbdSchedule, tbdSchedule.retrieved_at, geng);
-    const second = buildTargetMatchDayBrief(feed, t1, profile, tbdSchedule, tbdSchedule.retrieved_at, geng);
+    const first = buildTargetMatchDayBrief(feed, t1, profile, tbdSchedule, tbdSchedule.retrieved_at, geng, scheduleChanges);
+    const second = buildTargetMatchDayBrief(feed, t1, profile, tbdSchedule, tbdSchedule.retrieved_at, geng, scheduleChanges);
 
     assert.deepEqual(first, second);
     assert.equal(first.artifact_type, "target-match-day-brief");
@@ -403,6 +405,9 @@ test("builds a T1 match-day brief without guessing a TBD bracket opponent", asyn
     assert.equal(first.fixture.best_of, 5);
     assert.ok(first.fixture.days_until > 0);
     assert.equal(first.readiness.status, "WAITING_FOR_OPPONENT");
+    assert.equal(first.monitoring.status, "WATCHING");
+    assert.equal(first.monitoring.latest_run_status, "INITIALIZED");
+    assert.equal(first.monitoring.latest_change, null);
     assert.equal(first.readiness.checks.find((item) => item.id === "OFFICIAL_FIXTURE").status, "PASS");
     assert.equal(first.readiness.checks.find((item) => item.id === "OPPONENT_IDENTITY").status, "WAIT");
     assert.ok(first.prepare_now.length >= 3);
@@ -530,6 +535,8 @@ test("ships a validated same-origin publication feed for automatic loading", asy
 
 test("ships a normalized official schedule companion feed", async () => {
   const schedule = JSON.parse(await readFile(new URL("public/feed/schedule.json", templateRoot), "utf8"));
+  const changesText = await readFile(new URL("public/feed/schedule-changes.json", templateRoot), "utf8");
+  const changes = JSON.parse(changesText);
   assert.equal(schedule.schema_version, "1");
   assert.equal(schedule.artifact_type, "pro-schedule-snapshot");
   assert.equal(schedule.source_id, "lol-esports-schedule");
@@ -538,7 +545,15 @@ test("ships a normalized official schedule companion feed", async () => {
   assert.equal(schedule.quality.event_count, schedule.events.length);
   assert.ok(schedule.events.every((event) => event.participants.length === 2));
   assert.ok(schedule.events.every((event) => Date.parse(event.start_at) >= Date.parse(schedule.retrieved_at)));
+  assert.equal(changes.schema_version, "1");
+  assert.equal(changes.artifact_type, "pro-schedule-change-log");
+  assert.equal(changes.watched_team, "T1");
+  assert.equal(changes.current_snapshot.content_hash, schedule.content_hash);
+  assert.equal(changes.current_snapshot.retrieved_at, schedule.retrieved_at);
+  assert.ok(["INITIALIZED", "CHANGED", "UNCHANGED"].includes(changes.latest_run.status));
+  assert.ok(Array.isArray(changes.history));
   assert.doesNotMatch(JSON.stringify(schedule), /chatgpt|openai|gpt login|sign in/i);
+  assert.doesNotMatch(changesText, /chatgpt|openai|gpt login|sign in/i);
 });
 
 test("starter preview files are removed", async () => {
