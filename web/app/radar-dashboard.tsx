@@ -819,6 +819,9 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
     ...selected.region_presence,
   ] : [];
 
+  const t1Focus = defaultTargetTeam?.priority_picks[0] ?? null;
+  const metaFocus = report.entries.find((entry) => entry.eligible_for_review) ?? null;
+
   if (initialSpace === "ONBOARDING") {
     return <ProductHome
       currentSpace={initialSpace}
@@ -829,6 +832,18 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       fixtureDetail={quickFixtureDetail}
       feedLabel={feedState.label}
       aiValidation={aiValidation}
+      t1Focus={t1Focus ? {
+        championId: t1Focus.champion_id,
+        role: t1Focus.role ?? null,
+        gameCount: t1Focus.game_count,
+        gameRate: t1Focus.game_rate,
+      } : null}
+      metaFocus={metaFocus ? {
+        championId: metaFocus.champion_id,
+        role: metaFocus.role,
+        teamCount: metaFocus.metrics.current_distinct_team_count,
+        pickPresenceDelta: metaFocus.metrics.pick_presence_delta,
+      } : null}
     />;
   }
 
