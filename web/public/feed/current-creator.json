@@ -1,0 +1,648 @@
+{
+  "ai_handoff": {
+    "allowed_operations": [
+      "rephrase approved claims",
+      "expand the approved chapter outline",
+      "translate while preserving claim meaning and numbers"
+    ],
+    "forbidden_operations": [
+      "invent new evidence",
+      "claim causality or champion strength",
+      "remove counterpoints or sample warnings",
+      "publish without human review"
+    ],
+    "status": "OPTIONAL_DRAFTING_ONLY"
+  },
+  "human_review_required": true,
+  "mode": "CREATOR",
+  "narrative_constraints": [
+    "do not introduce facts absent from approved_claims",
+    "preserve every number and time window exactly",
+    "distinguish adoption patterns from champion strength or causality",
+    "include the counterpoint before the takeaway",
+    "retain evidence event IDs and source hashes in the final source list",
+    "require human approval before publication"
+  ],
+  "publication_ready": false,
+  "schema_version": "1",
+  "source_snapshot": {
+    "cutoff": "2026-08-25T06:39:37.755251+00:00",
+    "fixture_only": false,
+    "patch_id": "16.16",
+    "radar_schema_version": "1",
+    "source_versions": [
+      {
+        "content_hash": "sha256:13013bc4d423768e2cc758cf8ebe3d4ff7490458ad9971714b18c20334cd9bf0",
+        "source_id": "oracles-elixir-match-data",
+        "source_version": "sha256:13013bc4d423768e2cc758cf8ebe3d4ff7490458ad9971714b18c20334cd9bf0"
+      }
+    ]
+  },
+  "template_version": "creator-brief-v1",
+  "topic_candidates": [
+    {
+      "approved_claims": [
+        {
+          "claim_id": "Rell:SUPPORT:pick-presence",
+          "metric": "pick_presence_delta",
+          "text": "최근 7일 Rell SUPPORT 픽 점유율은 16.1%이며 이전 구간 대비 +4.8pp 변했다.",
+          "value": 0.047662
+        },
+        {
+          "claim_id": "Rell:SUPPORT:team-demand",
+          "metric": "demand_velocity",
+          "text": "최근 채택 팀은 36개이며 팀 수요는 이전 구간 대비 +15.2pp 변했다.",
+          "value": 0.151923
+        },
+        {
+          "claim_id": "Rell:SUPPORT:regional-divergence",
+          "metric": "most_divergent_region_delta",
+          "text": "LATIN_AMERICA의 최근 픽 점유율은 글로벌 점유율과 -16.1pp 차이가 난다.",
+          "value": -0.16087
+        }
+      ],
+      "candidate_id": "Rell:SUPPORT",
+      "champion_id": "Rell",
+      "chapter_outline": [
+        {
+          "chapter": "HOOK",
+          "uses": [
+            "Rell:SUPPORT:pick-presence"
+          ]
+        },
+        {
+          "chapter": "WHAT CHANGED",
+          "uses": [
+            "Rell:SUPPORT:pick-presence",
+            "Rell:SUPPORT:team-demand",
+            "Rell:SUPPORT:regional-divergence"
+          ]
+        },
+        {
+          "chapter": "WHY IT MAY MATTER",
+          "uses": [
+            "Rell:SUPPORT:team-demand"
+          ]
+        },
+        {
+          "chapter": "COUNTERPOINT",
+          "uses": []
+        },
+        {
+          "chapter": "TAKEAWAY AND NEXT CHECK",
+          "uses": []
+        }
+      ],
+      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "data_cards": [
+        {
+          "card": "PICK_PRESENCE_COMPARISON",
+          "current": 0.16087,
+          "prior": 0.113208
+        },
+        {
+          "card": "TEAM_DEMAND_COMPARISON",
+          "current": 0.276923,
+          "prior": 0.125
+        },
+        {
+          "card": "REGIONAL_PRESENCE",
+          "values": [
+            {
+              "delta_from_global": -0.007023,
+              "match_count": 13,
+              "pick_count": 2,
+              "pick_presence": 0.153846,
+              "region": "BRAZIL",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.018012,
+              "match_count": 14,
+              "pick_count": 2,
+              "pick_presence": 0.142857,
+              "region": "CHINA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": 0.060369,
+              "match_count": 113,
+              "pick_count": 25,
+              "pick_presence": 0.221239,
+              "region": "EMEA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.053727,
+              "match_count": 56,
+              "pick_count": 6,
+              "pick_presence": 0.107143,
+              "region": "KOREA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.16087,
+              "match_count": 3,
+              "pick_count": 0,
+              "pick_presence": 0.0,
+              "region": "LATIN_AMERICA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.09837,
+              "match_count": 16,
+              "pick_count": 1,
+              "pick_presence": 0.0625,
+              "region": "NORTH_AMERICA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.094203,
+              "match_count": 15,
+              "pick_count": 1,
+              "pick_presence": 0.066667,
+              "region": "PACIFIC",
+              "sample_eligible": true
+            }
+          ]
+        }
+      ],
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_217522:pick:6",
+        "oe:AL:LOLTMNT05_218468:pick:3",
+        "oe:CD:LOLTMNT02_451604:pick:8",
+        "oe:CD:LOLTMNT02_451637:pick:8",
+        "oe:EBL:LOLTMNT05_217465:pick:9",
+        "oe:EBL:LOLTMNT05_218467:pick:7",
+        "oe:EBL:LOLTMNT05_218539:pick:6",
+        "oe:HM:LOLTMNT02_451915:pick:10",
+        "oe:HM:LOLTMNT02_452409:pick:6",
+        "oe:HM:LOLTMNT02_452438:pick:9",
+        "oe:HM:LOLTMNT02_452826:pick:6",
+        "oe:HM:LOLTMNT02_453274:pick:9",
+        "oe:KeSPA Cup:LOLTMNT02_449945:pick:8",
+        "oe:LCKC:LOLTMNT02_451702:pick:9",
+        "oe:LCKC:LOLTMNT02_452272:pick:10",
+        "oe:LCKC:LOLTMNT02_452334:pick:9",
+        "oe:LCKC:LOLTMNT02_456050:pick:8",
+        "oe:LCKC:LOLTMNT02_457040:pick:10",
+        "oe:LCKC:LOLTMNT02_459023:pick:8",
+        "oe:LCP:LOLTMNT02_456193:pick:10",
+        "oe:LEC:LOLTMNT05_217037:pick:10",
+        "oe:LEC:LOLTMNT05_217160:pick:7",
+        "oe:LEC:LOLTMNT05_218053:pick:8",
+        "oe:LEC:LOLTMNT05_218159:pick:9",
+        "oe:LEC:LOLTMNT05_220091:pick:8",
+        "oe:LEC:LOLTMNT05_220135:pick:9",
+        "oe:LEC:LOLTMNT05_220148:pick:4",
+        "oe:LFL:LOLTMNT05_218375:pick:7",
+        "oe:LFL:LOLTMNT05_218455:pick:3",
+        "oe:LIT:LOLTMNT05_218530:pick:6",
+        "oe:LPL:13425-13425_game_2:pick:6",
+        "oe:LPL:13428-13428_game_1:pick:10",
+        "oe:NACL:LOLTMNT02_454293:pick:10",
+        "oe:NLC:LOLTMNT05_217297:pick:4",
+        "oe:NLC:LOLTMNT05_218462:pick:5",
+        "oe:NLC:LOLTMNT05_220187:pick:9",
+        "oe:PRM:LOLTMNT05_217470:pick:5",
+        "oe:PRM:LOLTMNT05_217492:pick:9",
+        "oe:RL:LOLTMNT02_451563:pick:8",
+        "oe:RL:LOLTMNT02_452426:pick:8",
+        "oe:RL:LOLTMNT02_452801:pick:9",
+        "oe:ROL:LOLTMNT05_218377:pick:9",
+        "oe:ROL:LOLTMNT05_218544:pick:7"
+      ],
+      "falsifiers": [
+        {
+          "condition": "next comparable snapshot is less than or equal to zero",
+          "metric": "demand_velocity"
+        },
+        {
+          "condition": "adoption does not expand beyond the currently observed teams",
+          "metric": "current_distinct_team_count"
+        }
+      ],
+      "hook": "Rell SUPPORT의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "quality_flags": [],
+      "radar_rank": 1,
+      "review_state": "HUMAN_REVIEW_REQUIRED",
+      "role": "SUPPORT",
+      "short_summary": "Rell SUPPORT의 최근 픽 점유율은 16.1%로, 이전 구간 대비 +4.8pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "thumbnail_copy": [
+        "Rell SUPPORT",
+        "+4.8pp"
+      ],
+      "title_candidates": [
+        "왜 지금 Rell SUPPORT인가: +4.8pp 변화의 근거",
+        "LATIN_AMERICA에서 먼저 보인 Rell SUPPORT, 글로벌과 -16.1pp 차이",
+        "Rell SUPPORT은 진짜 신호일까? 데이터와 반론"
+      ]
+    },
+    {
+      "approved_claims": [
+        {
+          "claim_id": "Lee Sin:JUNGLE:pick-presence",
+          "metric": "pick_presence_delta",
+          "text": "최근 7일 Lee Sin JUNGLE 픽 점유율은 22.2%이며 이전 구간 대비 +9.0pp 변했다.",
+          "value": 0.089664
+        },
+        {
+          "claim_id": "Lee Sin:JUNGLE:team-demand",
+          "metric": "demand_velocity",
+          "text": "최근 채택 팀은 42개이며 팀 수요는 이전 구간 대비 +14.8pp 변했다.",
+          "value": 0.148077
+        },
+        {
+          "claim_id": "Lee Sin:JUNGLE:regional-divergence",
+          "metric": "most_divergent_region_delta",
+          "text": "NORTH_AMERICA의 최근 픽 점유율은 글로벌 점유율과 +15.3pp 차이가 난다.",
+          "value": 0.153261
+        }
+      ],
+      "candidate_id": "Lee Sin:JUNGLE",
+      "champion_id": "Lee Sin",
+      "chapter_outline": [
+        {
+          "chapter": "HOOK",
+          "uses": [
+            "Lee Sin:JUNGLE:pick-presence"
+          ]
+        },
+        {
+          "chapter": "WHAT CHANGED",
+          "uses": [
+            "Lee Sin:JUNGLE:pick-presence",
+            "Lee Sin:JUNGLE:team-demand",
+            "Lee Sin:JUNGLE:regional-divergence"
+          ]
+        },
+        {
+          "chapter": "WHY IT MAY MATTER",
+          "uses": [
+            "Lee Sin:JUNGLE:team-demand"
+          ]
+        },
+        {
+          "chapter": "COUNTERPOINT",
+          "uses": []
+        },
+        {
+          "chapter": "TAKEAWAY AND NEXT CHECK",
+          "uses": []
+        }
+      ],
+      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "data_cards": [
+        {
+          "card": "PICK_PRESENCE_COMPARISON",
+          "current": 0.221739,
+          "prior": 0.132075
+        },
+        {
+          "card": "TEAM_DEMAND_COMPARISON",
+          "current": 0.323077,
+          "prior": 0.175
+        },
+        {
+          "card": "REGIONAL_PRESENCE",
+          "values": [
+            {
+              "delta_from_global": 0.00903,
+              "match_count": 13,
+              "pick_count": 3,
+              "pick_presence": 0.230769,
+              "region": "BRAZIL",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": 0.063975,
+              "match_count": 14,
+              "pick_count": 4,
+              "pick_presence": 0.285714,
+              "region": "CHINA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.062447,
+              "match_count": 113,
+              "pick_count": 18,
+              "pick_presence": 0.159292,
+              "region": "EMEA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": 0.063975,
+              "match_count": 56,
+              "pick_count": 16,
+              "pick_presence": 0.285714,
+              "region": "KOREA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": 0.111594,
+              "match_count": 3,
+              "pick_count": 1,
+              "pick_presence": 0.333333,
+              "region": "LATIN_AMERICA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": 0.153261,
+              "match_count": 16,
+              "pick_count": 6,
+              "pick_presence": 0.375,
+              "region": "NORTH_AMERICA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.021739,
+              "match_count": 15,
+              "pick_count": 3,
+              "pick_presence": 0.2,
+              "region": "PACIFIC",
+              "sample_eligible": true
+            }
+          ]
+        }
+      ],
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_217469:pick:3",
+        "oe:AL:LOLTMNT05_217509:pick:1",
+        "oe:CBLOL:LOLTMNT02_449761:pick:2",
+        "oe:CBLOL:LOLTMNT02_456885:pick:1",
+        "oe:CBLOL:LOLTMNT02_457626:pick:3",
+        "oe:CD:LOLTMNT02_451623:pick:7",
+        "oe:CD:LOLTMNT02_452131:pick:4",
+        "oe:HM:LOLTMNT02_452438:pick:3",
+        "oe:HM:LOLTMNT02_453314:pick:2",
+        "oe:KeSPA Cup:LOLTMNT02_449945:pick:1",
+        "oe:KeSPA Cup:LOLTMNT02_451363:pick:6",
+        "oe:LCK:LOLTMNT02_452633:pick:4",
+        "oe:LCK:LOLTMNT02_454038:pick:3",
+        "oe:LCK:LOLTMNT02_454084:pick:2",
+        "oe:LCK:LOLTMNT02_456447:pick:4",
+        "oe:LCK:LOLTMNT02_456749:pick:4",
+        "oe:LCK:LOLTMNT02_457093:pick:3",
+        "oe:LCK:LOLTMNT02_457532:pick:3",
+        "oe:LCK:LOLTMNT02_457803:pick:3",
+        "oe:LCKC:LOLTMNT02_450971:pick:7",
+        "oe:LCKC:LOLTMNT02_451703:pick:4",
+        "oe:LCKC:LOLTMNT02_452972:pick:2",
+        "oe:LCKC:LOLTMNT02_453093:pick:1",
+        "oe:LCKC:LOLTMNT02_457029:pick:3",
+        "oe:LCKC:LOLTMNT02_457040:pick:2",
+        "oe:LCKC:LOLTMNT02_459023:pick:2",
+        "oe:LCKC:LOLTMNT02_459050:pick:1",
+        "oe:LCP:LOLTMNT02_456193:pick:3",
+        "oe:LCP:LOLTMNT02_457495:pick:1",
+        "oe:LCP:LOLTMNT05_220110:pick:2",
+        "oe:LCS:LOLTMNT02_456676:pick:7",
+        "oe:LCS:LOLTMNT02_456695:pick:6",
+        "oe:LCS:LOLTMNT02_456935:pick:4",
+        "oe:LEC:LOLTMNT05_217160:pick:9",
+        "oe:LEC:LOLTMNT05_218053:pick:1",
+        "oe:LEC:LOLTMNT05_218159:pick:4",
+        "oe:LEC:LOLTMNT05_219068:pick:7",
+        "oe:LEC:LOLTMNT05_219186:pick:8",
+        "oe:LEC:LOLTMNT05_220100:pick:3",
+        "oe:LEC:LOLTMNT05_220148:pick:1",
+        "oe:LFL:LOLTMNT05_217330:pick:3",
+        "oe:LIT:LOLTMNT05_218530:pick:9",
+        "oe:LPL:13425-13425_game_2:pick:4",
+        "oe:LPL:13426-13426_game_3:pick:8",
+        "oe:LPL:13427-13427_game_1:pick:3",
+        "oe:LPL:13428-13428_game_1:pick:3",
+        "oe:LRS:LOLTMNT02_453017:pick:6",
+        "oe:NACL:LOLTMNT02_453395:pick:6",
+        "oe:NACL:LOLTMNT02_454307:pick:9",
+        "oe:NACL:LOLTMNT02_457370:pick:2",
+        "oe:NLC:LOLTMNT05_217459:pick:3",
+        "oe:NLC:LOLTMNT05_220216:pick:1",
+        "oe:PRM:LOLTMNT05_217434:pick:1",
+        "oe:RL:LOLTMNT02_451550:pick:1",
+        "oe:RL:LOLTMNT02_452410:pick:6",
+        "oe:RL:LOLTMNT02_453287:pick:1",
+        "oe:ROL:LOLTMNT05_217506:pick:9",
+        "oe:TCL:LOLTMNT05_218440:pick:7"
+      ],
+      "falsifiers": [
+        {
+          "condition": "next comparable snapshot is less than or equal to zero",
+          "metric": "demand_velocity"
+        },
+        {
+          "condition": "adoption does not expand beyond the currently observed teams",
+          "metric": "current_distinct_team_count"
+        }
+      ],
+      "hook": "Lee Sin JUNGLE의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "quality_flags": [],
+      "radar_rank": 2,
+      "review_state": "HUMAN_REVIEW_REQUIRED",
+      "role": "JUNGLE",
+      "short_summary": "Lee Sin JUNGLE의 최근 픽 점유율은 22.2%로, 이전 구간 대비 +9.0pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "thumbnail_copy": [
+        "Lee Sin JUNGLE",
+        "+9.0pp"
+      ],
+      "title_candidates": [
+        "왜 지금 Lee Sin JUNGLE인가: +9.0pp 변화의 근거",
+        "NORTH_AMERICA에서 먼저 보인 Lee Sin JUNGLE, 글로벌과 +15.3pp 차이",
+        "Lee Sin JUNGLE은 진짜 신호일까? 데이터와 반론"
+      ]
+    },
+    {
+      "approved_claims": [
+        {
+          "claim_id": "Galio:MID:pick-presence",
+          "metric": "pick_presence_delta",
+          "text": "최근 7일 Galio MID 픽 점유율은 14.3%이며 이전 구간 대비 +6.8pp 변했다.",
+          "value": 0.068007
+        },
+        {
+          "claim_id": "Galio:MID:team-demand",
+          "metric": "demand_velocity",
+          "text": "최근 채택 팀은 32개이며 팀 수요는 이전 구간 대비 +14.6pp 변했다.",
+          "value": 0.146154
+        },
+        {
+          "claim_id": "Galio:MID:regional-divergence",
+          "metric": "most_divergent_region_delta",
+          "text": "BRAZIL의 최근 픽 점유율은 글로벌 점유율과 +16.4pp 차이가 난다.",
+          "value": 0.164214
+        }
+      ],
+      "candidate_id": "Galio:MID",
+      "champion_id": "Galio",
+      "chapter_outline": [
+        {
+          "chapter": "HOOK",
+          "uses": [
+            "Galio:MID:pick-presence"
+          ]
+        },
+        {
+          "chapter": "WHAT CHANGED",
+          "uses": [
+            "Galio:MID:pick-presence",
+            "Galio:MID:team-demand",
+            "Galio:MID:regional-divergence"
+          ]
+        },
+        {
+          "chapter": "WHY IT MAY MATTER",
+          "uses": [
+            "Galio:MID:team-demand"
+          ]
+        },
+        {
+          "chapter": "COUNTERPOINT",
+          "uses": []
+        },
+        {
+          "chapter": "TAKEAWAY AND NEXT CHECK",
+          "uses": []
+        }
+      ],
+      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "data_cards": [
+        {
+          "card": "PICK_PRESENCE_COMPARISON",
+          "current": 0.143478,
+          "prior": 0.075472
+        },
+        {
+          "card": "TEAM_DEMAND_COMPARISON",
+          "current": 0.246154,
+          "prior": 0.1
+        },
+        {
+          "card": "REGIONAL_PRESENCE",
+          "values": [
+            {
+              "delta_from_global": 0.164214,
+              "match_count": 13,
+              "pick_count": 4,
+              "pick_presence": 0.307692,
+              "region": "BRAZIL",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.000621,
+              "match_count": 14,
+              "pick_count": 2,
+              "pick_presence": 0.142857,
+              "region": "CHINA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.019584,
+              "match_count": 113,
+              "pick_count": 14,
+              "pick_presence": 0.123894,
+              "region": "EMEA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": 0.017236,
+              "match_count": 56,
+              "pick_count": 9,
+              "pick_presence": 0.160714,
+              "region": "KOREA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.143478,
+              "match_count": 3,
+              "pick_count": 0,
+              "pick_presence": 0.0,
+              "region": "LATIN_AMERICA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": 0.044022,
+              "match_count": 16,
+              "pick_count": 3,
+              "pick_presence": 0.1875,
+              "region": "NORTH_AMERICA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.076812,
+              "match_count": 15,
+              "pick_count": 1,
+              "pick_presence": 0.066667,
+              "region": "PACIFIC",
+              "sample_eligible": true
+            }
+          ]
+        }
+      ],
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_217461:pick:10",
+        "oe:AL:LOLTMNT05_218542:pick:6",
+        "oe:CBLOL:LOLTMNT02_450539:pick:8",
+        "oe:CBLOL:LOLTMNT02_456624:pick:7",
+        "oe:CBLOL:LOLTMNT02_456877:pick:6",
+        "oe:CBLOL:LOLTMNT02_457619:pick:10",
+        "oe:CD:LOLTMNT02_452127:pick:9",
+        "oe:CD:LOLTMNT02_452496:pick:2",
+        "oe:EBL:LOLTMNT05_217503:pick:6",
+        "oe:HM:LOLTMNT02_451526:pick:5",
+        "oe:HM:LOLTMNT02_452409:pick:4",
+        "oe:HM:LOLTMNT02_453295:pick:5",
+        "oe:KeSPA Cup:LOLTMNT02_452010:pick:10",
+        "oe:LCK:LOLTMNT02_451797:pick:10",
+        "oe:LCK:LOLTMNT02_451854:pick:9",
+        "oe:LCK:LOLTMNT02_453228:pick:6",
+        "oe:LCK:LOLTMNT02_456141:pick:3",
+        "oe:LCK:LOLTMNT02_457532:pick:6",
+        "oe:LCKC:LOLTMNT02_451703:pick:7",
+        "oe:LCKC:LOLTMNT02_452972:pick:6",
+        "oe:LCKC:LOLTMNT02_459023:pick:6",
+        "oe:LCKC:LOLTMNT02_459063:pick:4",
+        "oe:LCP:LOLTMNT02_454077:pick:9",
+        "oe:LCS:LOLTMNT02_457969:pick:10",
+        "oe:LEC:LOLTMNT05_217248:pick:10",
+        "oe:LIT:LOLTMNT05_217505:pick:9",
+        "oe:LPL:13426-13426_game_3:pick:9",
+        "oe:LPL:13430-13430_game_2:pick:3",
+        "oe:NACL:LOLTMNT02_453395:pick:7",
+        "oe:NACL:LOLTMNT02_456306:pick:2",
+        "oe:NLC:LOLTMNT05_217459:pick:2",
+        "oe:PRM:LOLTMNT05_218484:pick:3",
+        "oe:RL:LOLTMNT02_451563:pick:9",
+        "oe:RL:LOLTMNT02_453353:pick:6",
+        "oe:ROL:LOLTMNT05_218368:pick:7",
+        "oe:ROL:LOLTMNT05_218544:pick:10",
+        "oe:ROL:LOLTMNT05_218545:pick:2"
+      ],
+      "falsifiers": [
+        {
+          "condition": "next comparable snapshot is less than or equal to zero",
+          "metric": "demand_velocity"
+        },
+        {
+          "condition": "adoption does not expand beyond the currently observed teams",
+          "metric": "current_distinct_team_count"
+        }
+      ],
+      "hook": "Galio MID의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "quality_flags": [],
+      "radar_rank": 3,
+      "review_state": "HUMAN_REVIEW_REQUIRED",
+      "role": "MID",
+      "short_summary": "Galio MID의 최근 픽 점유율은 14.3%로, 이전 구간 대비 +6.8pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "thumbnail_copy": [
+        "Galio MID",
+        "+6.8pp"
+      ],
+      "title_candidates": [
+        "왜 지금 Galio MID인가: +6.8pp 변화의 근거",
+        "BRAZIL에서 먼저 보인 Galio MID, 글로벌과 +16.4pp 차이",
+        "Galio MID은 진짜 신호일까? 데이터와 반론"
+      ]
+    }
+  ],
+  "warnings": []
+}

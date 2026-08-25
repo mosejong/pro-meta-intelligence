@@ -10,6 +10,8 @@ def test_isolated_publisher_has_a_four_file_allowlist_and_no_force_push() -> Non
     assert '"web/public/feed/history-status.json"' in script
     assert '"web/public/feed/schedule.json"' in script
     assert '"web/public/feed/schedule-changes.json"' in script
+    assert '"web/public/feed/current-creator.json"' in script
+    assert "Publish five allowlisted public feed artifacts" in script
     assert "worktree add --detach --lock" in script
     assert 'push $RemoteName "HEAD:$PublishBranch"' in script
     assert "--force" not in script
