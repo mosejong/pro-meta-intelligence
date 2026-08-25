@@ -5,6 +5,7 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { championImageUrl } from "./champion-assets";
 import { CreatorExportLab } from "./creator-export";
+import { isCreatorBrief, type CreatorBrief } from "./creator-storyboard";
 import { isHistoryStatus, isRadarReport, isScheduleChangeLog, isScheduleSnapshot, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport, type ScheduleChangeLog, type ScheduleSnapshot } from "./radar-types";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
@@ -266,6 +267,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
   const [opponentSearch, setOpponentSearch] = useState("");
   const [schedule, setSchedule] = useState<ScheduleSnapshot | null>(null);
   const [scheduleChanges, setScheduleChanges] = useState<ScheduleChangeLog | null>(null);
+  const [creatorBrief, setCreatorBrief] = useState<CreatorBrief | null>(null);
   const [scheduleCheckedAt, setScheduleCheckedAt] = useState<string | null>(null);
   const [scheduleState, setScheduleState] = useState<"connecting" | "connected" | "stale" | "unavailable">("connecting");
   const [opponentId, setOpponentId] = useState(findDefaultTargetTeam(sampleReport.opponent_prep?.teams ?? [])?.team_id ?? sampleReport.opponent_prep?.teams[0]?.team_id ?? "");
@@ -392,6 +394,20 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       if (!isRadarReport(parsed)) throw new Error("unsupported report");
       let publishedReport = parsed;
       try {
+        const creatorUrl = new URL("feed/current-creator.json", publicationBase);
+        const creatorResponse = await fetch(creatorUrl, { cache: "no-store" });
+        if (!creatorResponse.ok) throw new Error(`creator feed returned ${creatorResponse.status}`);
+        const creatorPayload: unknown = await creatorResponse.json();
+        if (
+          !isCreatorBrief(creatorPayload) ||
+          creatorPayload.source_snapshot.patch_id !== parsed.patch_id ||
+          creatorPayload.source_snapshot.cutoff !== parsed.cutoff
+        ) throw new Error("creator feed does not match radar feed");
+        setCreatorBrief(creatorPayload);
+      } catch {
+        setCreatorBrief(null);
+      }
+      try {
         const statusUrl = new URL("feed/history-status.json", publicationBase);
         const statusResponse = await fetch(statusUrl, { cache: "no-store" });
         if (statusResponse.ok) {
@@ -452,6 +468,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
         detail: publishedReport.fixture_only ? "자동 연결됨 · 합성 데이터" : "자동 연결됨 · 검증된 발행본",
       });
     } catch {
+      setCreatorBrief(null);
       setFeedState({
         kind: "demo",
         label: "DEMO FALLBACK",
@@ -529,6 +546,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       setRole("ALL");
       setEligibleOnly(false);
       setVisibleLimit(12);
+      setCreatorBrief(null);
       requestedTeamId.current = "";
       requestedOpponentId.current = "";
       setOpponentId(findDefaultTargetTeam(parsed.opponent_prep?.teams ?? [])?.team_id ?? parsed.opponent_prep?.teams[0]?.team_id ?? "");
@@ -1068,7 +1086,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
         </details> : <div className="brief-empty">현재 발행본에는 상대팀 드래프트 자료가 없습니다. 다음 검증된 피드부터 표시됩니다.</div>}
       </section>
 
-      <CreatorExportLab report={report} />
+      <CreatorExportLab report={report} brief={creatorBrief} />
 
       <section className="workspace" id="radar">
         <div className="section-heading">
