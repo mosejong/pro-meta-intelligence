@@ -17,7 +17,9 @@ import { buildTargetMatchDayBrief, serializeTargetMatchDayBrief } from "./target
 import { TargetMatchDayPanel } from "./target-match-day-panel";
 
 const MY_TEAM_STORAGE_KEY = "pmi:my-team-id";
+const VIEW_MODE_STORAGE_KEY = "pmi:view-mode";
 export const DEFAULT_TARGET_TEAM_NAME = "T1";
+type ViewMode = "QUICK" | "FULL";
 
 const flagLabels: Record<string, string> = {
   INSUFFICIENT_RECENT_MATCHES: "최근 경기 표본 부족",
@@ -241,6 +243,7 @@ export function RadarDashboard() {
   const [visibleLimit, setVisibleLimit] = useState(12);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("QUICK");
   const [myTeamId, setMyTeamId] = useState("");
   const [myTeamSearch, setMyTeamSearch] = useState("");
   const [opponentSearch, setOpponentSearch] = useState("");
@@ -346,6 +349,18 @@ export function RadarDashboard() {
   const nextOwnEvent = teamContext?.own_upcoming_events[0];
   const quality = qualityState(report);
   const eligibleCount = report.entries.filter((entry) => entry.eligible_for_review).length;
+  const fixtureParticipant = targetMatchDayBrief?.fixture.other_participant;
+  const fixtureIsTbd = Boolean(fixtureParticipant && [fixtureParticipant.name, fixtureParticipant.code].some((value) => value.trim().toUpperCase() === "TBD"));
+  const quickFixtureTitle = scheduleState === "connecting"
+    ? "공식 일정 연결 중"
+    : targetMatchDayBrief?.fixture.event_id
+      ? fixtureIsTbd
+        ? "T1 상대 확정 대기"
+        : `${fixtureParticipant?.name ?? "상대"} vs T1`
+      : "다음 T1 일정 대기";
+  const quickFixtureDetail = targetMatchDayBrief?.fixture.start_at
+    ? `${formatScheduleTime(targetMatchDayBrief.fixture.start_at)} KST · ${targetMatchDayBrief.fixture.league ?? "리그 미정"} ${targetMatchDayBrief.fixture.block ?? ""} · ${targetMatchDayBrief.fixture.best_of ? `Bo${targetMatchDayBrief.fixture.best_of}` : "형식 미정"}`
+    : "공식 일정이 들어오면 상대와 준비 상태를 자동 연결합니다.";
 
   const loadPublishedFeed = useCallback(async () => {
     if (manualOverride.current) return;
@@ -437,6 +452,14 @@ export function RadarDashboard() {
   }, []);
 
   useEffect(() => {
+    const storedViewMode = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    const restore = window.setTimeout(() => {
+      if (storedViewMode === "QUICK" || storedViewMode === "FULL") setViewMode(storedViewMode);
+    }, 0);
+    return () => window.clearTimeout(restore);
+  }, []);
+
+  useEffect(() => {
     if (!evidenceOpen && !emergencyOpen) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -490,6 +513,12 @@ export function RadarDashboard() {
     setOpponentSearch("");
     if (teamId) window.localStorage.setItem(MY_TEAM_STORAGE_KEY, teamId);
     else window.localStorage.removeItem(MY_TEAM_STORAGE_KEY);
+  }
+
+  function toggleViewMode() {
+    const nextMode: ViewMode = viewMode === "QUICK" ? "FULL" : "QUICK";
+    setViewMode(nextMode);
+    window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, nextMode);
   }
 
   function downloadTeamBrief() {
@@ -587,20 +616,22 @@ export function RadarDashboard() {
   ] : [];
 
   return (
-    <main>
+    <main className={viewMode === "QUICK" ? "quick-view" : "full-view"}>
       <header className="topbar">
         <a className="brand" href="#top" aria-label="Pro Meta Intelligence 홈">
           <span className="brand-mark">PM</span>
           <span><strong>PRO META</strong><small>INTELLIGENCE</small></span>
         </a>
         <nav aria-label="주요 메뉴">
-          <a className="active" href="#team-brief">오늘 결정</a>
+          <a className="active" href="#quick-start">빠른 시작</a>
+          <a href="#team-brief">오늘 결정</a>
           <a href="#opponent-prep">T1 상대전</a>
           <a href="#creator-export">콘텐츠</a>
-          <a href="#radar">전체 탐색</a>
+          {viewMode === "FULL" && <a href="#radar">전체 탐색</a>}
         </nav>
         <div className="topbar-actions">
           <span className={`snapshot-state ${feedState.kind}`} title={feedState.detail} aria-live="polite"><i />{feedState.label}</span>
+          <button className="view-mode-button" type="button" onClick={toggleViewMode} aria-pressed={viewMode === "FULL"}>{viewMode === "QUICK" ? "전체 분석" : "간단 보기"}</button>
           <button className="refresh-button" type="button" onClick={() => { manualOverride.current = false; void loadPublishedFeed(); }} aria-label="발행 피드 새로고침">↻</button>
           <button className="load-button" type="button" onClick={() => fileInput.current?.click()}>
             JSON 불러오기 <span>↗</span>
@@ -635,6 +666,35 @@ export function RadarDashboard() {
           </a>)}</div> : <p className="today-empty">공개 경기 기준을 통과한 검토 후보가 아직 없습니다.</p>}
           <footer><span>후보를 선택하면 찬성·반대 근거와 중단 조건으로 이동합니다.</span><b>근거 우선 · 출전 권고 아님</b></footer>
         </aside>
+      </section>
+
+      <section className="quick-start" id="quick-start" aria-labelledby="quick-start-title">
+        <header>
+          <div><span>10-SECOND START</span><h2 id="quick-start-title">원하는 결과부터 고르세요.</h2></div>
+          <p>처음부터 모든 표를 읽을 필요 없습니다. 목적을 선택하면 필요한 구역으로 바로 이동합니다.</p>
+          <b>{viewMode === "QUICK" ? "핵심만 표시 중" : "전체 근거 표시 중"}</b>
+        </header>
+        <div className="quick-start-grid">
+          <a className="match" href="#target-match-day">
+            <span><b>01</b>T1 다음 경기</span>
+            <strong>{quickFixtureTitle}</strong>
+            <p>{quickFixtureDetail}</p>
+            <small>일정·상대·라인 준비 보기 <b>→</b></small>
+          </a>
+          <a className="versus" href="#team-setup">
+            <span><b>02</b>내 팀 vs T1</span>
+            <strong>{selectedMyTeam ? `${selectedMyTeam.team_name} 기준 준비됨` : "내 팀을 한 번만 선택"}</strong>
+            <p>{selectedMyTeam ? "상대 우선순위와 드래프트 충돌을 내 팀 관점으로 계산했습니다." : `${opponentTeams.length}개 공개 팀 중 하나를 고르면 T1 상대 준비 자료가 즉시 열립니다.`}</p>
+            <small>{selectedMyTeam ? "상대 준비실로 이동" : "분석 기준 설정"} <b>→</b></small>
+          </a>
+          <a className="creator" href="#creator-export">
+            <span><b>03</b>영상 아이템 만들기</span>
+            <strong>{todayDecisions[0] ? `${todayDecisions[0].entry.champion_id}부터 시작` : "주제 후보 수집 중"}</strong>
+            <p>같은 검증 근거를 유튜브·쇼츠용 화면 카드와 편집 JSON으로 변환합니다.</p>
+            <small>Creator Studio 열기 <b>→</b></small>
+          </a>
+        </div>
+        <footer><span>QUICK VIEW</span><p>백테스트 준비도·원본 통계·전체 메타 탐색은 숨겨져 있지만 모든 근거와 경계는 유지됩니다.</p><button type="button" onClick={toggleViewMode}>{viewMode === "QUICK" ? "전체 분석 보기" : "핵심만 보기"}</button></footer>
       </section>
 
       <section className="summary" aria-label="요약 지표">
@@ -961,10 +1021,10 @@ export function RadarDashboard() {
       </section>
 
       <nav className="mobile-taskbar" aria-label="모바일 빠른 이동">
-        <a href="#team-brief"><b>01</b><span>오늘</span></a>
-        <a href="#opponent-prep"><b>02</b><span>T1 상대전</span></a>
-        <a href="#creator-export"><b>03</b><span>콘텐츠</span></a>
-        <a href="#radar"><b>04</b><span>탐색</span></a>
+        <a href="#quick-start"><b>01</b><span>시작</span></a>
+        <a href="#team-brief"><b>02</b><span>오늘</span></a>
+        <a href="#opponent-prep"><b>03</b><span>T1 상대전</span></a>
+        <a href="#creator-export"><b>04</b><span>콘텐츠</span></a>
       </nav>
 
       {evidenceOpen && selected && (
