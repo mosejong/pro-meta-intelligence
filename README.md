@@ -121,6 +121,8 @@ data path:
   optional analyst view.
 - account-free analysis links that restore the selected own team, opponent, and Quick/Full view so
   staff and collaborators can open the same evidence workspace without copying private data.
+- a printable T1 one-page brief that compresses the verified fixture, public pick/ban focus, review
+  actions, readiness gates, and confirmed five-lane order without inferring a TBD opponent.
 
 This is not yet evidence of predictive value. Real point-in-time daily snapshots must accumulate
 before Phase 3 can measure Recall@K, lead time, and false-alert behavior without hindsight leakage.

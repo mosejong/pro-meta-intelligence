@@ -25,6 +25,11 @@ After choosing an own team, **분석 링크 복사** creates an account-free URL
 public team ID, opponent ID, and Quick/Full view. Opening it restores the same workspace; no API key,
 uploaded file, private note, or browser-only preference is included.
 
+The **T1 원페이지 브리프** is the meeting handoff for that workspace. It keeps the official fixture,
+three public-data review actions, five readiness gates, T1 pick/ban focus, and—only after a verified
+head-to-head exists—the five-lane review order on one printable surface. Its PDF mode excludes the
+rest of the dashboard and retains the unknowns and evidence boundary.
+
 Use **JSON 불러오기** for a temporary local override created by:
 
 ```bash

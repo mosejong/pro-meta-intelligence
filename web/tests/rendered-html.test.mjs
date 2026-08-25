@@ -48,9 +48,17 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /aria-pressed="false"[^>]*>전체 분석/);
   assert.match(html, /분석 링크 복사/);
   assert.match(html, /내 팀 선택 후 공유 가능/);
+  assert.match(html, /ONE-PAGE · STAFF REVIEW/);
+  assert.match(html, /T1 공개 데이터 원페이지 브리프/);
+  assert.match(html, /NEXT VERIFIED FIXTURE/);
+  assert.match(html, /DECIDE IN MEETING/);
+  assert.match(html, /NO VERIFIED HEAD-TO-HEAD YET/);
+  assert.match(html, /상대 확정 전에는 라인 저격 자료를 만들지 않습니다/);
+  assert.match(html, /href="#t1-brief"/);
   assert.match(html, /전체 메타 신호 탐색/);
   assert.match(styles, /\.quick-view \.audit-notice[^\n]+\.quick-view \.workspace[^\n]+display: none/);
   assert.match(styles, /\.quick-start-grid/);
+  assert.match(styles, /body\.print-t1-one-page main > :not\(\.t1-one-page\)/);
   assert.match(html, /TEAM DECISION BRIEF/);
   assert.match(html, /오늘 코칭스태프가 검토할 5가지/);
   assert.match(html, /반대 근거/);
@@ -126,6 +134,8 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.ok(html.indexOf('class="decision-hero"') < html.indexOf('class="team-brief"'));
   assert.ok(html.indexOf('class="team-lens setup"') < html.indexOf('class="team-brief"'));
   assert.ok(html.indexOf('class="team-lens setup"') < html.indexOf('class="decision-flow"'));
+  assert.ok(html.indexOf('class="decision-flow"') < html.indexOf('class="t1-one-page"'));
+  assert.ok(html.indexOf('class="t1-one-page"') < html.indexOf('class="team-brief"'));
   assert.ok(html.indexOf('class="decision-flow"') < html.indexOf('class="team-brief"'));
   assert.ok(html.indexOf('class="team-brief"') < html.indexOf('class="history-readiness'));
   assert.ok(html.indexOf('class="history-readiness') < html.indexOf('class="opponent-prep"'));
@@ -508,6 +518,22 @@ test("builds a T1 match-day brief without guessing a TBD bracket opponent", asyn
     assert.match(confirmedHtml, /공개 데이터 경계/);
     assert.match(confirmedHtml, /cdn\/16\.16\.1\/img\/champion\//);
 
+    const { T1OnePageBrief } = await vite.ssrLoadModule("/app/t1-one-page-brief.tsx");
+    const onePageHtml = renderToStaticMarkup(createElement(T1OnePageBrief, {
+      brief: confirmed,
+      profile,
+      onPrint() {},
+      onDownload() {},
+    }));
+    assert.match(onePageHtml, /ONE-PAGE · STAFF REVIEW/);
+    assert.match(onePageHtml, /Gen\.G vs T1 회의용 브리프/);
+    assert.match(onePageHtml, /5-LANE REVIEW ORDER/);
+    assert.match(onePageHtml, /[0-5]\/5 신호 확인/);
+    assert.match(onePageHtml, /Kiin/);
+    assert.match(onePageHtml, /Doran/);
+    assert.match(onePageHtml, /인쇄 \/ PDF/);
+    assert.match(onePageHtml, /전체 일정·라인 근거 보기/);
+
     const t1Perspective = buildTargetMatchDayBrief(
       feed,
       t1,
@@ -581,7 +607,7 @@ test("builds a canonical share link that restores the analysis workspace", async
     assert.equal(url.searchParams.get("opponent"), "t1");
     assert.equal(url.searchParams.get("view"), "full");
     assert.equal(url.searchParams.has("utm_source"), false);
-    assert.equal(url.hash, "#opponent-prep");
+    assert.equal(url.hash, "#t1-brief");
     assert.deepEqual(parseWorkspaceSearch(url.search), {
       teamId: "gen-g",
       opponentId: "t1",
