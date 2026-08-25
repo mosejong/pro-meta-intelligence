@@ -85,18 +85,23 @@ try {
         throw "GitHub did not return a bootstrap draft release ID."
     }
     $releaseCreated = $true
-    & gh api --method POST `
+    $assetJson = & gh api --method POST `
         -H "Content-Type: application/octet-stream" `
         --input $encrypted `
         "https://uploads.github.com/repos/$Repository/releases/$releaseId/assets?name=oe-private-history-bootstrap.pmi"
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to upload the encrypted bootstrap asset."
     }
-    & gh api "repos/$Repository/releases/$releaseId" `
-        --jq '.assets[] | select(.name == "oe-private-history-bootstrap.pmi") | {id, name, size, url}'
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to resolve the uploaded bootstrap asset ID."
+    $asset = $assetJson | ConvertFrom-Json
+    if (-not $asset.id -or $asset.name -ne "oe-private-history-bootstrap.pmi") {
+        throw "GitHub did not return the expected bootstrap asset."
     }
+    [PSCustomObject]@{
+        id = $asset.id
+        name = $asset.name
+        size = $asset.size
+        url = $asset.url
+    } | ConvertTo-Json -Compress
     $completed = $true
 }
 finally {
