@@ -24,11 +24,15 @@ $inspection = & python -m pro_meta_intelligence audit-oe-history `
 if ($LASTEXITCODE -notin @(0, 2)) {
     throw "Existing OE archive failed integrity inspection."
 }
-$existingDraft = & gh api "repos/$Repository/releases" --paginate `
-    --jq ".[] | select(.draft == true and .tag_name == `"$DraftTag`") | .id"
+$releaseListJson = & gh api --method GET "repos/$Repository/releases?per_page=100"
 if ($LASTEXITCODE -ne 0) {
     throw "Failed to inspect existing draft releases."
 }
+$existingDraft = @(
+    $releaseListJson | ConvertFrom-Json | Where-Object {
+        $_.draft -eq $true -and $_.tag_name -eq $DraftTag
+    }
+)
 if ($existingDraft) {
     throw "Bootstrap draft release already exists: $DraftTag"
 }

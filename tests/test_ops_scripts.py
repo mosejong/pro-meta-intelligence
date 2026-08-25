@@ -123,6 +123,8 @@ def test_hosted_archive_bootstrap_never_prints_or_persists_the_generated_key() -
     assert "RandomNumberGenerator" in script
     assert "pack-private-oe-archive" in script
     assert "gh secret set" in script
+    assert 'gh api --method GET "repos/$Repository/releases?per_page=100"' in script
+    assert "$releaseListJson | ConvertFrom-Json" in script
     assert 'gh api --method POST "repos/$Repository/releases"' in script
     assert "-F draft=true" in script
     assert "https://uploads.github.com" in script
