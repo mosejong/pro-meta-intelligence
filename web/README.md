@@ -30,6 +30,13 @@ After choosing an own team, **분석 링크 복사** creates an account-free URL
 team and opponent selections. Opening it restores the same evidence context; no API key, uploaded
 file, or private note is included. Shared staff links open the focused T1 workspace directly.
 
+The Team Decision Brief includes a device-local Decision Journal. Analysts can move each exact
+patch/cutoff candidate through `INBOX`, `REVIEWED`, `SCRIM_REQUESTED`, `ADOPTED`, `REJECTED`, or
+`WATCH`, add a short non-sensitive meeting note, and export all records as JSON. Records are scoped
+to the optional own-team selection and remain in that browser only; they are not placed in analysis
+links, uploaded, or synchronized with other devices. Sensitive scrim and player information remains
+outside this public prototype.
+
 The **T1 원페이지 브리프** is the meeting handoff for that workspace. It keeps the official fixture,
 three public-data review actions, five readiness gates, T1 pick/ban focus, and—only after a verified
 head-to-head exists—the five-lane review order on one printable surface. Its PDF mode excludes the

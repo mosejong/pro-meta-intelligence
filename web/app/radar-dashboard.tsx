@@ -6,6 +6,17 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "
 import { championImageUrl } from "./champion-assets";
 import { CreatorExportLab } from "./creator-export";
 import { isCreatorBrief, type CreatorBrief } from "./creator-storyboard";
+import {
+  createDecisionJournalEntry,
+  DECISION_JOURNAL_STORAGE_KEY,
+  decisionJournalId,
+  parseDecisionJournal,
+  serializeDecisionJournal,
+  upsertDecisionJournalEntry,
+  type DecisionJournalEntry,
+  type DecisionJournalState,
+} from "./decision-journal";
+import { DecisionJournalPanel } from "./decision-journal-panel";
 import { isHistoryStatus, isRadarReport, isScheduleChangeLog, isScheduleSnapshot, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport, type ScheduleChangeLog, type ScheduleSnapshot } from "./radar-types";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
@@ -262,6 +273,9 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [viewMode, setViewMode] = useState<WorkspaceViewMode>("QUICK");
   const [shareState, setShareState] = useState<"IDLE" | "COPIED" | "FAILED">("IDLE");
+  const [decisionJournalEntries, setDecisionJournalEntries] = useState<DecisionJournalEntry[]>([]);
+  const [decisionJournalReady, setDecisionJournalReady] = useState(false);
+  const [decisionJournalStorageAvailable, setDecisionJournalStorageAvailable] = useState(true);
   const [myTeamId, setMyTeamId] = useState("");
   const [myTeamSearch, setMyTeamSearch] = useState("");
   const [opponentSearch, setOpponentSearch] = useState("");
@@ -309,6 +323,8 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
   const displayedEntries = visibleEntries.slice(0, visibleLimit);
   const selected = visibleEntries.find((entry) => keyOf(entry) === selectedKey) ?? visibleEntries[0] ?? report.entries[0];
   const selectedBrief = teamBrief.find((card) => keyOf(card.entry) === selectedKey) ?? teamBrief[0];
+  const selectedDecisionJournalId = selectedBrief ? decisionJournalId(report, selectedBrief, selectedMyTeam) : "";
+  const selectedDecisionJournalEntry = decisionJournalEntries.find((entry) => entry.decision_id === selectedDecisionJournalId);
   const selectedOpponent = rankedOpponentTeams.find((team) => team.team_id === opponentId) ?? defaultOpponentTarget ?? rankedOpponentTeams[0];
   const selectedPriority = opponentPriorities.find((priority) => priority.team.team_id === selectedOpponent?.team_id);
   const defaultTargetPriority = opponentPriorities.find((priority) => priority.team.team_id === defaultOpponentTarget?.team_id);
@@ -500,6 +516,35 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
   }, []);
 
   useEffect(() => {
+    const restore = window.setTimeout(() => {
+      try {
+        setDecisionJournalEntries(parseDecisionJournal(window.localStorage.getItem(DECISION_JOURNAL_STORAGE_KEY)));
+        setDecisionJournalStorageAvailable(true);
+      } catch {
+        setDecisionJournalStorageAvailable(false);
+      } finally {
+        setDecisionJournalReady(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(restore);
+  }, []);
+
+  useEffect(() => {
+    if (!decisionJournalReady || !decisionJournalStorageAvailable) return;
+    const persist = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(
+          DECISION_JOURNAL_STORAGE_KEY,
+          serializeDecisionJournal(decisionJournalEntries),
+        );
+      } catch {
+        setDecisionJournalStorageAvailable(false);
+      }
+    }, 0);
+    return () => window.clearTimeout(persist);
+  }, [decisionJournalEntries, decisionJournalReady, decisionJournalStorageAvailable]);
+
+  useEffect(() => {
     const shared = parseWorkspaceSearch(window.location.search);
     const storedViewMode = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
     const restore = window.setTimeout(() => {
@@ -614,6 +659,31 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = `team-decision-brief-${report.patch_id}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function updateDecisionJournal(state: DecisionJournalState, note: string) {
+    if (!selectedBrief || !decisionJournalStorageAvailable) return;
+    const entry = createDecisionJournalEntry(
+      report,
+      selectedBrief,
+      selectedMyTeam,
+      state,
+      note,
+      new Date().toISOString(),
+      selectedDecisionJournalEntry,
+    );
+    setDecisionJournalEntries((entries) => upsertDecisionJournalEntry(entries, entry));
+  }
+
+  function downloadDecisionJournal() {
+    if (!decisionJournalEntries.length) return;
+    const blob = new Blob([serializeDecisionJournal(decisionJournalEntries)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `team-decision-journal-${report.patch_id}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -906,6 +976,15 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
               <section className="stop-condition"><span>중단 조건</span><p>{selectedBrief.stopCondition}</p></section>
             </div>
             <div className="decision-boundary"><b>팀 데이터 경계</b><p>선수 숙련도 · 스크림 결과 · 팀 의도는 공개 경기로 추측하지 않습니다. 현재 카드는 검토 시작점이며 출전 권고가 아닙니다.</p><span>{selectedBrief.entry.evidence_event_ids.length} EVIDENCE EVENTS</span></div>
+            <DecisionJournalPanel
+              card={selectedBrief}
+              ownTeam={selectedMyTeam}
+              entry={selectedDecisionJournalEntry}
+              entryCount={decisionJournalEntries.length}
+              storageAvailable={decisionJournalStorageAvailable}
+              onChange={updateDecisionJournal}
+              onExport={downloadDecisionJournal}
+            />
           </article>
         </div> : <div className="brief-empty">검토 기준을 통과한 공개 경기 신호가 없습니다.</div>}
       </section>
