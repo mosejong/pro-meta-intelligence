@@ -40,6 +40,7 @@ from pro_meta_intelligence.publishing import (
     FeedJobRunner,
     SnapshotFeedPublisher,
     assess_oe_feed_health,
+    assess_publication_watchdog,
     build_history_status,
     build_schedule_change_log,
     publish_history_status,
@@ -256,6 +257,20 @@ def build_parser() -> argparse.ArgumentParser:
     oe_health.add_argument("--now", help="explicit health-check time for deterministic operations")
     oe_health.add_argument("--output", type=Path, help="optional JSON health report path")
 
+    public_watchdog = subparsers.add_parser(
+        "check-publication-watchdog",
+        help="verify paired and fresh artifacts from the independently served public feed",
+    )
+    public_watchdog.add_argument(
+        "--feed-dir", type=Path, required=True, help="directory containing downloaded public heads"
+    )
+    public_watchdog.add_argument("--maximum-radar-age-hours", type=float, default=50)
+    public_watchdog.add_argument("--maximum-schedule-age-hours", type=float, default=30)
+    public_watchdog.add_argument(
+        "--now", help="explicit health-check time for deterministic operations"
+    )
+    public_watchdog.add_argument("--output", type=Path, help="optional JSON watchdog report path")
+
     radar = subparsers.add_parser(
         "build-radar", help="build an explainable patch-level Meta Radar from a local OE CSV"
     )
@@ -329,6 +344,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _sync_oe_feed(args)
     if args.command == "check-oe-feed-health":
         return _check_oe_feed_health(args)
+    if args.command == "check-publication-watchdog":
+        return _check_publication_watchdog(args)
     if args.command == "build-radar":
         return _build_radar(args)
     if args.command == "benchmark-oe":
@@ -1015,6 +1032,20 @@ def _check_oe_feed_health(args: argparse.Namespace) -> int:
         checked_at=parse_datetime(args.now) if args.now else datetime.now(UTC),
         maximum_job_age_hours=args.maximum_job_age_hours,
         maximum_source_age_hours=args.maximum_source_age_hours,
+    )
+    _emit(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    return 0 if report["healthy"] else 2
+
+
+def _check_publication_watchdog(args: argparse.Namespace) -> int:
+    report = assess_publication_watchdog(
+        _read_json_object(args.feed_dir / "current.json"),
+        _read_json_object(args.feed_dir / "current-creator.json"),
+        _read_json_object(args.feed_dir / "history-status.json"),
+        _read_json_object(args.feed_dir / "schedule.json"),
+        checked_at=parse_datetime(args.now) if args.now else datetime.now(UTC),
+        maximum_radar_age_hours=args.maximum_radar_age_hours,
+        maximum_schedule_age_hours=args.maximum_schedule_age_hours,
     )
     _emit(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
     return 0 if report["healthy"] else 2

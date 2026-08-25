@@ -122,6 +122,8 @@ data path:
   Radar evidence, while keeping global and team evidence IDs separate and refusing inferred links.
 - a focused onboarding home that routes users into independent Team Room, T1 Desk, Creator Studio,
   or full Meta Radar pages while every workspace keeps the same published evidence contract.
+- an independently hosted production watchdog that verifies the live Radar/Creator pair, history
+  and schedule freshness, and public-data boundaries every six hours while maintaining one incident.
 - account-free analysis links that restore the selected own team and opponent in the focused T1
   workspace so staff and collaborators can open the same evidence context without private data.
 - a printable T1 one-page brief that compresses the verified fixture, public pick/ban focus, review

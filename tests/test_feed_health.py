@@ -126,6 +126,18 @@ def test_health_blocks_private_paths_and_product_login_branding() -> None:
     assert report["next_action"] == "HALT_PUBLICATION"
 
 
+def test_health_allows_normal_https_source_urls() -> None:
+    report = assess_oe_feed_health(
+        _latest_job(),
+        _feed(source_url="https://example.com/public/feed.json"),
+        _history(),
+        checked_at=NOW,
+    )
+
+    boundary = next(check for check in report["checks"] if check["id"] == "PUBLIC_BOUNDARY_SAFE")
+    assert boundary["passed"] is True
+
+
 def test_health_rejects_naive_time_and_nonpositive_thresholds() -> None:
     with pytest.raises(ValueError, match="timezone-aware"):
         assess_oe_feed_health(_latest_job(), _feed(), _history(), checked_at=datetime(2026, 8, 24))

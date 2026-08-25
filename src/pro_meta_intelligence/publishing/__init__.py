@@ -1,5 +1,8 @@
 from pro_meta_intelligence.publishing.feed import PublicationResult, SnapshotFeedPublisher
-from pro_meta_intelligence.publishing.health import assess_oe_feed_health
+from pro_meta_intelligence.publishing.health import (
+    assess_oe_feed_health,
+    assess_publication_watchdog,
+)
 from pro_meta_intelligence.publishing.history_status import (
     build_history_status,
     publish_history_status,
@@ -20,6 +23,7 @@ __all__ = [
     "PublicationResult",
     "SnapshotFeedPublisher",
     "assess_oe_feed_health",
+    "assess_publication_watchdog",
     "build_history_status",
     "build_schedule_change_log",
     "publish_history_status",
