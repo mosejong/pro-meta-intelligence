@@ -11,9 +11,11 @@ supported by public professional-match rows:
 - champion-role game-rate changes against the previous available patch,
 - an own-team-versus-T1 summary from the existing Draft Battlecard.
 
-The profile is generated only for exact allowlisted team identities. The default allowlist contains
-`T1`; `T1 Esports Academy` and partial-name matches do not qualify. Limiting the enriched payload to
-the target avoids duplicating player timelines for every team in the public feed.
+The detailed profile is generated only for exact allowlisted team identities. The default allowlist
+contains `T1`; `T1 Esports Academy` and partial-name matches do not qualify. Every team receives a
+bounded latest-match player/role profile for confirmed-opponent lane pairing, but recent-game
+timelines, previous-patch deltas, and series diagnostics remain target-only. This avoids duplicating
+the heavier timelines for every team in the public feed.
 
 ## Roster boundary
 

@@ -147,6 +147,7 @@ export type OpponentPrep = {
     minimum_games_for_review: number;
     top_champions: number;
     profile_team_names?: string[];
+    player_profiles_for_all_teams?: boolean;
   };
   boundary: string;
   formulae: Record<string, string>;
@@ -572,6 +573,7 @@ function isOpponentPrep(value: unknown) {
     typeof value.config.minimum_games_for_review !== "number" ||
     typeof value.config.top_champions !== "number" ||
     !(value.config.profile_team_names === undefined || Array.isArray(value.config.profile_team_names) && value.config.profile_team_names.every((item) => typeof item === "string")) ||
+    !(value.config.player_profiles_for_all_teams === undefined || typeof value.config.player_profiles_for_all_teams === "boolean") ||
     typeof value.boundary !== "string" ||
     !isRecord(value.formulae) ||
     !isRecord(value.evidence_index) ||

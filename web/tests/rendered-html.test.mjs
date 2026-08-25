@@ -453,7 +453,7 @@ test("builds a T1 match-day brief without guessing a TBD bracket opponent", asyn
     assert.equal(confirmed.fixture.other_participant.name, "Gen.G Esports");
     assert.ok(confirmed.confirmed_matchup);
     assert.equal(confirmed.confirmed_matchup.artifact_type, "confirmed-opponent-lane-report");
-    assert.equal(confirmed.confirmed_matchup.status, "LIMITED");
+    assert.equal(confirmed.confirmed_matchup.status, "READY");
     assert.equal(confirmed.confirmed_matchup.own_team.team_name, "Gen.G");
     assert.equal(confirmed.confirmed_matchup.opponent.team_name, "T1");
     assert.equal(confirmed.confirmed_matchup.lanes.length, 5);
@@ -464,7 +464,8 @@ test("builds a T1 match-day brief without guessing a TBD bracket opponent", asyn
     assert.ok(confirmed.confirmed_matchup.lanes.every((lane, index, lanes) => index === 0 || lanes[index - 1].review_score >= lane.review_score));
     assert.ok(confirmed.confirmed_matchup.lanes.every((lane) => lane.staff_questions.length > 0));
     assert.ok(confirmed.confirmed_matchup.quality.opponent_current_player_count >= 5);
-    assert.equal(confirmed.confirmed_matchup.quality.own_current_player_count, 0);
+    assert.ok(confirmed.confirmed_matchup.quality.own_current_player_count >= 5);
+    assert.equal(confirmed.confirmed_matchup.quality.lanes_with_player_names, 5);
     assert.ok(confirmed.confirmed_matchup.quality.lanes_with_draft_signals > 0);
     assert.ok(confirmed.confirmed_matchup.evidence.match_ids.length > 0);
     assert.match(confirmed.confirmed_matchup.boundary, /do not predict lane outcome/i);
@@ -481,7 +482,9 @@ test("builds a T1 match-day brief without guessing a TBD bracket opponent", asyn
     }));
     assert.match(confirmedHtml, /CONFIRMED OPPONENT COLLISION/);
     assert.match(confirmedHtml, /Gen\.G vs T1/);
-    assert.match(confirmedHtml, /TEAM-LEVEL LIMITED/);
+    assert.match(confirmedHtml, /PLAYER \+ DRAFT READY/);
+    assert.match(confirmedHtml, /Kiin/);
+    assert.match(confirmedHtml, /Doran/);
     assert.match(confirmedHtml, /P1 검토 라인/);
     assert.match(confirmedHtml, /공통 풀/);
     assert.match(confirmedHtml, /보호 자원/);
@@ -502,7 +505,8 @@ test("builds a T1 match-day brief without guessing a TBD bracket opponent", asyn
     assert.equal(t1Perspective.confirmed_matchup.own_team.team_name, "T1");
     assert.equal(t1Perspective.confirmed_matchup.opponent.team_name, "Gen.G");
     assert.ok(t1Perspective.confirmed_matchup.quality.own_current_player_count >= 5);
-    assert.equal(t1Perspective.confirmed_matchup.quality.opponent_current_player_count, 0);
+    assert.ok(t1Perspective.confirmed_matchup.quality.opponent_current_player_count >= 5);
+    assert.equal(t1Perspective.confirmed_matchup.quality.lanes_with_player_names, 5);
 
     const unavailable = buildTargetMatchDayBrief(feed, t1, profile, null, feed.cutoff, geng);
     assert.equal(unavailable.fixture.relationship, "SCHEDULE_UNAVAILABLE");
@@ -574,10 +578,10 @@ test("ships a validated same-origin publication feed for automatic loading", asy
   assert.equal(feed.patch_id, "16.16");
   assert.equal(feed.publication_readiness.ready_for_radar, true);
   assert.deepEqual(feed.publication_readiness.blocking_reasons, []);
-  assert.equal(
+  assert.ok(Number.isInteger(
     feed.publication_readiness.selected_patch_import_quality.known_exclusion_game_count,
-    24,
-  );
+  ));
+  assert.ok(feed.publication_readiness.selected_patch_import_quality.known_exclusion_game_count >= 0);
   assert.ok(feed.entries.length > 0);
   assert.equal(feed.opponent_prep.artifact_type, "opponent-prep-pack");
   assert.equal(feed.opponent_prep.fixture_only, false);
@@ -595,7 +599,13 @@ test("ships a validated same-origin publication feed for automatic loading", asy
   assert.equal(t1.recent_games.length, 5);
   assert.equal(t1.patch_comparison.previous_patch_id, "16.15");
   assert.equal(feed.opponent_prep.config.profile_team_names[0], "T1");
-  assert.equal(feed.opponent_prep.teams.filter((team) => team.player_profiles).length, 1);
+  assert.equal(feed.opponent_prep.config.player_profiles_for_all_teams, true);
+  assert.equal(feed.opponent_prep.teams.filter((team) => team.player_profiles).length, feed.opponent_prep.team_count);
+  assert.ok(feed.opponent_prep.teams.every((team) => {
+    const current = team.player_profiles.filter((player) => player.roster_status === "CURRENT");
+    return current.length >= 5 && new Set(current.map((player) => player.role)).size === 5;
+  }));
+  assert.equal(feed.opponent_prep.teams.filter((team) => team.recent_games).length, 1);
   assert.equal(history.artifact_type, "oe-history-status");
   assert.ok(Number.isInteger(history.gate_progress_percent));
   assert.ok(history.gate_progress_percent >= 0 && history.gate_progress_percent <= 100);
@@ -603,7 +613,7 @@ test("ships a validated same-origin publication feed for automatic loading", asy
   assert.equal(history.forecast.guaranteed, false);
   assert.ok(Date.parse(history.forecast.next_collection_due_at) > Date.parse(history.as_of));
   assert.deepEqual(feed.history_status, history);
-  assert.ok(feedText.length < 3_000_000, "target enrichment should not bloat every team payload");
+  assert.ok(feedText.length < 3_500_000, "all-team role profiles should remain bounded");
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(historyText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
 });

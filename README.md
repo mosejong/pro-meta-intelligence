@@ -110,6 +110,8 @@ data path:
 - a confirmed-opponent five-lane report that turns an exact official T1 fixture into a transparent
   staff-review order using shared pools, ban pressure, role priority, phase-one frequency, available
   public player profiles, and exact evidence IDs without presenting the score as win probability.
+- bounded latest-public-match player/role profiles for every observed team, while the heavier
+  recent-game timeline, patch comparison, and series diagnostics remain exact-T1-only.
 - an own-team-versus-opponent Draft Battlecard that turns public draft overlap into four bounded
   staff review lanes: protect, contest, deny review, and exchange scenario.
 - a Creator Export Lab that converts the same claim-locked evidence into 16:9 YouTube cards, 9:16

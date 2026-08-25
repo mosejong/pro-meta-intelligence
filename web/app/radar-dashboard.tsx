@@ -48,6 +48,7 @@ const opponentFlagLabels: Record<string, string> = {
   LOW_MATCH_SAMPLE: "경기 표본 부족",
   INCOMPLETE_BAN_EVIDENCE: "일부 밴 기록 누락",
   MISSING_TEAM_DISPLAY_NAME: "팀 표시명 누락",
+  INCOMPLETE_CURRENT_PLAYER_PROFILE: "현재 5포지션 선수 표본 부족",
 };
 const historyGateLabels: Record<string, string> = {
   RETRIEVALS: "일일 수집",
