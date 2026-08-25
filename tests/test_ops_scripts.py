@@ -128,7 +128,8 @@ def test_hosted_archive_bootstrap_never_prints_or_persists_the_generated_key() -
     assert 'gh api --method POST "repos/$Repository/releases"' in script
     assert "-F draft=true" in script
     assert "https://uploads.github.com" in script
-    assert 'gh api "repos/$Repository/releases/$releaseId"' in script
+    assert "$assetJson | ConvertFrom-Json" in script
+    assert '$asset.name -ne "oe-private-history-bootstrap.pmi"' in script
     assert 'gh api --method DELETE "repos/$Repository/releases/$releaseId"' in script
     assert "gh release upload" not in script
     assert "Remove-Item Env:OE_ARCHIVE_KEY" in script
