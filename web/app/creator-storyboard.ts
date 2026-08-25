@@ -191,8 +191,11 @@ export function buildCreatorStoryboard(
   if (claims.length < 2) throw new Error("creator storyboard requires at least two approved claims");
   const title = topic.title_candidates.includes(selectedTitle) ? selectedTitle : topic.title_candidates[0];
   const allClaimIds = claims.map((claim) => claim.claim_id);
+  const targetTeamClaim = claims.find((claim) => claim.metric === "target_team_public_game_rate");
   const visualCards = topic.data_cards.map((card) => card.card).join(" · ");
-  const nextCheck = "다음 비교 스냅샷에서 팀 수요가 이어지는지, 관측 팀 밖으로 채택이 확장되는지 다시 확인합니다.";
+  const nextCheck = targetTeamClaim
+    ? "다음 비교 스냅샷에서 글로벌 팀 수요가 이어지는지와 다음 T1 공개 경기에서 같은 픽이 다시 관측되는지를 각각 확인합니다."
+    : "다음 비교 스냅샷에서 팀 수요가 이어지는지, 관측 팀 밖으로 채택이 확장되는지 다시 확인합니다.";
   const sceneInputs: Array<Omit<StoryboardScene, "index" | "timecode"> & { start: number }> = [
     {
       start: 0,
@@ -222,10 +225,10 @@ export function buildCreatorStoryboard(
       label: "검토 가치",
       duration_seconds: 85,
       title: "왜 검토할 가치가 있나",
-      voiceover: `${claims[1].text} 이것은 강함의 증명이 아니라, 팀 검토 목록에서 빠뜨리지 않을 이유입니다.`,
-      on_screen: claims[1].text,
+      voiceover: `${claims[1].text}${targetTeamClaim ? ` ${targetTeamClaim.text}` : ""} 이것은 강함의 증명이 아니라, 팀 검토 목록에서 빠뜨리지 않을 이유입니다.`,
+      on_screen: [claims[1].text, targetTeamClaim?.text].filter(Boolean).join("\n"),
       visual_direction: "채택 팀 변화와 지역별 차이를 순서대로 강조",
-      claim_ids: [claims[1].claim_id, ...(claims[2] ? [claims[2].claim_id] : [])],
+      claim_ids: [claims[1].claim_id, ...(claims[2] ? [claims[2].claim_id] : []), ...(targetTeamClaim ? [targetTeamClaim.claim_id] : [])],
     },
     {
       start: 180,
@@ -270,7 +273,7 @@ export function buildCreatorStoryboard(
     thumbnail_copy: [...topic.thumbnail_copy],
     estimated_duration_seconds: scenes.reduce((total, scene) => total + scene.duration_seconds, 0),
     scenes,
-    short_form_script: `${topic.hook} ${claims[0].text} ${claims[1].text} 다만 ${topic.counterpoint} 다음 스냅샷에서 같은 신호가 이어지는지 다시 확인하겠습니다.`,
+    short_form_script: `${topic.hook} ${claims[0].text} ${claims[1].text}${targetTeamClaim ? ` ${targetTeamClaim.text}` : ""} 다만 ${topic.counterpoint} 다음 스냅샷에서 같은 신호가 이어지는지 다시 확인하겠습니다.`,
     source_event_ids: [...topic.evidence_event_ids],
     source_versions: [...sourceVersions],
     quality_flags: [...topic.quality_flags],

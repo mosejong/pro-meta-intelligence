@@ -55,6 +55,11 @@ an approved title, inspect each scene's voiceover and claim IDs, copy a 30–60 
 export the complete packet as Markdown or JSON. The local review checklist never marks the source
 artifact publication-ready; final factual and editorial approval remains human.
 
+The default Creator lens is T1-first. It intersects exact champion-role Radar candidates with exact
+T1 public pick events, then shows the T1 sample, observed games, observed players when available, and
+separate T1/global evidence counts. The global Creator brief remains one switch away. If there is no
+direct overlap, the UI stays global rather than implying that an unrelated global topic is about T1.
+
 After selecting an own team, the Draft Battlecard compares that team's public priorities with the
 selected opponent. It presents protect, exact pick-contest, deny-review, and exchange-scenario
 questions, then exports the same evidence-bounded artifact as JSON. It never treats the result as an
