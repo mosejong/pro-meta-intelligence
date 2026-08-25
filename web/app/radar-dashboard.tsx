@@ -4,6 +4,8 @@
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { championImageUrl } from "./champion-assets";
+import { AIValidationPanel } from "./ai-validation-panel";
+import { isAIValidationStatus, type AIValidationStatus } from "./ai-validation";
 import { CreatorExportLab } from "./creator-export";
 import { isCreatorBrief, type CreatorBrief } from "./creator-storyboard";
 import {
@@ -288,6 +290,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
   const [scheduleChanges, setScheduleChanges] = useState<ScheduleChangeLog | null>(null);
   const [creatorBrief, setCreatorBrief] = useState<CreatorBrief | null>(null);
   const [decisionOutcomes, setDecisionOutcomes] = useState<DecisionOutcomesFeed | null>(null);
+  const [aiValidation, setAIValidation] = useState<AIValidationStatus | null>(null);
   const [scheduleCheckedAt, setScheduleCheckedAt] = useState<string | null>(null);
   const [scheduleState, setScheduleState] = useState<"connecting" | "connected" | "stale" | "unavailable">("connecting");
   const [opponentId, setOpponentId] = useState(findDefaultTargetTeam(sampleReport.opponent_prep?.teams ?? [])?.team_id ?? sampleReport.opponent_prep?.teams[0]?.team_id ?? "");
@@ -460,6 +463,16 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
         setDecisionOutcomes(null);
       }
       try {
+        const aiValidationUrl = new URL("feed/ai-validation.json", publicationBase);
+        const aiValidationResponse = await fetch(aiValidationUrl, { cache: "no-store" });
+        if (!aiValidationResponse.ok) throw new Error(`AI validation returned ${aiValidationResponse.status}`);
+        const aiValidationPayload: unknown = await aiValidationResponse.json();
+        if (!isAIValidationStatus(aiValidationPayload)) throw new Error("unsupported AI validation status");
+        setAIValidation(aiValidationPayload);
+      } catch {
+        setAIValidation(null);
+      }
+      try {
         const scheduleUrl = new URL("feed/schedule.json", publicationBase);
         const scheduleResponse = await fetch(scheduleUrl, { cache: "no-store" });
         if (!scheduleResponse.ok) throw new Error(`schedule returned ${scheduleResponse.status}`);
@@ -512,6 +525,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
     } catch {
       setCreatorBrief(null);
       setDecisionOutcomes(null);
+      setAIValidation(null);
       setFeedState({
         kind: "demo",
         label: "DEMO FALLBACK",
@@ -814,6 +828,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       fixtureTitle={quickFixtureTitle}
       fixtureDetail={quickFixtureDetail}
       feedLabel={feedState.label}
+      aiValidation={aiValidation}
     />;
   }
 
@@ -1194,6 +1209,8 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
         </div>
         </details> : <div className="brief-empty">현재 발행본에는 상대팀 드래프트 자료가 없습니다. 다음 검증된 피드부터 표시됩니다.</div>}
       </section>
+
+      <AIValidationPanel status={aiValidation} />
 
       <CreatorExportLab report={report} brief={creatorBrief} />
 

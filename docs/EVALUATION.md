@@ -104,6 +104,12 @@ Potential analyst/staff study:
 - ability to identify uncertainty/counterevidence
 - subjective trust only as a secondary metric
 
+The implemented AI release gate is specified in
+[`AI_VALIDATION_PROTOCOL.md`](AI_VALIDATION_PROTOCOL.md). It requires paired hidden tasks, exact
+claim/evidence grading, zero critical errors, full boundary retention, and measured time savings.
+Until the minimum real holdout exists, the public status remains `NOT_VALIDATED` and AI output is
+withheld.
+
 ## 9. Failure Case Log
 
 Every meaningful miss or false positive should be documented with:

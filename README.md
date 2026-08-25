@@ -126,7 +126,11 @@ data path:
 - a focused onboarding home that routes users into independent Team Room, T1 Desk, Creator Studio,
   or full Meta Radar pages while every workspace keeps the same published evidence contract.
 - an independently hosted production watchdog that verifies the live Radar/Creator pair, history
-  and schedule freshness, and public-data boundaries every six hours while maintaining one incident.
+  and schedule freshness, AI release-gate state, and public-data boundaries every six hours while
+  maintaining one incident.
+- a provider-neutral paired human-vs-AI evaluator that withholds AI output until claim/evidence
+  accuracy, zero critical errors, boundary retention, edit burden, and time savings all pass on at
+  least 30 hidden cases.
 - a hosted OE collector that restores AES-GCM-authenticated rolling history, applies the same policy
   and readiness gates, retains two encrypted recovery generations, and publishes no raw provider rows.
 - account-free analysis links that restore the selected own team and opponent in the focused T1
@@ -248,8 +252,8 @@ failed or stale job, stale source snapshot, invalid public feed, or missing hist
 nonzero exit code. A reviewed Windows runner and Task Scheduler registration script are documented
 in [`docs/PRODUCTION_OPERATIONS.md`](docs/PRODUCTION_OPERATIONS.md).
 
-The reviewed Windows publisher can optionally copy only the six allowlisted Radar, Creator,
-history, decision-outcome, schedule, and schedule-change heads into a locked detached worktree and
+The reviewed Windows publisher can optionally copy only the seven allowlisted Radar, Creator,
+history, decision-outcome, schedule, schedule-change, and AI-validation heads into a locked detached worktree and
 fast-forward them to the publication branch. It refuses dirty
 state, unexpected staged paths, unhealthy feeds, and non-fast-forward pushes; raw archives never
 enter the publisher worktree.
@@ -311,7 +315,8 @@ python -m pro_meta_intelligence refresh-feed \
   --fail-on-import-issues
 ```
 
-The refresh command performs no network collection and calls no AI API. The scheduler-ready wrapper
+The refresh command performs no network collection and calls no AI API. AI validation is a separate
+fail-closed path documented in [`docs/AI_VALIDATION_PROTOCOL.md`](docs/AI_VALIDATION_PROTOCOL.md). The scheduler-ready wrapper
 adds an exclusive local writer lock and immutable run audit:
 
 ```bash

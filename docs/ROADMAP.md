@@ -148,6 +148,11 @@ Run A/B comparisons against single-agent and non-LLM baselines.
 
 Exit gate: multi-agent path must justify added cost/latency or be simplified.
 
+Current foundation: a provider-neutral human-vs-AI release evaluator now grades the same sealed
+holdout with deterministic claim, evidence, boundary, critical-error, edit-burden, and completion-
+time metrics. The public status is fail-closed and the UI keeps AI drafting locked until all gates
+pass. Real paired analyst cases and the first provider-backed candidate run are still required.
+
 ## Phase 7 — Strategy Agent + Emergency Brief + Creator Mode
 
 Natural-language querying over verified structured data.

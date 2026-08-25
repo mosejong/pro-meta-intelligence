@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 
 import pytest
 
+from pro_meta_intelligence.ai_validation import evaluate_ai_against_human
 from pro_meta_intelligence.cli import main
 from pro_meta_intelligence.publishing import assess_publication_watchdog
 
@@ -97,9 +98,25 @@ def _schedule(**updates):
     return value
 
 
+def _ai_validation(**updates):
+    value = evaluate_ai_against_human(
+        {
+            "schema_version": "1",
+            "artifact_type": "ai-human-paired-evaluation",
+            "run_id": "pending",
+            "task_type": "EVIDENCE_LOCKED_BRIEF",
+            "evaluated_at": CUTOFF,
+            "system": {},
+            "cases": [],
+        }
+    )
+    value.update(updates)
+    return value
+
+
 def test_publication_watchdog_accepts_paired_fresh_feeds_during_history_collection() -> None:
     report = assess_publication_watchdog(
-        _radar(), _creator(), _history(), _outcomes(), _schedule(), checked_at=NOW
+        _radar(), _creator(), _history(), _outcomes(), _schedule(), _ai_validation(), checked_at=NOW
     )
 
     assert report["healthy"] is True
@@ -114,7 +131,7 @@ def test_publication_watchdog_fails_closed_for_an_unpaired_creator() -> None:
     creator["source_snapshot"] = {**creator["source_snapshot"], "patch_id": "16.15"}
 
     report = assess_publication_watchdog(
-        _radar(), creator, _history(), _outcomes(), _schedule(), checked_at=NOW
+        _radar(), creator, _history(), _outcomes(), _schedule(), _ai_validation(), checked_at=NOW
     )
 
     assert report["failed_checks"] == ["RADAR_CREATOR_PAIRED"]
@@ -137,6 +154,7 @@ def test_publication_watchdog_distinguishes_radar_and_schedule_staleness() -> No
         history,
         outcomes,
         _schedule(retrieved_at="2026-08-20T00:00:00+00:00"),
+        _ai_validation(),
         checked_at=NOW,
     )
 
@@ -148,7 +166,7 @@ def test_publication_watchdog_distinguishes_radar_and_schedule_staleness() -> No
 
 
 def test_publication_watchdog_rejects_missing_or_unsafe_public_artifacts() -> None:
-    missing = assess_publication_watchdog(None, None, None, None, None, checked_at=NOW)
+    missing = assess_publication_watchdog(None, None, None, None, None, None, checked_at=NOW)
     assert missing["healthy"] is False
     assert "PUBLIC_FEED_READY" in missing["failed_checks"]
     assert "CREATOR_FEED_READY" in missing["failed_checks"]
@@ -160,12 +178,32 @@ def test_publication_watchdog_rejects_missing_or_unsafe_public_artifacts() -> No
         _history(),
         _outcomes(),
         _schedule(),
+        _ai_validation(),
         checked_at=NOW,
     )
     boundary = next(check for check in unsafe["checks"] if check["id"] == "PUBLIC_BOUNDARY_SAFE")
     assert boundary["passed"] is False
     assert boundary["observed"]["blocked_field_paths"] == ["creator.notes"]
     assert unsafe["next_action"] == "HALT_PUBLICATION"
+
+
+def test_publication_watchdog_rejects_a_forged_ai_enablement() -> None:
+    forged = _ai_validation(status="VALIDATED", ai_features_enabled=True)
+    forged["gates"] = [{**gate, "passed": True} for gate in forged["gates"]]
+    forged["failed_gates"] = []
+
+    report = assess_publication_watchdog(
+        _radar(),
+        _creator(),
+        _history(),
+        _outcomes(),
+        _schedule(),
+        forged,
+        checked_at=NOW,
+    )
+
+    assert "AI_VALIDATION_STATUS_VALID" in report["failed_checks"]
+    assert report["next_action"] == "RESTORE_FAIL_CLOSED_AI_STATUS"
 
 
 def test_publication_watchdog_rejects_invalid_time_configuration() -> None:
@@ -176,6 +214,7 @@ def test_publication_watchdog_rejects_invalid_time_configuration() -> None:
             _history(),
             _outcomes(),
             _schedule(),
+            _ai_validation(),
             checked_at=datetime(2026, 8, 25),
         )
     with pytest.raises(ValueError, match="positive"):
@@ -185,6 +224,7 @@ def test_publication_watchdog_rejects_invalid_time_configuration() -> None:
             _history(),
             _outcomes(),
             _schedule(),
+            _ai_validation(),
             checked_at=NOW,
             maximum_radar_age_hours=0,
         )
@@ -199,6 +239,7 @@ def test_publication_watchdog_cli_writes_machine_readable_report(tmp_path) -> No
         ("history-status.json", _history()),
         ("decision-outcomes.json", _outcomes()),
         ("schedule.json", _schedule()),
+        ("ai-validation.json", _ai_validation()),
     ):
         (feed_dir / name).write_text(json.dumps(payload), encoding="utf-8")
     output = tmp_path / "watchdog.json"

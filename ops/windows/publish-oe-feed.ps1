@@ -49,7 +49,8 @@ $allowedPaths = @(
     "web/public/feed/history-status.json",
     "web/public/feed/decision-outcomes.json",
     "web/public/feed/schedule.json",
-    "web/public/feed/schedule-changes.json"
+    "web/public/feed/schedule-changes.json",
+    "web/public/feed/ai-validation.json"
 )
 
 & $resolvedPython -m pro_meta_intelligence check-oe-feed-health `
@@ -65,7 +66,7 @@ if ($health.healthy -ne $true) {
 }
 
 $target = "$RemoteName/$PublishBranch via isolated worktree $publisherFullPath"
-if (-not $PSCmdlet.ShouldProcess($target, "Publish six allowlisted public feed artifacts")) {
+if (-not $PSCmdlet.ShouldProcess($target, "Publish seven allowlisted public feed artifacts")) {
     return
 }
 
