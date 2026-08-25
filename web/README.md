@@ -10,7 +10,8 @@ npm run dev
 ```
 
 Open `http://localhost:3000`. The dashboard first requests the same-origin
-`/feed/current.json` and `/feed/schedule.json`, checks both schemas, and rechecks them every five
+`/feed/current.json`, `/feed/schedule.json`, and `/feed/schedule-changes.json`, checks their schemas,
+and rechecks them every five
 minutes. The bundled match feed is the latest reviewed real provider snapshot and includes its
 publication-readiness audit. The official schedule companion is used only to prioritize team review;
 it is excluded from scoring after 36 hours without a successful refresh. The UI shows excluded-game
@@ -60,6 +61,11 @@ head-to-head from a T1 fixture involving another team, and exposes each readines
 hiding missing data behind one score. Once the participant changes in the refreshed schedule, the
 same deterministic brief updates automatically. Its schedule event ID remains separate from
 historical game and series IDs, and the complete brief is downloadable as JSON.
+
+The schedule watch runs through a dedicated GitHub workflow every eight hours, within the reviewed
+six-hour source interval. It publishes only the normalized schedule and T1 change log. The Match-Day
+Control shows the last check, latest detected change, and retained-change count; a missing log is
+reported as unavailable rather than treated as “no change.”
 
 ## Checks
 

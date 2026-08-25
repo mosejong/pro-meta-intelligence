@@ -32,6 +32,20 @@ function fixtureTime(value: string | null) {
   }).format(parsed);
 }
 
+function checkedTime(value: string | null) {
+  if (!value) return "감시 로그 없음";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(parsed);
+}
+
 export function TargetMatchDayPanel({
   brief,
   onDownload,
@@ -47,6 +61,12 @@ export function TargetMatchDayPanel({
       <div><span>T1 MATCH-DAY CONTROL · OFFICIAL SCHEDULE</span><h3>다음 T1 일정과 준비 상태</h3><p>상대가 미정이면 추정하지 않고, 확정되는 순간 같은 브리프가 자동으로 내 팀 대진 여부를 다시 판정합니다.</p></div>
       <div><b className={`match-day-status ${brief.readiness.status.toLowerCase()}`}>{statusLabels[brief.readiness.status]}</b><button type="button" onClick={onDownload}>MATCH-DAY JSON</button></div>
     </header>
+
+    <div className={`target-change-strip ${brief.monitoring.status.toLowerCase()}`}>
+      <b>{brief.monitoring.status === "CHANGE_DETECTED" ? "CHANGE DETECTED" : brief.monitoring.status === "WATCHING" ? "SCHEDULE WATCH ACTIVE" : "CHANGE LOG UNAVAILABLE"}</b>
+      <p>{brief.monitoring.latest_change ? `${brief.monitoring.latest_change.type} · ${brief.monitoring.latest_change.summary}` : "기준 스냅샷이 등록됐습니다. T1 상대·시간·Bo 형식 변경을 감시합니다."}</p>
+      <span>{checkedTime(brief.monitoring.checked_at)} KST · 최근 실행 {brief.monitoring.latest_run_change_count}건 · 보관 {brief.monitoring.retained_change_count}건</span>
+    </div>
 
     <div className="target-match-day-grid">
       <article className="target-fixture-card">

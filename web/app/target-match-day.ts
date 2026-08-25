@@ -1,4 +1,4 @@
-import type { OpponentTeam, RadarReport, ScheduleEvent, ScheduleParticipant, ScheduleSnapshot } from "./radar-types";
+import type { OpponentTeam, RadarReport, ScheduleChangeLog, ScheduleEvent, ScheduleParticipant, ScheduleSnapshot } from "./radar-types";
 import type { TargetProfile } from "./target-profile";
 
 export type TargetFixtureRelationship =
@@ -46,6 +46,20 @@ export type TargetMatchDayBrief = {
       label: string;
       detail: string;
     }>;
+  };
+  monitoring: {
+    status: "CHANGE_DETECTED" | "WATCHING" | "NOT_AVAILABLE";
+    checked_at: string | null;
+    latest_run_status: "INITIALIZED" | "CHANGED" | "UNCHANGED" | null;
+    latest_run_change_count: number;
+    retained_change_count: number;
+    latest_change: {
+      change_id: string;
+      detected_at: string;
+      type: string;
+      severity: "INFO" | "REVIEW" | "ACTION_REQUIRED";
+      summary: string;
+    } | null;
   };
   prepare_now: Array<{
     type: "PICK" | "BAN" | "PATCH_SHIFT" | "MATCHUP";
@@ -180,6 +194,7 @@ export function buildTargetMatchDayBrief(
   schedule?: ScheduleSnapshot | null,
   referenceAt?: string | null,
   ownTeam?: OpponentTeam,
+  scheduleChanges?: ScheduleChangeLog | null,
 ): TargetMatchDayBrief {
   const effectiveReference = referenceAt ?? schedule?.retrieved_at ?? report.cutoff;
   const fixture = nextTargetFixture(schedule, target, effectiveReference);
@@ -188,6 +203,7 @@ export function buildTargetMatchDayBrief(
   const currentPlayers = target.player_profiles?.filter((player) => player.roster_status === "CURRENT") ?? [];
   const readiness = readinessStatus(relationship);
   const seriesAvailable = target.series_tracking?.provider_series_id_available ?? false;
+  const latestChange = scheduleChanges?.latest_run.changes[0] ?? scheduleChanges?.history[0] ?? null;
 
   return {
     schema_version: "1",
@@ -250,6 +266,22 @@ export function buildTargetMatchDayBrief(
             : "공식 일정 이벤트 ID와 과거 게임 ID를 임의로 연결하지 않습니다.",
         },
       ],
+    },
+    monitoring: {
+      status: scheduleChanges
+        ? scheduleChanges.latest_run.status === "CHANGED" ? "CHANGE_DETECTED" : "WATCHING"
+        : "NOT_AVAILABLE",
+      checked_at: scheduleChanges?.generated_at ?? null,
+      latest_run_status: scheduleChanges?.latest_run.status ?? null,
+      latest_run_change_count: scheduleChanges?.latest_run.change_count ?? 0,
+      retained_change_count: scheduleChanges?.history.length ?? 0,
+      latest_change: latestChange ? {
+        change_id: latestChange.change_id,
+        detected_at: latestChange.detected_at,
+        type: latestChange.type,
+        severity: latestChange.severity,
+        summary: latestChange.summary,
+      } : null,
     },
     prepare_now: prepareNow(target, profile),
     unknowns: [

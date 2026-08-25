@@ -5,7 +5,7 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { championImageUrl } from "./champion-assets";
 import { CreatorExportLab } from "./creator-export";
-import { isHistoryStatus, isRadarReport, isScheduleSnapshot, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport, type ScheduleSnapshot } from "./radar-types";
+import { isHistoryStatus, isRadarReport, isScheduleChangeLog, isScheduleSnapshot, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport, type ScheduleChangeLog, type ScheduleSnapshot } from "./radar-types";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
 import { sampleReport } from "./sample-report";
@@ -233,6 +233,7 @@ export function RadarDashboard() {
   const [myTeamSearch, setMyTeamSearch] = useState("");
   const [opponentSearch, setOpponentSearch] = useState("");
   const [schedule, setSchedule] = useState<ScheduleSnapshot | null>(null);
+  const [scheduleChanges, setScheduleChanges] = useState<ScheduleChangeLog | null>(null);
   const [scheduleCheckedAt, setScheduleCheckedAt] = useState<string | null>(null);
   const [scheduleState, setScheduleState] = useState<"connecting" | "connected" | "stale" | "unavailable">("connecting");
   const [opponentId, setOpponentId] = useState(findDefaultTargetTeam(sampleReport.opponent_prep?.teams ?? [])?.team_id ?? sampleReport.opponent_prep?.teams[0]?.team_id ?? "");
@@ -326,9 +327,10 @@ export function RadarDashboard() {
         effectiveSchedule,
         scheduleCheckedAt,
         selectedMyTeam,
+        scheduleChanges,
       )
       : null
-  ), [defaultTargetTeam, effectiveSchedule, pinnedTargetProfile, report, scheduleCheckedAt, selectedMyTeam]);
+  ), [defaultTargetTeam, effectiveSchedule, pinnedTargetProfile, report, scheduleChanges, scheduleCheckedAt, selectedMyTeam]);
   const nextOwnEvent = teamContext?.own_upcoming_events[0];
   const quality = qualityState(report);
   const eligibleCount = report.entries.filter((entry) => entry.eligible_for_review).length;
@@ -363,8 +365,25 @@ export function RadarDashboard() {
         setSchedule(schedulePayload);
         setScheduleCheckedAt(checkedAt);
         setScheduleState(ageHours <= 36 ? "connected" : "stale");
+        try {
+          const changesUrl = new URL("feed/schedule-changes.json", document.baseURI);
+          const changesResponse = await fetch(changesUrl, { cache: "no-store" });
+          if (!changesResponse.ok) throw new Error(`schedule changes returned ${changesResponse.status}`);
+          const changesPayload: unknown = await changesResponse.json();
+          if (!isScheduleChangeLog(changesPayload)) throw new Error("unsupported schedule change log");
+          if (
+            changesPayload.current_snapshot.content_hash !== schedulePayload.content_hash ||
+            changesPayload.current_snapshot.retrieved_at !== schedulePayload.retrieved_at
+          ) {
+            throw new Error("schedule change log does not match the current schedule snapshot");
+          }
+          setScheduleChanges(changesPayload);
+        } catch {
+          setScheduleChanges(null);
+        }
       } catch {
         setSchedule(null);
+        setScheduleChanges(null);
         setScheduleCheckedAt(null);
         setScheduleState("unavailable");
       }

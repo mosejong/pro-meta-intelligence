@@ -188,6 +188,35 @@ export type ScheduleSnapshot = {
   boundary: string;
 };
 
+export type ScheduleChange = {
+  change_id: string;
+  detected_at: string;
+  type: string;
+  severity: "INFO" | "REVIEW" | "ACTION_REQUIRED";
+  summary: string;
+  correlation_method: "EVENT_ID" | "SAME_SLOT" | "SAME_CONFIRMED_OPPONENT" | "UNMATCHED";
+  fields_changed: string[];
+  previous_event: ScheduleEvent | null;
+  current_event: ScheduleEvent | null;
+};
+
+export type ScheduleChangeLog = {
+  schema_version: "1";
+  artifact_type: "pro-schedule-change-log";
+  source_id: string;
+  watched_team: string;
+  generated_at: string;
+  previous_snapshot: { retrieved_at: string; content_hash: string } | null;
+  current_snapshot: { retrieved_at: string; content_hash: string };
+  latest_run: {
+    status: "INITIALIZED" | "CHANGED" | "UNCHANGED";
+    change_count: number;
+    changes: ScheduleChange[];
+  };
+  history: ScheduleChange[];
+  boundary: string;
+};
+
 export type HistoryStatus = {
   schema_version: "1";
   artifact_type: "oe-history-status";
@@ -313,6 +342,49 @@ export function isScheduleSnapshot(value: unknown): value is ScheduleSnapshot {
     typeof value.quality.event_count === "number" &&
     typeof value.quality.tbd_participant_count === "number" &&
     typeof value.boundary === "string"
+  );
+}
+
+export function isScheduleChangeLog(value: unknown): value is ScheduleChangeLog {
+  if (!isRecord(value) || !isRecord(value.current_snapshot) || !isRecord(value.latest_run)) {
+    return false;
+  }
+  return (
+    value.schema_version === "1" &&
+    value.artifact_type === "pro-schedule-change-log" &&
+    typeof value.source_id === "string" &&
+    typeof value.watched_team === "string" &&
+    typeof value.generated_at === "string" &&
+    (value.previous_snapshot === null || isScheduleSnapshotReference(value.previous_snapshot)) &&
+    isScheduleSnapshotReference(value.current_snapshot) &&
+    (value.latest_run.status === "INITIALIZED" || value.latest_run.status === "CHANGED" || value.latest_run.status === "UNCHANGED") &&
+    typeof value.latest_run.change_count === "number" &&
+    Array.isArray(value.latest_run.changes) && value.latest_run.changes.every(isScheduleChange) &&
+    Array.isArray(value.history) && value.history.every(isScheduleChange) &&
+    typeof value.boundary === "string"
+  );
+}
+
+function isScheduleSnapshotReference(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    typeof value.retrieved_at === "string" &&
+    typeof value.content_hash === "string"
+  );
+}
+
+function isScheduleChange(value: unknown) {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.change_id === "string" &&
+    typeof value.detected_at === "string" &&
+    typeof value.type === "string" &&
+    (value.severity === "INFO" || value.severity === "REVIEW" || value.severity === "ACTION_REQUIRED") &&
+    typeof value.summary === "string" &&
+    (value.correlation_method === "EVENT_ID" || value.correlation_method === "SAME_SLOT" || value.correlation_method === "SAME_CONFIRMED_OPPONENT" || value.correlation_method === "UNMATCHED") &&
+    Array.isArray(value.fields_changed) && value.fields_changed.every((item) => typeof item === "string") &&
+    (value.previous_event === null || isScheduleEvent(value.previous_event)) &&
+    (value.current_event === null || isScheduleEvent(value.current_event))
   );
 }
 

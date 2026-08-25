@@ -319,6 +319,13 @@ h1 em { font-style: normal; color: var(--violet); }
 .match-day-status.waiting_for_opponent { background: #fff2b7; }
 .match-day-status.waiting_for_fixture { background: #e1dfd7; }
 .match-day-status.scenario_only { background: #e7ddff; }
+.target-change-strip { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 11px; min-height: 38px; padding: 7px 11px; border-bottom: 1px solid var(--ink); background: #e5e2d9; }
+.target-change-strip.change_detected { background: #ffdd9d; box-shadow: inset 6px 0 0 #c55a22; }
+.target-change-strip.watching { box-shadow: inset 6px 0 0 #72a867; }
+.target-change-strip.not_available { box-shadow: inset 6px 0 0 #8b8b84; }
+.target-change-strip > b { font: 850 8px var(--font-geist-mono); white-space: nowrap; }
+.target-change-strip > p { margin: 0; color: var(--muted); font-size: 8px; line-height: 1.4; }
+.target-change-strip > span { color: #5e615c; font: 700 7px var(--font-geist-mono); text-align: right; white-space: nowrap; }
 .target-match-day-grid { display: grid; grid-template-columns: minmax(250px, .72fr) minmax(260px, .78fr) minmax(340px, 1.25fr); }
 .target-match-day-grid > article { min-width: 0; border-right: 1px solid var(--ink); }
 .target-match-day-grid > article:last-child { border-right: 0; }
@@ -804,6 +811,8 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
   .target-match-day-head h3 { font-size: 20px; }
   .target-match-day-head p { font-size: 9px; }
   .target-match-day-head > div:last-child { justify-content: space-between; }
+  .target-change-strip { grid-template-columns: 1fr; gap: 3px; padding: 9px 11px; }
+  .target-change-strip > span { text-align: left; white-space: normal; }
   .target-match-day-grid { grid-template-columns: 1fr; }
   .target-match-day-grid > article, .target-match-day-grid > article:nth-child(2) { border-right: 0; border-bottom: 1px solid var(--ink); }
   .target-match-day-grid > article:last-child { border-bottom: 0; }

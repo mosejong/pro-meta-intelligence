@@ -41,6 +41,7 @@ from pro_meta_intelligence.publishing import (
     SnapshotFeedPublisher,
     assess_oe_feed_health,
     build_history_status,
+    build_schedule_change_log,
     publish_history_status,
 )
 from pro_meta_intelligence.quality import (
@@ -106,6 +107,17 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=Path("web/public/feed/schedule.json"),
         help="normalized public schedule snapshot",
+    )
+    schedule.add_argument(
+        "--changes-output",
+        type=Path,
+        default=Path("web/public/feed/schedule-changes.json"),
+        help="watched-team schedule change log",
+    )
+    schedule.add_argument(
+        "--watch-team",
+        default="T1",
+        help="exact team identity to monitor for schedule changes",
     )
 
     oe_import = subparsers.add_parser(
@@ -405,12 +417,28 @@ def _fetch_schedule(args: argparse.Namespace) -> int:
     adapter = LoLEsportsScheduleAdapter(registry)
     archive = SnapshotArchive(args.archive_dir)
     latest = archive.latest(adapter.source_id)
+    previous = _load_optional_json_object(args.output)
+    prior_changes = _load_optional_json_object(args.changes_output)
+    published_retrieved_at = (
+        parse_datetime(str(previous["retrieved_at"])) if previous is not None else None
+    )
+    last_retrieved_at = max(
+        (
+            item
+            for item in (
+                latest.retrieved_at if latest else None,
+                published_retrieved_at,
+            )
+            if item is not None
+        ),
+        default=None,
+    )
     leagues = args.leagues or ["lck", "lec", "lpl", "lcs", "msi", "worlds"]
     try:
         snapshot = adapter.fetch(
             leagues,
             locale=args.locale,
-            last_retrieved_at=latest.retrieved_at if latest else None,
+            last_retrieved_at=last_retrieved_at,
         )
     except ScheduleFetchIntervalError as error:
         payload = {
@@ -432,10 +460,21 @@ def _fetch_schedule(args: argparse.Namespace) -> int:
         }
         _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", None)
         return 4
+    current = snapshot.to_dict()
+    change_log = build_schedule_change_log(
+        previous,
+        current,
+        prior_changes,
+        watched_team=args.watch_team,
+    )
     archive.store(snapshot.artifact)
     _emit(
-        json.dumps(snapshot.to_dict(), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        json.dumps(current, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         args.output,
+    )
+    _emit(
+        json.dumps(change_log, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        args.changes_output,
     )
     return 0
 
@@ -1107,6 +1146,15 @@ def _load_league_regions(path: Path | None) -> LeagueRegionMap:
 
 def _load_registry(path: Path | None) -> SourceRegistry:
     return SourceRegistry.from_json(path) if path else SourceRegistry.load_default()
+
+
+def _load_optional_json_object(path: Path | None) -> dict[str, object] | None:
+    if path is None or not path.is_file():
+        return None
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"expected a JSON object: {path}")
+    return payload
 
 
 def _emit(output: str, destination: Path | None) -> None:
