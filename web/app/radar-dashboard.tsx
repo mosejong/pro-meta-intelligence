@@ -69,6 +69,11 @@ const historyActionLabels: Record<string, string> = {
   REVIEW_BENCHMARK_RESULTS: "실데이터 결과 검토",
   REVIEW_HISTORY_BLOCKERS: "차단 원인 검토",
 };
+const historyContinuityLabels: Record<string, string> = {
+  NOT_STARTED: "수집 시작 전",
+  ON_TRACK: "연속 수집 정상",
+  GAP_DETECTED: "수집 공백 확인 필요",
+};
 
 type FeedState = {
   kind: "connecting" | "published" | "demo" | "uploaded";
@@ -117,6 +122,12 @@ function points(value: number | null) {
   if (value === null) return "—";
   const amount = value * 100;
   return `${amount > 0 ? "+" : amount < 0 ? "−" : ""}${Math.abs(amount).toFixed(1)}pp`;
+}
+
+function historyGateProgress(gates: Array<{ current: number; required: number }>) {
+  if (!gates.length) return 0;
+  const total = gates.reduce((sum, gate) => sum + (gate.required > 0 ? Math.min(1, gate.current / gate.required) : 0), 0);
+  return Math.round((total / gates.length) * 100);
 }
 
 function signalFor(entry: RadarEntry) {
@@ -715,7 +726,7 @@ export function RadarDashboard() {
         <summary className="history-summary">
           <div><span>HISTORY · WALK-FORWARD</span><h2>실데이터 검증 준비도</h2></div>
           <p>{report.history_status.benchmark_ready ? "미래 데이터와 분리된 실제 백테스트 결과를 검토할 수 있습니다." : "과거 파일을 오늘 데이터로 재구성하지 않고, 실제 일일 스냅샷이 쌓이기를 기다립니다."}</p>
-          <div className="history-summary-action"><b>{historyActionLabels[report.history_status.next_action] ?? report.history_status.next_action}</b><span>{report.history_status.gates.filter((gate) => gate.passed).length}/{report.history_status.gates.length} 충족 · 상세 보기</span></div>
+          <div className="history-summary-action"><b>{historyActionLabels[report.history_status.next_action] ?? report.history_status.next_action}</b><span>{report.history_status.gate_progress_percent ?? historyGateProgress(report.history_status.gates)}% 축적 · {report.history_status.gates.filter((gate) => gate.passed).length}/{report.history_status.gates.length} 충족 · 상세 보기</span></div>
         </summary>
         <div className="history-detail">
           <div className="history-gates">{report.history_status.gates.map((gate) => {
@@ -728,6 +739,23 @@ export function RadarDashboard() {
               <em>{gate.passed ? "충족" : "수집 중"}</em>
             </article>;
           })}</div>
+          {report.history_status.continuity && report.history_status.forecast && <div className="history-operations">
+            <article className={report.history_status.continuity.status === "GAP_DETECTED" ? "history-operation-alert" : ""}>
+              <span>COLLECTION CONTINUITY</span>
+              <strong>{historyContinuityLabels[report.history_status.continuity.status] ?? report.history_status.continuity.status}</strong>
+              <p>다음 수집 {report.history_status.continuity.next_collection_due_at ? formatCutoff(report.history_status.continuity.next_collection_due_at) : "일정 없음"} · 허용 공백 {report.history_status.continuity.maximum_gap_hours}시간</p>
+            </article>
+            <article>
+              <span>EARLIEST POSSIBLE</span>
+              <strong>{report.history_status.benchmark_ready ? "백테스트 검토 가능" : report.history_status.forecast.earliest_possible_ready_at ? formatCutoff(report.history_status.forecast.earliest_possible_ready_at) : "계산 대기"}</strong>
+              <p>매일 수집되고 필요한 새 경기 상태가 생긴다는 전제의 최단 시점이며 보장 날짜가 아닙니다.</p>
+            </article>
+            <article>
+              <span>EVIDENCE REMAINING</span>
+              <strong>{report.history_status.forecast.remaining.retrievals}회 · {report.history_status.forecast.remaining.unique_states}상태 · {report.history_status.forecast.remaining.matured_cutoffs}컷오프</strong>
+              <p>수집 기간 {report.history_status.forecast.remaining.collection_span_days}일이 더 필요합니다. 하나라도 부족하면 성능 수치를 공개하지 않습니다.</p>
+            </article>
+          </div>}
           <footer><span>마지막 스냅샷 {report.history_status.as_of ? formatCutoff(report.history_status.as_of) : "아직 없음"}</span><p>준비도는 예측 성능이 아닙니다. Recall@K와 오탐률은 성숙한 미래 결과가 확보된 뒤에만 표시합니다.</p><b>{report.history_status.blocking_reasons.length} GATES OPEN</b></footer>
         </div>
       </details>}

@@ -77,6 +77,12 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /HISTORY · WALK-FORWARD/);
   assert.match(html, /실데이터 검증 준비도/);
   assert.match(html, /일일 수집 계속/);
+  assert.match(html, /10(?:<!-- -->)?% 축적/);
+  assert.match(html, /COLLECTION CONTINUITY/);
+  assert.match(html, /연속 수집 정상/);
+  assert.match(html, /EARLIEST POSSIBLE/);
+  assert.match(html, /보장 날짜가 아닙니다/);
+  assert.match(html, /EVIDENCE REMAINING/);
   assert.match(html, /CREATOR EXPORT LAB/);
   assert.match(html, /분석을 바로 영상 장면으로/);
   assert.match(html, /16:9 유튜브/);
@@ -502,6 +508,8 @@ test("locks the exact T1 organization as the default opponent target", async () 
 test("ships a validated same-origin publication feed for automatic loading", async () => {
   const feedText = await readFile(new URL("public/feed/current.json", templateRoot), "utf8");
   const feed = JSON.parse(feedText);
+  const historyText = await readFile(new URL("public/feed/history-status.json", templateRoot), "utf8");
+  const history = JSON.parse(historyText);
   assert.equal(feed.schema_version, "1");
   assert.equal(feed.fixture_only, false);
   assert.equal(feed.patch_id, "16.16");
@@ -529,8 +537,16 @@ test("ships a validated same-origin publication feed for automatic loading", asy
   assert.equal(t1.patch_comparison.previous_patch_id, "16.15");
   assert.equal(feed.opponent_prep.config.profile_team_names[0], "T1");
   assert.equal(feed.opponent_prep.teams.filter((team) => team.player_profiles).length, 1);
+  assert.equal(history.artifact_type, "oe-history-status");
+  assert.ok(Number.isInteger(history.gate_progress_percent));
+  assert.ok(history.gate_progress_percent >= 0 && history.gate_progress_percent <= 100);
+  assert.equal(history.continuity.status, "ON_TRACK");
+  assert.equal(history.forecast.guaranteed, false);
+  assert.ok(Date.parse(history.forecast.next_collection_due_at) > Date.parse(history.as_of));
+  assert.deepEqual(feed.history_status, history);
   assert.ok(feedText.length < 3_000_000, "target enrichment should not bloat every team payload");
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
+  assert.doesNotMatch(historyText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
 });
 
 test("ships a normalized official schedule companion feed", async () => {

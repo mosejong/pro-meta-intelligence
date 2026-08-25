@@ -93,7 +93,13 @@ audit and walk-forward benchmark maintenance under the same writer lock, then at
 compact `web/public/feed/history-status.json`. A separate scheduled audit is optional diagnostics,
 not a requirement for keeping the public readiness indicator current.
 
-The public status contains only the four default gate measurements, reason codes, warnings, the next
-operational action, and aggregate benchmark metrics after the benchmark is genuinely ready. Keep the
-raw archive and detailed audit private under `outputs/`; neither provider rows nor local filesystem
-paths belong in the public feed.
+The public status contains the four default gate measurements plus a compact collection ledger. The
+ledger reports the average gate-fill percentage, first and last verified retrievals, continuity
+deadline, remaining counts, and an earliest-possible readiness date. That date is explicitly a lower
+bound under uninterrupted daily collection and required distinct source-state changes; it is not a
+promise that games, source updates, or matured cutoffs will arrive. Aggregate benchmark metrics remain
+hidden until the benchmark is genuinely ready.
+
+Keep the raw archive and detailed audit private under `outputs/`; neither provider rows nor local
+filesystem paths belong in the public feed. The compact forecast is derived only from verified archive
+metadata and configured gates, so it cannot turn a current annual file into fictional history.
