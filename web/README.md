@@ -9,21 +9,26 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. The dashboard first requests the same-origin
+Open `http://localhost:3000`. The onboarding home separates the product into four focused workspaces:
+
+- `/team/` — own-team selection, opponent priority, review candidates, and Draft Battlecard.
+- `/t1/` — official T1 fixture, one-page staff brief, target profile, and match-day control.
+- `/creator/` — evidence-locked YouTube, Shorts, and editor JSON exports.
+- `/radar/` — full regional signal, audit, history, and raw evidence exploration.
+
+Each workspace requests the same-origin
 `/feed/current.json`, `/feed/schedule.json`, and `/feed/schedule-changes.json`, checks their schemas,
 and rechecks them every five
 minutes. The bundled match feed is the latest reviewed real provider snapshot and includes its
 publication-readiness audit. The official schedule companion is used only to prioritize team review;
 it is excluded from scoring after 36 hours without a successful refresh. The UI shows excluded-game
 and blocking-issue counts instead of presenting a clean-looking result without its data limitations.
-The default **Quick View** starts with three outcome routes: T1's next verified match, an own-team
-vs T1 preparation flow, and Creator Studio. It hides operational history, raw opponent tables, and
-the full Radar explorer without removing their evidence. **Full Analysis** restores those surfaces,
-and the preference is stored only in the current browser.
+The visible surface is selected by the page route rather than by asking a new user to understand one
+large dashboard. Direct links remain loadable on both the local app and GitHub Pages.
 
-After choosing an own team, **분석 링크 복사** creates an account-free URL containing only the
-public team ID, opponent ID, and Quick/Full view. Opening it restores the same workspace; no API key,
-uploaded file, private note, or browser-only preference is included.
+After choosing an own team, **분석 링크 복사** creates an account-free URL containing the public
+team and opponent selections. Opening it restores the same evidence context; no API key, uploaded
+file, or private note is included. Shared staff links open the focused T1 workspace directly.
 
 The **T1 원페이지 브리프** is the meeting handoff for that workspace. It keeps the official fixture,
 three public-data review actions, five readiness gates, T1 pick/ban focus, and—only after a verified
@@ -37,8 +42,8 @@ python -m pro_meta_intelligence build-radar --input path/to/oracles-elixir.csv
 ```
 
 Imported files stay in browser memory and are not uploaded or persisted. The refresh button returns
-from a local override to the published feed. Host access control is separate from application data:
-the dashboard itself has no ChatGPT, OpenAI, or product-account login flow.
+from a local override to the published feed. Host access control is separate from application data;
+the dashboard itself has no product-account connection flow.
 
 Creator Export Lab converts an eligible Radar candidate into a 1280×720 YouTube card, a 1080×1920
 short-form card, or scene JSON. The browser generates the files locally. Experimental
@@ -49,10 +54,10 @@ selected opponent. It presents protect, exact pick-contest, deny-review, and exc
 questions, then exports the same evidence-bounded artifact as JSON. It never treats the result as an
 automatic pick/ban instruction.
 
-The default reading flow is intentionally progressive: select the own team, review the prioritized
-opponent, then read the Draft Battlecard. Historical collection gates and raw opponent pick/ban,
-side, rotation, and evidence tables stay collapsed until requested. Mobile users get a persistent
-four-destination task bar instead of losing navigation when the desktop header is hidden.
+The default reading flow is intentionally progressive: choose a workspace, then complete its primary
+task. Team Room moves from own-team selection to prioritized opponent and Draft Battlecard; the other
+pages remove unrelated sections entirely. Mobile users get a persistent five-destination task bar
+for home, team, T1, creator, and radar navigation.
 
 Both the own-team and opponent selectors support instant filtering across team names, known aliases,
 and league labels. The selected record stays visible while a new search is in progress, and changing
@@ -100,10 +105,10 @@ The production build targets Cloudflare-compatible ESM through vinext and the Si
 
 ## Independent public URL
 
-The same dashboard also ships as a static GitHub Pages build at
-`https://mosejong.github.io/pro-meta-intelligence/`. This address has no application login and no
-ChatGPT-branded hostname. It loads the bundled feed relative to the project path, so the Sites and
-GitHub Pages builds use the same dashboard and data contract.
+The same product also ships as a static GitHub Pages build at
+`https://mosejong.github.io/pro-meta-intelligence/`. It has no application login and loads the
+bundled feed relative to each direct workspace path, so every page uses the same dashboard and data
+contract.
 
 ```bash
 npm run test:pages
