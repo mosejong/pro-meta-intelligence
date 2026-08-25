@@ -1,6 +1,6 @@
 # Production operations
 
-The unattended production path has six separate responsibilities:
+The unattended production path has seven separate responsibilities:
 
 1. `sync-oe-feed` performs policy-gated acquisition, archive audit, publication readiness, Radar and
    Creator publication, and walk-forward readiness maintenance under one writer lock.
@@ -16,6 +16,8 @@ The unattended production path has six separate responsibilities:
    only those two normalized artifacts.
 6. An independent GitHub watchdog downloads the actually served public artifacts every six hours,
    fails on availability, pairing, freshness, or boundary violations, and maintains one incident.
+7. The hosted OE workflow restores an authenticated encrypted history state, runs the same policy
+   and readiness gates, keeps two rolling recovery generations, and publishes only safe feed heads.
 
 ## Health command
 
@@ -85,6 +87,12 @@ python -m pro_meta_intelligence check-publication-watchdog \
 ```
 
 ## Windows runner
+
+The Windows runner is the bootstrap and emergency fallback after hosted collection is verified. Do
+not leave it enabled alongside the hosted collector: two independent schedulers would compete for
+the same reviewed 24-hour source interval and split the historical availability ledger. The hosted
+architecture and first migration procedure are documented in
+[`HOSTED_OE_COLLECTOR.md`](HOSTED_OE_COLLECTOR.md).
 
 Run one complete sync and health check from the repository root:
 

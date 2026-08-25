@@ -1,0 +1,204 @@
+name: Hosted OE collector and publisher
+
+on:
+  schedule:
+    - cron: "13 7,19 * * *"
+  workflow_dispatch:
+    inputs:
+      bootstrap_asset_id:
+        description: "Optional encrypted draft-release asset ID for the first hosted restore"
+        required: false
+        type: string
+      allow_fresh_start:
+        description: "Explicitly allow a new empty history when no hosted state exists"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  actions: write
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      archive_artifact_id: ${{ steps.archive-upload.outputs.artifact-id }}
+    env:
+      OE_ARCHIVE_KEY: ${{ secrets.OE_ARCHIVE_KEY }}
+      PRIVATE_STATE_DIR: outputs/hosted-oe-state
+      PRIVATE_ARCHIVE_DIR: outputs/oracles-elixir/raw
+      PRIVATE_STATE_FILE: outputs/hosted-oe-state/oe-private-history-state.pmi
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install collector and archive dependencies
+        run: python -m pip install -e ".[hosted-ops]"
+      - name: Require the private archive secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$OE_ARCHIVE_KEY" ]]; then
+            echo "Required repository secret OE_ARCHIVE_KEY is not configured." >&2
+            exit 1
+          fi
+      - name: Restore the newest authenticated private history state
+        id: restore
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BOOTSTRAP_ASSET_ID: ${{ inputs.bootstrap_asset_id }}
+          ALLOW_FRESH_START: ${{ inputs.allow_fresh_start }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$PRIVATE_STATE_DIR"
+          artifact_id=$(gh api \
+            "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" \
+            --jq '[.artifacts[] | select(.expired == false and (.name | startswith("oe-private-history-state-")))] | sort_by(.created_at) | reverse | .[0].id // empty')
+
+          restore_source=""
+          if [[ -n "$artifact_id" ]]; then
+            gh api \
+              -H "Accept: application/vnd.github+json" \
+              "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
+              > "$PRIVATE_STATE_DIR/state.zip"
+            unzip -q "$PRIVATE_STATE_DIR/state.zip" -d "$PRIVATE_STATE_DIR/restored-artifact"
+            cp "$PRIVATE_STATE_DIR/restored-artifact/oe-private-history-state.pmi" \
+              "$PRIVATE_STATE_FILE"
+            restore_source="ACTIONS_ARTIFACT:$artifact_id"
+          elif [[ -n "$BOOTSTRAP_ASSET_ID" ]]; then
+            gh api \
+              -H "Accept: application/octet-stream" \
+              "repos/$GITHUB_REPOSITORY/releases/assets/$BOOTSTRAP_ASSET_ID" \
+              > "$PRIVATE_STATE_FILE"
+            restore_source="BOOTSTRAP_RELEASE_ASSET:$BOOTSTRAP_ASSET_ID"
+          elif [[ "$ALLOW_FRESH_START" == "true" ]]; then
+            restore_source="EXPLICIT_FRESH_START"
+          else
+            echo "No hosted private history exists. Supply bootstrap_asset_id or explicitly allow a fresh start." >&2
+            exit 1
+          fi
+
+          if [[ -f "$PRIVATE_STATE_FILE" ]]; then
+            python -m pro_meta_intelligence restore-private-oe-archive \
+              --input "$PRIVATE_STATE_FILE" \
+              --archive-dir "$PRIVATE_ARCHIVE_DIR" \
+              --report "$PRIVATE_STATE_DIR/restore-report.json"
+            rm -f "$PRIVATE_STATE_FILE"
+          fi
+          echo "restore_source=$restore_source" >> "$GITHUB_OUTPUT"
+      - name: Run policy-gated OE sync and fail-closed local health check
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pro_meta_intelligence sync-oe-feed \
+            --year 2026 \
+            --source-timezone UTC \
+            --archive-dir "$PRIVATE_ARCHIVE_DIR" \
+            --feed-dir web/public/feed \
+            --run-dir outputs/oe-feed-jobs \
+            --creator-top-k 3 \
+            --max-index-entries 50 \
+            --output "$PRIVATE_STATE_DIR/sync-report.json"
+          python -m pro_meta_intelligence check-oe-feed-health \
+            --run-dir outputs/oe-feed-jobs \
+            --feed-dir web/public/feed \
+            --maximum-job-age-hours 30 \
+            --maximum-source-age-hours 50 \
+            --output "$PRIVATE_STATE_DIR/local-health.json"
+      - name: Repack authenticated private history without publishing raw rows
+        run: >-
+          python -m pro_meta_intelligence pack-private-oe-archive
+          --archive-dir "$PRIVATE_ARCHIVE_DIR"
+          --output "$PRIVATE_STATE_FILE"
+          --report "$PRIVATE_STATE_DIR/pack-report.json"
+      - name: Upload redundant rolling private history state
+        id: archive-upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: oe-private-history-state-${{ github.run_id }}
+          path: |
+            outputs/hosted-oe-state/oe-private-history-state.pmi
+            outputs/hosted-oe-state/pack-report.json
+            outputs/hosted-oe-state/restore-report.json
+            outputs/hosted-oe-state/local-health.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 90
+      - name: Keep the two newest encrypted history states
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t artifact_ids < <(gh api \
+            "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | select(.expired == false and (.name | startswith("oe-private-history-state-"))) | [.created_at, .id] | @tsv' \
+            | sort -r \
+            | cut -f2)
+          if (( ${#artifact_ids[@]} > 2 )); then
+            for artifact_id in "${artifact_ids[@]:2}"; do
+              gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id"
+            done
+          fi
+      - name: Validate and build the independent Pages artifact
+        working-directory: web
+        run: npm ci && npm run lint && npm run test:pages
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist-pages
+      - name: Publish only the reviewed public feed heads
+        shell: bash
+        run: |
+          set -euo pipefail
+          allowed_pattern='^(web/public/feed/current\.json|web/public/feed/current-creator\.json|web/public/feed/history-status\.json)$'
+          unexpected=$(git diff --name-only | grep -Ev "$allowed_pattern" || true)
+          if [[ -n "$unexpected" ]]; then
+            echo "Unexpected tracked changes from hosted sync:" >&2
+            echo "$unexpected" >&2
+            exit 1
+          fi
+          if git diff --quiet -- \
+            web/public/feed/current.json \
+            web/public/feed/current-creator.json \
+            web/public/feed/history-status.json; then
+            echo "Public OE feed heads are already current."
+            exit 0
+          fi
+          git config user.name "Pro Meta Intelligence Hosted Collector"
+          git config user.email "hosted-collector@pro-meta-intelligence.local"
+          git add -- \
+            web/public/feed/current.json \
+            web/public/feed/current-creator.json \
+            web/public/feed/history-status.json
+          staged=$(git diff --cached --name-only | grep -Ev "$allowed_pattern" || true)
+          if [[ -n "$staged" ]]; then
+            echo "Unexpected staged paths: $staged" >&2
+            exit 1
+          fi
+          git commit -m "chore(data): refresh hosted OE publication"
+          git push origin HEAD:main
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: sync
+    steps:
+      - name: Deploy hosted OE publication to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

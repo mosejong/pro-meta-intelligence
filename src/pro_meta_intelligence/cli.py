@@ -257,6 +257,24 @@ def build_parser() -> argparse.ArgumentParser:
     oe_health.add_argument("--now", help="explicit health-check time for deterministic operations")
     oe_health.add_argument("--output", type=Path, help="optional JSON health report path")
 
+    private_pack = subparsers.add_parser(
+        "pack-private-oe-archive",
+        help="validate, compress, and authenticate a private OE history archive",
+    )
+    private_pack.add_argument("--archive-dir", type=Path, required=True)
+    private_pack.add_argument("--output", type=Path, required=True)
+    private_pack.add_argument("--key-env", default="OE_ARCHIVE_KEY")
+    private_pack.add_argument("--report", type=Path, help="optional non-secret JSON report")
+
+    private_restore = subparsers.add_parser(
+        "restore-private-oe-archive",
+        help="authenticate and restore private OE history into a new archive directory",
+    )
+    private_restore.add_argument("--input", type=Path, required=True)
+    private_restore.add_argument("--archive-dir", type=Path, required=True)
+    private_restore.add_argument("--key-env", default="OE_ARCHIVE_KEY")
+    private_restore.add_argument("--report", type=Path, help="optional non-secret JSON report")
+
     public_watchdog = subparsers.add_parser(
         "check-publication-watchdog",
         help="verify paired and fresh artifacts from the independently served public feed",
@@ -346,6 +364,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _check_oe_feed_health(args)
     if args.command == "check-publication-watchdog":
         return _check_publication_watchdog(args)
+    if args.command == "pack-private-oe-archive":
+        return _pack_private_oe_archive(args)
+    if args.command == "restore-private-oe-archive":
+        return _restore_private_oe_archive(args)
     if args.command == "build-radar":
         return _build_radar(args)
     if args.command == "benchmark-oe":
@@ -1049,6 +1071,30 @@ def _check_publication_watchdog(args: argparse.Namespace) -> int:
     )
     _emit(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
     return 0 if report["healthy"] else 2
+
+
+def _pack_private_oe_archive(args: argparse.Namespace) -> int:
+    from pro_meta_intelligence.operations.private_archive import pack_private_oe_archive
+
+    report = pack_private_oe_archive(
+        args.archive_dir,
+        args.output,
+        key_environment_variable=args.key_env,
+    )
+    _emit(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.report)
+    return 0
+
+
+def _restore_private_oe_archive(args: argparse.Namespace) -> int:
+    from pro_meta_intelligence.operations.private_archive import restore_private_oe_archive
+
+    report = restore_private_oe_archive(
+        args.input,
+        args.archive_dir,
+        key_environment_variable=args.key_env,
+    )
+    _emit(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.report)
+    return 0
 
 
 def _read_json_object(path: Path) -> dict[str, object] | None:

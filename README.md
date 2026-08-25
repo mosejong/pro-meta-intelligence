@@ -124,6 +124,8 @@ data path:
   or full Meta Radar pages while every workspace keeps the same published evidence contract.
 - an independently hosted production watchdog that verifies the live Radar/Creator pair, history
   and schedule freshness, and public-data boundaries every six hours while maintaining one incident.
+- a hosted OE collector that restores AES-GCM-authenticated rolling history, applies the same policy
+  and readiness gates, retains two encrypted recovery generations, and publishes no raw provider rows.
 - account-free analysis links that restore the selected own team and opponent in the focused T1
   workspace so staff and collaborators can open the same evidence context without private data.
 - a printable T1 one-page brief that compresses the verified fixture, public pick/ban focus, review
@@ -154,6 +156,7 @@ See also:
 - [`docs/OE_COVERAGE_AUDIT.md`](docs/OE_COVERAGE_AUDIT.md)
 - [`docs/LEAGUE_REGION_MAP.md`](docs/LEAGUE_REGION_MAP.md)
 - [`docs/OE_HISTORY_READINESS.md`](docs/OE_HISTORY_READINESS.md)
+- [`docs/HOSTED_OE_COLLECTOR.md`](docs/HOSTED_OE_COLLECTOR.md)
 - [`docs/BLIND_SPOT_BENCHMARK.md`](docs/BLIND_SPOT_BENCHMARK.md)
 - [`docs/META_RADAR.md`](docs/META_RADAR.md)
 - [`docs/CREATOR_EXPORT_LAB.md`](docs/CREATOR_EXPORT_LAB.md)
