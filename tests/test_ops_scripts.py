@@ -123,9 +123,12 @@ def test_hosted_archive_bootstrap_never_prints_or_persists_the_generated_key() -
     assert "RandomNumberGenerator" in script
     assert "pack-private-oe-archive" in script
     assert "gh secret set" in script
-    assert "gh release create" in script
-    assert "--draft" in script
-    assert "gh release upload" in script
+    assert 'gh api --method POST "repos/$Repository/releases"' in script
+    assert "-F draft=true" in script
+    assert "https://uploads.github.com" in script
+    assert 'gh api "repos/$Repository/releases/$releaseId"' in script
+    assert 'gh api --method DELETE "repos/$Repository/releases/$releaseId"' in script
+    assert "gh release upload" not in script
     assert "Remove-Item Env:OE_ARCHIVE_KEY" in script
     assert "[Array]::Clear" in script
     assert "Write-Output $key" not in script
