@@ -99,6 +99,12 @@ snapshots still need to accumulate before the first non-fixture result is valid.
 run that audit and benchmark maintenance automatically and publish a compact four-gate readiness
 status for the dashboard without exposing the private raw archive.
 
+The Team Decision Journal is now connected to that benchmark through a separate public-safe outcome
+head. It keeps local human decisions private, resolves only exact cutoff or immutable source-state
+matches, and will surface hit, false-alert, and missed-adoption reviews after real history matures.
+Until then it explicitly remains `HISTORY_NOT_READY`. The remaining Phase 3 exit gate is therefore
+real observation time and subsequent analyst review, not missing application plumbing.
+
 Hosted operations now have an authenticated rolling-history path: GitHub Actions restores the
 private OE archive, respects the same source interval and publication gates, uploads two encrypted
 recovery generations, publishes only normalized feed heads, and deploys the validated Pages

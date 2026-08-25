@@ -1,0 +1,30 @@
+{
+  "artifact_type": "team-decision-outcomes",
+  "as_of": "2026-08-25T06:39:37.755251+00:00",
+  "benchmark_ready": false,
+  "boundary": "Only matured point-in-time benchmark outcomes are published. Human journal state is never uploaded, private team data is not inferred, and no raw archive path or provider row is included.",
+  "candidate_policy": {
+    "maximum_pre_cutoff_pick_presence": 0.1,
+    "presence_filter_applies_before_top_k": true,
+    "ranking": "eligible Meta Radar entries in their published deterministic order",
+    "top_k": 10
+  },
+  "evaluations": [],
+  "outcome_policy": {
+    "confirmation_time": "first future event where both thresholds are satisfied",
+    "event": "PICK",
+    "minimum_future_distinct_teams": 2,
+    "minimum_future_picks": 2,
+    "same_patch_only": true
+  },
+  "schema_version": "1",
+  "source_id": "oracles-elixir-match-data",
+  "status": "HISTORY_NOT_READY",
+  "summary": {
+    "evaluated_cutoff_count": 0,
+    "false_alert_count": 0,
+    "hit_count": 0,
+    "missed_adoption_count": 0,
+    "selected_candidate_count": 0
+  }
+}

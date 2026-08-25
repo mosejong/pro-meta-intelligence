@@ -17,7 +17,8 @@ Open `http://localhost:3000`. The onboarding home separates the product into fou
 - `/radar/` — full regional signal, audit, history, and raw evidence exploration.
 
 Each workspace requests the same-origin
-`/feed/current.json`, `/feed/schedule.json`, and `/feed/schedule-changes.json`, checks their schemas,
+`/feed/current.json`, `/feed/history-status.json`, `/feed/decision-outcomes.json`,
+`/feed/schedule.json`, and `/feed/schedule-changes.json`, checks their schemas,
 and rechecks them every five
 minutes. The bundled match feed is the latest reviewed real provider snapshot and includes its
 publication-readiness audit. The official schedule companion is used only to prioritize team review;
@@ -36,6 +37,12 @@ patch/cutoff candidate through `INBOX`, `REVIEWED`, `SCRIM_REQUESTED`, `ADOPTED`
 to the optional own-team selection and remain in that browser only; they are not placed in analysis
 links, uploaded, or synchronized with other devices. Sensitive scrim and player information remains
 outside this public prototype.
+
+The journal's Outcome Review uses the leakage-safe walk-forward feed. Before real history matures it
+shows a waiting state. Afterwards it can label the exact recorded candidate as hit, false alert,
+missed adoption, or not evaluated. An exact cutoff is preferred; an earlier evaluation may match
+only when its immutable source ID and content hash are identical. The result never changes the
+analyst's human state automatically.
 
 The **T1 원페이지 브리프** is the meeting handoff for that workspace. It keeps the official fixture,
 three public-data review actions, five readiness gates, T1 pick/ban focus, and—only after a verified

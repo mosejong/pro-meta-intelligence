@@ -99,6 +99,9 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /비민감 회의 메모/);
   assert.match(html, /JOURNAL JSON/);
   assert.match(html, /현재 브라우저에만 저장/);
+  assert.match(html, /WALK-FORWARD OUTCOME/);
+  assert.match(html, /먼저 사람의 판단을 기록하세요/);
+  assert.match(html, /사후 결과는 사람의 상태를 자동 변경하지 않습니다/);
   assert.match(html, /T1 TARGET DESK/);
   assert.match(html, /T1 공략 준비실/);
   assert.match(html, /T1 분석 바로가기/);
@@ -278,6 +281,88 @@ test("keeps human team decisions snapshot-scoped and validates local journal dat
       updated_at: `2026-08-25T11:${String(index % 60).padStart(2, "0")}:00.000Z`,
     }));
     assert.equal(upsertDecisionJournalEntry(oversized, adopted).length, MAX_DECISION_JOURNAL_ENTRIES);
+  } finally {
+    await vite.close();
+  }
+});
+
+test("reconciles journal decisions only to exact or immutable source-state outcomes", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { buildTeamBrief } = await vite.ssrLoadModule("/app/team-brief.ts");
+    const { createDecisionJournalEntry } = await vite.ssrLoadModule("/app/decision-journal.ts");
+    const { isDecisionOutcomesFeed, reconcileDecisionOutcome } = await vite.ssrLoadModule("/app/decision-outcomes.ts");
+    const card = buildTeamBrief(feed)[0];
+    const entry = createDecisionJournalEntry(feed, card, t1, "REVIEWED", "공개 근거 확인", feed.cutoff);
+    const candidate = {
+      champion_id: entry.candidate.champion_id,
+      role: entry.candidate.role,
+      radar_rank: entry.candidate.radar_rank,
+      outcome: "HIT",
+      candidate_evidence_event_ids: entry.evidence_event_ids,
+      pre_cutoff: { pick_presence: 0.02, pick_presence_delta: 0.01, demand_velocity: 0.05 },
+      confirmed_at: "2026-08-26T12:00:00+00:00",
+      future_pick_count: 3,
+      future_distinct_team_count: 2,
+      outcome_match_ids: ["match:1", "match:2"],
+      outcome_event_ids: ["event:1", "event:2"],
+    };
+    const evaluation = {
+      evaluation_id: `${feed.patch_id}::${feed.cutoff}`,
+      cutoff: feed.cutoff,
+      outcome_end: "2026-09-01T00:00:00+00:00",
+      patch_id: feed.patch_id,
+      selected_candidates: [candidate],
+      missed_adoptions: [],
+      source_versions: feed.evidence_index.source_versions,
+    };
+    const outcomes = {
+      schema_version: "1",
+      artifact_type: "team-decision-outcomes",
+      as_of: "2026-09-02T00:00:00+00:00",
+      status: "COMPLETE",
+      benchmark_ready: true,
+      summary: {
+        evaluated_cutoff_count: 1,
+        selected_candidate_count: 1,
+        hit_count: 1,
+        false_alert_count: 0,
+        missed_adoption_count: 0,
+      },
+      evaluations: [evaluation],
+    };
+    assert.equal(isDecisionOutcomesFeed(outcomes), true);
+    assert.equal(reconcileDecisionOutcome(entry, outcomes).status, "HIT");
+    assert.equal(reconcileDecisionOutcome(entry, outcomes).match, "EXACT_CUTOFF");
+
+    const sourceStateOutcomes = {
+      ...outcomes,
+      evaluations: [{ ...evaluation, evaluation_id: "earlier", cutoff: "2026-08-24T00:00:00+00:00" }],
+    };
+    assert.equal(reconcileDecisionOutcome(entry, sourceStateOutcomes).match, "SOURCE_STATE");
+    const unrelated = {
+      ...sourceStateOutcomes,
+      evaluations: [{
+        ...sourceStateOutcomes.evaluations[0],
+        source_versions: [{
+          source_id: "oracles-elixir-match-data",
+          source_version: `sha256:${"b".repeat(64)}`,
+          content_hash: `sha256:${"b".repeat(64)}`,
+        }],
+      }],
+    };
+    assert.equal(reconcileDecisionOutcome(entry, unrelated).status, "WAITING_FOR_CUTOFF");
+    assert.equal(reconcileDecisionOutcome(undefined, outcomes).status, "NOT_RECORDED");
   } finally {
     await vite.close();
   }
@@ -913,6 +998,8 @@ test("ships a validated same-origin publication feed for automatic loading", asy
   const feed = JSON.parse(feedText);
   const historyText = await readFile(new URL("public/feed/history-status.json", templateRoot), "utf8");
   const history = JSON.parse(historyText);
+  const outcomesText = await readFile(new URL("public/feed/decision-outcomes.json", templateRoot), "utf8");
+  const outcomes = JSON.parse(outcomesText);
   assert.equal(feed.schema_version, "1");
   assert.equal(feed.fixture_only, false);
   assert.equal(feed.patch_id, "16.16");
@@ -953,9 +1040,14 @@ test("ships a validated same-origin publication feed for automatic loading", asy
   assert.equal(history.forecast.guaranteed, false);
   assert.ok(Date.parse(history.forecast.next_collection_due_at) > Date.parse(history.as_of));
   assert.deepEqual(feed.history_status, history);
+  assert.equal(outcomes.artifact_type, "team-decision-outcomes");
+  assert.equal(outcomes.as_of, history.as_of);
+  assert.equal(outcomes.benchmark_ready, history.benchmark_ready);
+  assert.deepEqual(outcomes.evaluations, []);
   assert.ok(feedText.length < 3_500_000, "all-team role profiles should remain bounded");
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(historyText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
+  assert.doesNotMatch(outcomesText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
 });
 
 test("ships a normalized official schedule companion feed", async () => {

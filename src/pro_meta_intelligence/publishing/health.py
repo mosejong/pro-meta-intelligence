@@ -13,6 +13,7 @@ def assess_oe_feed_health(
     latest_job: dict[str, Any] | None,
     current_feed: dict[str, Any] | None,
     history_status: dict[str, Any] | None,
+    decision_outcomes: dict[str, Any] | None,
     *,
     checked_at: datetime | None = None,
     maximum_job_age_hours: float = 30,
@@ -40,7 +41,9 @@ def assess_oe_feed_health(
         ),
         _publication_check(current_feed),
         _history_artifact_check(history_status),
-        _public_boundary_check(current_feed, history_status),
+        _decision_outcomes_artifact_check(decision_outcomes),
+        _history_outcomes_pair_check(history_status, decision_outcomes),
+        _public_boundary_check(current_feed, history_status, decision_outcomes),
         _freshness_check(
             "SOURCE_SNAPSHOT_FRESHNESS",
             history_status.get("as_of") if isinstance(history_status, dict) else None,
@@ -72,6 +75,9 @@ def assess_oe_feed_health(
             "history_next_action": history_status.get("next_action")
             if isinstance(history_status, dict)
             else None,
+            "decision_outcomes_status": decision_outcomes.get("status")
+            if isinstance(decision_outcomes, dict)
+            else None,
         },
         "boundary": (
             "Operational freshness and publication health only; not evidence of predictive quality."
@@ -83,6 +89,7 @@ def assess_publication_watchdog(
     current_feed: dict[str, Any] | None,
     creator_feed: dict[str, Any] | None,
     history_status: dict[str, Any] | None,
+    decision_outcomes: dict[str, Any] | None,
     schedule_feed: dict[str, Any] | None,
     *,
     checked_at: datetime | None = None,
@@ -109,6 +116,8 @@ def assess_publication_watchdog(
         _paired_publication_check(current_feed, creator_feed),
         _history_artifact_check(history_status),
         _history_publication_pair_check(current_feed, history_status),
+        _decision_outcomes_artifact_check(decision_outcomes),
+        _history_outcomes_pair_check(history_status, decision_outcomes),
         _schedule_publication_check(schedule_feed),
         _freshness_check(
             "RADAR_PUBLICATION_FRESHNESS",
@@ -127,6 +136,7 @@ def assess_publication_watchdog(
                 "radar": current_feed,
                 "creator": creator_feed,
                 "history": history_status,
+                "decision_outcomes": decision_outcomes,
                 "schedule": schedule_feed,
             }
         ),
@@ -151,6 +161,9 @@ def assess_publication_watchdog(
             "radar_cutoff": current_feed.get("cutoff") if isinstance(current_feed, dict) else None,
             "history_status": history_status.get("status")
             if isinstance(history_status, dict)
+            else None,
+            "decision_outcomes_status": decision_outcomes.get("status")
+            if isinstance(decision_outcomes, dict)
             else None,
             "schedule_retrieved_at": schedule_feed.get("retrieved_at")
             if isinstance(schedule_feed, dict)
@@ -360,18 +373,123 @@ def _history_artifact_check(history_status: dict[str, Any] | None) -> dict[str, 
     )
 
 
+def _decision_outcomes_artifact_check(
+    decision_outcomes: dict[str, Any] | None,
+) -> dict[str, Any]:
+    artifact_type = (
+        decision_outcomes.get("artifact_type") if isinstance(decision_outcomes, dict) else None
+    )
+    schema_version = (
+        decision_outcomes.get("schema_version") if isinstance(decision_outcomes, dict) else None
+    )
+    status = decision_outcomes.get("status") if isinstance(decision_outcomes, dict) else None
+    benchmark_ready = (
+        decision_outcomes.get("benchmark_ready") if isinstance(decision_outcomes, dict) else None
+    )
+    evaluations = (
+        decision_outcomes.get("evaluations") if isinstance(decision_outcomes, dict) else None
+    )
+    summary = decision_outcomes.get("summary") if isinstance(decision_outcomes, dict) else None
+    summary_fields = (
+        "evaluated_cutoff_count",
+        "selected_candidate_count",
+        "hit_count",
+        "false_alert_count",
+        "missed_adoption_count",
+    )
+    summary_valid = isinstance(summary, dict) and all(
+        type(summary.get(field)) is int and summary[field] >= 0 for field in summary_fields
+    )
+    evaluations_valid = isinstance(evaluations, list) and all(
+        _is_decision_outcome_evaluation(item) for item in evaluations
+    )
+    expected_summary = _decision_outcomes_summary(evaluations) if evaluations_valid else None
+    summary_consistent = (
+        summary_valid
+        and expected_summary is not None
+        and all(summary[field] == expected_summary[field] for field in summary_fields)
+    )
+    lifecycle_valid = (
+        benchmark_ready is False
+        and status in {"HISTORY_NOT_READY", "NO_EVALUABLE_CUTOFFS"}
+        and evaluations == []
+    ) or (
+        benchmark_ready is True
+        and status == "COMPLETE"
+        and isinstance(evaluations, list)
+        and bool(evaluations)
+    )
+    passed = (
+        schema_version == "1"
+        and artifact_type == "team-decision-outcomes"
+        and isinstance(decision_outcomes.get("as_of"), str)
+        and bool(decision_outcomes["as_of"])
+        and isinstance(benchmark_ready, bool)
+        and summary_consistent
+        and evaluations_valid
+        and lifecycle_valid
+    )
+    return _check(
+        "DECISION_OUTCOMES_VALID",
+        passed,
+        {
+            "schema_version": schema_version,
+            "artifact_type": artifact_type,
+            "status": status,
+            "benchmark_ready": benchmark_ready,
+            "evaluation_count": len(evaluations) if isinstance(evaluations, list) else 0,
+        },
+        "versioned decision outcomes with a valid history lifecycle, summary, and evaluations",
+    )
+
+
+def _history_outcomes_pair_check(
+    history_status: dict[str, Any] | None,
+    decision_outcomes: dict[str, Any] | None,
+) -> dict[str, Any]:
+    history_as_of = history_status.get("as_of") if isinstance(history_status, dict) else None
+    outcomes_as_of = decision_outcomes.get("as_of") if isinstance(decision_outcomes, dict) else None
+    history_ready = (
+        history_status.get("benchmark_ready") if isinstance(history_status, dict) else None
+    )
+    outcomes_ready = (
+        decision_outcomes.get("benchmark_ready") if isinstance(decision_outcomes, dict) else None
+    )
+    passed = (
+        isinstance(history_as_of, str)
+        and bool(history_as_of)
+        and history_as_of == outcomes_as_of
+        and isinstance(history_ready, bool)
+        and history_ready == outcomes_ready
+    )
+    return _check(
+        "HISTORY_OUTCOMES_PAIRED",
+        passed,
+        {
+            "history_as_of": history_as_of,
+            "outcomes_as_of": outcomes_as_of,
+            "history_benchmark_ready": history_ready,
+            "outcomes_benchmark_ready": outcomes_ready,
+        },
+        "exact matching history/outcomes as_of and benchmark_ready",
+    )
+
+
 def _public_boundary_check(
     current_feed: dict[str, Any] | None,
     history_status: dict[str, Any] | None,
+    decision_outcomes: dict[str, Any] | None,
 ) -> dict[str, Any]:
     blocked_paths: list[str] = []
-    if isinstance(current_feed, dict) and isinstance(history_status, dict):
-        for root_name, artifact in (("current", current_feed), ("history", history_status)):
+    for root_name, artifact in (
+        ("current", current_feed),
+        ("history", history_status),
+        ("decision_outcomes", decision_outcomes),
+    ):
+        if isinstance(artifact, dict):
             for field_path, value in _string_leaves(artifact, root_name):
                 if _BLOCKED_PUBLIC_VALUE.search(value):
                     blocked_paths.append(field_path)
-    else:
-        blocked_paths.append("missing-artifact")
     return _check(
         "PUBLIC_BOUNDARY_SAFE",
         not blocked_paths,
@@ -428,6 +546,72 @@ def _is_history_gate(value: object) -> bool:
     )
 
 
+def _is_decision_outcome_evaluation(value: object) -> bool:
+    if not isinstance(value, dict):
+        return False
+    if not all(
+        isinstance(value.get(field), str) and bool(value[field])
+        for field in ("evaluation_id", "cutoff", "outcome_end", "patch_id")
+    ):
+        return False
+    selected = value.get("selected_candidates")
+    missed = value.get("missed_adoptions")
+    source_versions = value.get("source_versions")
+    if not isinstance(selected, list) or not isinstance(missed, list):
+        return False
+    if not isinstance(source_versions, list) or not all(
+        isinstance(item, dict)
+        and isinstance(item.get("source_id"), str)
+        and isinstance(item.get("content_hash"), str)
+        and bool(re.fullmatch(r"sha256:[0-9a-f]{64}", item["content_hash"]))
+        for item in source_versions
+    ):
+        return False
+    return all(_is_selected_outcome(item) for item in selected) and all(
+        _is_adoption_outcome(item) for item in missed
+    )
+
+
+def _is_selected_outcome(value: object) -> bool:
+    return (
+        isinstance(value, dict)
+        and isinstance(value.get("champion_id"), str)
+        and isinstance(value.get("role"), str)
+        and value.get("outcome") in {"HIT", "FALSE_ALERT"}
+    )
+
+
+def _is_adoption_outcome(value: object) -> bool:
+    return (
+        isinstance(value, dict)
+        and isinstance(value.get("champion_id"), str)
+        and isinstance(value.get("role"), str)
+    )
+
+
+def _decision_outcomes_summary(evaluations: list[object]) -> dict[str, int]:
+    selected = [
+        candidate
+        for evaluation in evaluations
+        if isinstance(evaluation, dict)
+        for candidate in evaluation.get("selected_candidates", [])
+        if isinstance(candidate, dict)
+    ]
+    return {
+        "evaluated_cutoff_count": len(evaluations),
+        "selected_candidate_count": len(selected),
+        "hit_count": sum(candidate.get("outcome") == "HIT" for candidate in selected),
+        "false_alert_count": sum(
+            candidate.get("outcome") == "FALSE_ALERT" for candidate in selected
+        ),
+        "missed_adoption_count": sum(
+            len(evaluation.get("missed_adoptions", []))
+            for evaluation in evaluations
+            if isinstance(evaluation, dict)
+        ),
+    }
+
+
 def _freshness_check(
     check_id: str,
     timestamp: object,
@@ -472,6 +656,10 @@ def _next_action(failed: list[str], history_status: dict[str, Any] | None) -> st
         return "RESTORE_PUBLIC_FEED"
     if "HISTORY_STATUS_VALID" in failed:
         return "REBUILD_HISTORY_STATUS"
+    if "DECISION_OUTCOMES_VALID" in failed:
+        return "REBUILD_DECISION_OUTCOMES"
+    if "HISTORY_OUTCOMES_PAIRED" in failed:
+        return "RESTORE_PAIRED_DECISION_OUTCOMES"
     if isinstance(history_status, dict) and isinstance(history_status.get("next_action"), str):
         return history_status["next_action"]
     return "KEEP_DAILY_COLLECTION"
@@ -486,6 +674,10 @@ def _public_watchdog_next_action(failed: list[str]) -> str:
         return "RESTORE_PAIRED_CREATOR_FEED"
     if "HISTORY_STATUS_VALID" in failed or "RADAR_HISTORY_PAIRED" in failed:
         return "REBUILD_HISTORY_STATUS"
+    if "DECISION_OUTCOMES_VALID" in failed:
+        return "REBUILD_DECISION_OUTCOMES"
+    if "HISTORY_OUTCOMES_PAIRED" in failed:
+        return "RESTORE_PAIRED_DECISION_OUTCOMES"
     if "SCHEDULE_FEED_READY" in failed:
         return "RESTORE_SCHEDULE_FEED"
     if "RADAR_PUBLICATION_FRESHNESS" in failed:

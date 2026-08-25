@@ -595,6 +595,26 @@ def test_check_oe_feed_health_cli_returns_scheduler_friendly_exit_codes(tmp_path
         ),
         encoding="utf-8",
     )
+    (feed_dir / "decision-outcomes.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1",
+                "artifact_type": "team-decision-outcomes",
+                "as_of": "2026-08-24T11:30:00+00:00",
+                "status": "HISTORY_NOT_READY",
+                "benchmark_ready": False,
+                "summary": {
+                    "evaluated_cutoff_count": 0,
+                    "selected_candidate_count": 0,
+                    "hit_count": 0,
+                    "false_alert_count": 0,
+                    "missed_adoption_count": 0,
+                },
+                "evaluations": [],
+            }
+        ),
+        encoding="utf-8",
+    )
     output = tmp_path / "health.json"
     command = [
         "check-oe-feed-health",
@@ -702,6 +722,11 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
         json.loads((feed / "history-status.json").read_text(encoding="utf-8"))
         == current["history_status"]
     )
+    outcomes = json.loads((feed / "decision-outcomes.json").read_text(encoding="utf-8"))
+    assert outcomes["artifact_type"] == "team-decision-outcomes"
+    assert outcomes["as_of"] == current["history_status"]["as_of"]
+    assert outcomes["benchmark_ready"] is False
+    assert outcomes["evaluations"] == []
 
     current_before_cache_reuse = (feed / "current.json").read_bytes()
     assert main(command) == 0

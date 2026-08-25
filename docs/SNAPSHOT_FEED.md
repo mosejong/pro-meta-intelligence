@@ -29,6 +29,12 @@ feed/
 - `index.json` lists recent versions and their hashes and relative paths.
 - Limiting index entries never deletes immutable snapshot directories.
 
+The unattended `sync-oe-feed` command also maintains `history-status.json` and its paired
+`decision-outcomes.json`. These are walk-forward operational companions, not members of the
+immutable Radar/Creator snapshot pair. The outcomes head is empty until real history matures and is
+generated from the same benchmark run as the history status; each head uses an atomic file replace,
+and health checks reject a partially updated pair before publication.
+
 ## Safe publication order
 
 The publisher writes and verifies the immutable Radar/Creator pair first. It then replaces each

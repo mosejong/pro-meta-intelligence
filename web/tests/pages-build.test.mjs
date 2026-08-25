@@ -27,6 +27,8 @@ test("copies the same-origin feed and social card", async () => {
   const feed = JSON.parse(feedText);
   const historyText = await readFile(new URL("feed/history-status.json", root), "utf8");
   const history = JSON.parse(historyText);
+  const outcomesText = await readFile(new URL("feed/decision-outcomes.json", root), "utf8");
+  const outcomes = JSON.parse(outcomesText);
   const scheduleText = await readFile(new URL("feed/schedule.json", root), "utf8");
   const schedule = JSON.parse(scheduleText);
   const scheduleChangesText = await readFile(new URL("feed/schedule-changes.json", root), "utf8");
@@ -50,6 +52,10 @@ test("copies the same-origin feed and social card", async () => {
   assert.equal(history.gates.length, 4);
   assert.equal(history.aggregate, null);
   assert.deepEqual(feed.history_status, history);
+  assert.equal(outcomes.artifact_type, "team-decision-outcomes");
+  assert.equal(outcomes.as_of, history.as_of);
+  assert.equal(outcomes.benchmark_ready, history.benchmark_ready);
+  assert.deepEqual(outcomes.evaluations, []);
   assert.equal(schedule.artifact_type, "pro-schedule-snapshot");
   assert.ok(schedule.events.length > 0);
   assert.equal(scheduleChanges.artifact_type, "pro-schedule-change-log");
@@ -62,6 +68,7 @@ test("copies the same-origin feed and social card", async () => {
   assert.ok(creator.topic_candidates.length > 0);
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(historyText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
+  assert.doesNotMatch(outcomesText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(scheduleText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(scheduleChangesText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(creatorText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
