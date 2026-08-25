@@ -38,6 +38,11 @@ test("server-renders the onboarding home as a focused product entry", async () =
   assert.match(html, /AI 검증 전 · 자동 판단 안 함/);
   assert.match(html, /규칙 기반 분석/);
   assert.match(html, /하고 싶은 일 하나만 고르세요/);
+  assert.match(html, /데이터 최신성과 일정 신뢰 상태/);
+  assert.match(html, /데이터 확인 중/);
+  assert.match(html, /공식 일정 확인 중/);
+  assert.match(html, /미확정 상대·오래된 일정은 우선순위에서 자동 제외합니다/);
+  assert.match(html, /어떻게 판단했나요/);
   assert.match(html, /href="\.\/team\/"/);
   assert.match(html, /href="\.\/t1\/"/);
   assert.match(html, /href="\.\/creator\/"/);
@@ -71,6 +76,10 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /용어가 어렵다면 20초 설명 보기/);
   assert.match(html, /좋다고 확정한 픽이 아니라 먼저 검토할 픽/);
   assert.match(html, /전체 근거 보기/);
+  assert.match(html, /데이터 최신성과 일정 신뢰 상태/);
+  assert.match(html, /분석 데이터/);
+  assert.match(html, /공식 일정/);
+  assert.match(html, /자동 보호/);
   assert.match(html, /10-SECOND START/);
   assert.match(html, /원하는 결과부터 고르세요/);
   assert.match(html, /T1 다음 경기/);
@@ -1003,6 +1012,61 @@ test("routes plain-language home questions without sending them to AI", async ()
     assert.equal(homeSpaceForQuestion("유튜브 영상 소재를 만들고 싶어"), "CREATOR");
     assert.equal(homeSpaceForQuestion("내 팀 상대 우선순위 분석"), "TEAM");
     assert.equal(homeSpaceForQuestion(""), "T1");
+  } finally {
+    await vite.close();
+  }
+});
+
+test("classifies publication freshness at explicit safety boundaries", async () => {
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { snapshotFreshness } = await vite.ssrLoadModule("/app/freshness.ts");
+    const policy = { freshHours: 12, staleHours: 36 };
+    assert.deepEqual(snapshotFreshness("2026-08-25T00:00:00Z", "2026-08-25T12:00:00Z", policy), {
+      level: "FRESH",
+      ageHours: 12,
+      ageLabel: "12시간 전",
+    });
+    assert.equal(snapshotFreshness("2026-08-25T00:00:00Z", "2026-08-25T12:30:00Z", policy).level, "AGING");
+    assert.equal(snapshotFreshness("2026-08-25T00:00:00Z", "2026-08-26T12:00:00Z", policy).level, "AGING");
+    assert.equal(snapshotFreshness("2026-08-25T00:00:00Z", "2026-08-26T12:01:00Z", policy).level, "STALE");
+    assert.equal(snapshotFreshness("2026-08-26T00:00:00Z", "2026-08-25T00:00:00Z", policy).ageHours, 0);
+    assert.equal(snapshotFreshness("invalid", "2026-08-25T00:00:00Z", policy).level, "UNKNOWN");
+    assert.equal(snapshotFreshness(null, null, policy).ageLabel, "확인 중");
+
+    const { DataTrustBar } = await vite.ssrLoadModule("/app/data-trust-bar.tsx");
+    const freshMarkup = renderToStaticMarkup(createElement(DataTrustBar, {
+      dataCutoff: "2026-08-25T00:00:00Z",
+      checkedAt: "2026-08-25T06:00:00Z",
+      feedKind: "published",
+      scheduleRetrievedAt: "2026-08-25T02:00:00Z",
+      scheduleState: "connected",
+      scheduleSourceUrl: "https://example.com/schedule",
+    }));
+    assert.match(freshMarkup, /최신 데이터/);
+    assert.match(freshMarkup, /공식 일정 확인됨/);
+    assert.match(freshMarkup, /사용 가능/);
+    assert.match(freshMarkup, /href="https:\/\/example.com\/schedule"/);
+
+    const staleMarkup = renderToStaticMarkup(createElement(DataTrustBar, {
+      dataCutoff: "2026-08-25T00:00:00Z",
+      checkedAt: "2026-08-27T00:00:00Z",
+      feedKind: "published",
+      scheduleRetrievedAt: "2026-08-25T00:00:00Z",
+      scheduleState: "stale",
+      scheduleSourceUrl: null,
+    }));
+    assert.match(staleMarkup, /오래된 데이터/);
+    assert.match(staleMarkup, /일정 갱신 필요/);
+    assert.match(staleMarkup, /오래된 일정 제외/);
   } finally {
     await vite.close();
   }

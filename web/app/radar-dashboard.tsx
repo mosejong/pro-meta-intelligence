@@ -4,6 +4,7 @@
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { championImageUrl } from "./champion-assets";
+import { DataTrustBar } from "./data-trust-bar";
 import { AIValidationPanel } from "./ai-validation-panel";
 import { isAIValidationStatus, type AIValidationStatus } from "./ai-validation";
 import { CreatorExportLab } from "./creator-export";
@@ -292,6 +293,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
   const [decisionOutcomes, setDecisionOutcomes] = useState<DecisionOutcomesFeed | null>(null);
   const [aiValidation, setAIValidation] = useState<AIValidationStatus | null>(null);
   const [scheduleCheckedAt, setScheduleCheckedAt] = useState<string | null>(null);
+  const [feedCheckedAt, setFeedCheckedAt] = useState<string | null>(null);
   const [scheduleState, setScheduleState] = useState<"connecting" | "connected" | "stale" | "unavailable">("connecting");
   const [opponentId, setOpponentId] = useState(findDefaultTargetTeam(sampleReport.opponent_prep?.teams ?? [])?.team_id ?? sampleReport.opponent_prep?.teams[0]?.team_id ?? "");
   const [feedState, setFeedState] = useState<FeedState>({
@@ -422,6 +424,8 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       const parsed: unknown = await response.json();
       if (!isRadarReport(parsed)) throw new Error("unsupported report");
       let publishedReport = parsed;
+      const checkedAt = new Date().toISOString();
+      setFeedCheckedAt(checkedAt);
       try {
         const creatorUrl = new URL("feed/current-creator.json", publicationBase);
         const creatorResponse = await fetch(creatorUrl, { cache: "no-store" });
@@ -478,7 +482,6 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
         if (!scheduleResponse.ok) throw new Error(`schedule returned ${scheduleResponse.status}`);
         const schedulePayload: unknown = await scheduleResponse.json();
         if (!isScheduleSnapshot(schedulePayload)) throw new Error("unsupported schedule");
-        const checkedAt = new Date().toISOString();
         const ageHours = (Date.parse(checkedAt) - Date.parse(schedulePayload.retrieved_at)) / (60 * 60 * 1000);
         setSchedule(schedulePayload);
         setScheduleCheckedAt(checkedAt);
@@ -526,6 +529,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       setCreatorBrief(null);
       setDecisionOutcomes(null);
       setAIValidation(null);
+      setFeedCheckedAt(null);
       setFeedState({
         kind: "demo",
         label: "DEMO FALLBACK",
@@ -638,6 +642,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       requestedOpponentId.current = "";
       setOpponentId(findDefaultTargetTeam(parsed.opponent_prep?.teams ?? [])?.team_id ?? parsed.opponent_prep?.teams[0]?.team_id ?? "");
       manualOverride.current = true;
+      setFeedCheckedAt(new Date().toISOString());
       setFeedState({ kind: "uploaded", label: "LOCAL FILE", detail: file.name.toUpperCase() });
     } catch {
       setFeedState({ kind: "demo", label: "INVALID LOCAL FILE", detail: "기존 화면 유지" });
@@ -832,6 +837,12 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       fixtureDetail={quickFixtureDetail}
       feedLabel={feedState.label}
       aiValidation={aiValidation}
+      feedKind={feedState.kind}
+      dataCutoff={report.cutoff}
+      checkedAt={feedCheckedAt}
+      scheduleRetrievedAt={schedule?.retrieved_at ?? null}
+      scheduleState={scheduleState}
+      scheduleSourceUrl={schedule?.source_url ?? null}
       t1Focus={t1Focus ? {
         championId: t1Focus.champion_id,
         role: t1Focus.role ?? null,
@@ -929,6 +940,15 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
         <div><span>{sectionCopy.index} · {sectionCopy.eyebrow}</span><h1>{sectionCopy.title}</h1><p>{sectionCopy.detail}</p></div>
         <a href={sectionCopy.target}>{sectionCopy.action} <b>→</b></a>
       </section>
+
+      <DataTrustBar
+        dataCutoff={report.cutoff}
+        checkedAt={feedCheckedAt}
+        feedKind={feedState.kind}
+        scheduleRetrievedAt={schedule?.retrieved_at ?? null}
+        scheduleState={scheduleState}
+        scheduleSourceUrl={schedule?.source_url ?? null}
+      />
 
       <section className="section-plain-guide" aria-labelledby="plain-guide-title">
         <header><span>처음이라면 여기만</span><h2 id="plain-guide-title">세 줄로 먼저 이해하세요.</h2></header>
