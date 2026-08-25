@@ -27,15 +27,17 @@ test("server-renders the onboarding home as a focused product entry", async () =
   assert.equal(response.status, 200);
 
   const html = await response.text();
-  assert.match(html, /보고 싶은 분야부터/);
-  assert.match(html, /CHOOSE YOUR WORKSPACE/);
-  assert.match(html, /내 팀 기준 분석/);
-  assert.match(html, /T1 원페이지 브리프/);
-  assert.match(html, /CREATOR STUDIO/);
-  assert.match(html, /전체 메타 탐색/);
-  assert.match(html, /AI RELEASE GATE/);
-  assert.match(html, /검증 전 AI 기능 잠금/);
-  assert.match(html, /결정론적 분석/);
+  assert.match(html, /T1, 오늘/);
+  assert.match(html, /뭐부터 볼까/);
+  assert.match(html, /오늘은 이것만 먼저 보세요/);
+  assert.match(html, /다음 공식 일정/);
+  assert.match(html, /T1 공개 경기 반복 픽/);
+  assert.match(html, /이번 패치 주목 후보/);
+  assert.match(html, /무엇이 궁금하세요/);
+  assert.match(html, /입력 내용은 저장하거나 서버로 보내지 않습니다/);
+  assert.match(html, /AI 검증 전 · 자동 판단 안 함/);
+  assert.match(html, /규칙 기반 분석/);
+  assert.match(html, /하고 싶은 일 하나만 고르세요/);
   assert.match(html, /href="\.\/team\/"/);
   assert.match(html, /href="\.\/t1\/"/);
   assert.match(html, /href="\.\/creator\/"/);
@@ -967,6 +969,28 @@ test("maps direct paths and relative navigation across product spaces", async ()
     assert.equal(productSpaceHref("ONBOARDING", "TEAM"), "./team/");
     assert.equal(productSpaceHref("TEAM", "ONBOARDING"), "../");
     assert.equal(productSpaceHref("CREATOR", "T1"), "../t1/");
+  } finally {
+    await vite.close();
+  }
+});
+
+test("routes plain-language home questions without sending them to AI", async () => {
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { homeSpaceForQuestion } = await vite.ssrLoadModule("/app/home-intent.ts");
+    assert.equal(homeSpaceForQuestion("T1 다음 상대 핵심만 보고 싶어"), "T1");
+    assert.equal(homeSpaceForQuestion("정글 조커픽과 챔피언 메타"), "RADAR");
+    assert.equal(homeSpaceForQuestion("유튜브 영상 소재를 만들고 싶어"), "CREATOR");
+    assert.equal(homeSpaceForQuestion("내 팀 상대 우선순위 분석"), "TEAM");
+    assert.equal(homeSpaceForQuestion(""), "T1");
   } finally {
     await vite.close();
   }
