@@ -89,9 +89,10 @@ first operational rollout observable and reversible.
 
 `publish-oe-feed.ps1` uses a locked, detached Git worktree outside the developer checkout. It first
 runs the health gate, fetches the remote publication branch, refuses a dirty publisher worktree, and
-copies exactly four allowlisted artifacts:
+copies exactly five allowlisted artifacts:
 
 - `web/public/feed/current.json`
+- `web/public/feed/current-creator.json`
 - `web/public/feed/history-status.json`
 - `web/public/feed/schedule.json`
 - `web/public/feed/schedule-changes.json`

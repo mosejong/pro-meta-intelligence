@@ -45,6 +45,7 @@ $sourceFeedDir = Join-Path $resolvedRoot "web\public\feed"
 $healthOutput = Join-Path $runDir "publisher-health.json"
 $allowedPaths = @(
     "web/public/feed/current.json",
+    "web/public/feed/current-creator.json",
     "web/public/feed/history-status.json",
     "web/public/feed/schedule.json",
     "web/public/feed/schedule-changes.json"
@@ -63,7 +64,7 @@ if ($health.healthy -ne $true) {
 }
 
 $target = "$RemoteName/$PublishBranch via isolated worktree $publisherFullPath"
-if (-not $PSCmdlet.ShouldProcess($target, "Publish four allowlisted public feed artifacts")) {
+if (-not $PSCmdlet.ShouldProcess($target, "Publish five allowlisted public feed artifacts")) {
     return
 }
 
