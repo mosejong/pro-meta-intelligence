@@ -225,6 +225,34 @@ export type HistoryStatus = {
   status: string;
   history_ready: boolean;
   benchmark_ready: boolean;
+  gate_progress_percent?: number;
+  collection?: {
+    retrieval_count: number;
+    unique_normalized_state_count: number;
+    collection_span_days: number;
+    matured_cutoff_count: number;
+    first_retrieved_at: string | null;
+    last_retrieved_at: string | null;
+  };
+  continuity?: {
+    status: "NOT_STARTED" | "ON_TRACK" | "GAP_DETECTED";
+    maximum_gap_hours: number;
+    next_collection_due_at: string | null;
+    continuity_deadline_at: string | null;
+  };
+  forecast?: {
+    remaining: {
+      retrievals: number;
+      unique_states: number;
+      collection_span_days: number;
+      matured_cutoffs: number;
+    };
+    next_collection_due_at: string | null;
+    continuity_deadline_at: string | null;
+    earliest_possible_ready_at: string | null;
+    assumption: string;
+    guaranteed: false;
+  };
   gates: Array<{
     id: string;
     current: number;
@@ -317,6 +345,10 @@ export function isHistoryStatus(value: unknown): value is HistoryStatus {
     typeof value.status === "string" &&
     typeof value.history_ready === "boolean" &&
     typeof value.benchmark_ready === "boolean" &&
+    (value.gate_progress_percent === undefined || typeof value.gate_progress_percent === "number") &&
+    (value.collection === undefined || isHistoryCollection(value.collection)) &&
+    (value.continuity === undefined || isHistoryContinuity(value.continuity)) &&
+    (value.forecast === undefined || isHistoryForecast(value.forecast)) &&
     Array.isArray(value.gates) && value.gates.every(isHistoryGate) &&
     Array.isArray(value.blocking_reasons) && value.blocking_reasons.every((item) => typeof item === "string") &&
     Array.isArray(value.warnings) && value.warnings.every((item) => typeof item === "string") &&
@@ -413,6 +445,43 @@ function isHistoryGate(value: unknown) {
     typeof value.required === "number" &&
     typeof value.unit === "string" &&
     typeof value.passed === "boolean",
+  );
+}
+
+function isHistoryCollection(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    typeof value.retrieval_count === "number" &&
+    typeof value.unique_normalized_state_count === "number" &&
+    typeof value.collection_span_days === "number" &&
+    typeof value.matured_cutoff_count === "number" &&
+    (value.first_retrieved_at === null || typeof value.first_retrieved_at === "string") &&
+    (value.last_retrieved_at === null || typeof value.last_retrieved_at === "string"),
+  );
+}
+
+function isHistoryContinuity(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    ["NOT_STARTED", "ON_TRACK", "GAP_DETECTED"].includes(String(value.status)) &&
+    typeof value.maximum_gap_hours === "number" &&
+    (value.next_collection_due_at === null || typeof value.next_collection_due_at === "string") &&
+    (value.continuity_deadline_at === null || typeof value.continuity_deadline_at === "string"),
+  );
+}
+
+function isHistoryForecast(value: unknown) {
+  if (!isRecord(value) || !isRecord(value.remaining)) return false;
+  return (
+    typeof value.remaining.retrievals === "number" &&
+    typeof value.remaining.unique_states === "number" &&
+    typeof value.remaining.collection_span_days === "number" &&
+    typeof value.remaining.matured_cutoffs === "number" &&
+    (value.next_collection_due_at === null || typeof value.next_collection_due_at === "string") &&
+    (value.continuity_deadline_at === null || typeof value.continuity_deadline_at === "string") &&
+    (value.earliest_possible_ready_at === null || typeof value.earliest_possible_ready_at === "string") &&
+    typeof value.assumption === "string" &&
+    value.guaranteed === false
   );
 }
 

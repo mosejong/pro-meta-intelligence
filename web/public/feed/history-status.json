@@ -10,6 +10,34 @@
     "MATURED_CUTOFF_COUNT_BELOW_MINIMUM"
   ],
   "boundary": "Operational collection readiness only; not evidence that the Radar predicts adoption.",
+  "collection": {
+    "collection_span_days": 1.083,
+    "first_retrieved_at": "2026-08-23T03:37:47.491921+00:00",
+    "last_retrieved_at": "2026-08-24T05:36:54.129494+00:00",
+    "matured_cutoff_count": 0,
+    "retrieval_count": 2,
+    "unique_normalized_state_count": 2
+  },
+  "continuity": {
+    "continuity_deadline_at": "2026-08-26T05:36:54.129494+00:00",
+    "maximum_gap_hours": 48,
+    "next_collection_due_at": "2026-08-25T05:36:54.129494+00:00",
+    "status": "ON_TRACK"
+  },
+  "forecast": {
+    "assumption": "UNINTERRUPTED_DAILY_COLLECTION_WITH_REQUIRED_DISTINCT_STATES",
+    "continuity_deadline_at": "2026-08-26T05:36:54.129494+00:00",
+    "earliest_possible_ready_at": "2026-09-06T03:37:47.491921+00:00",
+    "guaranteed": false,
+    "next_collection_due_at": "2026-08-25T05:36:54.129494+00:00",
+    "remaining": {
+      "collection_span_days": 12.917,
+      "matured_cutoffs": 2,
+      "retrievals": 12,
+      "unique_states": 1
+    }
+  },
+  "gate_progress_percent": 22,
   "gates": [
     {
       "current": 2,

@@ -35,6 +35,12 @@ code `2` means at least one operational gate failed.
 prevents monitoring from paging merely because the leakage-safe benchmark correctly refuses to run
 before future outcomes exist.
 
+The public history panel also exposes collection continuity and an earliest-possible readiness date.
+Treat `ON_TRACK` as “no audited gap above the configured 48-hour ceiling,” not proof that the next
+download will contain a distinct state. `GAP_DETECTED` requires operator review. The date forecast is
+not guaranteed and assumes uninterrupted daily retrievals plus every distinct state needed to mature
+the future-outcome cutoffs.
+
 Default health limits are intentionally wider than the 24-hour provider interval:
 
 - latest completed job: at most 30 hours old;
