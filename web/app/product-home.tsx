@@ -5,6 +5,7 @@
 import { type FormEvent, useState } from "react";
 import type { AIValidationStatus } from "./ai-validation";
 import { championImageUrl } from "./champion-assets";
+import { DataTrustBar, type FeedTrustKind, type ScheduleTrustState } from "./data-trust-bar";
 import { homeSpaceForQuestion } from "./home-intent";
 import type { ProductSpace } from "./product-space";
 import { productRootHref, productSpaceHref } from "./product-space";
@@ -31,6 +32,12 @@ type ProductHomeProps = {
   fixtureTitle: string;
   fixtureDetail: string;
   feedLabel: string;
+  feedKind: FeedTrustKind;
+  dataCutoff: string;
+  checkedAt: string | null;
+  scheduleRetrievedAt: string | null;
+  scheduleState: ScheduleTrustState;
+  scheduleSourceUrl: string | null;
   aiValidation: AIValidationStatus | null;
   t1Focus: ChampionFocus | null;
   metaFocus: MetaFocus | null;
@@ -56,6 +63,12 @@ export function ProductHome({
   fixtureTitle,
   fixtureDetail,
   feedLabel,
+  feedKind,
+  dataCutoff,
+  checkedAt,
+  scheduleRetrievedAt,
+  scheduleState,
+  scheduleSourceUrl,
   aiValidation,
   t1Focus,
   metaFocus,
@@ -86,6 +99,15 @@ export function ProductHome({
       </div>
       <figure><img src={`${rootHref}meta-radar-hero-v2.png`} alt="지역별 메타 신호가 분석 후보로 모이는 일러스트" /><figcaption><span>현재 패치 {patchId}</span><b>지금 더 볼 후보 {reviewCount}개</b></figcaption></figure>
     </section>
+
+    <DataTrustBar
+      dataCutoff={dataCutoff}
+      checkedAt={checkedAt}
+      feedKind={feedKind}
+      scheduleRetrievedAt={scheduleRetrievedAt}
+      scheduleState={scheduleState}
+      scheduleSourceUrl={scheduleSourceUrl}
+    />
 
     <section className="home-today" id="home-today" aria-labelledby="home-today-title">
       <header><span>TODAY · 30 SECOND BRIEF</span><h2 id="home-today-title">오늘은 이것만 먼저 보세요.</h2><p>결론을 먼저 읽고, 더 궁금한 카드만 자세히 확인할 수 있습니다.</p></header>
