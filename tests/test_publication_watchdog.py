@@ -63,6 +63,26 @@ def _history(**updates):
     return value
 
 
+def _outcomes(**updates):
+    value = {
+        "schema_version": "1",
+        "artifact_type": "team-decision-outcomes",
+        "as_of": CUTOFF,
+        "status": "HISTORY_NOT_READY",
+        "benchmark_ready": False,
+        "summary": {
+            "evaluated_cutoff_count": 0,
+            "selected_candidate_count": 0,
+            "hit_count": 0,
+            "false_alert_count": 0,
+            "missed_adoption_count": 0,
+        },
+        "evaluations": [],
+    }
+    value.update(updates)
+    return value
+
+
 def _schedule(**updates):
     value = {
         "schema_version": "1",
@@ -79,7 +99,7 @@ def _schedule(**updates):
 
 def test_publication_watchdog_accepts_paired_fresh_feeds_during_history_collection() -> None:
     report = assess_publication_watchdog(
-        _radar(), _creator(), _history(), _schedule(), checked_at=NOW
+        _radar(), _creator(), _history(), _outcomes(), _schedule(), checked_at=NOW
     )
 
     assert report["healthy"] is True
@@ -93,7 +113,9 @@ def test_publication_watchdog_fails_closed_for_an_unpaired_creator() -> None:
     creator = _creator()
     creator["source_snapshot"] = {**creator["source_snapshot"], "patch_id": "16.15"}
 
-    report = assess_publication_watchdog(_radar(), creator, _history(), _schedule(), checked_at=NOW)
+    report = assess_publication_watchdog(
+        _radar(), creator, _history(), _outcomes(), _schedule(), checked_at=NOW
+    )
 
     assert report["failed_checks"] == ["RADAR_CREATOR_PAIRED"]
     assert report["next_action"] == "RESTORE_PAIRED_CREATOR_FEED"
@@ -107,11 +129,13 @@ def test_publication_watchdog_distinguishes_radar_and_schedule_staleness() -> No
         "cutoff": "2026-08-20T00:00:00+00:00",
     }
     history = _history(as_of="2026-08-20T00:00:00+00:00")
+    outcomes = _outcomes(as_of="2026-08-20T00:00:00+00:00")
 
     report = assess_publication_watchdog(
         radar,
         creator,
         history,
+        outcomes,
         _schedule(retrieved_at="2026-08-20T00:00:00+00:00"),
         checked_at=NOW,
     )
@@ -124,7 +148,7 @@ def test_publication_watchdog_distinguishes_radar_and_schedule_staleness() -> No
 
 
 def test_publication_watchdog_rejects_missing_or_unsafe_public_artifacts() -> None:
-    missing = assess_publication_watchdog(None, None, None, None, checked_at=NOW)
+    missing = assess_publication_watchdog(None, None, None, None, None, checked_at=NOW)
     assert missing["healthy"] is False
     assert "PUBLIC_FEED_READY" in missing["failed_checks"]
     assert "CREATOR_FEED_READY" in missing["failed_checks"]
@@ -134,6 +158,7 @@ def test_publication_watchdog_rejects_missing_or_unsafe_public_artifacts() -> No
         _radar(debug_path="/safe-looking"),
         _creator(notes="Sign in with OpenAI"),
         _history(),
+        _outcomes(),
         _schedule(),
         checked_at=NOW,
     )
@@ -146,13 +171,19 @@ def test_publication_watchdog_rejects_missing_or_unsafe_public_artifacts() -> No
 def test_publication_watchdog_rejects_invalid_time_configuration() -> None:
     with pytest.raises(ValueError, match="timezone-aware"):
         assess_publication_watchdog(
-            _radar(), _creator(), _history(), _schedule(), checked_at=datetime(2026, 8, 25)
+            _radar(),
+            _creator(),
+            _history(),
+            _outcomes(),
+            _schedule(),
+            checked_at=datetime(2026, 8, 25),
         )
     with pytest.raises(ValueError, match="positive"):
         assess_publication_watchdog(
             _radar(),
             _creator(),
             _history(),
+            _outcomes(),
             _schedule(),
             checked_at=NOW,
             maximum_radar_age_hours=0,
@@ -166,6 +197,7 @@ def test_publication_watchdog_cli_writes_machine_readable_report(tmp_path) -> No
         ("current.json", _radar()),
         ("current-creator.json", _creator()),
         ("history-status.json", _history()),
+        ("decision-outcomes.json", _outcomes()),
         ("schedule.json", _schedule()),
     ):
         (feed_dir / name).write_text(json.dumps(payload), encoding="utf-8")

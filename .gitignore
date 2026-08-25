@@ -17,6 +17,7 @@ web/public/feed/*
 !web/public/feed/current.json
 !web/public/feed/current-creator.json
 !web/public/feed/history-status.json
+!web/public/feed/decision-outcomes.json
 !web/public/feed/schedule.json
 !web/public/feed/schedule-changes.json
 web/.site-public/

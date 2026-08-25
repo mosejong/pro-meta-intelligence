@@ -10,6 +10,7 @@ const publishedFiles = [
   "og.png",
   "feed/current.json",
   "feed/history-status.json",
+  "feed/decision-outcomes.json",
   "feed/schedule.json",
   "feed/schedule-changes.json",
   "feed/current-creator.json",

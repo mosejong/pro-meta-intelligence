@@ -237,14 +237,20 @@ that status independently from the main Radar feed, so collection progress can a
 new Radar publication is rejected or unchanged. Raw provider rows and the detailed private audit
 remain under the ignored `outputs/` archive.
 
+The sync also publishes paired `decision-outcomes.json`. It is empty while history is immature and,
+once ready, exposes only bounded matured outcomes for the device-local Team Decision Journal. The
+journal itself is never uploaded; results join only by exact cutoff or the same immutable source
+state and never overwrite a human decision.
+
 Production operators can turn those artifacts into a fail-closed freshness signal with
 `check-oe-feed-health`. The initial `HISTORY_NOT_READY` collection phase remains healthy, while a
 failed or stale job, stale source snapshot, invalid public feed, or missing history status returns a
 nonzero exit code. A reviewed Windows runner and Task Scheduler registration script are documented
 in [`docs/PRODUCTION_OPERATIONS.md`](docs/PRODUCTION_OPERATIONS.md).
 
-The reviewed Windows publisher can optionally copy only `current.json` and `history-status.json`
-into a locked detached worktree and fast-forward them to the publication branch. It refuses dirty
+The reviewed Windows publisher can optionally copy only the six allowlisted Radar, Creator,
+history, decision-outcome, schedule, and schedule-change heads into a locked detached worktree and
+fast-forward them to the publication branch. It refuses dirty
 state, unexpected staged paths, unhealthy feeds, and non-fast-forward pushes; raw archives never
 enter the publisher worktree.
 

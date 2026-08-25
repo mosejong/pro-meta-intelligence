@@ -17,6 +17,11 @@ import {
   type DecisionJournalState,
 } from "./decision-journal";
 import { DecisionJournalPanel } from "./decision-journal-panel";
+import {
+  isDecisionOutcomesFeed,
+  reconcileDecisionOutcome,
+  type DecisionOutcomesFeed,
+} from "./decision-outcomes";
 import { isHistoryStatus, isRadarReport, isScheduleChangeLog, isScheduleSnapshot, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport, type ScheduleChangeLog, type ScheduleSnapshot } from "./radar-types";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
@@ -282,6 +287,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
   const [schedule, setSchedule] = useState<ScheduleSnapshot | null>(null);
   const [scheduleChanges, setScheduleChanges] = useState<ScheduleChangeLog | null>(null);
   const [creatorBrief, setCreatorBrief] = useState<CreatorBrief | null>(null);
+  const [decisionOutcomes, setDecisionOutcomes] = useState<DecisionOutcomesFeed | null>(null);
   const [scheduleCheckedAt, setScheduleCheckedAt] = useState<string | null>(null);
   const [scheduleState, setScheduleState] = useState<"connecting" | "connected" | "stale" | "unavailable">("connecting");
   const [opponentId, setOpponentId] = useState(findDefaultTargetTeam(sampleReport.opponent_prep?.teams ?? [])?.team_id ?? sampleReport.opponent_prep?.teams[0]?.team_id ?? "");
@@ -325,6 +331,10 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
   const selectedBrief = teamBrief.find((card) => keyOf(card.entry) === selectedKey) ?? teamBrief[0];
   const selectedDecisionJournalId = selectedBrief ? decisionJournalId(report, selectedBrief, selectedMyTeam) : "";
   const selectedDecisionJournalEntry = decisionJournalEntries.find((entry) => entry.decision_id === selectedDecisionJournalId);
+  const selectedDecisionOutcome = useMemo(
+    () => reconcileDecisionOutcome(selectedDecisionJournalEntry, decisionOutcomes),
+    [decisionOutcomes, selectedDecisionJournalEntry],
+  );
   const selectedOpponent = rankedOpponentTeams.find((team) => team.team_id === opponentId) ?? defaultOpponentTarget ?? rankedOpponentTeams[0];
   const selectedPriority = opponentPriorities.find((priority) => priority.team.team_id === selectedOpponent?.team_id);
   const defaultTargetPriority = opponentPriorities.find((priority) => priority.team.team_id === defaultOpponentTarget?.team_id);
@@ -434,6 +444,22 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
         // The Radar remains usable when the independently published status is unavailable.
       }
       try {
+        const outcomesUrl = new URL("feed/decision-outcomes.json", publicationBase);
+        const outcomesResponse = await fetch(outcomesUrl, { cache: "no-store" });
+        if (!outcomesResponse.ok) throw new Error(`decision outcomes returned ${outcomesResponse.status}`);
+        const outcomesPayload: unknown = await outcomesResponse.json();
+        const historyStatus = publishedReport.history_status;
+        if (
+          !isDecisionOutcomesFeed(outcomesPayload) ||
+          !historyStatus ||
+          outcomesPayload.as_of !== historyStatus.as_of ||
+          outcomesPayload.benchmark_ready !== historyStatus.benchmark_ready
+        ) throw new Error("decision outcomes do not match history status");
+        setDecisionOutcomes(outcomesPayload);
+      } catch {
+        setDecisionOutcomes(null);
+      }
+      try {
         const scheduleUrl = new URL("feed/schedule.json", publicationBase);
         const scheduleResponse = await fetch(scheduleUrl, { cache: "no-store" });
         if (!scheduleResponse.ok) throw new Error(`schedule returned ${scheduleResponse.status}`);
@@ -485,6 +511,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       });
     } catch {
       setCreatorBrief(null);
+      setDecisionOutcomes(null);
       setFeedState({
         kind: "demo",
         label: "DEMO FALLBACK",
@@ -592,6 +619,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       setEligibleOnly(false);
       setVisibleLimit(12);
       setCreatorBrief(null);
+      setDecisionOutcomes(null);
       requestedTeamId.current = "";
       requestedOpponentId.current = "";
       setOpponentId(findDefaultTargetTeam(parsed.opponent_prep?.teams ?? [])?.team_id ?? parsed.opponent_prep?.teams[0]?.team_id ?? "");
@@ -982,6 +1010,8 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
               entry={selectedDecisionJournalEntry}
               entryCount={decisionJournalEntries.length}
               storageAvailable={decisionJournalStorageAvailable}
+              outcome={selectedDecisionOutcome}
+              outcomeFeed={decisionOutcomes}
               onChange={updateDecisionJournal}
               onExport={downloadDecisionJournal}
             />

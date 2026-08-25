@@ -3,7 +3,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_isolated_publisher_has_a_four_file_allowlist_and_no_force_push() -> None:
+def test_isolated_publisher_has_a_six_file_allowlist_and_no_force_push() -> None:
     script = (ROOT / "ops" / "windows" / "publish-oe-feed.ps1").read_text(encoding="utf-8")
 
     assert '"web/public/feed/current.json"' in script
@@ -11,7 +11,8 @@ def test_isolated_publisher_has_a_four_file_allowlist_and_no_force_push() -> Non
     assert '"web/public/feed/schedule.json"' in script
     assert '"web/public/feed/schedule-changes.json"' in script
     assert '"web/public/feed/current-creator.json"' in script
-    assert "Publish five allowlisted public feed artifacts" in script
+    assert '"web/public/feed/decision-outcomes.json"' in script
+    assert "Publish six allowlisted public feed artifacts" in script
     assert "worktree add --detach --lock" in script
     assert 'push $RemoteName "HEAD:$PublishBranch"' in script
     assert "--force" not in script
@@ -66,6 +67,7 @@ def test_production_watchdog_checks_live_publication_and_reconciles_one_incident
         "current.json",
         "current-creator.json",
         "history-status.json",
+        "decision-outcomes.json",
         "schedule.json",
     ):
         assert artifact in workflow
@@ -109,6 +111,7 @@ def test_hosted_oe_collector_restores_private_state_and_publishes_only_safe_head
     assert "web/public/feed/current.json" in workflow
     assert "web/public/feed/current-creator.json" in workflow
     assert "web/public/feed/history-status.json" in workflow
+    assert "web/public/feed/decision-outcomes.json" in workflow
     assert "schedule.json" not in workflow
     assert "--force" not in workflow
 

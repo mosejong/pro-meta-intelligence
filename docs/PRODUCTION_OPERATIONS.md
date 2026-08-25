@@ -31,8 +31,8 @@ python -m pro_meta_intelligence check-oe-feed-health \
 ```
 
 Exit code `0` means the latest job succeeded, the job and source snapshot are fresh, the public feed
-is a non-fixture publication that passed readiness, and the compact history artifact is valid. Exit
-code `2` means at least one operational gate failed.
+is a non-fixture publication that passed readiness, and the paired compact history and decision-
+outcome artifacts are valid. Exit code `2` means at least one operational gate failed.
 
 `HISTORY_NOT_READY` is not an outage. During the initial collection period, the health report remains
 `HEALTHY` with phase `COLLECTING_HISTORY`; the four history gates continue to describe progress. This
@@ -57,7 +57,7 @@ stalled collector.
 
 `.github/workflows/production-watchdog.yml` checks the independently served GitHub Pages artifacts
 every six hours. It does not trust the repository checkout as proof of production health. The job
-downloads the live Radar, Creator, history, and official-schedule heads with bounded response sizes,
+downloads the live Radar, Creator, history, decision-outcome, and official-schedule heads with bounded response sizes,
 retries transient HTTP failures, and runs `check-publication-watchdog` against those downloaded
 bytes.
 
@@ -66,6 +66,7 @@ The public watchdog fails closed when:
 - the Radar or Creator contract is invalid;
 - the Radar and Creator patch/cutoff pair differs;
 - the history status does not belong to the current Radar cutoff;
+- the decision-outcome contract is invalid or does not match the history `as_of` and readiness;
 - Radar data is older than 50 hours or schedule data is older than 30 hours;
 - a public artifact contains a local path, provider CSV reference, or product-login branding; or
 - any required public endpoint cannot be downloaded.
@@ -132,11 +133,12 @@ first operational rollout observable and reversible.
 
 `publish-oe-feed.ps1` uses a locked, detached Git worktree outside the developer checkout. It first
 runs the health gate, fetches the remote publication branch, refuses a dirty publisher worktree, and
-copies exactly five allowlisted artifacts:
+copies exactly six allowlisted artifacts:
 
 - `web/public/feed/current.json`
 - `web/public/feed/current-creator.json`
 - `web/public/feed/history-status.json`
+- `web/public/feed/decision-outcomes.json`
 - `web/public/feed/schedule.json`
 - `web/public/feed/schedule-changes.json`
 

@@ -47,6 +47,7 @@ $allowedPaths = @(
     "web/public/feed/current.json",
     "web/public/feed/current-creator.json",
     "web/public/feed/history-status.json",
+    "web/public/feed/decision-outcomes.json",
     "web/public/feed/schedule.json",
     "web/public/feed/schedule-changes.json"
 )
@@ -64,7 +65,7 @@ if ($health.healthy -ne $true) {
 }
 
 $target = "$RemoteName/$PublishBranch via isolated worktree $publisherFullPath"
-if (-not $PSCmdlet.ShouldProcess($target, "Publish five allowlisted public feed artifacts")) {
+if (-not $PSCmdlet.ShouldProcess($target, "Publish six allowlisted public feed artifacts")) {
     return
 }
 

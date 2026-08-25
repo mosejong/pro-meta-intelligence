@@ -26,6 +26,18 @@ cases so the blocking reasons are inspectable.
 
 This command performs no network request and does not copy provider rows into the report.
 
+To derive the bounded public companion after producing the private detailed report:
+
+```bash
+python -m pro_meta_intelligence build-decision-outcomes \
+  --benchmark outputs/oracles-elixir/blind-spot-benchmark.json \
+  --feed-dir web/public/feed
+```
+
+The public artifact retains only matured cutoff identity, candidate/outcome evidence IDs, source
+hashes, bounded counts, and frozen policies. It excludes archive paths and provider rows. Before
+history readiness it is a valid empty `HISTORY_NOT_READY` artifact, not a simulated result.
+
 ## Point-in-time contract
 
 Every evaluated window uses two different roles for archived content:

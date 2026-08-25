@@ -8,6 +8,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
+from typing import Any
 
 from pro_meta_intelligence.backtest import (
     BacktestHarness,
@@ -41,8 +42,10 @@ from pro_meta_intelligence.publishing import (
     SnapshotFeedPublisher,
     assess_oe_feed_health,
     assess_publication_watchdog,
+    build_decision_outcomes,
     build_history_status,
     build_schedule_change_log,
+    publish_decision_outcomes,
     publish_history_status,
 )
 from pro_meta_intelligence.quality import (
@@ -222,6 +225,14 @@ def build_parser() -> argparse.ArgumentParser:
     blind_spot.add_argument("--minimum-current-picks", type=int, default=2)
     blind_spot.add_argument("--output", type=Path, help="optional JSON benchmark report path")
 
+    decision_outcomes = subparsers.add_parser(
+        "build-decision-outcomes",
+        help="publish a public-safe Team Decision outcome feed from an OE history benchmark",
+    )
+    decision_outcomes.add_argument("--benchmark", type=Path, required=True)
+    decision_outcomes.add_argument("--feed-dir", type=Path, default=Path("web/public/feed"))
+    decision_outcomes.add_argument("--output", type=Path, help="optional JSON summary path")
+
     oe_sync = subparsers.add_parser(
         "sync-oe-feed",
         help="fetch or reuse the reviewed OE CSV and publish an audited Meta Radar feed",
@@ -358,6 +369,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _audit_oe_history(args)
     if args.command == "benchmark-oe-history":
         return _benchmark_oe_history(args)
+    if args.command == "build-decision-outcomes":
+        return _build_decision_outcomes(args)
     if args.command == "sync-oe-feed":
         return _sync_oe_feed(args)
     if args.command == "check-oe-feed-health":
@@ -728,6 +741,8 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
         ).to_dict()
         history_status = build_history_status(history_benchmark)
         publish_history_status(args.feed_dir, history_status)
+        decision_outcomes = build_decision_outcomes(history_benchmark)
+        publish_decision_outcomes(args.feed_dir, decision_outcomes)
 
         if latest is None:
             payload = {
@@ -740,6 +755,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                     "error": acquisition_error,
                 },
                 "history_status": history_status,
+                "decision_outcomes": _decision_outcomes_summary(decision_outcomes),
             }
             return FeedJobOperationResult(exit_code=4, payload=payload)
 
@@ -780,6 +796,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 "published": False,
                 "readiness_audit": coverage.to_dict(),
                 "history_status": history_status,
+                "decision_outcomes": _decision_outcomes_summary(decision_outcomes),
             }
         else:
             exit_code, payload = _refresh_feed_payload(
@@ -797,6 +814,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             "content_hash": latest.content_hash,
         }
         payload["history_status"] = history_status
+        payload["decision_outcomes"] = _decision_outcomes_summary(decision_outcomes)
         return FeedJobOperationResult(exit_code=exit_code, payload=payload)
 
     try:
@@ -1051,6 +1069,7 @@ def _check_oe_feed_health(args: argparse.Namespace) -> int:
         _read_json_object(args.run_dir / "latest.json"),
         _read_json_object(args.feed_dir / "current.json"),
         _read_json_object(args.feed_dir / "history-status.json"),
+        _read_json_object(args.feed_dir / "decision-outcomes.json"),
         checked_at=parse_datetime(args.now) if args.now else datetime.now(UTC),
         maximum_job_age_hours=args.maximum_job_age_hours,
         maximum_source_age_hours=args.maximum_source_age_hours,
@@ -1064,6 +1083,7 @@ def _check_publication_watchdog(args: argparse.Namespace) -> int:
         _read_json_object(args.feed_dir / "current.json"),
         _read_json_object(args.feed_dir / "current-creator.json"),
         _read_json_object(args.feed_dir / "history-status.json"),
+        _read_json_object(args.feed_dir / "decision-outcomes.json"),
         _read_json_object(args.feed_dir / "schedule.json"),
         checked_at=parse_datetime(args.now) if args.now else datetime.now(UTC),
         maximum_radar_age_hours=args.maximum_radar_age_hours,
@@ -1071,6 +1091,31 @@ def _check_publication_watchdog(args: argparse.Namespace) -> int:
     )
     _emit(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
     return 0 if report["healthy"] else 2
+
+
+def _build_decision_outcomes(args: argparse.Namespace) -> int:
+    benchmark = _read_json_object(args.benchmark)
+    if benchmark is None:
+        raise ValueError(f"benchmark must be a JSON object: {args.benchmark}")
+    outcomes = build_decision_outcomes(benchmark)
+    path = publish_decision_outcomes(args.feed_dir, outcomes)
+    payload = {
+        "schema_version": "1",
+        "status": "PUBLISHED",
+        "path": str(path),
+        "decision_outcomes": _decision_outcomes_summary(outcomes),
+    }
+    _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    return 0
+
+
+def _decision_outcomes_summary(outcomes: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "status": outcomes.get("status"),
+        "benchmark_ready": outcomes.get("benchmark_ready"),
+        "as_of": outcomes.get("as_of"),
+        "summary": outcomes.get("summary"),
+    }
 
 
 def _pack_private_oe_archive(args: argparse.Namespace) -> int:

@@ -164,7 +164,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          allowed_pattern='^(web/public/feed/current\.json|web/public/feed/current-creator\.json|web/public/feed/history-status\.json)$'
+          allowed_pattern='^(web/public/feed/current\.json|web/public/feed/current-creator\.json|web/public/feed/history-status\.json|web/public/feed/decision-outcomes\.json)$'
           unexpected=$(git diff --name-only | grep -Ev "$allowed_pattern" || true)
           if [[ -n "$unexpected" ]]; then
             echo "Unexpected tracked changes from hosted sync:" >&2
@@ -174,7 +174,8 @@ jobs:
           if git diff --quiet -- \
             web/public/feed/current.json \
             web/public/feed/current-creator.json \
-            web/public/feed/history-status.json; then
+            web/public/feed/history-status.json \
+            web/public/feed/decision-outcomes.json; then
             echo "Public OE feed heads are already current."
             exit 0
           fi
@@ -183,7 +184,8 @@ jobs:
           git add -- \
             web/public/feed/current.json \
             web/public/feed/current-creator.json \
-            web/public/feed/history-status.json
+            web/public/feed/history-status.json \
+            web/public/feed/decision-outcomes.json
           staged=$(git diff --cached --name-only | grep -Ev "$allowed_pattern" || true)
           if [[ -n "$staged" ]]; then
             echo "Unexpected staged paths: $staged" >&2

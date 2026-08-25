@@ -37,7 +37,7 @@ jobs:
           set -euo pipefail
           output_dir="outputs/publication-watchdog"
           mkdir -p "$output_dir"
-          for artifact in current.json current-creator.json history-status.json schedule.json; do
+          for artifact in current.json current-creator.json history-status.json decision-outcomes.json schedule.json; do
             curl --fail --show-error --silent --location \
               --retry 3 --retry-all-errors --connect-timeout 10 --max-time 30 \
               --max-filesize 7000000 \

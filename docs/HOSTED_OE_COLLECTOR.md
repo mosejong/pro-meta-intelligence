@@ -50,7 +50,7 @@ are isolated under the `hosted-ops` extra and tested in CI.
 6. repacks and uploads the authenticated rolling history before any Git push;
 7. keeps the two newest encrypted history generations;
 8. builds and validates the Pages artifact;
-9. permits tracked changes only to Radar, Creator, and history public heads;
+9. permits tracked changes only to Radar, Creator, history, and decision-outcome public heads;
 10. performs a normal non-force push and deploys the already validated Pages artifact.
 
 No hosted run can silently reset history. If no prior artifact exists, `workflow_dispatch` must name

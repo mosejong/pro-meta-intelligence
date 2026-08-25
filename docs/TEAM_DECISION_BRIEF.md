@@ -62,6 +62,18 @@ as `team-decision-journal-<patch>.json`. There is no server sync, account, or cl
 state is a competitive outcome. Storage is capped at the 250 most recently updated records so a
 stale journal cannot grow without bound.
 
+## Walk-forward outcome review
+
+`decision-outcomes.json` closes the public-evidence loop without uploading the local journal. Once
+the real snapshot history is mature, a recorded candidate can show `HIT`, `FALSE_ALERT`,
+`MISSED_ADOPTION`, or an explicit waiting/not-evaluated state. Matching is permitted only for the
+exact patch/cutoff or the same immutable source content hash from an earlier benchmark cutoff.
+Champion name alone never joins decisions across time.
+
+The result is descriptive public adoption, not proof that a staff decision was correct. It never
+changes `ADOPTED`, `REJECTED`, or another human journal state. When the benchmark is not ready, the
+UI displays `HISTORY NOT READY` rather than backfilling a verdict from today's annual file.
+
 The optional 280-character note is explicitly for non-sensitive meeting context. Scrim results,
 player evaluation, private draft plans, and other authorized team information do not belong in this
 device-local public prototype. A future shared team workflow still requires authenticated storage,

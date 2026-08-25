@@ -52,8 +52,28 @@ def _history(**updates):
     return value
 
 
+def _outcomes(**updates):
+    value = {
+        "schema_version": "1",
+        "artifact_type": "team-decision-outcomes",
+        "as_of": "2026-08-24T11:30:00+00:00",
+        "status": "HISTORY_NOT_READY",
+        "benchmark_ready": False,
+        "summary": {
+            "evaluated_cutoff_count": 0,
+            "selected_candidate_count": 0,
+            "hit_count": 0,
+            "false_alert_count": 0,
+            "missed_adoption_count": 0,
+        },
+        "evaluations": [],
+    }
+    value.update(updates)
+    return value
+
+
 def test_health_treats_expected_history_collection_as_healthy() -> None:
-    report = assess_oe_feed_health(_latest_job(), _feed(), _history(), checked_at=NOW)
+    report = assess_oe_feed_health(_latest_job(), _feed(), _history(), _outcomes(), checked_at=NOW)
 
     assert report["healthy"] is True
     assert report["status"] == "HEALTHY"
@@ -64,7 +84,7 @@ def test_health_treats_expected_history_collection_as_healthy() -> None:
 
 def test_health_fails_closed_for_a_failed_job() -> None:
     report = assess_oe_feed_health(
-        _latest_job(status="FAILED", exit_code=1), _feed(), _history(), checked_at=NOW
+        _latest_job(status="FAILED", exit_code=1), _feed(), _history(), _outcomes(), checked_at=NOW
     )
 
     assert report["healthy"] is False
@@ -77,6 +97,7 @@ def test_health_detects_stale_source_without_calling_history_incomplete_an_outag
         _latest_job(),
         _feed(),
         _history(as_of="2026-08-20T00:00:00+00:00"),
+        _outcomes(as_of="2026-08-20T00:00:00+00:00"),
         checked_at=NOW,
     )
 
@@ -86,7 +107,7 @@ def test_health_detects_stale_source_without_calling_history_incomplete_an_outag
 
 
 def test_health_fails_closed_when_operational_artifacts_are_missing() -> None:
-    report = assess_oe_feed_health(None, None, None, checked_at=NOW)
+    report = assess_oe_feed_health(None, None, None, None, checked_at=NOW)
 
     assert report["healthy"] is False
     assert set(report["failed_checks"]) == {
@@ -94,14 +115,19 @@ def test_health_fails_closed_when_operational_artifacts_are_missing() -> None:
         "JOB_FRESHNESS",
         "PUBLIC_FEED_READY",
         "HISTORY_STATUS_VALID",
-        "PUBLIC_BOUNDARY_SAFE",
+        "DECISION_OUTCOMES_VALID",
+        "HISTORY_OUTCOMES_PAIRED",
         "SOURCE_SNAPSHOT_FRESHNESS",
     }
 
 
 def test_health_rejects_structurally_incomplete_public_artifacts() -> None:
     report = assess_oe_feed_health(
-        _latest_job(), _feed(entries=[]), _history(gates=[{"id": "RETRIEVALS"}] * 4), checked_at=NOW
+        _latest_job(),
+        _feed(entries=[]),
+        _history(gates=[{"id": "RETRIEVALS"}] * 4),
+        _outcomes(),
+        checked_at=NOW,
     )
 
     assert "PUBLIC_FEED_READY" in report["failed_checks"]
@@ -113,6 +139,7 @@ def test_health_blocks_private_paths_and_product_login_branding() -> None:
         _latest_job(),
         _feed(debug_path=r"C:\Users\operator\raw.csv"),
         _history(boundary="GPT 로그인 / Sign in with OpenAI"),
+        _outcomes(),
         checked_at=NOW,
     )
 
@@ -131,6 +158,7 @@ def test_health_allows_normal_https_source_urls() -> None:
         _latest_job(),
         _feed(source_url="https://example.com/public/feed.json"),
         _history(),
+        _outcomes(),
         checked_at=NOW,
     )
 
@@ -140,8 +168,33 @@ def test_health_allows_normal_https_source_urls() -> None:
 
 def test_health_rejects_naive_time_and_nonpositive_thresholds() -> None:
     with pytest.raises(ValueError, match="timezone-aware"):
-        assess_oe_feed_health(_latest_job(), _feed(), _history(), checked_at=datetime(2026, 8, 24))
+        assess_oe_feed_health(
+            _latest_job(), _feed(), _history(), _outcomes(), checked_at=datetime(2026, 8, 24)
+        )
     with pytest.raises(ValueError, match="positive"):
         assess_oe_feed_health(
-            _latest_job(), _feed(), _history(), checked_at=NOW, maximum_job_age_hours=0
+            _latest_job(), _feed(), _history(), _outcomes(), checked_at=NOW, maximum_job_age_hours=0
         )
+
+
+def test_health_fails_closed_for_missing_or_unpaired_decision_outcomes() -> None:
+    missing = assess_oe_feed_health(_latest_job(), _feed(), _history(), None, checked_at=NOW)
+    assert "DECISION_OUTCOMES_VALID" in missing["failed_checks"]
+    assert missing["next_action"] == "REBUILD_DECISION_OUTCOMES"
+
+    unpaired = assess_oe_feed_health(
+        _latest_job(),
+        _feed(),
+        _history(),
+        _outcomes(as_of="2026-08-23T11:30:00+00:00"),
+        checked_at=NOW,
+    )
+    assert unpaired["failed_checks"] == ["HISTORY_OUTCOMES_PAIRED"]
+    assert unpaired["next_action"] == "RESTORE_PAIRED_DECISION_OUTCOMES"
+
+    inconsistent = _outcomes()
+    inconsistent["summary"] = {**inconsistent["summary"], "hit_count": 1}
+    rejected = assess_oe_feed_health(
+        _latest_job(), _feed(), _history(), inconsistent, checked_at=NOW
+    )
+    assert "DECISION_OUTCOMES_VALID" in rejected["failed_checks"]
