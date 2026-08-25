@@ -99,6 +99,12 @@ snapshots still need to accumulate before the first non-fixture result is valid.
 run that audit and benchmark maintenance automatically and publish a compact four-gate readiness
 status for the dashboard without exposing the private raw archive.
 
+Hosted operations now have an authenticated rolling-history path: GitHub Actions restores the
+private OE archive, respects the same source interval and publication gates, uploads two encrypted
+recovery generations, publishes only normalized feed heads, and deploys the validated Pages
+artifact. The workstation remains a bootstrap/emergency fallback rather than the intended primary
+collector once migration succeeds.
+
 ## Phase 4 — Expert / OTP Evidence + User-defined Intelligence Sources
 
 Validate high-Elo / OTP / expert sources and ingestion policy.

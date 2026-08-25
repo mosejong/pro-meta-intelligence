@@ -69,4 +69,6 @@ timestamps. Without them, current UTC is used where applicable.
 - No site is crawled or downloaded by `refresh-feed`.
 - No external AI provider is called.
 - The local file remains caller-supplied and its authenticity is explicitly unverified.
-- Distributed locking, hosted object storage, and signed feed manifests are future production gates.
+- Cross-provider distributed locking, an external object store, and signed public feed manifests
+  remain future gates. The current hosted path serializes GitHub workflows and keeps two rolling
+  AES-GCM-authenticated private history artifacts; it is not a general multi-cloud writer lease.

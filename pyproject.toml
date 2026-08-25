@@ -17,6 +17,10 @@ dev = [
   "pytest>=8.0,<9",
   "ruff>=0.6,<1",
 ]
+hosted-ops = [
+  "cryptography>=50.0,<51",
+  "zstandard>=0.25,<0.26",
+]
 
 [project.scripts]
 pro-meta = "pro_meta_intelligence.cli:main"
