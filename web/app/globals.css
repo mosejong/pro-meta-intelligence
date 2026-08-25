@@ -120,9 +120,14 @@ h1 em { font-style: normal; color: var(--violet); }
 .team-picker select { padding-right: 34px; }
 .team-picker input::placeholder { color: #858984; font-weight: 600; }
 .team-picker > small { color: #4f544f; font: 700 8px var(--font-geist-mono); }
-.team-lens > a { padding: 10px 12px; border: 1px solid var(--ink); background: var(--ink); color: white; font-size: 11px; font-weight: 800; white-space: nowrap; }
-.team-lens > a span { margin-left: 10px; color: var(--signal); }
-.team-lens > a:hover, .team-lens > a:focus-visible { background: var(--violet); outline: 2px solid var(--ink); outline-offset: 2px; }
+.team-lens-actions { display: grid; gap: 5px; justify-items: stretch; }
+.team-lens-actions button, .team-lens-actions a { min-height: 38px; padding: 10px 12px; border: 1px solid var(--ink); font-size: 11px; font-weight: 800; text-align: center; white-space: nowrap; }
+.team-lens-actions button { background: white; color: var(--ink); cursor: pointer; }
+.team-lens-actions button:disabled { border-color: #8a8d89; background: #d1cec6; color: #777a76; cursor: not-allowed; }
+.team-lens-actions a { background: var(--ink); color: white; }
+.team-lens-actions a span { margin-left: 10px; color: var(--signal); }
+.team-lens-actions button:not(:disabled):hover, .team-lens-actions button:not(:disabled):focus-visible, .team-lens-actions a:hover, .team-lens-actions a:focus-visible { background: var(--violet); color: white; outline: 2px solid var(--ink); outline-offset: 2px; }
+.team-lens-actions small { color: #4f544f; font: 700 8px var(--font-geist-mono); line-height: 1.4; text-align: center; }
 .decision-flow { display: grid; grid-template-columns: repeat(3, 1fr); padding: 0 max(4vw, calc((100vw - 1500px) / 2)); border-bottom: 1px solid var(--ink); background: #17191e; color: white; }
 .decision-flow a { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 66px; padding: 10px 16px; border-right: 1px solid #4e5157; }
 .decision-flow a:last-child { border-right: 0; }
@@ -857,7 +862,8 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
 @media (max-width: 680px) { .quick-start { padding: 24px 5vw; } .quick-start > header { grid-template-columns: 1fr; gap: 9px; } .quick-start > header p { grid-column: auto; grid-row: auto; } .quick-start > header > b { justify-self: start; } .quick-start-grid > a { min-height: 175px; padding: 16px; } .quick-start-grid > a > strong { margin-top: 14px; font-size: 18px; } .quick-start > footer { grid-template-columns: 1fr; gap: 5px; } .quick-start > footer button { justify-self: start; } .view-mode-button { padding: 7px 8px; } .quick-view .load-button { display: none; } }
 @media (max-width: 960px) {
   .team-lens { grid-template-columns: 1fr minmax(380px, .9fr); }
-  .team-lens > a { grid-column: 1 / -1; justify-self: start; }
+  .team-lens-actions { grid-column: 1 / -1; grid-template-columns: auto auto minmax(180px, 1fr); align-items: center; justify-self: start; }
+  .team-lens-actions small { text-align: left; }
   .opponent-heading { align-items: flex-start; flex-direction: column; gap: 18px; }
   .opponent-controls { width: 100%; justify-content: flex-start; }
   .opponent-picker { min-width: min(520px, 100%); }
@@ -872,7 +878,8 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
 }
 @media (max-width: 680px) {
   .team-lens { grid-template-columns: 1fr; padding: 16px 5vw; }
-  .team-lens > a { grid-column: auto; }
+  .team-lens-actions { grid-column: auto; grid-template-columns: 1fr 1fr; justify-self: stretch; }
+  .team-lens-actions small { grid-column: 1 / -1; text-align: left; }
   .team-picker-fields { grid-template-columns: 1fr; }
   .my-team-card { display: grid; grid-template-columns: 1fr; grid-template-rows: auto auto auto 1fr auto; }
   .my-team-card > header { grid-row: auto; }

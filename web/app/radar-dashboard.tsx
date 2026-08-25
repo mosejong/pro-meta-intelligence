@@ -15,11 +15,11 @@ import { buildTargetProfile, serializeTargetProfile } from "./target-profile";
 import { TargetProfilePanel } from "./target-profile-panel";
 import { buildTargetMatchDayBrief, serializeTargetMatchDayBrief } from "./target-match-day";
 import { TargetMatchDayPanel } from "./target-match-day-panel";
+import { buildWorkspaceUrl, parseWorkspaceSearch, type WorkspaceViewMode } from "./workspace-link";
 
 const MY_TEAM_STORAGE_KEY = "pmi:my-team-id";
 const VIEW_MODE_STORAGE_KEY = "pmi:view-mode";
 export const DEFAULT_TARGET_TEAM_NAME = "T1";
-type ViewMode = "QUICK" | "FULL";
 
 const flagLabels: Record<string, string> = {
   INSUFFICIENT_RECENT_MATCHES: "최근 경기 표본 부족",
@@ -182,6 +182,19 @@ function formatScheduleTime(value: string) {
   }).format(date);
 }
 
+function copyTextFallback(value: string) {
+  const field = document.createElement("textarea");
+  field.value = value;
+  field.readOnly = true;
+  field.style.position = "fixed";
+  field.style.opacity = "0";
+  document.body.appendChild(field);
+  field.select();
+  const copied = document.execCommand("copy");
+  field.remove();
+  return copied;
+}
+
 function qualityState(report: RadarReport) {
   const critical = report.entries.filter((entry) => !entry.eligible_for_review).length;
   const unknown = report.quality.unknown_leagues.length;
@@ -243,7 +256,8 @@ export function RadarDashboard() {
   const [visibleLimit, setVisibleLimit] = useState(12);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("QUICK");
+  const [viewMode, setViewMode] = useState<WorkspaceViewMode>("QUICK");
+  const [shareState, setShareState] = useState<"IDLE" | "COPIED" | "FAILED">("IDLE");
   const [myTeamId, setMyTeamId] = useState("");
   const [myTeamSearch, setMyTeamSearch] = useState("");
   const [opponentSearch, setOpponentSearch] = useState("");
@@ -261,6 +275,8 @@ export function RadarDashboard() {
   const emergencyTrigger = useRef<HTMLButtonElement>(null);
   const emergencyDialog = useRef<HTMLElement>(null);
   const manualOverride = useRef(false);
+  const requestedTeamId = useRef("");
+  const requestedOpponentId = useRef("");
 
   const roles = useMemo(
     () => ["ALL", ...Array.from(new Set(report.entries.map((entry) => entry.role))).sort()],
@@ -419,7 +435,13 @@ export function RadarDashboard() {
       setRole("ALL");
       setEligibleOnly(false);
       setVisibleLimit(12);
-      setOpponentId(findDefaultTargetTeam(publishedReport.opponent_prep?.teams ?? [])?.team_id ?? publishedReport.opponent_prep?.teams[0]?.team_id ?? "");
+      const publishedTeams = publishedReport.opponent_prep?.teams ?? [];
+      if (requestedTeamId.current) {
+        const sharedTeam = publishedTeams.find((team) => team.team_id === requestedTeamId.current);
+        setMyTeamId(sharedTeam?.team_id ?? "");
+      }
+      const sharedOpponent = publishedTeams.find((team) => team.team_id === requestedOpponentId.current);
+      setOpponentId(sharedOpponent?.team_id ?? findDefaultTargetTeam(publishedTeams)?.team_id ?? publishedTeams[0]?.team_id ?? "");
       setFeedState({
         kind: publishedReport.fixture_only ? "demo" : "published",
         label: publishedReport.fixture_only ? "PUBLISHED DEMO FEED" : "LIVE PUBLISHED FEED",
@@ -444,17 +466,24 @@ export function RadarDashboard() {
   }, [loadPublishedFeed]);
 
   useEffect(() => {
+    const shared = parseWorkspaceSearch(window.location.search);
     const storedTeamId = window.localStorage.getItem(MY_TEAM_STORAGE_KEY);
+    requestedTeamId.current = shared.teamId ?? "";
+    requestedOpponentId.current = shared.opponentId ?? "";
     const restore = window.setTimeout(() => {
-      if (storedTeamId) setMyTeamId(storedTeamId);
+      if (shared.teamId) setMyTeamId(shared.teamId);
+      else if (storedTeamId) setMyTeamId(storedTeamId);
+      if (shared.opponentId) setOpponentId(shared.opponentId);
     }, 0);
     return () => window.clearTimeout(restore);
   }, []);
 
   useEffect(() => {
+    const shared = parseWorkspaceSearch(window.location.search);
     const storedViewMode = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
     const restore = window.setTimeout(() => {
-      if (storedViewMode === "QUICK" || storedViewMode === "FULL") setViewMode(storedViewMode);
+      if (shared.viewMode) setViewMode(shared.viewMode);
+      else if (storedViewMode === "QUICK" || storedViewMode === "FULL") setViewMode(storedViewMode);
     }, 0);
     return () => window.clearTimeout(restore);
   }, []);
@@ -496,6 +525,8 @@ export function RadarDashboard() {
       setRole("ALL");
       setEligibleOnly(false);
       setVisibleLimit(12);
+      requestedTeamId.current = "";
+      requestedOpponentId.current = "";
       setOpponentId(findDefaultTargetTeam(parsed.opponent_prep?.teams ?? [])?.team_id ?? parsed.opponent_prep?.teams[0]?.team_id ?? "");
       manualOverride.current = true;
       setFeedState({ kind: "uploaded", label: "LOCAL FILE", detail: file.name.toUpperCase() });
@@ -507,6 +538,8 @@ export function RadarDashboard() {
   }
 
   function selectMyTeam(teamId: string) {
+    requestedTeamId.current = "";
+    requestedOpponentId.current = "";
     setMyTeamId(teamId);
     setOpponentId("");
     setMyTeamSearch("");
@@ -515,10 +548,40 @@ export function RadarDashboard() {
     else window.localStorage.removeItem(MY_TEAM_STORAGE_KEY);
   }
 
+  function selectOpponent(teamId: string) {
+    requestedOpponentId.current = "";
+    setOpponentId(teamId);
+    setOpponentSearch("");
+  }
+
   function toggleViewMode() {
-    const nextMode: ViewMode = viewMode === "QUICK" ? "FULL" : "QUICK";
+    const nextMode: WorkspaceViewMode = viewMode === "QUICK" ? "FULL" : "QUICK";
     setViewMode(nextMode);
     window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, nextMode);
+  }
+
+  async function copyAnalysisLink() {
+    if (!selectedMyTeam) return;
+    const shareUrl = buildWorkspaceUrl(window.location.href, {
+      teamId: selectedMyTeam.team_id,
+      opponentId: selectedOpponent?.team_id ?? defaultTargetTeam?.team_id ?? null,
+      viewMode,
+    });
+    try {
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+        } catch {
+          if (!copyTextFallback(shareUrl)) throw new Error("clipboard unavailable");
+        }
+      } else if (!copyTextFallback(shareUrl)) {
+        throw new Error("clipboard unavailable");
+      }
+      setShareState("COPIED");
+    } catch {
+      setShareState("FAILED");
+    }
+    window.setTimeout(() => setShareState("IDLE"), 2500);
   }
 
   function downloadTeamBrief() {
@@ -722,7 +785,13 @@ export function RadarDashboard() {
           </div>
           <small aria-live="polite">{myTeamSearch ? `${myTeamSearchResults.length}개 검색 결과` : `전체 ${opponentTeams.length}개 팀`}{selectedMyTeam ? ` · 현재 ${selectedMyTeam.team_name}` : ""}</small>
         </div>
-        <a href="#opponent-prep">{selectedMyTeam ? "상대 우선순위 보기" : "분석 기준 설정"} <span>→</span></a>
+        <div className="team-lens-actions">
+          <button type="button" onClick={() => void copyAnalysisLink()} disabled={!selectedMyTeam} aria-live="polite">
+            {shareState === "COPIED" ? "링크 복사 완료" : shareState === "FAILED" ? "복사 실패" : "분석 링크 복사"}
+          </button>
+          <a href="#opponent-prep">{selectedMyTeam ? "상대 우선순위 보기" : "분석 기준 설정"} <span>→</span></a>
+          <small>{selectedMyTeam ? "내 팀·상대·보기 모드를 로그인 없이 공유" : "내 팀 선택 후 공유 가능"}</small>
+        </div>
       </section>
 
       <nav className="decision-flow" aria-label="팀 분석 진행 단계">
@@ -831,7 +900,7 @@ export function RadarDashboard() {
           {selectedOpponent && <div className="opponent-controls">
             <div className="opponent-picker">
               <label htmlFor="opponent-search">상대 검색</label>
-              <div><input id="opponent-search" type="search" value={opponentSearch} onChange={(event) => setOpponentSearch(event.target.value)} placeholder="팀명 또는 리그" autoComplete="off" /><select value={selectedOpponent.team_id} onChange={(event) => { setOpponentId(event.target.value); setOpponentSearch(""); }} aria-label="준비할 상대 선택">{opponentOptions.map((team) => { const priority = opponentPriorities.find((item) => item.team.team_id === team.team_id); return <option key={team.team_id} value={team.team_id}>{priority ? `${priority.tier} · ${priority.score}점 · ` : ""}{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>; })}</select></div>
+              <div><input id="opponent-search" type="search" value={opponentSearch} onChange={(event) => setOpponentSearch(event.target.value)} placeholder="팀명 또는 리그" autoComplete="off" /><select value={selectedOpponent.team_id} onChange={(event) => selectOpponent(event.target.value)} aria-label="준비할 상대 선택">{opponentOptions.map((team) => { const priority = opponentPriorities.find((item) => item.team.team_id === team.team_id); return <option key={team.team_id} value={team.team_id}>{priority ? `${priority.tier} · ${priority.score}점 · ` : ""}{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>; })}</select></div>
               <small aria-live="polite">{opponentSearch ? `${opponentSearchResults.length}개 검색 결과` : `${rankedOpponentTeams.length}개 상대 · ${defaultOpponentTarget ? "T1 기본 타깃 · " : ""}점수순`}</small>
             </div>
             <button ref={emergencyTrigger} className="emergency-open" type="button" onClick={() => setEmergencyOpen(true)}>3분 브리프</button>
@@ -853,7 +922,7 @@ export function RadarDashboard() {
               const topPick = priority.team.priority_picks[0];
               const active = priority.team.team_id === selectedOpponent?.team_id;
               const targetLocked = priority.team.team_id === defaultOpponentTarget?.team_id;
-              return <button type="button" className={`${active ? "active" : ""} ${priority.next_meeting ? "scheduled" : ""} ${targetLocked ? "target-locked" : ""}`} key={priority.team.team_id} onClick={() => setOpponentId(priority.team.team_id)} aria-pressed={active}>
+              return <button type="button" className={`${active ? "active" : ""} ${priority.next_meeting ? "scheduled" : ""} ${targetLocked ? "target-locked" : ""}`} key={priority.team.team_id} onClick={() => selectOpponent(priority.team.team_id)} aria-pressed={active}>
                 <span className={`priority-tier ${priority.tier.toLowerCase()}`}>{priority.tier}</span>
                 <span className="priority-order">{targetLocked ? "TGT" : String(index + 1).padStart(2, "0")}</span>
                 {topPick ? <img src={championImageUrl(topPick.champion_id)} alt="" /> : <span className="priority-placeholder" />}
