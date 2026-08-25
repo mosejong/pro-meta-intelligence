@@ -118,6 +118,8 @@ data path:
   short-form cards, and editor-ready scene JSON without uploading the generated files.
 - a five-scene Creator Storyboard that turns the matching published Creator brief into a five-minute
   voiceover sequence, short-form script, claim-linked Markdown, editor JSON, and a human-review gate.
+- a T1-first Creator angle that only links exact T1 public champion-role observations to matching
+  Radar evidence, while keeping global and team evidence IDs separate and refusing inferred links.
 - a focused onboarding home that routes users into independent Team Room, T1 Desk, Creator Studio,
   or full Meta Radar pages while every workspace keeps the same published evidence contract.
 - account-free analysis links that restore the selected own team and opponent in the focused T1

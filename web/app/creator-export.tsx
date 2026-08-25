@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { championSplashUrl } from "./champion-assets";
 import { buildCreatorStoryboard, buildFallbackCreatorTopic, creatorStoryboardMarkdown, type CreatorBrief } from "./creator-storyboard";
+import { buildT1CreatorAngles } from "./creator-t1-angle";
 import type { RadarEntry, RadarReport } from "./radar-types";
 import { buildTeamDecisionCard } from "./team-brief";
 
@@ -351,12 +352,16 @@ export function CreatorExportLab({ report, brief = null }: { report: RadarReport
     () => report.entries.filter((entry) => entry.eligible_for_review).slice(0, 12),
     [report],
   );
-  const topics = useMemo(() => {
+  const [creatorLens, setCreatorLens] = useState<"T1" | "GLOBAL">("T1");
+  const globalTopics = useMemo(() => {
     if (brief && brief.source_snapshot.patch_id === report.patch_id && brief.source_snapshot.cutoff === report.cutoff && brief.topic_candidates.length > 0) {
       return brief.topic_candidates;
     }
     return candidates.map((entry) => buildFallbackCreatorTopic(report, entry));
   }, [brief, candidates, report]);
+  const t1Angles = useMemo(() => buildT1CreatorAngles(report), [report]);
+  const effectiveLens = creatorLens === "T1" && t1Angles.length > 0 ? "T1" : "GLOBAL";
+  const topics = effectiveLens === "T1" ? t1Angles.map((angle) => angle.topic) : globalTopics;
   const [selectedKey, setSelectedKey] = useState("");
   const [selectedTitle, setSelectedTitle] = useState("");
   const [activeSceneIndex, setActiveSceneIndex] = useState(1);
@@ -370,11 +375,22 @@ export function CreatorExportLab({ report, brief = null }: { report: RadarReport
   const [status, setStatus] = useState("내보낼 장면을 확인하세요.");
   const sceneRef = useRef<HTMLElement>(null);
   const selectedTopic = topics.find((topic) => topic.candidate_id === selectedKey) ?? topics[0];
+  const selectedAngle = effectiveLens === "T1" ? t1Angles.find((angle) => angle.topic.candidate_id === selectedTopic?.candidate_id) : undefined;
   const selected = selectedTopic
     ? report.entries.find((entry) => `${entry.champion_id}:${entry.role}` === selectedTopic.candidate_id) ?? candidates[0]
     : candidates[0];
-  const scene = selected ? buildCreatorScene(report, selected, aspect) : null;
   const storyboardTitle = selectedTopic?.title_candidates.includes(selectedTitle) ? selectedTitle : selectedTopic?.title_candidates[0];
+  const baseScene = selected ? buildCreatorScene(report, selected, aspect) : null;
+  const scene = baseScene && selectedTopic ? {
+    ...baseScene,
+    title: storyboardTitle ?? baseScene.title,
+    hook: selectedTopic.hook,
+    thumbnail_text: selectedTopic.thumbnail_copy.join("\n"),
+    counterpoint: selectedTopic.counterpoint,
+    source_count: selectedTopic.evidence_event_ids.length,
+    source_event_ids: [...selectedTopic.evidence_event_ids],
+    boundary: selectedAngle?.boundary ?? baseScene.boundary,
+  } : baseScene;
   const storyboard = selectedTopic ? buildCreatorStoryboard(
     report,
     selectedTopic,
@@ -459,10 +475,16 @@ export function CreatorExportLab({ report, brief = null }: { report: RadarReport
       <span className={htmlCanvasReady ? "experimental" : "fallback"}><i />{htmlCanvasReady ? "HTML-IN-CANVAS READY" : "CANVAS FALLBACK READY"}</span>
     </header>
     <div className="creator-export-controls">
-      <label>분석 후보<select value={selectedTopic?.candidate_id ?? ""} onChange={(event) => { setSelectedKey(event.target.value); setSelectedTitle(""); setActiveSceneIndex(1); setReviewChecks([]); }}>{topics.map((topic) => <option key={topic.candidate_id} value={topic.candidate_id}>#{topic.radar_rank} · {topic.champion_id} · {roleLabels[topic.role] ?? topic.role}</option>)}</select></label>
+      <label>{effectiveLens === "T1" ? "T1 공개 중복 후보" : "글로벌 분석 후보"}<select value={selectedTopic?.candidate_id ?? ""} onChange={(event) => { setSelectedKey(event.target.value); setSelectedTitle(""); setActiveSceneIndex(1); setReviewChecks([]); }}>{topics.map((topic) => <option key={topic.candidate_id} value={topic.candidate_id}>#{topic.radar_rank} · {topic.champion_id} · {roleLabels[topic.role] ?? topic.role}</option>)}</select></label>
       <fieldset><legend>출력 비율</legend><button type="button" className={aspect === "landscape" ? "active" : ""} onClick={() => setAspect("landscape")}>16:9 유튜브</button><button type="button" className={aspect === "vertical" ? "active" : ""} onClick={() => setAspect("vertical")}>9:16 쇼츠</button></fieldset>
       <div className="creator-export-actions"><button type="button" onClick={() => void exportPng()}>PNG 저장</button><button type="button" onClick={exportJson}>장면 JSON</button></div>
     </div>
+
+    <section className="creator-angle-switch" aria-label="Creator 분석 관점">
+      <header><div><span>T1-FIRST CREATOR ANGLE</span><h3>실제 공개 중복만 T1과 연결합니다.</h3><p>글로벌 상위 후보를 억지로 T1에 붙이지 않고, 같은 챔피언·역할이 T1 공개 경기에도 관측된 경우만 별도 영상 각도로 엽니다.</p></div><nav><button type="button" className={effectiveLens === "T1" ? "active" : ""} onClick={() => { setCreatorLens("T1"); setSelectedKey(""); setSelectedTitle(""); setActiveSceneIndex(1); setReviewChecks([]); }} disabled={t1Angles.length === 0}>T1 공개 중복 <b>{t1Angles.length}</b></button><button type="button" className={effectiveLens === "GLOBAL" ? "active" : ""} onClick={() => { setCreatorLens("GLOBAL"); setSelectedKey(""); setSelectedTitle(""); setActiveSceneIndex(1); setReviewChecks([]); }}>글로벌 Radar <b>{globalTopics.length}</b></button></nav></header>
+      {selectedAngle ? <div className="creator-angle-evidence"><article><span>T1 PUBLIC SAMPLE</span><strong>{selectedAngle.target_sample_game_count}경기</strong><small>현재 공개 표본</small></article><article><span>DIRECT OVERLAP</span><strong>{selectedAngle.observed_game_count}경기</strong><small>{(selectedAngle.observed_game_rate * 100).toFixed(1)}% 관측</small></article><article><span>OBSERVED PLAYER</span><strong>{selectedAngle.observed_players.join(" · ") || "이름 경계"}</strong><small>공개 픽 이벤트 기준</small></article><article><span>EVIDENCE</span><strong>{selectedAngle.target_evidence_ids.length + selectedAngle.global_evidence_ids.length}건</strong><small>T1 {selectedAngle.target_evidence_ids.length} · 글로벌 {selectedAngle.global_evidence_ids.length}</small></article></div> : <div className="creator-angle-empty"><b>NO DIRECT T1 OVERLAP</b><p>T1 공개 픽과 정확히 겹치는 검토 후보가 없어 글로벌 Radar로 표시합니다. 관련성을 추정해 채우지 않습니다.</p></div>}
+      <footer><b>{selectedAngle ? "DIRECT_PUBLIC_OVERLAP" : "GLOBAL_RADAR"}</b><p>{selectedAngle?.boundary ?? "글로벌 공개 경기의 변화만 다루며 특정 팀의 준비 또는 의도를 추정하지 않습니다."}</p></footer>
+    </section>
 
     <section className="creator-storyboard" aria-labelledby="creator-storyboard-title">
       <header>
@@ -472,7 +494,7 @@ export function CreatorExportLab({ report, brief = null }: { report: RadarReport
       <div className="creator-title-picker">
         <label>영상 제목<select value={storyboard.title} onChange={(event) => setSelectedTitle(event.target.value)}>{storyboard.title_candidates.map((title) => <option key={title} value={title}>{title}</option>)}</select></label>
         <div><span>THUMBNAIL</span><strong>{storyboard.thumbnail_copy.join(" / ")}</strong></div>
-        <b>{brief ? "PUBLISHED CREATOR BRIEF" : "RADAR FALLBACK BRIEF"}</b>
+        <b>{selectedAngle ? "T1 PUBLIC ANGLE" : brief ? "PUBLISHED CREATOR BRIEF" : "RADAR FALLBACK BRIEF"}</b>
       </div>
       <nav className="creator-storyboard-timeline" aria-label="영상 장면 순서">
         {storyboard.scenes.map((item) => <button key={item.index} type="button" className={activeScene.index === item.index ? "active" : ""} onClick={() => setActiveSceneIndex(item.index)} aria-pressed={activeScene.index === item.index}><b>{String(item.index).padStart(2, "0")}</b><span>{item.timecode}</span><strong>{item.label}</strong><small>{item.duration_seconds}초</small></button>)}

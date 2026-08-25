@@ -191,6 +191,10 @@ test("server-renders a five-scene creator workflow with human review", async () 
   assert.match(html, /대본 Markdown/);
   assert.match(html, /스토리보드 JSON/);
   assert.match(html, /검토 전 · 발행 불가/);
+  assert.match(html, /T1-FIRST CREATOR ANGLE/);
+  assert.match(html, /실제 공개 중복만 T1과 연결합니다/);
+  assert.match(html, /T1 공개 중복/);
+  assert.match(html, /글로벌 Radar/);
 });
 
 test("builds deterministic creator scenes for YouTube and Shorts exports", async () => {
@@ -271,6 +275,55 @@ test("builds a claim-locked five-scene storyboard from the published creator bri
     assert.match(markdown, /## 쇼츠 대본/);
     assert.match(markdown, new RegExp(topic.evidence_event_ids[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     assert.match(markdown, /HUMAN_REVIEW_REQUIRED/);
+  } finally {
+    await vite.close();
+  }
+});
+
+test("builds T1 creator angles only from exact public pick and Radar overlaps", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { buildT1CreatorAngles } = await vite.ssrLoadModule("/app/creator-t1-angle.ts");
+    const { buildCreatorStoryboard } = await vite.ssrLoadModule("/app/creator-storyboard.ts");
+    const angles = buildT1CreatorAngles(feed);
+    assert.ok(angles.length > 0);
+    assert.equal(angles[0].target_team_name, "T1");
+    assert.equal(angles[0].topic.champion_id, "Vi");
+    assert.equal(angles[0].topic.role, "JUNGLE");
+    assert.ok(angles.every((angle) => angle.angle_type === "DIRECT_PUBLIC_OVERLAP"));
+    assert.ok(angles.every((angle) => angle.observed_game_count > 0));
+    assert.ok(angles.every((angle) => angle.target_evidence_ids.length > 0));
+    assert.ok(angles.every((angle) => angle.global_evidence_ids.length > 0));
+    assert.ok(angles.every((angle) => angle.target_evidence_ids.every((eventId) => angle.topic.evidence_event_ids.includes(eventId))));
+    assert.ok(angles.every((angle) => angle.topic.approved_claims.some((claim) => claim.metric === "target_team_public_game_rate")));
+    assert.ok(angles.every((angle) => angle.topic.title_candidates.every((title) => title.includes("T1"))));
+    assert.ok(angles.every((angle) => /스크림|의도/.test(angle.boundary)));
+
+    const storyboard = buildCreatorStoryboard(feed, angles[0].topic);
+    const targetClaim = angles[0].topic.approved_claims.find((claim) => claim.metric === "target_team_public_game_rate");
+    assert.ok(targetClaim);
+    assert.ok(storyboard.scenes[1].claim_ids.includes(targetClaim.claim_id));
+    assert.ok(storyboard.scenes[2].claim_ids.includes(targetClaim.claim_id));
+    assert.match(storyboard.short_form_script, /T1/);
+    assert.match(storyboard.scenes[4].voiceover, /다음 T1 공개 경기/);
+
+    const withoutT1Picks = {
+      ...feed,
+      opponent_prep: {
+        ...feed.opponent_prep,
+        teams: feed.opponent_prep.teams.map((team) => team.team_name === "T1" ? { ...team, priority_picks: [] } : team),
+      },
+    };
+    assert.deepEqual(buildT1CreatorAngles(withoutT1Picks), []);
   } finally {
     await vite.close();
   }

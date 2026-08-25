@@ -71,6 +71,21 @@ The packet fixes a five-minute draft timeline, retains claim IDs and evidence ev
 separate 30–60 second script, and starts in `HUMAN_REVIEW_REQUIRED`. The browser checklist records
 only the current editor's local progress and cannot convert the artifact to publication-ready.
 
+### T1-first angle
+
+Creator Studio opens on a T1 public-overlap lens. It does not attach the globally highest-ranked
+topic to T1 by association. Instead, it intersects exact champion-role Radar entries with exact T1
+priority-pick events from the same published report. A T1 angle therefore contains two separately
+identifiable evidence groups:
+
+- global Radar pick events and approved metric claims;
+- T1 public pick events, sample game count, observed game count, and observed rate.
+
+The title, hook, counterpoint, storyboard, PNG scene, Markdown, and JSON all retain that boundary.
+If no exact overlap exists, the interface falls back to the global lens and says why; it does not
+manufacture a T1 connection. Public observations never establish scrim readiness, next-match intent,
+player mastery, or a coaching-staff priority.
+
 If a matching Creator feed is unavailable, the UI creates the same bounded structure directly from
 an eligible Radar entry and labels it `RADAR FALLBACK BRIEF`; it does not invent a new claim.
 
