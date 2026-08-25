@@ -61,7 +61,16 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /결정할 3가지/);
   assert.match(html, /LIVE DECISION QUEUE/);
   assert.match(html, /티어표가 아니라 회의 시작점입니다/);
-  assert.match(html, /<main class="section-space space-team">/);
+  assert.match(html, /<main class="section-space space-team quick-view">/);
+  assert.match(html, /처음이라면 여기만/);
+  assert.match(html, /세 줄로 먼저 이해하세요/);
+  assert.match(html, /01 · 한 줄 결론/);
+  assert.match(html, /02 · 왜 중요한가/);
+  assert.match(html, /03 · 확인한 근거/);
+  assert.match(html, /먼저 내 팀을 선택하세요/);
+  assert.match(html, /용어가 어렵다면 20초 설명 보기/);
+  assert.match(html, /좋다고 확정한 픽이 아니라 먼저 검토할 픽/);
+  assert.match(html, /전체 근거 보기/);
   assert.match(html, /10-SECOND START/);
   assert.match(html, /원하는 결과부터 고르세요/);
   assert.match(html, /T1 다음 경기/);
@@ -80,7 +89,8 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /상대 확정 전에는 라인 저격 자료를 만들지 않습니다/);
   assert.match(html, /href="#t1-brief"/);
   assert.match(html, /전체 메타 신호 탐색/);
-  assert.match(styles, /\.quick-view \.audit-notice[^\n]+\.quick-view \.workspace[^\n]+display: none/);
+  assert.match(styles, /\.quick-view \.audit-notice[^\n]+\.quick-view \.method[^\n]+display: none/);
+  assert.doesNotMatch(styles, /\.quick-view[^\n]+\.workspace/);
   assert.match(styles, /\.quick-start-grid/);
   assert.match(styles, /body\.print-t1-one-page main > :not\(\.t1-one-page\)/);
   assert.match(html, /TEAM DECISION BRIEF/);
@@ -183,17 +193,19 @@ test("server-renders the team analyst surface", async () => {
 
 test("server-renders every focused workspace route", async () => {
   const cases = [
-    ["/t1", "space-t1", "T1 DESK"],
-    ["/creator", "space-creator", "CREATOR STUDIO"],
-    ["/radar", "space-radar", "META RADAR"],
+    ["/t1", "space-t1", "T1 DESK", "T1 한 장 요약 보기"],
+    ["/creator", "space-creator", "CREATOR STUDIO", "영상 장면 만들기"],
+    ["/radar", "space-radar", "META RADAR", "후보와 근거 보기"],
   ];
 
-  for (const [path, className, marker] of cases) {
+  for (const [path, className, marker, guideAction] of cases) {
     const response = await render(path);
     assert.equal(response.status, 200);
     const html = await response.text();
-    assert.match(html, new RegExp(`<main class="section-space ${className}">`));
+    assert.match(html, new RegExp(`<main class="section-space ${className} quick-view">`));
     assert.match(html, new RegExp(marker));
+    assert.match(html, /세 줄로 먼저 이해하세요/);
+    assert.match(html, new RegExp(guideAction));
   }
 });
 
