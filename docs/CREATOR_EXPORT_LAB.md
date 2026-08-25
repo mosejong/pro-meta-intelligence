@@ -7,11 +7,14 @@ analyst-reviewed video workflow. It does not generate a new analytical claim. Th
 metrics, counterpoint, source IDs, patch, and cutoff all come from the same published Radar evidence
 used by Team Mode.
 
-The first output formats are:
+The output formats are:
 
 - 1280×720 PNG for a 16:9 YouTube scene;
 - 1080×1920 PNG for a 9:16 short-form scene;
 - `creator-visual-scene` JSON for an editor, motion template, or later script pipeline.
+- `creator-storyboard` JSON containing the five-scene claim order and human-review state;
+- Markdown containing the long-form scene voiceover, short-form script, visual directions, claim IDs,
+  and original evidence list.
 
 Files are generated in the browser and are not uploaded to the application server.
 
@@ -53,5 +56,23 @@ the public dashboard until interoperable browser support exists. See the
 - hiding counterevidence to make a stronger thumbnail claim;
 - treating experimental browser support as a production requirement.
 
-The next Creator Mode gate is a multi-scene storyboard with claim order, chart specifications,
-voiceover notes, and a final human approval state.
+## Five-scene storyboard
+
+Creator Storyboard v1 consumes the matching published `current-creator.json` when its patch and
+cutoff exactly match the Radar feed. It arranges only the brief's approved claims into:
+
+1. Hook;
+2. what changed;
+3. why the signal may deserve review;
+4. counterpoint;
+5. takeaway and next observation.
+
+The packet fixes a five-minute draft timeline, retains claim IDs and evidence event IDs, provides a
+separate 30–60 second script, and starts in `HUMAN_REVIEW_REQUIRED`. The browser checklist records
+only the current editor's local progress and cannot convert the artifact to publication-ready.
+
+If a matching Creator feed is unavailable, the UI creates the same bounded structure directly from
+an eligible Radar entry and labels it `RADAR FALLBACK BRIEF`; it does not invent a new claim.
+
+The next Creator Mode gate is optional provider-backed rephrasing that preserves this deterministic
+packet, followed by post-outcome miss tracking. Provider output must never replace the source packet.

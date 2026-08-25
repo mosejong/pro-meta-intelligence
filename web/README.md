@@ -49,6 +49,12 @@ Creator Export Lab converts an eligible Radar candidate into a 1280×720 YouTube
 short-form card, or scene JSON. The browser generates the files locally. Experimental
 HTML-in-Canvas is used only when detected; all other browsers use the built-in Canvas 2D fallback.
 
+Creator Storyboard v1 also loads the matching published Creator brief and arranges its approved
+claims into five scenes: hook, change, review value, counterpoint, and next check. Editors can choose
+an approved title, inspect each scene's voiceover and claim IDs, copy a 30–60 second script, and
+export the complete packet as Markdown or JSON. The local review checklist never marks the source
+artifact publication-ready; final factual and editorial approval remains human.
+
 After selecting an own team, the Draft Battlecard compares that team's public priorities with the
 selected opponent. It presents protect, exact pick-contest, deny-review, and exchange-scenario
 questions, then exports the same evidence-bounded artifact as JSON. It never treats the result as an

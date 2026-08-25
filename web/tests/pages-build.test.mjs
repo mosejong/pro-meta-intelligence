@@ -31,6 +31,8 @@ test("copies the same-origin feed and social card", async () => {
   const schedule = JSON.parse(scheduleText);
   const scheduleChangesText = await readFile(new URL("feed/schedule-changes.json", root), "utf8");
   const scheduleChanges = JSON.parse(scheduleChangesText);
+  const creatorText = await readFile(new URL("feed/current-creator.json", root), "utf8");
+  const creator = JSON.parse(creatorText);
   const card = await readFile(new URL("og.png", root));
   const hero = await readFile(new URL("meta-radar-hero-v2.png", root));
 
@@ -53,10 +55,16 @@ test("copies the same-origin feed and social card", async () => {
   assert.equal(scheduleChanges.artifact_type, "pro-schedule-change-log");
   assert.equal(scheduleChanges.watched_team, "T1");
   assert.equal(scheduleChanges.current_snapshot.content_hash, schedule.content_hash);
+  assert.equal(creator.mode, "CREATOR");
+  assert.equal(creator.source_snapshot.patch_id, feed.patch_id);
+  assert.equal(creator.source_snapshot.cutoff, feed.cutoff);
+  assert.equal(creator.human_review_required, true);
+  assert.ok(creator.topic_candidates.length > 0);
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(historyText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(scheduleText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(scheduleChangesText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
+  assert.doesNotMatch(creatorText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.ok(card.byteLength > 10_000);
   assert.ok(hero.byteLength > 1_000_000);
 });

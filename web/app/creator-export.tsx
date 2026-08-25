@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { championSplashUrl } from "./champion-assets";
+import { buildCreatorStoryboard, buildFallbackCreatorTopic, creatorStoryboardMarkdown, type CreatorBrief } from "./creator-storyboard";
 import type { RadarEntry, RadarReport } from "./radar-types";
 import { buildTeamDecisionCard } from "./team-brief";
 
@@ -345,12 +346,21 @@ function canvasBlob(canvas: HTMLCanvasElement) {
   });
 }
 
-export function CreatorExportLab({ report }: { report: RadarReport }) {
+export function CreatorExportLab({ report, brief = null }: { report: RadarReport; brief?: CreatorBrief | null }) {
   const candidates = useMemo(
     () => report.entries.filter((entry) => entry.eligible_for_review).slice(0, 12),
     [report],
   );
+  const topics = useMemo(() => {
+    if (brief && brief.source_snapshot.patch_id === report.patch_id && brief.source_snapshot.cutoff === report.cutoff && brief.topic_candidates.length > 0) {
+      return brief.topic_candidates;
+    }
+    return candidates.map((entry) => buildFallbackCreatorTopic(report, entry));
+  }, [brief, candidates, report]);
   const [selectedKey, setSelectedKey] = useState("");
+  const [selectedTitle, setSelectedTitle] = useState("");
+  const [activeSceneIndex, setActiveSceneIndex] = useState(1);
+  const [reviewChecks, setReviewChecks] = useState<string[]>([]);
   const [aspect, setAspect] = useState<CreatorAspect>("landscape");
   const htmlCanvasReady = useSyncExternalStore(
     subscribeToCapability,
@@ -359,8 +369,20 @@ export function CreatorExportLab({ report }: { report: RadarReport }) {
   );
   const [status, setStatus] = useState("내보낼 장면을 확인하세요.");
   const sceneRef = useRef<HTMLElement>(null);
-  const selected = candidates.find((entry) => `${entry.champion_id}::${entry.role}` === selectedKey) ?? candidates[0];
+  const selectedTopic = topics.find((topic) => topic.candidate_id === selectedKey) ?? topics[0];
+  const selected = selectedTopic
+    ? report.entries.find((entry) => `${entry.champion_id}:${entry.role}` === selectedTopic.candidate_id) ?? candidates[0]
+    : candidates[0];
   const scene = selected ? buildCreatorScene(report, selected, aspect) : null;
+  const storyboardTitle = selectedTopic?.title_candidates.includes(selectedTitle) ? selectedTitle : selectedTopic?.title_candidates[0];
+  const storyboard = selectedTopic ? buildCreatorStoryboard(
+    report,
+    selectedTopic,
+    storyboardTitle,
+    brief?.source_snapshot.source_versions ?? [],
+  ) : null;
+  const activeScene = storyboard?.scenes.find((item) => item.index === activeSceneIndex) ?? storyboard?.scenes[0];
+  const reviewItems = ["수치와 패치 확인", "반론 유지 확인", "출처 목록 확인"];
 
   async function exportPng() {
     if (!scene || !sceneRef.current) return;
@@ -397,7 +419,39 @@ export function CreatorExportLab({ report }: { report: RadarReport }) {
     setStatus("장면 JSON 저장 완료");
   }
 
-  if (!scene) return null;
+  function exportStoryboardJson() {
+    if (!storyboard) return;
+    downloadBlob(
+      new Blob([`${JSON.stringify(storyboard, null, 2)}\n`], { type: "application/json" }),
+      `pmi-storyboard-${storyboard.champion_id.replace(/[^A-Za-z0-9_-]+/g, "-")}-${report.patch_id}.json`,
+    );
+    setStatus("5장 스토리보드 JSON 저장 완료");
+  }
+
+  function exportStoryboardMarkdown() {
+    if (!storyboard) return;
+    downloadBlob(
+      new Blob([creatorStoryboardMarkdown(storyboard)], { type: "text/markdown;charset=utf-8" }),
+      `pmi-storyboard-${storyboard.champion_id.replace(/[^A-Za-z0-9_-]+/g, "-")}-${report.patch_id}.md`,
+    );
+    setStatus("대본 패킷 Markdown 저장 완료");
+  }
+
+  async function copyShortScript() {
+    if (!storyboard) return;
+    try {
+      await navigator.clipboard.writeText(storyboard.short_form_script);
+      setStatus("쇼츠 대본 복사 완료");
+    } catch {
+      setStatus("복사 실패 · Markdown으로 저장하세요.");
+    }
+  }
+
+  function toggleReviewCheck(item: string) {
+    setReviewChecks((current) => current.includes(item) ? current.filter((value) => value !== item) : [...current, item]);
+  }
+
+  if (!scene || !storyboard || !activeScene) return null;
 
   return <section className="creator-export" id="creator-export">
     <header className="creator-export-head">
@@ -405,10 +459,44 @@ export function CreatorExportLab({ report }: { report: RadarReport }) {
       <span className={htmlCanvasReady ? "experimental" : "fallback"}><i />{htmlCanvasReady ? "HTML-IN-CANVAS READY" : "CANVAS FALLBACK READY"}</span>
     </header>
     <div className="creator-export-controls">
-      <label>분석 후보<select value={selected ? `${selected.champion_id}::${selected.role}` : ""} onChange={(event) => setSelectedKey(event.target.value)}>{candidates.map((entry) => <option key={`${entry.champion_id}::${entry.role}`} value={`${entry.champion_id}::${entry.role}`}>#{entry.rank} · {entry.champion_id} · {roleLabels[entry.role] ?? entry.role}</option>)}</select></label>
+      <label>분석 후보<select value={selectedTopic?.candidate_id ?? ""} onChange={(event) => { setSelectedKey(event.target.value); setSelectedTitle(""); setActiveSceneIndex(1); setReviewChecks([]); }}>{topics.map((topic) => <option key={topic.candidate_id} value={topic.candidate_id}>#{topic.radar_rank} · {topic.champion_id} · {roleLabels[topic.role] ?? topic.role}</option>)}</select></label>
       <fieldset><legend>출력 비율</legend><button type="button" className={aspect === "landscape" ? "active" : ""} onClick={() => setAspect("landscape")}>16:9 유튜브</button><button type="button" className={aspect === "vertical" ? "active" : ""} onClick={() => setAspect("vertical")}>9:16 쇼츠</button></fieldset>
       <div className="creator-export-actions"><button type="button" onClick={() => void exportPng()}>PNG 저장</button><button type="button" onClick={exportJson}>장면 JSON</button></div>
     </div>
+
+    <section className="creator-storyboard" aria-labelledby="creator-storyboard-title">
+      <header>
+        <div><span>STORYBOARD V1 · CLAIM LOCKED</span><h3 id="creator-storyboard-title">한 후보를 영상 한 편으로.</h3><p>승인된 주장과 반론을 Hook → 근거 → 의미 → 반론 → 다음 확인 순서로 배열했습니다.</p></div>
+        <dl><div><dt>SCENES</dt><dd>{storyboard.scenes.length}</dd></div><div><dt>RUN TIME</dt><dd>{Math.round(storyboard.estimated_duration_seconds / 60)}분</dd></div><div><dt>SOURCES</dt><dd>{storyboard.source_event_ids.length}</dd></div></dl>
+      </header>
+      <div className="creator-title-picker">
+        <label>영상 제목<select value={storyboard.title} onChange={(event) => setSelectedTitle(event.target.value)}>{storyboard.title_candidates.map((title) => <option key={title} value={title}>{title}</option>)}</select></label>
+        <div><span>THUMBNAIL</span><strong>{storyboard.thumbnail_copy.join(" / ")}</strong></div>
+        <b>{brief ? "PUBLISHED CREATOR BRIEF" : "RADAR FALLBACK BRIEF"}</b>
+      </div>
+      <nav className="creator-storyboard-timeline" aria-label="영상 장면 순서">
+        {storyboard.scenes.map((item) => <button key={item.index} type="button" className={activeScene.index === item.index ? "active" : ""} onClick={() => setActiveSceneIndex(item.index)} aria-pressed={activeScene.index === item.index}><b>{String(item.index).padStart(2, "0")}</b><span>{item.timecode}</span><strong>{item.label}</strong><small>{item.duration_seconds}초</small></button>)}
+      </nav>
+      <div className="creator-storyboard-detail">
+        <article>
+          <header><span>{activeScene.chapter}</span><b>{activeScene.timecode} · {activeScene.duration_seconds}초</b></header>
+          <h4>{activeScene.title}</h4>
+          <div><span>VOICEOVER</span><p>{activeScene.voiceover}</p></div>
+          <footer><span>화면 지시</span><p>{activeScene.visual_direction}</p></footer>
+        </article>
+        <aside>
+          <span>ON-SCREEN COPY</span><p>{activeScene.on_screen}</p>
+          <div><span>CLAIM IDS</span>{activeScene.claim_ids.length ? activeScene.claim_ids.map((claimId) => <code key={claimId}>{claimId}</code>) : <code>COUNTERPOINT / BOUNDARY</code>}</div>
+        </aside>
+      </div>
+      <div className="creator-script-packet">
+        <section><span>SHORTS · 30–60 SEC</span><h4>짧은 대본</h4><p>{storyboard.short_form_script}</p><button type="button" onClick={() => void copyShortScript()}>쇼츠 대본 복사</button></section>
+        <section className="creator-review-gate"><span>HUMAN REVIEW GATE</span><h4>{reviewChecks.length} / {reviewItems.length} 편집 확인</h4>{reviewItems.map((item) => <label key={item}><input type="checkbox" checked={reviewChecks.includes(item)} onChange={() => toggleReviewCheck(item)} />{item}</label>)}<b>{reviewChecks.length === reviewItems.length ? "편집 검토 완료 · 수동 발행 판단" : "검토 전 · 발행 불가"}</b></section>
+        <section className="creator-packet-actions"><span>EDITOR HANDOFF</span><h4>제작 파일</h4><button type="button" onClick={exportStoryboardMarkdown}>대본 Markdown</button><button type="button" onClick={exportStoryboardJson}>스토리보드 JSON</button><small>브라우저에서만 생성 · 서버 업로드 없음</small></section>
+      </div>
+      <footer className="creator-storyboard-boundary"><b>{storyboard.review_state}</b><p>{storyboard.boundary}</p></footer>
+    </section>
+
     <div className={`creator-stage ${aspect}`}>
       <article ref={sceneRef} className={`creator-scene ${aspect}`} style={{ backgroundImage: `linear-gradient(${aspect === "vertical" ? "0deg" : "90deg"}, #f5f2e9 ${aspect === "vertical" ? "45%" : "44%"}, transparent ${aspect === "vertical" ? "70%" : "76%"}), url(${scene.image_url})` }}>
         <span className="creator-scene-tag">PATCH {scene.patch_id} · SIGNAL #{String(scene.rank).padStart(2, "0")}</span>

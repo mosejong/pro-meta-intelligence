@@ -178,6 +178,21 @@ test("server-renders every focused workspace route", async () => {
   }
 });
 
+test("server-renders a five-scene creator workflow with human review", async () => {
+  const response = await render("/creator");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /STORYBOARD V1 · CLAIM LOCKED/);
+  assert.match(html, /한 후보를 영상 한 편으로/);
+  assert.match(html, /Hook → 근거 → 의미 → 반론 → 다음 확인/);
+  assert.match(html, /영상 장면 순서/);
+  assert.match(html, /SHORTS · 30–60 SEC/);
+  assert.match(html, /HUMAN REVIEW GATE/);
+  assert.match(html, /대본 Markdown/);
+  assert.match(html, /스토리보드 JSON/);
+  assert.match(html, /검토 전 · 발행 불가/);
+});
+
 test("builds deterministic creator scenes for YouTube and Shorts exports", async () => {
   const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
   const entry = feed.entries.find((item) => item.eligible_for_review);
@@ -210,6 +225,52 @@ test("builds deterministic creator scenes for YouTube and Shorts exports", async
     assert.match(landscape.counterpoint, /공개 경기|집중|편차|품질 경고/);
     assert.match(landscape.image_url, /^https:\/\/ddragon\.leagueoflegends\.com\/cdn\/img\/champion\/splash\//);
     assert.match(landscape.boundary, /출전 권고가 아닙니다/);
+  } finally {
+    await vite.close();
+  }
+});
+
+test("builds a claim-locked five-scene storyboard from the published creator brief", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const brief = JSON.parse(await readFile(new URL("public/feed/current-creator.json", templateRoot), "utf8"));
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { buildCreatorStoryboard, creatorStoryboardMarkdown, isCreatorBrief } = await vite.ssrLoadModule("/app/creator-storyboard.ts");
+    assert.equal(isCreatorBrief(brief), true);
+    assert.equal(isCreatorBrief({ ...brief, publication_ready: true }), false);
+    assert.equal(brief.source_snapshot.patch_id, feed.patch_id);
+    assert.equal(brief.source_snapshot.cutoff, feed.cutoff);
+
+    const topic = brief.topic_candidates[0];
+    const storyboard = buildCreatorStoryboard(feed, topic, topic.title_candidates[1], brief.source_snapshot.source_versions);
+    const approvedClaimIds = new Set(topic.approved_claims.map((claim) => claim.claim_id));
+    assert.equal(storyboard.artifact_type, "creator-storyboard");
+    assert.equal(storyboard.template_version, "creator-storyboard-v1");
+    assert.equal(storyboard.title, topic.title_candidates[1]);
+    assert.equal(storyboard.scenes.length, 5);
+    assert.equal(storyboard.estimated_duration_seconds, 300);
+    assert.deepEqual(storyboard.scenes.map((scene) => scene.timecode), ["00:00", "00:20", "01:35", "03:00", "04:00"]);
+    assert.deepEqual(storyboard.scenes.map((scene) => scene.chapter), ["HOOK", "WHAT CHANGED", "WHY IT MAY MATTER", "COUNTERPOINT", "TAKEAWAY"]);
+    assert.ok(storyboard.scenes.flatMap((scene) => scene.claim_ids).every((claimId) => approvedClaimIds.has(claimId)));
+    assert.deepEqual(storyboard.source_event_ids, topic.evidence_event_ids);
+    assert.deepEqual(storyboard.source_versions, brief.source_snapshot.source_versions);
+    assert.equal(storyboard.review_state, "HUMAN_REVIEW_REQUIRED");
+    assert.equal(storyboard.publication_ready, false);
+    assert.match(storyboard.short_form_script, new RegExp(topic.champion_id));
+    const markdown = creatorStoryboardMarkdown(storyboard);
+    assert.match(markdown, /^# /);
+    assert.match(markdown, /## 00:00 · 시작 질문/);
+    assert.match(markdown, /## 쇼츠 대본/);
+    assert.match(markdown, new RegExp(topic.evidence_event_ids[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(markdown, /HUMAN_REVIEW_REQUIRED/);
   } finally {
     await vite.close();
   }
