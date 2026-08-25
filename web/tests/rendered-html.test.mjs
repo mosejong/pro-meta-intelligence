@@ -49,6 +49,9 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /T1 분석 바로가기/);
   assert.match(html, /T1 기본 타깃/);
   assert.match(html, /T1 TARGET PROFILE/);
+  assert.match(html, /T1 MATCH-DAY CONTROL/);
+  assert.match(html, /다음 T1 일정과 준비 상태/);
+  assert.match(html, /MATCH-DAY JSON/);
   assert.match(html, /T1의 이번 패치에서 바뀐 것/);
   assert.match(html, /최근 관측 라인업의 챔피언 풀/);
   assert.match(html, /최근 경기 타임라인/);
@@ -348,6 +351,94 @@ test("builds a deterministic T1 target profile with players, patch shifts, and o
     assert.ok(first.evidence.match_ids.length > 0);
     assert.match(first.boundary, /not a prediction/i);
     assert.deepEqual(JSON.parse(serializeTargetProfile(first)), first);
+  } finally {
+    await vite.close();
+  }
+});
+
+test("builds a T1 match-day brief without guessing a TBD bracket opponent", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const schedule = JSON.parse(await readFile(new URL("public/feed/schedule.json", templateRoot), "utf8"));
+  const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+  const geng = feed.opponent_prep.teams.find((team) => team.team_name === "Gen.G");
+  assert.ok(t1);
+  assert.ok(geng);
+
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { buildTargetProfile } = await vite.ssrLoadModule("/app/target-profile.ts");
+    const { buildTargetMatchDayBrief, serializeTargetMatchDayBrief } = await vite.ssrLoadModule("/app/target-match-day.ts");
+    const profile = buildTargetProfile(feed, t1, null);
+    const tbdSchedule = {
+      ...schedule,
+      retrieved_at: "2026-08-25T00:00:00Z",
+      available_at: "2026-08-25T00:00:00Z",
+      events: [{
+        event_id: "lolesports:test-t1-tbd",
+        start_at: "2026-08-29T08:00:00Z",
+        league: "LCK",
+        block: "Playoffs",
+        best_of: 5,
+        participants: [{ name: "TBD", code: "TBD" }, { name: "T1", code: "T1" }],
+      }],
+      quality: { event_count: 1, tbd_participant_count: 1 },
+    };
+    const first = buildTargetMatchDayBrief(feed, t1, profile, tbdSchedule, tbdSchedule.retrieved_at, geng);
+    const second = buildTargetMatchDayBrief(feed, t1, profile, tbdSchedule, tbdSchedule.retrieved_at, geng);
+
+    assert.deepEqual(first, second);
+    assert.equal(first.artifact_type, "target-match-day-brief");
+    assert.equal(first.target.team_name, "T1");
+    assert.equal(first.fixture.relationship, "PARTICIPANT_TBD");
+    assert.equal(first.fixture.other_participant.name, "TBD");
+    assert.equal(first.fixture.event_id, "lolesports:test-t1-tbd");
+    assert.equal(first.fixture.best_of, 5);
+    assert.ok(first.fixture.days_until > 0);
+    assert.equal(first.readiness.status, "WAITING_FOR_OPPONENT");
+    assert.equal(first.readiness.checks.find((item) => item.id === "OFFICIAL_FIXTURE").status, "PASS");
+    assert.equal(first.readiness.checks.find((item) => item.id === "OPPONENT_IDENTITY").status, "WAIT");
+    assert.ok(first.prepare_now.length >= 3);
+    assert.ok(first.prepare_now.every((item) => item.evidence_ids.length > 0));
+    assert.ok(first.unknowns.some((item) => item.includes("TBD")));
+    assert.match(first.boundary, /TBD participants are never inferred/i);
+    assert.deepEqual(JSON.parse(serializeTargetMatchDayBrief(first)), first);
+
+    const confirmedSchedule = {
+      ...schedule,
+      events: [{
+        event_id: "lolesports:confirmed-t1-geng",
+        start_at: "2026-08-26T08:00:00Z",
+        league: "LCK",
+        block: "Playoffs",
+        best_of: 5,
+        participants: [{ name: "T1", code: "T1" }, { name: "Gen.G Esports", code: "GEN" }],
+      }],
+      quality: { event_count: 1, tbd_participant_count: 0 },
+    };
+    const confirmed = buildTargetMatchDayBrief(
+      feed,
+      t1,
+      profile,
+      confirmedSchedule,
+      "2026-08-24T00:00:00Z",
+      geng,
+    );
+    assert.equal(confirmed.fixture.relationship, "CONFIRMED_HEAD_TO_HEAD");
+    assert.equal(confirmed.readiness.status, "READY");
+    assert.equal(confirmed.fixture.other_participant.name, "Gen.G Esports");
+
+    const unavailable = buildTargetMatchDayBrief(feed, t1, profile, null, feed.cutoff, geng);
+    assert.equal(unavailable.fixture.relationship, "SCHEDULE_UNAVAILABLE");
+    assert.equal(unavailable.readiness.status, "WAITING_FOR_FIXTURE");
+    assert.equal(unavailable.fixture.event_id, null);
   } finally {
     await vite.close();
   }

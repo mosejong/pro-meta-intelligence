@@ -101,6 +101,9 @@ data path:
 - a T1 Target Profile that separates the latest observed five-player lineup from other same-patch
   lineups, shows public player champion pools, recent games, and previous-patch shifts, and exports
   the same evidence-bounded view for staff handoff.
+- a T1 Match-Day Brief that verifies the next official fixture, distinguishes TBD, direct head-to-head,
+  and unrelated own-team states, and turns the current T1 profile into preparation tasks without
+  guessing bracket outcomes or historical series links.
 - an own-team-versus-opponent Draft Battlecard that turns public draft overlap into four bounded
   staff review lanes: protect, contest, deny review, and exchange scenario.
 - a Creator Export Lab that converts the same claim-locked evidence into 16:9 YouTube cards, 9:16
@@ -138,6 +141,8 @@ See also:
 - [`docs/FEED_JOB.md`](docs/FEED_JOB.md)
 - [`docs/CREATOR_BRIEF.md`](docs/CREATOR_BRIEF.md)
 - [`docs/TEAM_DECISION_BRIEF.md`](docs/TEAM_DECISION_BRIEF.md)
+- [`docs/T1_TARGET_PROFILE.md`](docs/T1_TARGET_PROFILE.md)
+- [`docs/T1_MATCH_DAY_BRIEF.md`](docs/T1_MATCH_DAY_BRIEF.md)
 - [`docs/OPPONENT_PREP.md`](docs/OPPONENT_PREP.md)
 - [`docs/EMERGENCY_BRIEF.md`](docs/EMERGENCY_BRIEF.md)
 - [`docs/DRAFT_BATTLECARD.md`](docs/DRAFT_BATTLECARD.md)
