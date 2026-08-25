@@ -1,8 +1,8 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-08-25T04:28:27.229923+00:00",
+  "available_at": "2026-08-25T16:53:43.878232+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:ded4f60719ee89d3c89695a08d0a05956cf4d0944b9b36de231ad1d6cb2192f4",
+  "content_hash": "sha256:4bc4319005d062e4cf85199fec36200d98badc657e37c6380f6cd88368094799",
   "events": [
     {
       "best_of": 5,
@@ -41,16 +41,16 @@
     {
       "best_of": 5,
       "block": "Play In Knockouts",
-      "event_id": "lolesports:cd771094ae042e8c86cc",
+      "event_id": "lolesports:015c08d29f55140c7c39",
       "league": "LPL",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "EDG",
+          "name": "EDWARD GAMING"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "NIP",
+          "name": "Shenzhen NINJAS IN PYJAMAS"
         }
       ],
       "start_at": "2026-08-28T06:00:00+00:00"
@@ -75,16 +75,16 @@
     {
       "best_of": 5,
       "block": "Play In Knockouts",
-      "event_id": "lolesports:63fe7229476cb1be9d5e",
+      "event_id": "lolesports:37c60058989caa5f0b13",
       "league": "LPL",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "TT",
+          "name": "THUNDER TALK GAMING"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "IG",
+          "name": "Invictus Gaming"
         }
       ],
       "start_at": "2026-08-28T09:00:00+00:00"
@@ -143,16 +143,16 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:c9b3ce0a0caff0a8ca09",
+      "event_id": "lolesports:7ec8c43d4ef8bb172cf8",
       "league": "LPL",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "TES",
+          "name": "TOP ESPORTS"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "LGD",
+          "name": "LGD GAMING"
         }
       ],
       "start_at": "2026-08-29T09:00:00+00:00"
@@ -245,16 +245,16 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:5e2ed181ec82b575f003",
+      "event_id": "lolesports:9f15fafbc06aa8ab90d8",
       "league": "LPL",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "JDG",
+          "name": "Beijing JDG Esports"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "WE",
+          "name": "Xi'an Team WE"
         }
       ],
       "start_at": "2026-08-30T09:00:00+00:00"
@@ -398,7 +398,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:01e0a33f6d7acb8802c5",
+      "event_id": "lolesports:e053dce48b60bd6b9924",
       "league": "LPL",
       "participants": [
         {
@@ -406,8 +406,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "BLG",
+          "name": "BILIBILI GAMING"
         }
       ],
       "start_at": "2026-09-03T09:00:00+00:00"
@@ -432,7 +432,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:da4ed599d1f831c994f9",
+      "event_id": "lolesports:0f6ebd04e150415692d2",
       "league": "LPL",
       "participants": [
         {
@@ -440,8 +440,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "AL",
+          "name": "Anyone's Legend"
         }
       ],
       "start_at": "2026-09-04T09:00:00+00:00"
@@ -696,9 +696,9 @@
   "locale": "en-US",
   "quality": {
     "event_count": 40,
-    "tbd_participant_count": 42
+    "tbd_participant_count": 32
   },
-  "retrieved_at": "2026-08-25T04:28:27.229923+00:00",
+  "retrieved_at": "2026-08-25T16:53:43.878232+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"

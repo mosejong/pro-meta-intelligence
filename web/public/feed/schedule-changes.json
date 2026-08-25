@@ -2,17 +2,20 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:ded4f60719ee89d3c89695a08d0a05956cf4d0944b9b36de231ad1d6cb2192f4",
-    "retrieved_at": "2026-08-25T04:28:27.229923+00:00"
+    "content_hash": "sha256:4bc4319005d062e4cf85199fec36200d98badc657e37c6380f6cd88368094799",
+    "retrieved_at": "2026-08-25T16:53:43.878232+00:00"
   },
-  "generated_at": "2026-08-25T04:28:27.229923+00:00",
+  "generated_at": "2026-08-25T16:53:43.878232+00:00",
   "history": [],
   "latest_run": {
     "change_count": 0,
     "changes": [],
-    "status": "INITIALIZED"
+    "status": "UNCHANGED"
   },
-  "previous_snapshot": null,
+  "previous_snapshot": {
+    "content_hash": "sha256:ded4f60719ee89d3c89695a08d0a05956cf4d0944b9b36de231ad1d6cb2192f4",
+    "retrieved_at": "2026-08-25T04:28:27.229923+00:00"
+  },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "watched_team": "T1"
