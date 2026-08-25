@@ -115,15 +115,20 @@ def test_ai_validation_cli_fails_closed_and_writes_aggregate_report(tmp_path) ->
     output = tmp_path / "status.json"
     source.write_text(json.dumps(_run(case_count=3)), encoding="utf-8")
 
-    assert main([
-        "evaluate-ai-assistant",
-        "--input",
-        str(source),
-        "--minimum-paired-cases",
-        "4",
-        "--output",
-        str(output),
-    ]) == 2
+    assert (
+        main(
+            [
+                "evaluate-ai-assistant",
+                "--input",
+                str(source),
+                "--minimum-paired-cases",
+                "4",
+                "--output",
+                str(output),
+            ]
+        )
+        == 2
+    )
 
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["status"] == "NOT_VALIDATED"

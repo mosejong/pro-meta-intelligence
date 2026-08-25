@@ -122,8 +122,10 @@ def evaluate_ai_against_human(
         ),
     ]
     enough_cases = gates[0]["passed"]
-    status = "VALIDATED" if enough_cases and all(gate["passed"] for gate in gates) else (
-        "REJECTED" if enough_cases else "NOT_VALIDATED"
+    status = (
+        "VALIDATED"
+        if enough_cases and all(gate["passed"] for gate in gates)
+        else ("REJECTED" if enough_cases else "NOT_VALIDATED")
     )
     evaluated_at = parse_datetime(run["evaluated_at"]).isoformat()
     return {
@@ -281,13 +283,17 @@ def _aggregate(rows: list[dict[str, Any]]) -> dict[str, Any]:
             "critical_error_count": sum(row["critical_error_count"] for row in rows),
             "critical_error_rate": _round(
                 sum(row["critical_error_count"] > 0 for row in rows) / len(rows)
-            ) if rows else 0.0,
+            )
+            if rows
+            else 0.0,
             "median_duration_seconds": (
                 _round(median(row["duration_seconds"] for row in rows)) if rows else None
             ),
             "accepted_without_edit_rate": _round(
                 sum(row["accepted_without_edit"] for row in rows) / len(rows)
-            ) if rows else 0.0,
+            )
+            if rows
+            else 0.0,
         }
     )
     return result
@@ -305,17 +311,10 @@ def _paired_metrics(human: list[dict[str, Any]], ai: list[dict[str, Any]]) -> di
     ai_median = median(row["duration_seconds"] for row in ai)
     return {
         "claim_f1_delta": _round(
-            sum(
-                a["claim_f1"] - h["claim_f1"]
-                for h, a in zip(human, ai, strict=True)
-            )
-            / len(human)
+            sum(a["claim_f1"] - h["claim_f1"] for h, a in zip(human, ai, strict=True)) / len(human)
         ),
         "evidence_f1_delta": _round(
-            sum(
-                a["evidence_f1"] - h["evidence_f1"]
-                for h, a in zip(human, ai, strict=True)
-            )
+            sum(a["evidence_f1"] - h["evidence_f1"] for h, a in zip(human, ai, strict=True))
             / len(human)
         ),
         "median_time_ratio": _round(ai_median / human_median),
@@ -342,8 +341,7 @@ def _version_pinned(system: dict[str, Any]) -> bool:
 
 def _system_fingerprint(system: dict[str, Any]) -> str:
     selected = {
-        field: system[field]
-        for field in ("provider", "model", "model_version", "prompt_version")
+        field: system[field] for field in ("provider", "model", "model_version", "prompt_version")
     }
     return _fingerprint(selected)
 

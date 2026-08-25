@@ -362,9 +362,11 @@ def _ai_validation_artifact_check(ai_validation: dict[str, Any] | None) -> dict[
             "public-safe, fail-closed AI validation status",
         )
     gates = ai_validation.get("gates")
-    gate_ids = {
-        gate.get("id") for gate in gates if isinstance(gate, dict)
-    } if isinstance(gates, list) else set()
+    gate_ids = (
+        {gate.get("id") for gate in gates if isinstance(gate, dict)}
+        if isinstance(gates, list)
+        else set()
+    )
     gates_valid = (
         isinstance(gates, list)
         and len(gates) == len(expected_gate_ids)
@@ -377,18 +379,20 @@ def _ai_validation_artifact_check(ai_validation: dict[str, Any] | None) -> dict[
             for gate in gates
         )
     )
-    gates_by_id = {
-        gate["id"]: gate
-        for gate in gates
-        if isinstance(gate, dict) and isinstance(gate.get("id"), str)
-    } if isinstance(gates, list) else {}
+    gates_by_id = (
+        {
+            gate["id"]: gate
+            for gate in gates
+            if isinstance(gate, dict) and isinstance(gate.get("id"), str)
+        }
+        if isinstance(gates, list)
+        else {}
+    )
     status = ai_validation.get("status")
     enabled = ai_validation.get("ai_features_enabled")
     case_count = ai_validation.get("paired_holdout_case_count")
     policy = ai_validation.get("policy")
-    minimum_cases = (
-        policy.get("minimum_paired_holdout_cases") if isinstance(policy, dict) else None
-    )
+    minimum_cases = policy.get("minimum_paired_holdout_cases") if isinstance(policy, dict) else None
     sample_gate = gates_by_id.get("PAIRED_HOLDOUT_SAMPLE")
     sample_consistent = (
         type(case_count) is int
@@ -402,30 +406,36 @@ def _ai_validation_artifact_check(ai_validation: dict[str, Any] | None) -> dict[
         and sample_gate.get("passed") is (case_count >= minimum_cases)
     )
     failed_gates = ai_validation.get("failed_gates")
-    expected_failed_gates = [
-        gate["id"] for gate in gates if isinstance(gate, dict) and gate.get("passed") is False
-    ] if isinstance(gates, list) else []
+    expected_failed_gates = (
+        [gate["id"] for gate in gates if isinstance(gate, dict) and gate.get("passed") is False]
+        if isinstance(gates, list)
+        else []
+    )
     failure_list_consistent = failed_gates == expected_failed_gates
     lifecycle_valid = (
-        status == "VALIDATED"
-        and enabled is True
-        and gates_valid
-        and sample_consistent
-        and all(gate["passed"] for gate in gates)
-    ) or (
-        status == "NOT_VALIDATED"
-        and enabled is False
-        and gates_valid
-        and sample_consistent
-        and sample_gate["passed"] is False
-        and any(not gate["passed"] for gate in gates)
-    ) or (
-        status == "REJECTED"
-        and enabled is False
-        and gates_valid
-        and sample_consistent
-        and sample_gate["passed"] is True
-        and any(not gate["passed"] for gate in gates)
+        (
+            status == "VALIDATED"
+            and enabled is True
+            and gates_valid
+            and sample_consistent
+            and all(gate["passed"] for gate in gates)
+        )
+        or (
+            status == "NOT_VALIDATED"
+            and enabled is False
+            and gates_valid
+            and sample_consistent
+            and sample_gate["passed"] is False
+            and any(not gate["passed"] for gate in gates)
+        )
+        or (
+            status == "REJECTED"
+            and enabled is False
+            and gates_valid
+            and sample_consistent
+            and sample_gate["passed"] is True
+            and any(not gate["passed"] for gate in gates)
+        )
     )
     dataset_fingerprint = ai_validation.get("dataset_fingerprint")
     system_fingerprint = ai_validation.get("system_fingerprint")
@@ -461,6 +471,8 @@ def _ai_validation_artifact_check(ai_validation: dict[str, Any] | None) -> dict[
         },
         "paired human holdout status that enables AI only when every release gate passes",
     )
+
+
 def _history_artifact_check(history_status: dict[str, Any] | None) -> dict[str, Any]:
     artifact_type = (
         history_status.get("artifact_type") if isinstance(history_status, dict) else None
