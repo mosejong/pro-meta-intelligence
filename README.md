@@ -119,6 +119,8 @@ data path:
 - a default Quick View that routes new users to T1 match day, own-team-vs-T1 preparation, or Creator
   Studio in one choice while keeping raw tables, operational history, and the full Radar in an
   optional analyst view.
+- account-free analysis links that restore the selected own team, opponent, and Quick/Full view so
+  staff and collaborators can open the same evidence workspace without copying private data.
 
 This is not yet evidence of predictive value. Real point-in-time daily snapshots must accumulate
 before Phase 3 can measure Recall@K, lead time, and false-alert behavior without hindsight leakage.

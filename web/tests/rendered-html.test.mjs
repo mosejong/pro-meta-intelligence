@@ -46,6 +46,8 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /핵심만 표시 중/);
   assert.match(html, /전체 분석 보기/);
   assert.match(html, /aria-pressed="false"[^>]*>전체 분석/);
+  assert.match(html, /분석 링크 복사/);
+  assert.match(html, /내 팀 선택 후 공유 가능/);
   assert.match(html, /전체 메타 신호 탐색/);
   assert.match(styles, /\.quick-view \.audit-notice[^\n]+\.quick-view \.workspace[^\n]+display: none/);
   assert.match(styles, /\.quick-start-grid/);
@@ -552,6 +554,44 @@ test("filters the large team list by name, alias, and league", async () => {
     assert.equal(matchesTeamQuery(t1, "  t1 lck  "), true);
     assert.equal(matchesTeamQuery(t1, "LEC"), false);
     assert.ok(feed.opponent_prep.teams.filter((team) => matchesTeamQuery(team, "LCK")).length > 1);
+  } finally {
+    await vite.close();
+  }
+});
+
+test("builds a canonical share link that restores the analysis workspace", async () => {
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const { buildWorkspaceUrl, parseWorkspaceSearch } = await vite.ssrLoadModule("/app/workspace-link.ts");
+    const shared = buildWorkspaceUrl("https://example.com/pro-meta-intelligence/?utm_source=test#top", {
+      teamId: "gen-g",
+      opponentId: "t1",
+      viewMode: "FULL",
+    });
+    const url = new URL(shared);
+    assert.equal(url.searchParams.get("team"), "gen-g");
+    assert.equal(url.searchParams.get("opponent"), "t1");
+    assert.equal(url.searchParams.get("view"), "full");
+    assert.equal(url.searchParams.has("utm_source"), false);
+    assert.equal(url.hash, "#opponent-prep");
+    assert.deepEqual(parseWorkspaceSearch(url.search), {
+      teamId: "gen-g",
+      opponentId: "t1",
+      viewMode: "FULL",
+    });
+    assert.deepEqual(parseWorkspaceSearch("?team=%20%20&opponent=x&view=unknown"), {
+      teamId: null,
+      opponentId: "x",
+      viewMode: null,
+    });
   } finally {
     await vite.close();
   }

@@ -21,6 +21,10 @@ vs T1 preparation flow, and Creator Studio. It hides operational history, raw op
 the full Radar explorer without removing their evidence. **Full Analysis** restores those surfaces,
 and the preference is stored only in the current browser.
 
+After choosing an own team, **분석 링크 복사** creates an account-free URL containing only the
+public team ID, opponent ID, and Quick/Full view. Opening it restores the same workspace; no API key,
+uploaded file, private note, or browser-only preference is included.
+
 Use **JSON 불러오기** for a temporary local override created by:
 
 ```bash
