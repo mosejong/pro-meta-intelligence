@@ -16,6 +16,11 @@ minutes. The bundled match feed is the latest reviewed real provider snapshot an
 publication-readiness audit. The official schedule companion is used only to prioritize team review;
 it is excluded from scoring after 36 hours without a successful refresh. The UI shows excluded-game
 and blocking-issue counts instead of presenting a clean-looking result without its data limitations.
+The default **Quick View** starts with three outcome routes: T1's next verified match, an own-team
+vs T1 preparation flow, and Creator Studio. It hides operational history, raw opponent tables, and
+the full Radar explorer without removing their evidence. **Full Analysis** restores those surfaces,
+and the preference is stored only in the current browser.
+
 Use **JSON 불러오기** for a temporary local override created by:
 
 ```bash

@@ -24,6 +24,7 @@ async function render(path = "/") {
 
 test("server-renders the Meta Radar analyst surface", async () => {
   const response = await render();
+  const styles = await readFile(new URL("app/globals.css", templateRoot), "utf8");
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
@@ -35,7 +36,19 @@ test("server-renders the Meta Radar analyst surface", async () => {
   assert.match(html, /결정할 3가지/);
   assert.match(html, /LIVE DECISION QUEUE/);
   assert.match(html, /티어표가 아니라 회의 시작점입니다/);
+  assert.match(html, /<main class="quick-view">/);
+  assert.match(html, /10-SECOND START/);
+  assert.match(html, /원하는 결과부터 고르세요/);
+  assert.match(html, /T1 다음 경기/);
+  assert.match(html, /내 팀 vs T1/);
+  assert.match(html, /영상 아이템 만들기/);
+  assert.match(html, /3개 공개 팀 중 하나를 고르면/);
+  assert.match(html, /핵심만 표시 중/);
+  assert.match(html, /전체 분석 보기/);
+  assert.match(html, /aria-pressed="false"[^>]*>전체 분석/);
   assert.match(html, /전체 메타 신호 탐색/);
+  assert.match(styles, /\.quick-view \.audit-notice[^\n]+\.quick-view \.workspace[^\n]+display: none/);
+  assert.match(styles, /\.quick-start-grid/);
   assert.match(html, /TEAM DECISION BRIEF/);
   assert.match(html, /오늘 코칭스태프가 검토할 5가지/);
   assert.match(html, /반대 근거/);
