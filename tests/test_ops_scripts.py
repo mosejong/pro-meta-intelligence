@@ -51,6 +51,37 @@ def test_github_schedule_refresh_respects_policy_interval_and_narrow_publish_sco
     assert "--force" not in workflow
 
 
+def test_production_watchdog_checks_live_publication_and_reconciles_one_incident() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "production-watchdog.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'cron: "43 */6 * * *"' in workflow
+    assert "contents: read" in workflow
+    assert "issues: write" in workflow
+    assert "cancel-in-progress: false" in workflow
+    assert "timeout-minutes: 10" in workflow
+    assert "mosejong.github.io/pro-meta-intelligence/feed" in workflow
+    for artifact in (
+        "current.json",
+        "current-creator.json",
+        "history-status.json",
+        "schedule.json",
+    ):
+        assert artifact in workflow
+    assert "curl --fail" in workflow
+    assert "--retry 3" in workflow
+    assert "--max-filesize 7000000" in workflow
+    assert "check-publication-watchdog" in workflow
+    assert "gh issue create" in workflow
+    assert "gh issue edit" in workflow
+    assert "gh issue close" in workflow
+    assert "actions/upload-artifact@v4" in workflow
+    assert "retention-days: 14" in workflow
+    assert "steps.health.outcome != 'success'" in workflow
+    assert "git push" not in workflow
+
+
 def test_windows_scripts_resolve_the_default_root_after_parameter_binding() -> None:
     for relative_path in (
         "ops/windows/publish-oe-feed.ps1",

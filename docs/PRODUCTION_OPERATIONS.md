@@ -1,6 +1,6 @@
 # Production operations
 
-The unattended production path has four separate responsibilities:
+The unattended production path has six separate responsibilities:
 
 1. `sync-oe-feed` performs policy-gated acquisition, archive audit, publication readiness, Radar and
    Creator publication, and walk-forward readiness maintenance under one writer lock.
@@ -14,6 +14,8 @@ The unattended production path has four separate responsibilities:
 5. A dedicated GitHub workflow can refresh only the official schedule and T1 change log every eight
    hours. It respects the six-hour registry interval, validates the static publication, and pushes
    only those two normalized artifacts.
+6. An independent GitHub watchdog downloads the actually served public artifacts every six hours,
+   fails on availability, pairing, freshness, or boundary violations, and maintains one incident.
 
 ## Health command
 
@@ -48,6 +50,39 @@ Default health limits are intentionally wider than the 24-hour provider interval
 
 The extra margin tolerates a sleeping workstation or a short provider outage without hiding a truly
 stalled collector.
+
+## Independently hosted publication watchdog
+
+`.github/workflows/production-watchdog.yml` checks the independently served GitHub Pages artifacts
+every six hours. It does not trust the repository checkout as proof of production health. The job
+downloads the live Radar, Creator, history, and official-schedule heads with bounded response sizes,
+retries transient HTTP failures, and runs `check-publication-watchdog` against those downloaded
+bytes.
+
+The public watchdog fails closed when:
+
+- the Radar or Creator contract is invalid;
+- the Radar and Creator patch/cutoff pair differs;
+- the history status does not belong to the current Radar cutoff;
+- Radar data is older than 50 hours or schedule data is older than 30 hours;
+- a public artifact contains a local path, provider CSV reference, or product-login branding; or
+- any required public endpoint cannot be downloaded.
+
+One labeled GitHub issue represents the incident lifecycle. A repeated failure updates that issue
+instead of opening duplicates, while the first healthy run closes it automatically. The final step
+still fails the workflow so repository notification settings and external Actions monitoring can
+observe the outage. This watchdog proves endpoint availability, pairing, and freshness only. It
+cannot prove that the private collector job ran correctly or that Radar rankings are predictive.
+
+Reproduce the contract locally against already downloaded artifacts:
+
+```bash
+python -m pro_meta_intelligence check-publication-watchdog \
+  --feed-dir path/to/downloaded/feed \
+  --maximum-radar-age-hours 50 \
+  --maximum-schedule-age-hours 30 \
+  --output outputs/publication-watchdog/health.json
+```
 
 ## Windows runner
 
