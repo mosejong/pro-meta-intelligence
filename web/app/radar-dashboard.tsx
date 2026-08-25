@@ -854,8 +854,55 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
     RADAR: { index: "04", eyebrow: "META RADAR", title: "전체 신호와 경계를 탐색하세요.", detail: "지역 차이, 수요 변화, 표본 경고와 원본 이벤트를 분석가 관점으로 확인합니다.", action: "신호 탐색", target: "#radar" },
   }[initialSpace];
 
+  const sectionGuide = {
+    TEAM: {
+      conclusion: selectedMyTeam
+        ? `${selectedMyTeam.team_name} 기준 상대 준비가 열렸습니다.`
+        : "먼저 내 팀을 선택하세요.",
+      reason: selectedMyTeam
+        ? "같은 상대라도 우리 팀의 공개 픽과 겹치는 지점부터 봐야 실제 준비 순서가 달라집니다."
+        : "내 팀이 정해져야 T1 고정 시점이 아닌 우리 팀 관점의 상대 우선순위와 드래프트 충돌을 계산할 수 있습니다.",
+      evidence: `패치 ${report.patch_id} · 공개 팀 ${opponentTeams.length}개 · 검토 후보 ${eligibleCount}개`,
+      action: selectedMyTeam ? "상대 우선순위 보기" : "내 팀 고르기",
+      target: selectedMyTeam ? "#opponent-prep" : "#team-setup",
+    },
+    T1: {
+      conclusion: quickFixtureTitle,
+      reason: fixtureIsTbd
+        ? "상대가 확정되기 전에는 라인별 맞대결을 만들지 않고, T1의 반복 픽과 공통 준비만 확인합니다."
+        : "공식 일정과 공개 픽·밴을 먼저 확인하면 추측 없이 다음 경기 준비 범위를 좁힐 수 있습니다.",
+      evidence: defaultTargetTeam
+        ? `T1 공개 경기 ${defaultTargetTeam.game_count}개 · 근거 기록 ${defaultTargetTeam.evidence.draft_event_ids.length}개`
+        : "T1 공개 경기 표본을 확인하는 중입니다.",
+      action: "T1 한 장 요약 보기",
+      target: "#t1-brief",
+    },
+    CREATOR: {
+      conclusion: todayDecisions[0]
+        ? `${todayDecisions[0].entry.champion_id}부터 영상 소재로 검토하세요.`
+        : "검증 기준을 통과한 영상 소재를 기다리고 있습니다.",
+      reason: "제목보다 먼저 주장·반론·출처가 잠기므로, 과장된 AI 요약 대신 검증 가능한 이야기 구조를 만들 수 있습니다.",
+      evidence: `검토 후보 ${eligibleCount}개 · 패치 ${report.patch_id} · 자동 게시 없음`,
+      action: "영상 장면 만들기",
+      target: "#creator-export",
+    },
+    RADAR: {
+      conclusion: selected
+        ? `${selected.champion_id} · ${roleLabels[selected.role] ?? selected.role}이 현재 첫 검토 후보입니다.`
+        : "현재 표본 기준을 통과한 후보가 없습니다.",
+      reason: selected
+        ? `최근 ${selected.metrics.current_distinct_team_count}개 팀에서 관측됐습니다. 좋은 픽이라는 단정이 아니라 먼저 확인할 신호입니다.`
+        : "새 공개 경기 표본이 들어올 때까지 기존 픽을 억지로 추천하지 않습니다.",
+      evidence: selected
+        ? `원본 이벤트 ${selected.evidence_event_ids.length}개 · 최근/이전 구간 비교 · 출전 권고 아님`
+        : `패치 ${report.patch_id} · 공개 데이터 경계 유지`,
+      action: "후보와 근거 보기",
+      target: "#radar",
+    },
+  }[initialSpace];
+
   return (
-    <main className={`section-space space-${initialSpace.toLowerCase()}`}>
+    <main className={`section-space space-${initialSpace.toLowerCase()} ${viewMode === "QUICK" ? "quick-view" : "full-view"}`}>
       <header className="topbar">
         <a className="brand" href={productSpaceHref(initialSpace, "ONBOARDING")} aria-label="Pro Meta Intelligence 홈">
           <span className="brand-mark">PM</span>
@@ -869,6 +916,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
         </nav>
         <div className="topbar-actions">
           <span className={`snapshot-state ${feedState.kind}`} title={feedState.detail} aria-live="polite"><i />{feedState.label}</span>
+          <button className="view-mode-button" type="button" aria-pressed={viewMode === "FULL"} onClick={toggleViewMode}>{viewMode === "QUICK" ? "전체 근거 보기" : "쉬운 화면으로"}</button>
           <button className="refresh-button" type="button" onClick={() => { manualOverride.current = false; void loadPublishedFeed(); }} aria-label="발행 피드 새로고침">↻</button>
           <button className="load-button" type="button" onClick={() => fileInput.current?.click()}>
             JSON 불러오기 <span>↗</span>
@@ -880,6 +928,19 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       <section className="section-portal-hero" id="top">
         <div><span>{sectionCopy.index} · {sectionCopy.eyebrow}</span><h1>{sectionCopy.title}</h1><p>{sectionCopy.detail}</p></div>
         <a href={sectionCopy.target}>{sectionCopy.action} <b>→</b></a>
+      </section>
+
+      <section className="section-plain-guide" aria-labelledby="plain-guide-title">
+        <header><span>처음이라면 여기만</span><h2 id="plain-guide-title">세 줄로 먼저 이해하세요.</h2></header>
+        <div>
+          <article className="conclusion"><b>01 · 한 줄 결론</b><strong>{sectionGuide.conclusion}</strong><a href={sectionGuide.target}>{sectionGuide.action} <span>→</span></a></article>
+          <article><b>02 · 왜 중요한가</b><p>{sectionGuide.reason}</p></article>
+          <article><b>03 · 확인한 근거</b><p>{sectionGuide.evidence}</p><small>공개 경기에서 확인된 범위만 표시합니다.</small></article>
+        </div>
+        <details>
+          <summary>용어가 어렵다면 20초 설명 보기 <span>＋</span></summary>
+          <dl><div><dt>후보</dt><dd>좋다고 확정한 픽이 아니라 먼저 검토할 픽</dd></div><div><dt>관측</dt><dd>공개 경기에서 실제로 등장한 기록</dd></div><div><dt>표본</dt><dd>이번 비교에 포함된 경기 수</dd></div><div><dt>근거</dt><dd>결론을 다시 확인할 수 있는 경기·픽 기록</dd></div></dl>
+        </details>
       </section>
 
       <section className="decision-hero">
