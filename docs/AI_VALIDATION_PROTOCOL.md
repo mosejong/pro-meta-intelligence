@@ -35,6 +35,25 @@ override a failed critical gate.
 6. Run the evaluator. Only the aggregate status, metrics, gates, and SHA-256 fingerprints may be
    published; prompts, raw outputs, analyst identity, credentials, and case IDs stay private.
 
+## Public human-baseline workbench
+
+The Creator surface includes a device-local workbench for collecting the human side of future
+paired cases. It deliberately shows no reference answer and no AI output. A participant selects
+claims, source event IDs, and interpretation boundaries from one immutable published snapshot;
+active completion time is recorded between starting and saving the task.
+
+The browser stores at most 60 unique snapshot/champion/role drafts in local storage. It does not
+collect an analyst name, account, API key, free-form personal text, or send drafts to the server.
+The participant can export or delete the local bundle at any time.
+
+An exported `ai-human-baseline-draft-bundle` is **not** accepted by the release evaluator and does
+not increase the public `paired_holdout_case_count`. Every draft is marked
+`HUMAN_BASELINE_ONLY`, `contains_expert_reference=false`, `contains_ai_output=false`, and
+`ready_for_release_evaluation=false`. A separate offline curation step must lock an expert
+reference, add output from the pinned AI system on the same task, assign the final split, and
+produce the private input contract below. This separation prevents public collection from leaking
+or silently redefining the holdout answer.
+
 ## Release gates
 
 | Gate | Required result |

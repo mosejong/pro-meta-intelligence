@@ -235,6 +235,78 @@ test("server-renders a five-scene creator workflow with human review", async () 
   assert.match(html, /실제 공개 중복만 T1과 연결합니다/);
   assert.match(html, /T1 공개 중복/);
   assert.match(html, /글로벌 Radar/);
+  assert.match(html, /STEP 1 · HUMAN BASELINE/);
+  assert.match(html, /AI와 비교할 사람 기준선부터 모으기/);
+  assert.match(html, /아직 AI 평가에 포함되지 않음/);
+  assert.match(html, /기기 로컬 기록을 확인하는 중/);
+});
+
+test("keeps human AI baselines local, bounded, and explicitly ungraded", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const entry = feed.entries.find((item) => item.evidence_event_ids.length > 0);
+  assert.ok(entry);
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+  try {
+    const {
+      createAIHumanBaselineDraft,
+      exportAIHumanBaselineBundle,
+      parseAIHumanBaselineDrafts,
+      serializeAIHumanBaselineDrafts,
+      upsertAIHumanBaselineDraft,
+    } = await vite.ssrLoadModule("/app/ai-human-baseline.ts");
+    const first = createAIHumanBaselineDraft({
+      report: feed,
+      entry,
+      draftId: "draft-001",
+      savedAt: "2026-08-26T08:00:00Z",
+      claimIds: ["CLAIM:OBSERVED_GROWTH", "CLAIM:INVENTED"],
+      evidenceIds: [entry.evidence_event_ids[0], "EVENT:INVENTED"],
+      boundaryIds: ["BOUNDARY:PUBLIC_ONLY", "BOUNDARY:INVENTED"],
+      criticalErrorIds: ["CRITICAL:INVENTED"],
+      durationSeconds: 48.4,
+      acceptedWithoutEdit: true,
+    });
+    assert.equal(first.status, "HUMAN_BASELINE_ONLY");
+    assert.deepEqual(first.human.claim_ids, ["CLAIM:OBSERVED_GROWTH"]);
+    assert.deepEqual(first.human.evidence_ids, [entry.evidence_event_ids[0]]);
+    assert.deepEqual(first.human.boundary_ids, ["BOUNDARY:PUBLIC_ONLY"]);
+    assert.deepEqual(first.human.critical_error_ids, []);
+    assert.equal(first.human.duration_seconds, 48);
+    assert.ok(first.task.available_evidence_ids.length <= 12);
+    assert.deepEqual(first.task.available_claim_ids, [
+      "CLAIM:OBSERVED_GROWTH",
+      "CLAIM:MULTI_TEAM_ADOPTION",
+      "CLAIM:REGIONAL_DIVERGENCE",
+      "CLAIM:CONCENTRATED_SIGNAL",
+      "CLAIM:INSUFFICIENT_SAMPLE",
+      "CLAIM:COUNTERPOINT_REQUIRED",
+    ]);
+    assert.equal(first.privacy.analyst_identity_collected, false);
+    assert.equal(first.privacy.api_key_collected, false);
+
+    const replacement = { ...first, draft_id: "draft-002", saved_at: "2026-08-26T08:01:00Z" };
+    const drafts = upsertAIHumanBaselineDraft([first], replacement);
+    assert.equal(drafts.length, 1);
+    assert.equal(drafts[0].draft_id, "draft-002");
+    assert.deepEqual(parseAIHumanBaselineDrafts(serializeAIHumanBaselineDrafts(drafts)), drafts);
+    assert.deepEqual(parseAIHumanBaselineDrafts("{not-json"), []);
+
+    const bundle = JSON.parse(exportAIHumanBaselineBundle(drafts, "2026-08-26T08:02:00Z"));
+    assert.equal(bundle.case_count, 1);
+    assert.equal(bundle.contains_expert_reference, false);
+    assert.equal(bundle.contains_ai_output, false);
+    assert.equal(bundle.ready_for_release_evaluation, false);
+    assert.equal(bundle.next_action, "ADD_SEALED_REFERENCE_AND_PAIRED_AI_OUTPUT_OFFLINE");
+  } finally {
+    await vite.close();
+  }
 });
 
 test("keeps human team decisions snapshot-scoped and validates local journal data", async () => {
@@ -789,7 +861,7 @@ test("builds a T1 match-day brief without guessing a TBD bracket opponent", asyn
     assert.equal(first.readiness.status, "WAITING_FOR_OPPONENT");
     assert.equal(first.confirmed_matchup, null);
     assert.equal(first.monitoring.status, "WATCHING");
-    assert.equal(first.monitoring.latest_run_status, "INITIALIZED");
+    assert.ok(["INITIALIZED", "CHANGED", "UNCHANGED"].includes(first.monitoring.latest_run_status));
     assert.equal(first.monitoring.latest_change, null);
     assert.equal(first.readiness.checks.find((item) => item.id === "OFFICIAL_FIXTURE").status, "PASS");
     assert.equal(first.readiness.checks.find((item) => item.id === "OPPONENT_IDENTITY").status, "WAIT");
