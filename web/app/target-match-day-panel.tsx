@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- champion assets are served from Riot Data Dragon in both builds */
 
 import { championImageUrl } from "./champion-assets";
+import { useChampionNames } from "./champion-names";
 import type { ConfirmedLaneSignal, LaneRole } from "./confirmed-opponent-lane-report";
 import type { TargetMatchDayBrief } from "./target-match-day";
 
@@ -42,11 +43,12 @@ function LaneSignalGroup({
   items: ConfirmedLaneSignal[];
   mode: "CONTESTED" | "PROTECT" | "OPPONENT";
 }) {
+  const { nameOf } = useChampionNames();
   return <div className="lane-signal-group">
     <span>{label}</span>
     {items.length ? <div>{items.slice(0, 3).map((item) => <article key={`${mode}:${item.champion_id}`}>
       <img src={championImageUrl(item.champion_id)} alt="" loading="lazy" />
-      <p><strong>{item.champion_id}</strong><small>{mode === "CONTESTED"
+      <p><strong>{nameOf(item.champion_id)}</strong><small>{mode === "CONTESTED"
         ? `우리 ${percentage(item.own_game_rate)} · 상대 ${percentage(item.opponent_game_rate)}`
         : mode === "PROTECT"
           ? `우리 ${percentage(item.own_game_rate)} · 상대 밴 ${percentage(item.opponent_ban_rate)}`

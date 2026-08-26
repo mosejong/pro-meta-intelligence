@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- champion portraits use the stable Riot CDN in both builds */
 
 import { championImageUrl } from "./champion-assets";
+import { useChampionNames } from "./champion-names";
 import type { TargetProfile } from "./target-profile";
 
 const roleLabels: Record<string, string> = {
@@ -27,6 +28,7 @@ function shortDate(value: string) {
 }
 
 export function TargetProfilePanel({ profile, onDownload }: { profile: TargetProfile; onDownload: () => void }) {
+  const { nameOf } = useChampionNames();
   const topPick = profile.focus.priority_pick;
   const latest = profile.recent_games[0];
   const currentPlayers = profile.players.filter((player) => player.roster_status !== "OTHER_OBSERVED").slice(0, 5);
@@ -41,7 +43,7 @@ export function TargetProfilePanel({ profile, onDownload }: { profile: TargetPro
     <div className="target-kpis">
       <article><span>분석 표본</span><strong>{profile.target.game_count}G</strong><small>{profile.target.record} · {profile.target.leagues.join("/")}</small></article>
       <article><span>선픽 보유</span><strong>{percent(profile.target.first_pick_rate)}</strong><small>전체 드래프트 1번 픽 기준</small></article>
-      <article>{topPick ? <><span>최다 관측 픽</span><strong>{topPick.champion_id}</strong><small>{roleLabels[topPick.role ?? ""] ?? topPick.role ?? "역할 미상"} · {percent(topPick.game_rate)}</small></> : <><span>최다 관측 픽</span><strong>—</strong><small>표본 없음</small></>}</article>
+      <article>{topPick ? <><span>최다 관측 픽</span><strong>{nameOf(topPick.champion_id)}</strong><small>{roleLabels[topPick.role ?? ""] ?? topPick.role ?? "역할 미상"} · {percent(topPick.game_rate)}</small></> : <><span>최다 관측 픽</span><strong>—</strong><small>표본 없음</small></>}</article>
       <article><span>마지막 경기</span><strong>{latest ? shortDate(latest.observed_at) : "—"}</strong><small>{latest ? `${latest.result === "WIN" ? "승" : "패"} · vs ${latest.opponent_team_name}` : "경기 타임라인 없음"}</small></article>
     </div>
 
@@ -53,7 +55,7 @@ export function TargetProfilePanel({ profile, onDownload }: { profile: TargetPro
           return <div className="target-player" key={player.player_id}>
             {lead ? <img src={championImageUrl(lead.champion_id)} alt="" loading="lazy" /> : <span className="target-player-placeholder" />}
             <div><span>{roleLabels[player.role] ?? player.role}</span><strong>{player.player_name}</strong><small>{player.game_count}경기 공개 표본</small></div>
-            <div className="target-player-pool">{player.champions.slice(0, 3).map((champion) => <span key={champion.champion_id}><img src={championImageUrl(champion.champion_id)} alt="" loading="lazy" /><b>{champion.champion_id}</b><small>{percent(champion.game_rate)}</small></span>)}</div>
+            <div className="target-player-pool">{player.champions.slice(0, 3).map((champion) => <span key={champion.champion_id}><img src={championImageUrl(champion.champion_id)} alt="" loading="lazy" /><b>{nameOf(champion.champion_id)}</b><small>{percent(champion.game_rate)}</small></span>)}</div>
           </div>;
         })}</div> : <p className="target-profile-empty">이 피드에는 선수 식별 필드가 없습니다. 팀 픽을 특정 선수 숙련도로 대신 표시하지 않습니다.</p>}
       </article>
@@ -62,8 +64,8 @@ export function TargetProfilePanel({ profile, onDownload }: { profile: TargetPro
         <article className="target-patch-shift">
           <header><div><span>PATCH SHIFT</span><h4>이전 패치와 달라진 픽</h4></div><b>{profile.patch_shift.status === "OBSERVED" ? `${profile.patch_shift.previous_patch_id} → ${profile.patch_id}` : "기준 부족"}</b></header>
           {profile.patch_shift.status === "OBSERVED" ? <div className="patch-shift-columns">
-            <section><span>새로 올라온 픽</span>{profile.patch_shift.emerging.length ? profile.patch_shift.emerging.map((item) => <div key={`${item.champion_id}:${item.role}`}><img src={championImageUrl(item.champion_id)} alt="" loading="lazy" /><p><strong>{item.champion_id}</strong><small>{roleLabels[item.role] ?? item.role} · {percent(item.current_game_rate)}</small></p><b>{points(item.delta)}</b></div>) : <p>상승 변화 없음</p>}</section>
-            <section><span>줄어든 픽</span>{profile.patch_shift.cooling.length ? profile.patch_shift.cooling.map((item) => <div key={`${item.champion_id}:${item.role}`}><img src={championImageUrl(item.champion_id)} alt="" loading="lazy" /><p><strong>{item.champion_id}</strong><small>{roleLabels[item.role] ?? item.role} · 이전 {percent(item.previous_game_rate)}</small></p><b>{points(item.delta)}</b></div>) : <p>하락 변화 없음</p>}</section>
+            <section><span>새로 올라온 픽</span>{profile.patch_shift.emerging.length ? profile.patch_shift.emerging.map((item) => <div key={`${item.champion_id}:${item.role}`}><img src={championImageUrl(item.champion_id)} alt="" loading="lazy" /><p><strong>{nameOf(item.champion_id)}</strong><small>{roleLabels[item.role] ?? item.role} · {percent(item.current_game_rate)}</small></p><b>{points(item.delta)}</b></div>) : <p>상승 변화 없음</p>}</section>
+            <section><span>줄어든 픽</span>{profile.patch_shift.cooling.length ? profile.patch_shift.cooling.map((item) => <div key={`${item.champion_id}:${item.role}`}><img src={championImageUrl(item.champion_id)} alt="" loading="lazy" /><p><strong>{nameOf(item.champion_id)}</strong><small>{roleLabels[item.role] ?? item.role} · 이전 {percent(item.previous_game_rate)}</small></p><b>{points(item.delta)}</b></div>) : <p>하락 변화 없음</p>}</section>
           </div> : <p className="target-profile-empty">같은 팀 ID의 이전 패치 경기 표본이 없어 변화를 계산하지 않았습니다.</p>}
         </article>
 
@@ -72,7 +74,7 @@ export function TargetProfilePanel({ profile, onDownload }: { profile: TargetPro
           {profile.recent_games.length ? <div>{profile.recent_games.map((game) => <div className="target-game" key={game.match_id}>
             <span className={`target-result ${game.result.toLowerCase()}`}>{game.result === "WIN" ? "W" : "L"}</span>
             <p><strong>vs {game.opponent_team_name}</strong><small>{shortDate(game.observed_at)} · {game.side === "BLUE" ? "블루" : "레드"} · {game.first_pick ? "선픽" : "후픽"}</small></p>
-            <div>{game.picks.slice(0, 5).map((pick) => <img src={championImageUrl(pick.champion_id)} alt={pick.champion_id} title={`${pick.player_name ?? roleLabels[pick.role] ?? pick.role} · ${pick.champion_id}`} loading="lazy" key={pick.evidence_event_id} />)}</div>
+            <div>{game.picks.slice(0, 5).map((pick) => <img src={championImageUrl(pick.champion_id)} alt={nameOf(pick.champion_id)} title={`${pick.player_name ?? roleLabels[pick.role] ?? pick.role} · ${nameOf(pick.champion_id)}`} loading="lazy" key={pick.evidence_event_id} />)}</div>
           </div>)}</div> : <p className="target-profile-empty">경기별 타임라인이 없는 구형 피드입니다.</p>}
           <footer>{profile.series_tracking.boundary}</footer>
         </article>

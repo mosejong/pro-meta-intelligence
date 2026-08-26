@@ -1201,6 +1201,40 @@ test("ships a fail-closed human-paired AI validation status", async () => {
   assert.doesNotMatch(text, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
 });
 
+test("maps official champion names and searches in Korean or English", async () => {
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+  try {
+    const {
+      championDisplayName,
+      matchesChampionQuery,
+      parseChampionNameCatalog,
+    } = await vite.ssrLoadModule("/app/champion-names.tsx");
+    const catalog = parseChampionNameCatalog({
+      data: {
+        DrMundo: { id: "DrMundo", name: "문도 박사" },
+        RekSai: { id: "RekSai", name: "렉사이" },
+        Rell: { id: "Rell", name: "렐" },
+      },
+    });
+    assert.equal(championDisplayName("Mundo", catalog), "문도 박사");
+    assert.equal(championDisplayName("RekSai", catalog), "렉사이");
+    assert.equal(championDisplayName("UnknownChampion", catalog), "UnknownChampion");
+    assert.equal(matchesChampionQuery("RekSai", "렉사이", catalog), true);
+    assert.equal(matchesChampionQuery("RekSai", "rek sai", catalog), true);
+    assert.equal(matchesChampionQuery("Rell", "렐", catalog), true);
+    assert.equal(matchesChampionQuery("Rell", "아리", catalog), false);
+  } finally {
+    await vite.close();
+  }
+});
+
 test("starter preview files are removed", async () => {
   await assert.rejects(access(new URL("../app/_sites-preview", templateRoot)));
 });

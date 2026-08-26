@@ -1092,8 +1092,16 @@ h2 { margin: 0; font-size: 30px; letter-spacing: -.04em; }
 .section-description { max-width: 620px; margin: 11px 0 0; color: var(--muted); font-size: 14px; line-height: 1.65; word-break: keep-all; }
 .legend { display: flex; gap: 20px; font: 550 9px var(--font-geist-mono); color: var(--muted); }
 .controls { display: flex; align-items: center; gap: 15px; }
-.controls > label:first-child { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.controls > label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 700; }
 .controls select { min-height: 38px; border: 1px solid var(--ink); border-radius: 0; background: var(--panel); color: var(--ink); padding: 8px 30px 8px 11px; font-size: 13px; font-weight: 650; }
+.champion-search input { width: 170px; min-height: 38px; border: 1px solid var(--ink); border-radius: 0; background: #fff; color: var(--ink); padding: 8px 11px; font-size: 13px; font-weight: 650; }
+.champion-search input::placeholder { color: #8a887f; }
+.champion-search input:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+@media (max-width: 680px) {
+  .controls { width: 100%; }
+  .controls > label { width: 100%; justify-content: space-between; }
+  .champion-search input, .controls select { width: min(72vw, 250px); }
+}
 .toggle { display: flex; align-items: center; gap: 9px; cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 650; }
 .toggle input { position: absolute; opacity: 0; pointer-events: none; }
 .toggle > span { width: 28px; height: 16px; border: 1px solid var(--ink); padding: 2px; transition: background .15s ease; }

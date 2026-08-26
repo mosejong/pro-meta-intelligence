@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- champion assets use the pinned Riot Data Dragon version */
 
 import { championImageUrl } from "./champion-assets";
+import { useChampionNames } from "./champion-names";
 import type { TargetMatchDayBrief } from "./target-match-day";
 import type { TargetProfile } from "./target-profile";
 
@@ -57,6 +58,7 @@ export function T1OnePageBrief({
   onPrint: () => void;
   onDownload: () => void;
 }) {
+  const { nameOf } = useChampionNames();
   const participants = brief.fixture.participants.length
     ? brief.fixture.participants.map((participant) => participant.code || participant.name).join(" vs ")
     : "T1 vs 미정";
@@ -101,7 +103,7 @@ export function T1OnePageBrief({
       <div className="one-page-focus" aria-label="T1 공개 경기 핵심 관측">
         {focus.map((item) => <article key={item.label}>
           <img src={championImageUrl(item.championId)} alt="" loading="lazy" />
-          <div><span>{item.label}</span><strong>{item.championId}</strong><small>{item.detail}</small></div>
+          <div><span>{item.label}</span><strong>{nameOf(item.championId)}</strong><small>{item.detail}</small></div>
         </article>)}
       </div>
       <article className="one-page-evidence">

@@ -2,6 +2,7 @@ import type { DecisionJournalEntry, DecisionJournalState } from "./decision-jour
 import type { DecisionOutcomeResolution, DecisionOutcomesFeed } from "./decision-outcomes";
 import type { OpponentTeam } from "./radar-types";
 import type { TeamDecisionCard } from "./team-brief";
+import { useChampionNames } from "./champion-names";
 
 const stateOptions: Array<{ value: DecisionJournalState; label: string; detail: string }> = [
   { value: "INBOX", label: "검토 대기", detail: "회의 큐에 유지" },
@@ -108,12 +109,13 @@ export function DecisionJournalPanel({
   onChange: (state: DecisionJournalState, note: string) => void;
   onExport: () => void;
 }) {
+  const { nameOf } = useChampionNames();
   const selectedState = entry?.human_state ?? "INBOX";
   const note = entry?.analyst_note ?? "";
   const review = outcomeReview(outcome, outcomeFeed);
   return <section className="decision-journal" aria-label="팀 결정 기록">
     <header>
-      <div><span>HUMAN DECISION · DEVICE LOCAL</span><h4>이 후보를 어떻게 처리할지 기록</h4><p>{ownTeam ? `${ownTeam.team_name} 관점` : "팀 미선택 · 공통 검토"} · {card.entry.champion_id} {card.entry.role}</p></div>
+      <div><span>HUMAN DECISION · DEVICE LOCAL</span><h4>이 후보를 어떻게 처리할지 기록</h4><p>{ownTeam ? `${ownTeam.team_name} 관점` : "팀 미선택 · 공통 검토"} · {nameOf(card.entry.champion_id)} {card.entry.role}</p></div>
       <div><b className={storageAvailable ? "available" : "unavailable"}>{storageAvailable ? `${entryCount}개 로컬 기록` : "저장소 사용 불가"}</b><button type="button" onClick={onExport} disabled={!entryCount}>JOURNAL JSON</button></div>
     </header>
     <div className="decision-journal-states" role="group" aria-label="사람의 검토 상태">

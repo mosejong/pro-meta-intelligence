@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { championSplashUrl } from "./champion-assets";
+import { useChampionNames } from "./champion-names";
 import { buildCreatorStoryboard, buildFallbackCreatorTopic, creatorStoryboardMarkdown, type CreatorBrief } from "./creator-storyboard";
 import { buildT1CreatorAngles } from "./creator-t1-angle";
 import type { RadarEntry, RadarReport } from "./radar-types";
@@ -348,6 +349,7 @@ function canvasBlob(canvas: HTMLCanvasElement) {
 }
 
 export function CreatorExportLab({ report, brief = null }: { report: RadarReport; brief?: CreatorBrief | null }) {
+  const { nameOf } = useChampionNames();
   const candidates = useMemo(
     () => report.entries.filter((entry) => entry.eligible_for_review).slice(0, 12),
     [report],
@@ -475,7 +477,7 @@ export function CreatorExportLab({ report, brief = null }: { report: RadarReport
       <span className={htmlCanvasReady ? "experimental" : "fallback"}><i />{htmlCanvasReady ? "HTML-IN-CANVAS READY" : "CANVAS FALLBACK READY"}</span>
     </header>
     <div className="creator-export-controls">
-      <label>{effectiveLens === "T1" ? "T1 공개 중복 후보" : "글로벌 분석 후보"}<select value={selectedTopic?.candidate_id ?? ""} onChange={(event) => { setSelectedKey(event.target.value); setSelectedTitle(""); setActiveSceneIndex(1); setReviewChecks([]); }}>{topics.map((topic) => <option key={topic.candidate_id} value={topic.candidate_id}>#{topic.radar_rank} · {topic.champion_id} · {roleLabels[topic.role] ?? topic.role}</option>)}</select></label>
+      <label>{effectiveLens === "T1" ? "T1 공개 중복 후보" : "글로벌 분석 후보"}<select value={selectedTopic?.candidate_id ?? ""} onChange={(event) => { setSelectedKey(event.target.value); setSelectedTitle(""); setActiveSceneIndex(1); setReviewChecks([]); }}>{topics.map((topic) => <option key={topic.candidate_id} value={topic.candidate_id}>#{topic.radar_rank} · {nameOf(topic.champion_id)} · {roleLabels[topic.role] ?? topic.role}</option>)}</select></label>
       <fieldset><legend>출력 비율</legend><button type="button" className={aspect === "landscape" ? "active" : ""} onClick={() => setAspect("landscape")}>16:9 유튜브</button><button type="button" className={aspect === "vertical" ? "active" : ""} onClick={() => setAspect("vertical")}>9:16 쇼츠</button></fieldset>
       <div className="creator-export-actions"><button type="button" onClick={() => void exportPng()}>PNG 저장</button><button type="button" onClick={exportJson}>장면 JSON</button></div>
     </div>
