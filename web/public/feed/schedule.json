@@ -1,8 +1,8 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-08-26T09:00:54.632757+00:00",
+  "available_at": "2026-08-26T16:58:22.072264+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:7b01ae23902f6837bf9c324ed3019b785ebd1f4bea6ffe4cac2200a510954354",
+  "content_hash": "sha256:0eee56d7308b9045da03bb3fa99e801c9fec2a8dcd06198636a1a4b9d027540c",
   "events": [
     {
       "best_of": 5,
@@ -41,7 +41,7 @@
     {
       "best_of": 5,
       "block": "Play-Ins",
-      "event_id": "lolesports:8b640915b920fc619669",
+      "event_id": "lolesports:6c8872ffd170f935dbdb",
       "league": "LCK",
       "participants": [
         {
@@ -49,8 +49,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "BRO",
+          "name": "HANJIN BRION"
         }
       ],
       "start_at": "2026-08-28T08:00:00+00:00"
@@ -109,7 +109,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:66353d20c76eae1e34ad",
+      "event_id": "lolesports:9882d5e6add9af9598b3",
       "league": "LCK",
       "participants": [
         {
@@ -117,8 +117,8 @@
           "name": "TBD"
         },
         {
-          "code": "T1",
-          "name": "T1"
+          "code": "TBD",
+          "name": "TBD"
         }
       ],
       "start_at": "2026-08-29T08:00:00+00:00"
@@ -211,7 +211,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:d9aecf6d03e8559a3bb6",
+      "event_id": "lolesports:6641186c205bca10aa82",
       "league": "LCK",
       "participants": [
         {
@@ -219,8 +219,8 @@
           "name": "TBD"
         },
         {
-          "code": "DK",
-          "name": "Dplus KIA"
+          "code": "TBD",
+          "name": "TBD"
         }
       ],
       "start_at": "2026-08-30T08:00:00+00:00"
@@ -330,7 +330,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:f5f19707f5c8696d8557",
+      "event_id": "lolesports:30a5faa97b869abf88fd",
       "league": "LCK",
       "participants": [
         {
@@ -338,8 +338,8 @@
           "name": "TBD"
         },
         {
-          "code": "GEN",
-          "name": "Gen.G Esports"
+          "code": "TBD",
+          "name": "TBD"
         }
       ],
       "start_at": "2026-09-01T08:00:00+00:00"
@@ -347,7 +347,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:f52057f3e137646f5864",
+      "event_id": "lolesports:4c55f6e092672cdda8f8",
       "league": "LCK",
       "participants": [
         {
@@ -355,8 +355,8 @@
           "name": "TBD"
         },
         {
-          "code": "HLE",
-          "name": "Hanwha Life Esports"
+          "code": "TBD",
+          "name": "TBD"
         }
       ],
       "start_at": "2026-09-02T08:00:00+00:00"
@@ -666,6 +666,23 @@
         }
       ],
       "start_at": "2026-09-12T09:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Finals",
+      "event_id": "lolesports:784ea3a17b2cd05e311b",
+      "league": "LCK",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-13T08:00:00+00:00"
     }
   ],
   "league_slugs": [
@@ -678,10 +695,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 39,
-    "tbd_participant_count": 32
+    "event_count": 40,
+    "tbd_participant_count": 37
   },
-  "retrieved_at": "2026-08-26T09:00:54.632757+00:00",
+  "retrieved_at": "2026-08-26T16:58:22.072264+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
