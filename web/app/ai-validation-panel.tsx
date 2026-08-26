@@ -1,4 +1,6 @@
 import type { AIValidationStatus } from "./ai-validation";
+import { AIHumanBaselineWorkbench } from "./ai-human-baseline-workbench";
+import type { RadarReport } from "./radar-types";
 
 const gateCopy = {
   accuracy: ["정확도", "주장·근거 F1 90% 이상", ["CLAIM_ACCURACY_NONINFERIOR", "EVIDENCE_ACCURACY_NONINFERIOR"]],
@@ -15,7 +17,7 @@ function percent(value: number) {
   return `${Math.round(value * 100)}%`;
 }
 
-export function AIValidationPanel({ status }: { status: AIValidationStatus | null }) {
+export function AIValidationPanel({ status, report }: { status: AIValidationStatus | null; report: RadarReport }) {
   const measured = Boolean(status && status.paired_holdout_case_count > 0);
   const enabled = status?.status === "VALIDATED" && status.ai_features_enabled;
   const cards = status ? [
@@ -45,6 +47,7 @@ export function AIValidationPanel({ status }: { status: AIValidationStatus | nul
     {status ? <div className="ai-validation-grid">{cards.map(({ label, requirement, ids, value }) => <article className={passes(status, ids) ? "passed" : "pending"} key={label}>
       <span>{label}</span><strong>{value}</strong><small>{requirement}</small><em>{passes(status, ids) ? "통과" : measured ? "미통과" : "대기"}</em>
     </article>)}</div> : <div className="ai-validation-unavailable"><b>검증 상태를 불러오지 못했습니다.</b><p>상태를 확인할 수 없으므로 AI 기능은 자동으로 잠깁니다.</p></div>}
+    {!enabled && <AIHumanBaselineWorkbench report={report} />}
     <footer><b>현재 활성 경로</b><p>{enabled ? "검증된 AI 초안 + 사람 최종 승인" : "결정론적 데이터 분석 + 사람 최종 판단"}</p><span>자동 게시 없음 · 근거 ID 필수 · 비공개 팀 데이터 전송 없음</span></footer>
   </section>;
 }

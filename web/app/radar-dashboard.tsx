@@ -1313,7 +1313,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         </details> : <div className="brief-empty">현재 발행본에는 상대팀 드래프트 자료가 없습니다. 다음 검증된 피드부터 표시됩니다.</div>}
       </section>
 
-      <AIValidationPanel status={aiValidation} />
+      <AIValidationPanel status={aiValidation} report={report} />
 
       <CreatorExportLab report={report} brief={creatorBrief} />
 
