@@ -1,4 +1,4 @@
-const DATA_DRAGON_VERSION = "16.16.1";
+export const DATA_DRAGON_VERSION = "16.16.1";
 
 const championAssetOverrides: Record<string, string> = {
   "Cho'Gath": "Chogath",
@@ -20,4 +20,8 @@ export function championImageUrl(championId: string) {
 
 export function championSplashUrl(championId: string) {
   return `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${championAssetId(championId)}_0.jpg`;
+}
+
+export function championCatalogUrl(locale = "ko_KR") {
+  return `https://ddragon.leagueoflegends.com/cdn/${DATA_DRAGON_VERSION}/data/${locale}/champion.json`;
 }

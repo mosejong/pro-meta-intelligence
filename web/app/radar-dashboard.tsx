@@ -4,6 +4,7 @@
 
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { championImageUrl } from "./champion-assets";
+import { ChampionNameProvider, useChampionNames } from "./champion-names";
 import { DataTrustBar } from "./data-trust-bar";
 import { AIValidationPanel } from "./ai-validation-panel";
 import { isAIValidationStatus, type AIValidationStatus } from "./ai-validation";
@@ -236,46 +237,50 @@ function qualityState(report: RadarReport) {
 }
 
 function ChampionTendencyList({ items, emptyLabel }: { items: OpponentChampionTendency[]; emptyLabel: string }) {
+  const { nameOf } = useChampionNames();
   if (!items.length) return <p className="tendency-empty">{emptyLabel}</p>;
   return <div className="tendency-list">{items.map((item) => <div className="tendency-item" key={`${item.champion_id}:${item.role ?? "BAN"}`}>
     <img src={championImageUrl(item.champion_id)} alt="" loading="lazy" />
-    <span><strong>{item.champion_id}</strong><small>{item.role ? `${roleLabels[item.role] ?? item.role} · P1 ${item.phase_1_count} · P2 ${item.phase_2_count}` : `1페이즈 ${item.phase_1_count} · 2페이즈 ${item.phase_2_count}`}</small></span>
+    <span><strong>{nameOf(item.champion_id)}</strong><small>{item.role ? `${roleLabels[item.role] ?? item.role} · P1 ${item.phase_1_count} · P2 ${item.phase_2_count}` : `1페이즈 ${item.phase_1_count} · 2페이즈 ${item.phase_2_count}`}</small></span>
     <b>{percent(item.game_rate)}</b>
   </div>)}</div>;
 }
 
-function preparationQuestions(team: OpponentTeam) {
+function preparationQuestions(team: OpponentTeam, nameOf: (championId: string) => string) {
   const topPick = team.priority_picks[0];
   const topBan = team.frequent_bans[0];
   const receivedBan = team.received_bans[0];
   const rotation = team.first_rotations[0];
   return [
     topPick
-      ? `${topPick.champion_id}이 열렸을 때 ${roleLabels[topPick.role ?? ""] ?? topPick.role ?? "해당 역할"} 우선순위를 유지하는지, 어떤 조합에서 달라지는지 확인한다.`
+      ? `${nameOf(topPick.champion_id)}이 열렸을 때 ${roleLabels[topPick.role ?? ""] ?? topPick.role ?? "해당 역할"} 우선순위를 유지하는지, 어떤 조합에서 달라지는지 확인한다.`
       : "반복 픽 표본이 쌓이기 전까지 특정 챔피언을 핵심 선호로 단정하지 않는다.",
     topBan || receivedBan
-      ? `상대가 자주 밴한 ${topBan?.champion_id ?? "후보"}와 상대가 받은 ${receivedBan?.champion_id ?? "후보"}의 맥락을 분리해 우리 밴 예산을 검토한다.`
+      ? `상대가 자주 밴한 ${topBan ? nameOf(topBan.champion_id) : "후보"}와 상대가 받은 ${receivedBan ? nameOf(receivedBan.champion_id) : "후보"}의 맥락을 분리해 우리 밴 예산을 검토한다.`
       : "밴 기록이 부족하므로 상대 의도를 추정하지 말고 원본 드래프트를 먼저 확인한다.",
     rotation
-      ? `${rotation.side === "BLUE" ? "블루" : "레드"}에서 ${rotation.champions.join(" → ")} 로테이션이 다시 나오면 준비한 응답 순서가 작동하는지 점검한다.`
+      ? `${rotation.side === "BLUE" ? "블루" : "레드"}에서 ${rotation.champions.map(nameOf).join(" → ")} 로테이션이 다시 나오면 준비한 응답 순서가 작동하는지 점검한다.`
       : "반복된 1차 로테이션이 없어 단일 경기 패턴을 재현 가능성으로 오해하지 않는다.",
   ];
 }
 
 function BattlecardSignalList({ items, emptyLabel }: { items: BattlecardSignal[]; emptyLabel: string }) {
+  const { nameOf } = useChampionNames();
   if (!items.length) return <p className="battlecard-empty">{emptyLabel}</p>;
   return <div className="battlecard-signal-list">{items.slice(0, 2).map((item) => <article key={`${item.champion_id}:${item.role ?? "UNKNOWN"}`}>
     <img src={championImageUrl(item.champion_id)} alt="" loading="lazy" />
-    <div><strong>{item.champion_id}</strong><span>{item.role ? roleLabels[item.role] ?? item.role : "역할 미상"} · 근거 {item.evidence_ids.length}건</span><small>{item.observation}</small></div>
+    <div><strong>{nameOf(item.champion_id)}</strong><span>{item.role ? roleLabels[item.role] ?? item.role : "역할 미상"} · 근거 {item.evidence_ids.length}건</span><small>{item.observation}</small></div>
     <p>{item.staff_question}</p>
   </article>)}</div>;
 }
 
-export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?: ProductSpace }) {
+function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?: ProductSpace }) {
+  const { matches: matchesChampion, nameOf } = useChampionNames();
   const [report, setReport] = useState<RadarReport>(sampleReport);
   const [selectedKey, setSelectedKey] = useState(keyOf(sampleReport.entries[0]));
   const [role, setRole] = useState("ALL");
   const [eligibleOnly, setEligibleOnly] = useState(false);
+  const [championQuery, setChampionQuery] = useState("");
   const [visibleLimit, setVisibleLimit] = useState(12);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
@@ -313,8 +318,8 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
     [report],
   );
   const visibleEntries = useMemo(
-    () => report.entries.filter((entry) => (role === "ALL" || entry.role === role) && (!eligibleOnly || entry.eligible_for_review)),
-    [eligibleOnly, report, role],
+    () => report.entries.filter((entry) => (role === "ALL" || entry.role === role) && (!eligibleOnly || entry.eligible_for_review) && matchesChampion(entry.champion_id, championQuery)),
+    [championQuery, eligibleOnly, matchesChampion, report, role],
   );
   const teamBrief = useMemo(() => buildTeamBrief(report), [report]);
   const todayDecisions = teamBrief.slice(0, 3);
@@ -512,6 +517,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       setSelectedKey(publishedReport.entries[0] ? keyOf(publishedReport.entries[0]) : "");
       setRole("ALL");
       setEligibleOnly(false);
+      setChampionQuery("");
       setVisibleLimit(12);
       const publishedTeams = publishedReport.opponent_prep?.teams ?? [];
       if (requestedTeamId.current) {
@@ -635,6 +641,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       setSelectedKey(keyOf(parsed.entries[0]));
       setRole("ALL");
       setEligibleOnly(false);
+      setChampionQuery("");
       setVisibleLimit(12);
       setCreatorBrief(null);
       setDecisionOutcomes(null);
@@ -890,7 +897,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
     },
     CREATOR: {
       conclusion: todayDecisions[0]
-        ? `${todayDecisions[0].entry.champion_id}부터 영상 소재로 검토하세요.`
+        ? `${nameOf(todayDecisions[0].entry.champion_id)}부터 영상 소재로 검토하세요.`
         : "검증 기준을 통과한 영상 소재를 기다리고 있습니다.",
       reason: "제목보다 먼저 주장·반론·출처가 잠기므로, 과장된 AI 요약 대신 검증 가능한 이야기 구조를 만들 수 있습니다.",
       evidence: `검토 후보 ${eligibleCount}개 · 패치 ${report.patch_id} · 자동 게시 없음`,
@@ -899,7 +906,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
     },
     RADAR: {
       conclusion: selected
-        ? `${selected.champion_id} · ${roleLabels[selected.role] ?? selected.role}이 현재 첫 검토 후보입니다.`
+        ? `${nameOf(selected.champion_id)} · ${roleLabels[selected.role] ?? selected.role}이 현재 첫 검토 후보입니다.`
         : "현재 표본 기준을 통과한 후보가 없습니다.",
       reason: selected
         ? `최근 ${selected.metrics.current_distinct_team_count}개 팀에서 관측됐습니다. 좋은 픽이라는 단정이 아니라 먼저 확인할 신호입니다.`
@@ -983,7 +990,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
           {todayDecisions.length > 0 ? <div>{todayDecisions.map((card, index) => <a href="#team-brief" key={keyOf(card.entry)} onClick={() => setSelectedKey(keyOf(card.entry))}>
             <span className="today-rank">{String(index + 1).padStart(2, "0")}</span>
             <img src={championImageUrl(card.entry.champion_id)} alt="" />
-            <span className="today-name"><strong>{card.entry.champion_id}</strong><small>{roleLabels[card.entry.role] ?? card.entry.role} · {card.entry.metrics.current_distinct_team_count}팀 채택</small></span>
+            <span className="today-name"><strong>{nameOf(card.entry.champion_id)}</strong><small>{roleLabels[card.entry.role] ?? card.entry.role} · {card.entry.metrics.current_distinct_team_count}팀 채택</small></span>
             <span className="today-signal"><small>수요 변화</small><strong>{points(card.entry.metrics.demand_velocity)}</strong></span>
             <b className={`decision-chip ${card.decision.toLowerCase()}`}>{card.decisionLabel}</b>
           </a>)}</div> : <p className="today-empty">공개 경기 기준을 통과한 검토 후보가 아직 없습니다.</p>}
@@ -1012,7 +1019,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
           </a>
           <a className="creator" href="#creator-export">
             <span><b>03</b>영상 아이템 만들기</span>
-            <strong>{todayDecisions[0] ? `${todayDecisions[0].entry.champion_id}부터 시작` : "주제 후보 수집 중"}</strong>
+            <strong>{todayDecisions[0] ? `${nameOf(todayDecisions[0].entry.champion_id)}부터 시작` : "주제 후보 수집 중"}</strong>
             <p>같은 검증 근거를 유튜브·쇼츠용 화면 카드와 편집 JSON으로 변환합니다.</p>
             <small>Creator Studio 열기 <b>→</b></small>
           </a>
@@ -1094,7 +1101,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
               return <button type="button" className={active ? "active" : ""} key={keyOf(card.entry)} onClick={() => setSelectedKey(keyOf(card.entry))} aria-pressed={active}>
                 <span className="brief-rank">{String(index + 1).padStart(2, "0")}</span>
                 <img src={championImageUrl(card.entry.champion_id)} alt="" />
-                <span className="brief-name"><strong>{card.entry.champion_id}</strong><small>{roleLabels[card.entry.role] ?? card.entry.role}</small></span>
+                <span className="brief-name"><strong>{nameOf(card.entry.champion_id)}</strong><small>{roleLabels[card.entry.role] ?? card.entry.role}</small></span>
                 <b className={`decision-chip ${card.decision.toLowerCase()}`}>{card.decisionLabel}</b>
               </button>;
             })}
@@ -1103,8 +1110,8 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
           <article className="decision-sheet">
             <header>
               <div className="decision-champion">
-                <img src={championImageUrl(selectedBrief.entry.champion_id)} alt={`${selectedBrief.entry.champion_id} 챔피언`} />
-                <div><span>검토 카드 #{String(selectedBrief.entry.rank).padStart(2, "0")}</span><h3>{selectedBrief.entry.champion_id} · {roleLabels[selectedBrief.entry.role] ?? selectedBrief.entry.role}</h3></div>
+                <img src={championImageUrl(selectedBrief.entry.champion_id)} alt={`${nameOf(selectedBrief.entry.champion_id)} 챔피언`} />
+                <div><span>검토 카드 #{String(selectedBrief.entry.rank).padStart(2, "0")}</span><h3>{nameOf(selectedBrief.entry.champion_id)} · {roleLabels[selectedBrief.entry.role] ?? selectedBrief.entry.role}</h3></div>
               </div>
               <b className={`decision-chip ${selectedBrief.decision.toLowerCase()}`}>{selectedBrief.decisionLabel}</b>
             </header>
@@ -1191,7 +1198,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
             <header><div className="team-monogram" aria-hidden="true">{selectedMyTeam?.team_name.slice(0, 2).toUpperCase()}</div><div><span>MY TEAM · ANALYSIS ANCHOR</span><h3>{selectedMyTeam?.team_name}</h3><p>{selectedMyTeam?.leagues.join(" · ")}</p></div></header>
             <div className="my-team-stats"><span><b>{selectedMyTeam?.game_count}</b> 공개 경기</span><span><b>{percent(selectedMyTeam?.first_pick_rate ?? null)}</b> 선픽</span><span><b>{selectedMyTeam?.evidence.draft_event_ids.length}</b> 근거 기록</span></div>
             <div className={`next-fixture ${nextOwnEvent ? "scheduled" : "empty"}`}><span>NEXT OFFICIAL FIXTURE</span>{nextOwnEvent ? <><strong>{nextOwnEvent.participants.map((participant) => participant.code).join(" vs ")}</strong><small>{formatScheduleTime(nextOwnEvent.start_at)} KST · {nextOwnEvent.league} {nextOwnEvent.block} · {nextOwnEvent.best_of ? `Bo${nextOwnEvent.best_of}` : "형식 미정"}</small></> : <><strong>{scheduleState === "connected" ? "확정 상대 일정 없음" : scheduleState === "stale" ? "일정 갱신 필요" : "일정 미연결"}</strong><small>{scheduleState === "connected" ? "TBD가 확정되면 다음 수집에서 자동 반영" : scheduleState === "stale" ? "36시간이 지난 일정은 우선순위에서 제외" : "공개 경기 분석 점수만 유지"}</small></>}</div>
-            <div className="my-team-picks"><span>관측된 우선 픽</span><div>{selectedMyTeam?.priority_picks.slice(0, 3).map((pick) => <div key={`${pick.champion_id}:${pick.role}`}><img src={championImageUrl(pick.champion_id)} alt="" /><strong>{pick.champion_id}</strong><small>{roleLabels[pick.role ?? ""] ?? pick.role}</small></div>)}</div></div>
+            <div className="my-team-picks"><span>관측된 우선 픽</span><div>{selectedMyTeam?.priority_picks.slice(0, 3).map((pick) => <div key={`${pick.champion_id}:${pick.role}`}><img src={championImageUrl(pick.champion_id)} alt="" /><strong>{nameOf(pick.champion_id)}</strong><small>{roleLabels[pick.role ?? ""] ?? pick.role}</small></div>)}</div></div>
             <p className="team-data-boundary">공개 경기 성향만 사용 · 선수 숙련도와 스크림 미포함</p>
           </article>
           <div className="priority-queue">
@@ -1248,9 +1255,9 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
               <header><span>04 · EXCHANGE</span><h4>교환 시나리오</h4><b>{matchupBattlecard.exchange ? "1" : "0"}</b></header>
               <p>서로 다른 공개 우선 픽을 열었을 때의 검증 질문</p>
               {matchupBattlecard.exchange ? <div className="battlecard-exchange">
-                <div><img src={championImageUrl(matchupBattlecard.exchange.own.champion_id)} alt="" /><span><small>우리 확보</small><strong>{matchupBattlecard.exchange.own.champion_id}</strong></span></div>
+                <div><img src={championImageUrl(matchupBattlecard.exchange.own.champion_id)} alt="" /><span><small>우리 확보</small><strong>{nameOf(matchupBattlecard.exchange.own.champion_id)}</strong></span></div>
                 <b aria-hidden="true">⇄</b>
-                <div><img src={championImageUrl(matchupBattlecard.exchange.opponent.champion_id)} alt="" /><span><small>상대 허용</small><strong>{matchupBattlecard.exchange.opponent.champion_id}</strong></span></div>
+                <div><img src={championImageUrl(matchupBattlecard.exchange.opponent.champion_id)} alt="" /><span><small>상대 허용</small><strong>{nameOf(matchupBattlecard.exchange.opponent.champion_id)}</strong></span></div>
                 <p>{matchupBattlecard.exchange.staff_question}</p>
               </div> : <p className="battlecard-empty">비교 가능한 서로 다른 우선 픽 표본이 없습니다.</p>}
             </article>
@@ -1292,9 +1299,9 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
             </div>
 
             <div className="opponent-lower">
-              <article className="rotation-panel"><header><span>관측된 1차 로테이션</span><b>반복 횟수순 · 의도 추정 아님</b></header><div>{selectedOpponent.first_rotations.length ? selectedOpponent.first_rotations.map((rotation) => <div className="rotation" key={`${rotation.side}:${rotation.champions.join(":")}`}><b>{rotation.side === "BLUE" ? "BLUE" : "RED"}</b><span>{rotation.champions.map((champion) => <span className="rotation-champion" key={champion}><img src={championImageUrl(champion)} alt="" /><small>{champion}</small></span>)}</span><strong>{rotation.game_count}회</strong></div>) : <p className="tendency-empty">1차 로테이션 표본이 없습니다.</p>}</div></article>
+              <article className="rotation-panel"><header><span>관측된 1차 로테이션</span><b>반복 횟수순 · 의도 추정 아님</b></header><div>{selectedOpponent.first_rotations.length ? selectedOpponent.first_rotations.map((rotation) => <div className="rotation" key={`${rotation.side}:${rotation.champions.join(":")}`}><b>{rotation.side === "BLUE" ? "BLUE" : "RED"}</b><span>{rotation.champions.map((champion) => <span className="rotation-champion" key={champion}><img src={championImageUrl(champion)} alt="" /><small>{nameOf(champion)}</small></span>)}</span><strong>{rotation.game_count}회</strong></div>) : <p className="tendency-empty">1차 로테이션 표본이 없습니다.</p>}</div></article>
 
-              <aside className="staff-checklist"><span>STAFF CHECKLIST</span><h3>회의에서 확인할 질문</h3><ol>{preparationQuestions(selectedOpponent).map((question) => <li key={question}>{question}</li>)}</ol></aside>
+              <aside className="staff-checklist"><span>STAFF CHECKLIST</span><h3>회의에서 확인할 질문</h3><ol>{preparationQuestions(selectedOpponent, nameOf).map((question) => <li key={question}>{question}</li>)}</ol></aside>
             </div>
 
             <div className="side-evidence-row">
@@ -1314,6 +1321,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
         <div className="section-heading">
           <div><p className="eyebrow">04 · 신호 목록</p><h2>전체 메타 신호 탐색</h2><p className="section-description">팀 브리프의 결론을 직접 검증하거나 다른 역할의 후보를 탐색할 때 사용합니다.</p></div>
           <div className="controls">
+            <label className="champion-search"><span>챔피언</span><input value={championQuery} onChange={(event) => { setChampionQuery(event.target.value); setVisibleLimit(12); }} placeholder="렐, Rell, 렉사이" aria-label="챔피언 이름 검색" /></label>
             <label>포지션<select value={role} onChange={(event) => { setRole(event.target.value); setVisibleLimit(12); }}>{roles.map((item) => <option key={item}>{item === "ALL" ? "전체" : (roleLabels[item] ?? item)}</option>)}</select></label>
             <label className="toggle"><input type="checkbox" checked={eligibleOnly} onChange={(event) => setEligibleOnly(event.target.checked)} /><span /> 기준 통과만</label>
           </div>
@@ -1327,18 +1335,18 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
               const signal = signalFor(entry);
               return (
                 <button className={`candidate ${active ? "selected" : ""}`} type="button" key={keyOf(entry)} onClick={() => setSelectedKey(keyOf(entry))} aria-pressed={active}>
-                  <span className="champion-portrait"><img src={championImageUrl(entry.champion_id)} alt={`${entry.champion_id} 캐릭터`} loading="lazy" /><b>{String(entry.rank).padStart(2, "0")}</b></span>
-                  <span className="champion"><strong>{entry.champion_id}</strong><small>{roleLabels[entry.role] ?? entry.role}</small></span>
+                  <span className="champion-portrait"><img src={championImageUrl(entry.champion_id)} alt={`${nameOf(entry.champion_id)} 캐릭터`} loading="lazy" /><b>{String(entry.rank).padStart(2, "0")}</b></span>
+                  <span className="champion"><strong>{nameOf(entry.champion_id)}</strong><small>{roleLabels[entry.role] ?? entry.role}</small></span>
                   <span className="signal-metrics"><span><small>픽 점유율</small><strong>{percent(entry.metrics.current_pick_presence)} <em>{points(entry.metrics.pick_presence_delta)}</em></strong></span><span><small>팀 수요</small><strong className={entry.metrics.demand_velocity >= 0 ? "positive" : "negative"}>{points(entry.metrics.demand_velocity)}</strong></span></span>
                   <span className={`status ${entry.eligible_for_review ? "eligible" : "watch"}`}>{signal}</span>
                 </button>
               );
-            }) : <div className="empty-state">현재 필터에 맞는 후보가 없습니다.</div>}
+            }) : <div className="empty-state">{championQuery ? `“${championQuery}”에 맞는 챔피언 후보가 없습니다.` : "현재 필터에 맞는 후보가 없습니다."}</div>}
             {visibleEntries.length > 0 && <div className="candidate-more"><p>전체 {visibleEntries.length}개 중 {Math.min(displayedEntries.length, visibleEntries.length)}개 표시</p>{displayedEntries.length < visibleEntries.length && <button type="button" onClick={() => setVisibleLimit((current) => current + 12)}>12개 더 보기 <span>＋</span></button>}</div>}
           </div>
 
           {selected ? <aside className="detail" id="evidence">
-            <div className="detail-head"><div className="detail-identity"><img src={championImageUrl(selected.champion_id)} alt={`${selected.champion_id} 캐릭터`} /><div><span>선택한 신호</span><h3>{selected.champion_id} · {roleLabels[selected.role] ?? selected.role}</h3></div></div><b>{String(selected.rank).padStart(2, "0")}</b></div>
+            <div className="detail-head"><div className="detail-identity"><img src={championImageUrl(selected.champion_id)} alt={`${nameOf(selected.champion_id)} 캐릭터`} /><div><span>선택한 신호</span><h3>{nameOf(selected.champion_id)} · {roleLabels[selected.role] ?? selected.role}</h3></div></div><b>{String(selected.rank).padStart(2, "0")}</b></div>
             <p className="verdict">{verdictFor(selected)}</p>
             <div className="region-bars" aria-label="지역별 픽 점유율">
               {regions.map((region) => <div className={!region.sample_eligible ? "weak" : ""} key={region.region}><span>{regionLabels[region.region] ?? region.region}</span><i><b style={{ width: `${Math.min(region.pick_presence * 100, 100)}%` }} /></i><strong>{percent(region.pick_presence)}</strong></div>)}
@@ -1381,7 +1389,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
         <div className="dialog-backdrop">
           <button className="dialog-dismiss" type="button" onClick={() => setEvidenceOpen(false)} aria-label="근거 창 닫기" />
           <section className="evidence-dialog" role="dialog" aria-modal="true" aria-labelledby="evidence-title">
-            <header><div><span>EVIDENCE PACKET · #{String(selected.rank).padStart(2, "0")}</span><h2 id="evidence-title">{selected.champion_id.toUpperCase()} · {selected.role}</h2></div><button type="button" onClick={() => setEvidenceOpen(false)} aria-label="근거 창 닫기">×</button></header>
+            <header><div><span>EVIDENCE PACKET · #{String(selected.rank).padStart(2, "0")}</span><h2 id="evidence-title">{nameOf(selected.champion_id)} · {roleLabels[selected.role] ?? selected.role}</h2></div><button type="button" onClick={() => setEvidenceOpen(false)} aria-label="근거 창 닫기">×</button></header>
             <div className="dialog-content">
               <article><h3>결론을 만드는 수치</h3><dl className="metric-list"><div><dt>PICK PRESENCE Δ</dt><dd>{points(selected.metrics.pick_presence_delta)}</dd></div><div><dt>DEMAND VELOCITY</dt><dd>{points(selected.metrics.demand_velocity)}</dd></div><div><dt>REGIONAL DIVERGENCE</dt><dd>{percent(selected.metrics.regional_divergence, 1)}</dd></div><div><dt>TEAM CONCENTRATION</dt><dd>{percent(selected.metrics.team_concentration, 1)}</dd></div></dl></article>
               <article><h3>Pick event IDs</h3><ul className="record-list">{selected.evidence_event_ids.map((id) => <li key={id}>{id}</li>)}</ul></article>
@@ -1419,7 +1427,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
                   <header><span>02</span><h3>상대 선호 × 글로벌 메타</h3></header>
                   <div>{emergencyBrief.meta_overlaps.length ? emergencyBrief.meta_overlaps.map((overlap) => <article key={`${overlap.champion_id}:${overlap.role}`}>
                     <img src={championImageUrl(overlap.champion_id)} alt="" />
-                    <div><h4>{overlap.champion_id} · {roleLabels[overlap.role] ?? overlap.role}</h4><p>상대 {percent(overlap.opponent_game_rate)} · 레이더 #{overlap.radar_rank} · 수요 {points(overlap.demand_velocity)}</p></div>
+                    <div><h4>{nameOf(overlap.champion_id)} · {roleLabels[overlap.role] ?? overlap.role}</h4><p>상대 {percent(overlap.opponent_game_rate)} · 레이더 #{overlap.radar_rank} · 수요 {points(overlap.demand_velocity)}</p></div>
                     <b className={overlap.review_level.toLowerCase()}>{overlap.review_level === "HIGH_REVIEW" ? "우선 확인" : overlap.review_level === "REVIEW" ? "확인" : "맥락만"}</b>
                   </article>) : <p className="emergency-empty">직접 교집합이 없습니다. 상대 선호와 글로벌 상승 신호를 억지로 연결하지 않습니다.</p>}</div>
                 </section>
@@ -1434,7 +1442,7 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
                 <header><span>04</span><div><h3>별도 패치 테스트 큐</h3><p>상대 대응 추천이 아니라 오늘의 글로벌 검토 후보입니다.</p></div></header>
                 <div>{emergencyBrief.patch_review_queue.map((candidate) => <article key={`${candidate.champion_id}:${candidate.role}`}>
                   <img src={championImageUrl(candidate.champion_id)} alt="" />
-                  <div><span>{candidate.decision}</span><h4>{candidate.champion_id} · {roleLabels[candidate.role] ?? candidate.role}</h4><p>{candidate.practice_question}</p><small>반대 근거: {candidate.counter_evidence}</small></div>
+                  <div><span>{candidate.decision}</span><h4>{nameOf(candidate.champion_id)} · {roleLabels[candidate.role] ?? candidate.role}</h4><p>{candidate.practice_question}</p><small>반대 근거: {candidate.counter_evidence}</small></div>
                 </article>)}</div>
               </section>
 
@@ -1452,4 +1460,8 @@ export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?:
       )}
     </main>
   );
+}
+
+export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?: ProductSpace }) {
+  return <ChampionNameProvider><RadarDashboardContent initialSpace={initialSpace} /></ChampionNameProvider>;
 }

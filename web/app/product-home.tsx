@@ -5,6 +5,7 @@
 import { type FormEvent, useState } from "react";
 import type { AIValidationStatus } from "./ai-validation";
 import { championImageUrl } from "./champion-assets";
+import { useChampionNames } from "./champion-names";
 import { DataTrustBar, type FeedTrustKind, type ScheduleTrustState } from "./data-trust-bar";
 import { homeSpaceForQuestion } from "./home-intent";
 import type { ProductSpace } from "./product-space";
@@ -73,6 +74,7 @@ export function ProductHome({
   t1Focus,
   metaFocus,
 }: ProductHomeProps) {
+  const { nameOf } = useChampionNames();
   const rootHref = productRootHref(currentSpace);
   const [question, setQuestion] = useState("");
   const aiEnabled = aiValidation?.ai_features_enabled === true;
@@ -118,11 +120,11 @@ export function ProductHome({
         </a>
         <a className="pick" href={productSpaceHref(currentSpace, "T1")}>
           <span className="home-today-number">02</span>{t1Focus ? <img src={championImageUrl(t1Focus.championId)} alt="" /> : <div className="home-team-mark muted" aria-hidden="true">?</div>}
-          <div><small>T1 공개 경기 반복 픽</small><h3>{t1Focus ? `${t1Focus.championId} · ${roleLabels[t1Focus.role ?? ""] ?? t1Focus.role ?? "역할 확인"}` : "공개 표본 대기"}</h3><p>{t1Focus ? `${t1Focus.gameCount}경기에서 관측 · 경기 기준 ${percent(t1Focus.gameRate)}` : "새 경기 표본이 들어오면 가장 반복된 픽을 표시합니다."}</p></div><b>픽·밴 근거 보기 →</b>
+          <div><small>T1 공개 경기 반복 픽</small><h3>{t1Focus ? `${nameOf(t1Focus.championId)} · ${roleLabels[t1Focus.role ?? ""] ?? t1Focus.role ?? "역할 확인"}` : "공개 표본 대기"}</h3><p>{t1Focus ? `${t1Focus.gameCount}경기에서 관측 · 경기 기준 ${percent(t1Focus.gameRate)}` : "새 경기 표본이 들어오면 가장 반복된 픽을 표시합니다."}</p></div><b>픽·밴 근거 보기 →</b>
         </a>
         <a className="meta" href={productSpaceHref(currentSpace, "RADAR")}>
           <span className="home-today-number">03</span>{metaFocus ? <img src={championImageUrl(metaFocus.championId)} alt="" /> : <div className="home-team-mark muted" aria-hidden="true">?</div>}
-          <div><small>이번 패치 주목 후보</small><h3>{metaFocus ? `${metaFocus.championId} · ${roleLabels[metaFocus.role] ?? metaFocus.role}` : "검토 후보 대기"}</h3><p>{metaFocus ? `최근 ${metaFocus.teamCount}개 팀 관측 · ${metaFocus.pickPresenceDelta > 0 ? "이전보다 사용 증가" : "추가 관찰 필요"}` : "표본 기준을 통과한 후보가 생기면 표시합니다."}</p></div><b>쉬운 설명과 근거 →</b>
+          <div><small>이번 패치 주목 후보</small><h3>{metaFocus ? `${nameOf(metaFocus.championId)} · ${roleLabels[metaFocus.role] ?? metaFocus.role}` : "검토 후보 대기"}</h3><p>{metaFocus ? `최근 ${metaFocus.teamCount}개 팀 관측 · ${metaFocus.pickPresenceDelta > 0 ? "이전보다 사용 증가" : "추가 관찰 필요"}` : "표본 기준을 통과한 후보가 생기면 표시합니다."}</p></div><b>쉬운 설명과 근거 →</b>
         </a>
       </div>
     </section>
