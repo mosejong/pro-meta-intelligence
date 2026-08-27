@@ -128,6 +128,13 @@ memory. It is never written to local storage, sent to a server or AI provider, i
 link, or copied into a public export. Changing the own team or closing the tab removes it. Opponent
 private practice is neither accepted nor inferred.
 
+Staff can also create or update those rows directly in Team Room without editing JSON. The inline
+editor suggests the latest public roster and official champion catalog, replaces an existing
+player/role/champion row instead of duplicating it, and labels each row as public-match overlap,
+private-only practice, or an unmatched roster name. That label is an evidence boundary rather than
+a readiness score. A private session leaves the browser only when the user explicitly downloads its
+JSON; the exported file can be loaded again later without creating a server-side account or record.
+
 ## Checks
 
 ```bash

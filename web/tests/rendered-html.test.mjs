@@ -1031,8 +1031,10 @@ test("accepts only bounded own-team private practice and summarizes roster match
   try {
     const {
       PRIVATE_PRACTICE_MAX_BYTES,
+      classifyPracticeRow,
       parsePrivatePracticeSession,
       summarizePrivatePractice,
+      upsertPrivatePracticeRow,
     } = await vite.ssrLoadModule("/app/player-practice.ts");
     assert.equal(PRIVATE_PRACTICE_MAX_BYTES, 256 * 1024);
 
@@ -1060,6 +1062,28 @@ test("accepts only bounded own-team private practice and summarizes roster match
     assert.equal(summaries[0].wins, 5);
     assert.equal(summaries[0].average_comfort, 4);
     assert.equal(summaries[0].matches_public_roster, true);
+    assert.deepEqual(classifyPracticeRow(session.rows[0], t1.player_profiles), {
+      status: "PUBLIC_OVERLAP",
+      public_game_count: player.champions[0].game_count,
+      public_game_rate: player.champions[0].game_rate,
+    });
+
+    const updated = upsertPrivatePracticeRow(t1, session, { ...session.rows[0], games: 10 }, "2026-08-27T13:00:00Z");
+    assert.equal(updated.rows.length, 1);
+    assert.equal(updated.rows[0].games, 10);
+    assert.equal(updated.recorded_at, "2026-08-27T13:00:00Z");
+    assert.equal(classifyPracticeRow({ ...session.rows[0], champion_id: "PrivateOnlyChampion" }, t1.player_profiles).status, "PRIVATE_ONLY");
+    assert.equal(classifyPracticeRow({ ...session.rows[0], player_name: "Internal Substitute" }, t1.player_profiles).status, "ROSTER_UNMATCHED");
+
+    const { PlayerPracticePanel } = await vite.ssrLoadModule("/app/player-practice-panel.tsx");
+    const editorHtml = renderToStaticMarkup(createElement(PlayerPracticePanel, { ownTeam: t1, opponent: null }));
+    assert.match(editorHtml, /JSON 편집 없이 한 줄씩 기록/);
+    assert.match(editorHtml, /기록 추가 \/ 갱신/);
+    assert.match(editorHtml, /같은 선수·포지션·챔피언은 자동 갱신/);
+    assert.match(editorHtml, /탭의 메모리에만 유지/);
+
+    const practiceSource = await readFile(new URL("app/player-practice-panel.tsx", templateRoot), "utf8");
+    assert.doesNotMatch(practiceSource, /localStorage|sessionStorage|fetch\s*\(/);
 
     assert.throws(
       () => parsePrivatePracticeSession({ ...payload, team_name: "Opponent Private Team" }, t1),
