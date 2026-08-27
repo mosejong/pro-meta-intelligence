@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- champion portraits use the stable Riot CDN */
 
-import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, useMemo, useRef, useState } from "react";
 import { championImageUrl } from "./champion-assets";
 import { useChampionNames } from "./champion-names";
 import {
@@ -63,12 +63,6 @@ export function PlayerPracticePanel({ ownTeam, opponent }: { ownTeam?: OpponentT
   const inputRef = useRef<HTMLInputElement>(null);
   const [session, setSession] = useState<PrivatePracticeSession | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setSession(null);
-    setError(null);
-    if (inputRef.current) inputRef.current.value = "";
-  }, [ownTeam?.team_id]);
 
   const summaries = useMemo(
     () => session ? summarizePrivatePractice(session, ownTeam?.player_profiles) : [],

@@ -49,7 +49,11 @@ export function normalizePlayerKey(value: string) {
 function cleanText(value: unknown, label: string, maximumLength: number) {
   if (typeof value !== "string") throw new PrivatePracticeError(`${label}은(는) 문자열이어야 합니다.`);
   const cleaned = value.trim();
-  if (!cleaned || cleaned.length > maximumLength || /[\u0000-\u001f\u007f]/u.test(cleaned)) {
+  const hasControlCharacter = [...cleaned].some((character) => {
+    const code = character.charCodeAt(0);
+    return code <= 31 || code === 127;
+  });
+  if (!cleaned || cleaned.length > maximumLength || hasControlCharacter) {
     throw new PrivatePracticeError(`${label} 값의 길이 또는 문자를 확인하세요.`);
   }
   return cleaned;

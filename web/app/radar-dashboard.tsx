@@ -1068,7 +1068,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         <a className={matchupBattlecard ? "ready" : "locked"} href="#draft-battlecard"><b>3</b><span><small>드래프트 배틀카드</small><strong>{matchupBattlecard ? "확인 준비 완료" : "상대 선택 후 생성"}</strong></span></a>
       </nav>
 
-      {initialSpace === "TEAM" && <PlayerPracticePanel ownTeam={selectedMyTeam} opponent={selectedOpponent} />}
+      {initialSpace === "TEAM" && <PlayerPracticePanel key={selectedMyTeam?.team_id ?? "no-team"} ownTeam={selectedMyTeam} opponent={selectedOpponent} />}
 
       {targetMatchDayBrief && pinnedTargetProfile && <T1OnePageBrief
         brief={targetMatchDayBrief}

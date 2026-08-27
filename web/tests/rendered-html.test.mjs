@@ -866,9 +866,11 @@ test("builds a T1 match-day brief without guessing a TBD bracket opponent", asyn
     assert.ok(first.fixture.days_until > 0);
     assert.equal(first.readiness.status, "WAITING_FOR_OPPONENT");
     assert.equal(first.confirmed_matchup, null);
-    assert.equal(first.monitoring.status, "WATCHING");
+    const expectedMonitoringStatus = scheduleChanges.latest_run.status === "CHANGED" ? "CHANGE_DETECTED" : "WATCHING";
+    const expectedLatestChange = scheduleChanges.latest_run.changes[0] ?? scheduleChanges.history[0] ?? null;
+    assert.equal(first.monitoring.status, expectedMonitoringStatus);
     assert.ok(["INITIALIZED", "CHANGED", "UNCHANGED"].includes(first.monitoring.latest_run_status));
-    assert.equal(first.monitoring.latest_change, null);
+    assert.equal(first.monitoring.latest_change?.change_id ?? null, expectedLatestChange?.change_id ?? null);
     assert.equal(first.readiness.checks.find((item) => item.id === "OFFICIAL_FIXTURE").status, "PASS");
     assert.equal(first.readiness.checks.find((item) => item.id === "OPPONENT_IDENTITY").status, "WAIT");
     assert.ok(first.prepare_now.length >= 3);
