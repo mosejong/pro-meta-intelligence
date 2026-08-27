@@ -1601,6 +1601,77 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
 .player-public-empty { display: grid; align-content: center; min-height: 160px; padding: 22px; }
 .player-public-empty b { font-size: 13px; }
 .player-public-empty p { margin: 5px 0 0; color: var(--muted); font-size: 9px; }
+.player-tendency-bot { margin-top: 16px; border: 1px solid var(--ink); background: #171a1f; color: white; }
+.player-tendency-bot > header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 24px; padding: 18px; border-bottom: 1px solid #60646b; }
+.player-tendency-bot > header span { color: var(--signal); font: 850 8px var(--font-geist-mono); letter-spacing: .08em; }
+.player-tendency-bot > header h3 { margin: 5px 0 5px; font-size: 22px; }
+.player-tendency-bot > header p { max-width: 780px; margin: 0; color: #b8bcc0; font-size: 10px; line-height: 1.55; }
+.player-tendency-bot > header > b { display: inline-flex; align-items: center; gap: 7px; padding: 7px 9px; border: 1px solid #ef8b76; color: #ef8b76; font: 800 7px var(--font-geist-mono); white-space: nowrap; }
+.player-tendency-bot > header > b i { width: 7px; height: 7px; background: #ef8b76; }
+.player-tendency-bot > header > b.validated { border-color: var(--signal); color: var(--signal); }
+.player-tendency-bot > header > b.validated i { background: var(--signal); }
+.tendency-bot-setup, .tendency-bot-empty { display: grid; align-content: center; min-height: 112px; padding: 20px; background: #22252b; }
+.tendency-bot-setup b, .tendency-bot-empty b { font-size: 13px; }
+.tendency-bot-setup p, .tendency-bot-empty p { margin: 5px 0 0; color: #aeb2b6; font-size: 9px; }
+.tendency-bot-controls { display: grid; grid-template-columns: auto minmax(220px, .72fr) minmax(260px, 1.28fr); gap: 10px; padding: 12px; border-bottom: 1px solid #60646b; background: #22252b; }
+.tendency-bot-controls fieldset { display: flex; align-items: end; gap: 4px; margin: 0; padding: 0; border: 0; }
+.tendency-bot-controls legend, .tendency-bot-controls label > span { display: block; margin-bottom: 4px; color: #aeb2b6; font: 750 7px var(--font-geist-mono); }
+.tendency-bot-controls button { min-height: 40px; padding: 8px 10px; border: 1px solid #6b6f76; background: transparent; color: #d9dcdf; font-size: 8px; font-weight: 800; cursor: pointer; }
+.tendency-bot-controls button.active { border-color: var(--signal); background: var(--signal); color: #111318; }
+.tendency-bot-controls button:disabled { cursor: not-allowed; opacity: .35; }
+.tendency-bot-controls label { min-width: 0; }
+.tendency-bot-controls select { width: 100%; min-height: 40px; padding: 7px 9px; border: 1px solid #6b6f76; border-radius: 0; background: #15171c; color: white; font-size: 9px; }
+.tendency-bot-subject { display: grid; grid-template-columns: 42px minmax(0, 1fr); align-items: center; gap: 9px; min-width: 0; min-height: 54px; padding: 6px; border: 1px solid #60646b; background: #15171c; }
+.tendency-bot-subject > img, .tendency-bot-subject > span { grid-row: 1; width: 40px; height: 40px; border: 1px solid #777b82; background: #33363c; object-fit: cover; }
+.tendency-bot-subject small, .tendency-bot-subject strong, .tendency-bot-subject em { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tendency-bot-subject small { color: var(--signal); font: 750 6px var(--font-geist-mono); }
+.tendency-bot-subject strong { margin-top: 2px; font-size: 11px; }
+.tendency-bot-subject em { margin-top: 2px; color: #9ea2a7; font-size: 7px; font-style: normal; }
+.tendency-bot-prompts { display: flex; gap: 6px; padding: 9px 12px; overflow-x: auto; border-bottom: 1px solid #60646b; background: #1d2025; }
+.tendency-bot-prompts button { flex: 0 0 auto; min-height: 31px; padding: 6px 9px; border: 1px solid #61656c; background: transparent; color: #c4c7ca; font-size: 7px; cursor: pointer; }
+.tendency-bot-prompts button:hover, .tendency-bot-prompts button:focus-visible { border-color: var(--signal); color: var(--signal); outline: none; }
+.tendency-bot-query { padding: 12px; border-bottom: 1px solid #60646b; background: #25282e; }
+.tendency-bot-query > label { color: var(--signal); font: 800 7px var(--font-geist-mono); }
+.tendency-bot-query > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; margin-top: 5px; }
+.tendency-bot-query input { min-width: 0; min-height: 45px; padding: 10px 12px; border: 1px solid #747880; border-right: 0; border-radius: 0; background: #111318; color: white; font-size: 11px; }
+.tendency-bot-query button { min-height: 45px; padding: 9px 15px; border: 1px solid var(--signal); background: var(--signal); color: #111318; font-size: 9px; font-weight: 850; cursor: pointer; }
+.tendency-bot-query button:disabled { cursor: not-allowed; opacity: .35; }
+.tendency-bot-query > small { display: block; margin-top: 5px; color: #8f9499; font-size: 7px; }
+.tendency-bot-error { margin: 0; padding: 9px 12px; border-bottom: 1px solid #b9574e; background: #5d2d2b; color: #ffd7d3; font-size: 9px; }
+.tendency-bot-answer { background: #f2f0e9; color: var(--ink); }
+.tendency-bot-answer > header { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding: 16px; border-bottom: 1px solid var(--ink); }
+.tendency-bot-answer > header span { color: var(--violet); font: 850 7px var(--font-geist-mono); }
+.tendency-bot-answer > header h4 { margin: 4px 0 0; font-size: 18px; }
+.tendency-bot-answer > header > b { padding: 5px 7px; border: 1px solid var(--ink); font: 800 7px var(--font-geist-mono); white-space: nowrap; }
+.tendency-bot-answer.refused > header { box-shadow: inset 5px 0 0 #ef8b76; }
+.tendency-bot-conclusion { margin: 0; padding: 18px; border-bottom: 1px solid var(--ink); background: white; font-size: 14px; font-weight: 750; line-height: 1.65; word-break: keep-all; }
+.tendency-bot-facts { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--ink); }
+.tendency-bot-facts section { position: relative; min-height: 122px; padding: 13px; border-right: 1px solid var(--line); }
+.tendency-bot-facts section:last-child { border-right: 0; }
+.tendency-bot-facts section > span { color: var(--violet); font: 800 7px var(--font-geist-mono); }
+.tendency-bot-facts section > strong { display: block; margin-top: 10px; font-size: 15px; }
+.tendency-bot-facts section > p { margin: 5px 0 20px; color: var(--muted); font-size: 8px; line-height: 1.5; }
+.tendency-bot-facts section > small { position: absolute; right: 10px; bottom: 9px; padding: 3px 5px; background: #dedbd2; color: var(--muted); font: 750 6px var(--font-geist-mono); }
+.tendency-bot-facts section.private_session { box-shadow: inset 0 4px 0 #398d67; }
+.tendency-bot-facts section.data_boundary { box-shadow: inset 0 4px 0 #ef8b76; }
+.tendency-bot-answer details { border-bottom: 1px solid var(--ink); }
+.tendency-bot-answer summary { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 9px 13px; cursor: pointer; font-size: 9px; font-weight: 800; }
+.tendency-bot-answer summary span { color: var(--violet); font-size: 14px; }
+.tendency-bot-evidence { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+.tendency-bot-evidence > section { min-width: 0; padding: 13px; border-right: 1px solid var(--line); }
+.tendency-bot-evidence > section:last-child { border-right: 0; }
+.tendency-bot-evidence > section > b { color: var(--violet); font: 800 7px var(--font-geist-mono); }
+.tendency-bot-evidence section > div { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+.tendency-bot-evidence code { max-width: 100%; padding: 3px 5px; overflow: hidden; background: #dedbd2; color: #55524d; font-size: 6px; text-overflow: ellipsis; white-space: nowrap; }
+.tendency-bot-evidence ul { margin: 7px 0 0; padding-left: 16px; }
+.tendency-bot-evidence li { margin-top: 4px; color: var(--muted); font-size: 8px; line-height: 1.45; }
+.tendency-bot-answer > footer { display: grid; grid-template-columns: auto 1fr; gap: 12px; padding: 9px 13px; background: #dedbd2; }
+.tendency-bot-answer > footer b { color: var(--violet); font: 850 7px var(--font-geist-mono); }
+.tendency-bot-answer > footer p { margin: 0; color: var(--muted); font-size: 8px; }
+.player-tendency-bot > footer { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; padding: 10px 13px; border-top: 1px solid #60646b; background: #111318; }
+.player-tendency-bot > footer b { color: var(--signal); font: 850 7px var(--font-geist-mono); }
+.player-tendency-bot > footer p { margin: 0; color: #9ea2a7; font-size: 8px; }
+.player-tendency-bot > footer span { color: #ef8b76; font: 800 7px var(--font-geist-mono); white-space: nowrap; }
 .private-practice { margin-top: 16px; border: 1px solid var(--ink); background: white; }
 .private-practice > header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 24px; padding: 17px; border-bottom: 1px solid var(--ink); background: #171a1f; color: white; }
 .private-practice > header h3 { margin: 4px 0 5px; font-size: 19px; }
@@ -1708,6 +1779,13 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
   .player-public-grid { grid-template-columns: 1fr; }
   .player-public-column:first-child { border-right: 0; border-bottom: 1px solid var(--ink); }
   .private-practice-actions { justify-content: flex-start; }
+  .player-tendency-bot > header { grid-template-columns: 1fr; }
+  .player-tendency-bot > header > b { justify-self: start; }
+  .tendency-bot-controls { grid-template-columns: 1fr 1fr; }
+  .tendency-bot-subject { grid-column: 1 / -1; }
+  .tendency-bot-facts { grid-template-columns: 1fr 1fr; }
+  .tendency-bot-facts section:nth-child(2) { border-right: 0; }
+  .tendency-bot-facts section:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
   .private-practice-fields { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .private-practice-fields .champion-field { grid-column: span 2; }
   .private-practice-fields > button { grid-column: span 2; }
@@ -1737,6 +1815,22 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
   .player-public-pool { grid-column: 1 / -1; }
   .private-practice-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .private-practice-actions label, .private-practice-actions button { justify-content: center; text-align: center; }
+  .player-tendency-bot > header { padding: 15px; }
+  .tendency-bot-controls { grid-template-columns: 1fr; }
+  .tendency-bot-controls fieldset { display: grid; grid-template-columns: 1fr 1fr; }
+  .tendency-bot-controls legend { grid-column: 1 / -1; }
+  .tendency-bot-subject { grid-column: auto; }
+  .tendency-bot-query > div { grid-template-columns: 1fr; }
+  .tendency-bot-query input { border-right: 1px solid #747880; border-bottom: 0; }
+  .tendency-bot-answer > header { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .tendency-bot-facts { grid-template-columns: 1fr; }
+  .tendency-bot-facts section, .tendency-bot-facts section:nth-child(2) { border-right: 0; border-bottom: 1px solid var(--line); }
+  .tendency-bot-facts section:last-child { border-bottom: 0; }
+  .tendency-bot-evidence { grid-template-columns: 1fr; }
+  .tendency-bot-evidence > section { border-right: 0; border-bottom: 1px solid var(--line); }
+  .tendency-bot-evidence > section:last-child { border-bottom: 0; }
+  .tendency-bot-answer > footer, .player-tendency-bot > footer { grid-template-columns: 1fr; gap: 4px; }
+  .player-tendency-bot > footer span { white-space: normal; }
   .private-practice-editor > header { align-items: flex-start; flex-direction: column; gap: 4px; padding: 10px; }
   .private-practice-editor > header small { margin-left: 0; }
   .private-practice-fields { grid-template-columns: 1fr 1fr; padding: 10px; }

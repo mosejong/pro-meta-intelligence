@@ -96,6 +96,9 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /PRIVATE DATA BOUNDARY/);
   assert.match(html, /서버·로컬 저장소·AI·발행 피드로 전송하지 않습니다/);
   assert.match(html, /상대팀 연습 데이터 금지/);
+  assert.match(html, /선수 성향 분석봇/);
+  assert.match(html, /AI GATE CHECKING/);
+  assert.match(html, /성격·멘탈 추정 금지/);
   assert.match(html, /ONE-PAGE · STAFF REVIEW/);
   assert.match(html, /T1 공개 데이터 원페이지 브리프/);
   assert.match(html, /NEXT VERIFIED FIXTURE/);
@@ -1090,7 +1093,8 @@ test("accepts only bounded own-team private practice and summarizes roster match
     assert.equal(buildPracticeCandidateCoverage([{ ...candidate, role: "UNKNOWN" }], t1, session)[0].status, "ROSTER_UNAVAILABLE");
 
     const { PlayerPracticePanel } = await vite.ssrLoadModule("/app/player-practice-panel.tsx");
-    const editorHtml = renderToStaticMarkup(createElement(PlayerPracticePanel, { ownTeam: t1, opponent: null, reviewCandidates: [candidate] }));
+    const aiStatus = JSON.parse(await readFile(new URL("public/feed/ai-validation.json", templateRoot), "utf8"));
+    const editorHtml = renderToStaticMarkup(createElement(PlayerPracticePanel, { ownTeam: t1, opponent: null, reviewCandidates: [candidate], aiValidation: aiStatus }));
     assert.match(editorHtml, /JSON 편집 없이 한 줄씩 기록/);
     assert.match(editorHtml, /기록 추가 \/ 갱신/);
     assert.match(editorHtml, /같은 선수·포지션·챔피언은 자동 갱신/);
@@ -1099,9 +1103,84 @@ test("accepts only bounded own-team private practice and summarizes roster match
     assert.match(editorHtml, /우선 검토 후보의 연습 기록만 빠르게 확인/);
     assert.match(editorHtml, /NO AUTO-RANKING/);
     assert.match(editorHtml, /Radar 순위, 상대 우선순위, 출전 판단을 변경하지 않습니다/);
+    assert.match(editorHtml, /선수 성향 분석봇/);
+    assert.match(editorHtml, /AI LOCKED · 0\/30/);
+    assert.match(editorHtml, /생성형 AI 호출·서버 저장·대화 기록 없음/);
+
+    const { answerPlayerTendencyQuestion, routeTendencyQuestion } = await vite.ssrLoadModule("/app/player-tendency-bot.ts");
+    assert.equal(routeTendencyQuestion("내 연습 기록과 어디가 겹쳐?"), "PRACTICE_CROSSCHECK");
+    assert.equal(routeTendencyQuestion("같은 포지션 상대와 비교해줘"), "ROLE_COMPARISON");
+    assert.equal(routeTendencyQuestion("이 선수 멘탈과 성격은 어때?"), "PROHIBITED_INFERENCE");
+    assert.equal(routeTendencyQuestion("요즘 폼과 기량은 어때?"), "PROHIBITED_INFERENCE");
+
+    const publicAnswer = answerPlayerTendencyQuestion({
+      query: "공개 경기에서 가장 반복된 챔피언은?",
+      scope: "OWN_TEAM",
+      team: t1,
+      comparisonTeam: null,
+      playerId: player.player_id,
+      privateSession: session,
+    });
+    assert.equal(publicAnswer.generation_mode, "DETERMINISTIC_EVIDENCE_ROUTER");
+    assert.equal(publicAnswer.ai_generated, false);
+    assert.equal(publicAnswer.private_data_used, false);
+    assert.equal(publicAnswer.publishable, true);
+    assert.ok(publicAnswer.evidence_ids.length > 0);
+
+    const privateAnswer = answerPlayerTendencyQuestion({
+      query: "내 연습 기록과 어디가 겹쳐?",
+      scope: "OWN_TEAM",
+      team: t1,
+      comparisonTeam: null,
+      playerId: player.player_id,
+      privateSession: session,
+    });
+    assert.equal(privateAnswer.private_data_used, true);
+    assert.equal(privateAnswer.publishable, false);
+    assert.equal(privateAnswer.evidence_state, "PUBLIC_PLUS_PRIVATE");
+    assert.ok(privateAnswer.facts.some((fact) => fact.evidence_type === "PRIVATE_SESSION"));
+
+    const geng = feed.opponent_prep.teams.find((team) => team.team_name === "Gen.G");
+    const opponentPlayer = geng?.player_profiles?.find((candidate) => candidate.roster_status === "CURRENT");
+    assert.ok(geng);
+    assert.ok(opponentPlayer);
+    const opponentAnswer = answerPlayerTendencyQuestion({
+      query: "내부 연습과 스크림 준비는 어때?",
+      scope: "OPPONENT",
+      team: geng,
+      comparisonTeam: t1,
+      playerId: opponentPlayer.player_id,
+      privateSession: session,
+    });
+    assert.equal(opponentAnswer.private_data_used, false);
+    assert.equal(opponentAnswer.evidence_state, "PUBLIC_ONLY");
+    assert.ok(opponentAnswer.facts.every((fact) => fact.evidence_type !== "PRIVATE_SESSION"));
+    assert.match(opponentAnswer.conclusion, /상대의 비공개 연습은 추정하지 않습니다/);
+
+    const refused = answerPlayerTendencyQuestion({
+      query: "이 선수 멘탈과 성격은 어때?",
+      scope: "OWN_TEAM",
+      team: t1,
+      comparisonTeam: geng,
+      playerId: player.player_id,
+      privateSession: session,
+    });
+    assert.equal(refused.intent, "PROHIBITED_INFERENCE");
+    assert.equal(refused.evidence_state, "LIMITED");
+    assert.equal(refused.private_data_used, false);
+    assert.match(refused.conclusion, /추정하지 않습니다/);
+    assert.throws(() => answerPlayerTendencyQuestion({
+      query: "x".repeat(161),
+      scope: "OWN_TEAM",
+      team: t1,
+      comparisonTeam: geng,
+      playerId: player.player_id,
+      privateSession: null,
+    }), /1~160자/);
 
     const practiceSource = await readFile(new URL("app/player-practice-panel.tsx", templateRoot), "utf8");
-    assert.doesNotMatch(practiceSource, /localStorage|sessionStorage|fetch\s*\(/);
+    const botSource = await readFile(new URL("app/player-tendency-bot-panel.tsx", templateRoot), "utf8");
+    assert.doesNotMatch(`${practiceSource}\n${botSource}`, /localStorage|sessionStorage|fetch\s*\(/);
 
     assert.throws(
       () => parsePrivatePracticeSession({ ...payload, team_name: "Opponent Private Team" }, t1),
