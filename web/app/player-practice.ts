@@ -36,6 +36,12 @@ export type PlayerPracticeSummary = {
   matches_public_roster: boolean;
 };
 
+export type PracticePublicOverlap = {
+  status: "PUBLIC_OVERLAP" | "PRIVATE_ONLY" | "ROSTER_UNMATCHED";
+  public_game_count: number;
+  public_game_rate: number | null;
+};
+
 export class PrivatePracticeError extends Error {}
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -44,6 +50,10 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 export function normalizePlayerKey(value: string) {
   return value.normalize("NFKC").toLocaleLowerCase("ko-KR").replace(/[^\p{L}\p{N}]/gu, "");
+}
+
+export function privatePracticeRowKey(row: Pick<PrivatePracticeRow, "player_name" | "role" | "champion_id">) {
+  return `${normalizePlayerKey(row.player_name)}:${row.role}:${normalizePlayerKey(row.champion_id)}`;
 }
 
 function cleanText(value: unknown, label: string, maximumLength: number) {
@@ -109,7 +119,7 @@ export function parsePrivatePracticeSession(value: unknown, ownTeam: OpponentTea
     const wins = raw.wins === undefined ? undefined : integer(raw.wins, `rows[${index}].wins`, 0, games);
     const comfort = raw.comfort === undefined ? undefined : integer(raw.comfort, `rows[${index}].comfort`, 1, 5);
     const lastPracticedAt = isoDate(raw.last_practiced_at, `rows[${index}].last_practiced_at`, true);
-    const duplicateKey = `${normalizePlayerKey(playerName)}:${role}:${normalizePlayerKey(championId)}`;
+    const duplicateKey = privatePracticeRowKey({ player_name: playerName, role: role as PracticeRole, champion_id: championId });
     if (seen.has(duplicateKey)) {
       throw new PrivatePracticeError(`rows[${index}]에 같은 선수·포지션·챔피언이 중복되었습니다.`);
     }
@@ -131,6 +141,44 @@ export function parsePrivatePracticeSession(value: unknown, ownTeam: OpponentTea
     team_name: teamName,
     recorded_at: recordedAt,
     rows,
+  };
+}
+
+export function upsertPrivatePracticeRow(
+  ownTeam: OpponentTeam,
+  session: PrivatePracticeSession | null,
+  row: PrivatePracticeRow,
+  recordedAt = new Date().toISOString(),
+) {
+  const rowKey = privatePracticeRowKey(row);
+  const rows = (session?.rows ?? []).filter((candidate) => privatePracticeRowKey(candidate) !== rowKey);
+  return parsePrivatePracticeSession({
+    schema_version: "1",
+    artifact_type: "private-player-practice-session",
+    team_name: ownTeam.team_name,
+    recorded_at: recordedAt,
+    rows: [...rows, row],
+  }, ownTeam);
+}
+
+export function classifyPracticeRow(
+  row: PrivatePracticeRow,
+  publicPlayers: OpponentPlayerProfile[] | undefined,
+): PracticePublicOverlap {
+  const player = (publicPlayers ?? []).find((candidate) => (
+    candidate.roster_status === "CURRENT"
+    && candidate.role === row.role
+    && normalizePlayerKey(candidate.player_name) === normalizePlayerKey(row.player_name)
+  ));
+  if (!player) return { status: "ROSTER_UNMATCHED", public_game_count: 0, public_game_rate: null };
+  const champion = player.champions.find(
+    (candidate) => normalizePlayerKey(candidate.champion_id) === normalizePlayerKey(row.champion_id),
+  );
+  if (!champion) return { status: "PRIVATE_ONLY", public_game_count: 0, public_game_rate: null };
+  return {
+    status: "PUBLIC_OVERLAP",
+    public_game_count: champion.game_count,
+    public_game_rate: champion.game_rate,
   };
 }
 
