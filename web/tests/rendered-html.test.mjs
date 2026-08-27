@@ -1031,6 +1031,7 @@ test("accepts only bounded own-team private practice and summarizes roster match
   try {
     const {
       PRIVATE_PRACTICE_MAX_BYTES,
+      buildPracticeCandidateCoverage,
       classifyPracticeRow,
       parsePrivatePracticeSession,
       summarizePrivatePractice,
@@ -1075,12 +1076,29 @@ test("accepts only bounded own-team private practice and summarizes roster match
     assert.equal(classifyPracticeRow({ ...session.rows[0], champion_id: "PrivateOnlyChampion" }, t1.player_profiles).status, "PRIVATE_ONLY");
     assert.equal(classifyPracticeRow({ ...session.rows[0], player_name: "Internal Substitute" }, t1.player_profiles).status, "ROSTER_UNMATCHED");
 
+    const candidate = { ...feed.entries[0], champion_id: session.rows[0].champion_id, role: session.rows[0].role };
+    const noSessionCoverage = buildPracticeCandidateCoverage([candidate], t1, null);
+    assert.equal(noSessionCoverage[0].status, "NO_PRIVATE_SESSION");
+    const recordedCoverage = buildPracticeCandidateCoverage([candidate], t1, session);
+    assert.equal(recordedCoverage[0].status, "PRACTICE_RECORDED");
+    assert.equal(recordedCoverage[0].total_practice_games, 8);
+    assert.equal(recordedCoverage[0].players.find((item) => item.player_name === player.player_name)?.row?.games, 8);
+    const unmatchedSession = { ...session, rows: [{ ...session.rows[0], player_name: "Internal Substitute" }] };
+    const unmatchedCoverage = buildPracticeCandidateCoverage([candidate], t1, unmatchedSession);
+    assert.equal(unmatchedCoverage[0].status, "NO_MATCHING_PRACTICE");
+    assert.equal(unmatchedCoverage[0].unmatched_row_count, 1);
+    assert.equal(buildPracticeCandidateCoverage([{ ...candidate, role: "UNKNOWN" }], t1, session)[0].status, "ROSTER_UNAVAILABLE");
+
     const { PlayerPracticePanel } = await vite.ssrLoadModule("/app/player-practice-panel.tsx");
-    const editorHtml = renderToStaticMarkup(createElement(PlayerPracticePanel, { ownTeam: t1, opponent: null }));
+    const editorHtml = renderToStaticMarkup(createElement(PlayerPracticePanel, { ownTeam: t1, opponent: null, reviewCandidates: [candidate] }));
     assert.match(editorHtml, /JSON 편집 없이 한 줄씩 기록/);
     assert.match(editorHtml, /기록 추가 \/ 갱신/);
     assert.match(editorHtml, /같은 선수·포지션·챔피언은 자동 갱신/);
     assert.match(editorHtml, /탭의 메모리에만 유지/);
+    assert.match(editorHtml, /TEAM DECISION × PRIVATE PRACTICE/);
+    assert.match(editorHtml, /우선 검토 후보의 연습 기록만 빠르게 확인/);
+    assert.match(editorHtml, /NO AUTO-RANKING/);
+    assert.match(editorHtml, /Radar 순위, 상대 우선순위, 출전 판단을 변경하지 않습니다/);
 
     const practiceSource = await readFile(new URL("app/player-practice-panel.tsx", templateRoot), "utf8");
     assert.doesNotMatch(practiceSource, /localStorage|sessionStorage|fetch\s*\(/);

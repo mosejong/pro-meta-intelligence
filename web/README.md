@@ -135,6 +135,12 @@ private-only practice, or an unmatched roster name. That label is an evidence bo
 a readiness score. A private session leaves the browser only when the user explicitly downloads its
 JSON; the exported file can be loaded again later without creating a server-side account or record.
 
+The same panel cross-checks the five public Team Decision candidates against exact current-roster,
+role, and champion matches in the in-memory practice session. It reports recorded, missing,
+unmatched-name, and roster-unavailable states and can prefill the editor for a selected candidate.
+This coverage view never changes Radar rank, opponent priority, a team decision, or a player
+selection; missing practice data remains an unknown rather than negative evidence.
+
 ## Checks
 
 ```bash
