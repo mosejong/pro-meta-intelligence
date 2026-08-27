@@ -147,12 +147,10 @@ def assemble_paired_evaluation(
         split = expert_case.get("split")
         if split not in {"DEV", "HOLDOUT"}:
             raise AIHoldoutAssemblyError(f"expert split must be DEV or HOLDOUT: {task_key}")
+        case_suffix = expected_fingerprint.removeprefix("sha256:")[:10]
         paired_cases.append(
             {
-                "case_id": (
-                    f"case-{index + 1:03d}-"
-                    f"{expected_fingerprint.removeprefix('sha256:')[:10]}"
-                ),
+                "case_id": f"case-{index + 1:03d}-{case_suffix}",
                 "split": split,
                 "reference": reference,
                 "human": human,

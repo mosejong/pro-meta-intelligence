@@ -75,9 +75,7 @@ def _human_bundle(count: int = 2) -> dict[str, object]:
 
 def _filled_templates(count: int = 2):
     human = _human_bundle(count)
-    expert, ai, summary = prepare_holdout_templates(
-        human, created_at="2026-08-26T03:00:00Z"
-    )
+    expert, ai, summary = prepare_holdout_templates(human, created_at="2026-08-26T03:00:00Z")
     expert["sealed_at"] = "2026-08-26T04:00:00Z"
     ai["run_id"] = "holdout-2026-08"
     ai["evaluated_at"] = "2026-08-26T05:00:00Z"
@@ -127,9 +125,7 @@ def test_assembler_builds_the_existing_private_evaluator_contract() -> None:
     human, expert, ai, _ = _filled_templates()
 
     run = assemble_paired_evaluation(human, expert, ai)
-    report = evaluate_ai_against_human(
-        run, AIValidationPolicy(minimum_paired_holdout_cases=2)
-    )
+    report = evaluate_ai_against_human(run, AIValidationPolicy(minimum_paired_holdout_cases=2))
 
     assert run["artifact_type"] == "ai-human-paired-evaluation"
     assert len(run["cases"]) == 2
@@ -156,9 +152,7 @@ def test_ai_hallucinated_ids_reach_the_deterministic_critical_gate() -> None:
     ai["cases"][0]["ai"]["claim_ids"] = ["CLAIM:INVENTED"]
 
     run = assemble_paired_evaluation(human, expert, ai)
-    report = evaluate_ai_against_human(
-        run, AIValidationPolicy(minimum_paired_holdout_cases=2)
-    )
+    report = evaluate_ai_against_human(run, AIValidationPolicy(minimum_paired_holdout_cases=2))
 
     assert report["status"] == "REJECTED"
     assert "ZERO_CRITICAL_ERRORS" in report["failed_gates"]
@@ -171,45 +165,46 @@ def test_holdout_cli_prepares_and_assembles_private_files(tmp_path) -> None:
     run_path = tmp_path / "paired.json"
     human_path.write_text(json.dumps(_human_bundle()), encoding="utf-8")
 
-    assert main(
-        [
-            "prepare-ai-holdout",
-            "--human-baselines",
-            str(human_path),
-            "--reference-template",
-            str(expert_path),
-            "--ai-template",
-            str(ai_path),
-            "--created-at",
-            "2026-08-26T03:00:00Z",
-        ]
-    ) == 0
+    assert (
+        main(
+            [
+                "prepare-ai-holdout",
+                "--human-baselines",
+                str(human_path),
+                "--reference-template",
+                str(expert_path),
+                "--ai-template",
+                str(ai_path),
+                "--created-at",
+                "2026-08-26T03:00:00Z",
+            ]
+        )
+        == 0
+    )
     expert = json.loads(expert_path.read_text(encoding="utf-8"))
     ai = json.loads(ai_path.read_text(encoding="utf-8"))
     _, filled_expert, filled_ai, _ = _filled_templates()
     expert.update({key: filled_expert[key] for key in ("sealed_at", "cases")})
-    ai.update(
-        {
-            key: filled_ai[key]
-            for key in ("run_id", "evaluated_at", "system", "cases")
-        }
-    )
+    ai.update({key: filled_ai[key] for key in ("run_id", "evaluated_at", "system", "cases")})
     expert_path.write_text(json.dumps(expert), encoding="utf-8")
     ai_path.write_text(json.dumps(ai), encoding="utf-8")
 
-    assert main(
-        [
-            "assemble-ai-holdout",
-            "--human-baselines",
-            str(human_path),
-            "--expert-references",
-            str(expert_path),
-            "--ai-outputs",
-            str(ai_path),
-            "--output",
-            str(run_path),
-        ]
-    ) == 0
+    assert (
+        main(
+            [
+                "assemble-ai-holdout",
+                "--human-baselines",
+                str(human_path),
+                "--expert-references",
+                str(expert_path),
+                "--ai-outputs",
+                str(ai_path),
+                "--output",
+                str(run_path),
+            ]
+        )
+        == 0
+    )
     assert json.loads(run_path.read_text(encoding="utf-8"))["cases"]
 
 
