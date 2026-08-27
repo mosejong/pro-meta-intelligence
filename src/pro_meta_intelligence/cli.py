@@ -10,7 +10,12 @@ from pathlib import Path
 from time import perf_counter
 from typing import Any
 
-from pro_meta_intelligence.ai_validation import AIValidationPolicy, evaluate_ai_against_human
+from pro_meta_intelligence.ai_validation import (
+    AIValidationPolicy,
+    assemble_paired_evaluation,
+    evaluate_ai_against_human,
+    prepare_holdout_templates,
+)
 from pro_meta_intelligence.backtest import (
     BacktestHarness,
     OEBlindSpotConfig,
@@ -234,6 +239,25 @@ def build_parser() -> argparse.ArgumentParser:
     decision_outcomes.add_argument("--feed-dir", type=Path, default=Path("web/public/feed"))
     decision_outcomes.add_argument("--output", type=Path, help="optional JSON summary path")
 
+    prepare_ai_holdout = subparsers.add_parser(
+        "prepare-ai-holdout",
+        help="create separate blinded expert and AI templates from local human baselines",
+    )
+    prepare_ai_holdout.add_argument("--human-baselines", type=Path, required=True)
+    prepare_ai_holdout.add_argument("--reference-template", type=Path, required=True)
+    prepare_ai_holdout.add_argument("--ai-template", type=Path, required=True)
+    prepare_ai_holdout.add_argument("--created-at", help="explicit ISO-8601 preparation time")
+    prepare_ai_holdout.add_argument("--output", type=Path, help="optional non-secret summary path")
+
+    assemble_ai_holdout = subparsers.add_parser(
+        "assemble-ai-holdout",
+        help="strictly join human, sealed expert, and pinned AI outputs for private evaluation",
+    )
+    assemble_ai_holdout.add_argument("--human-baselines", type=Path, required=True)
+    assemble_ai_holdout.add_argument("--expert-references", type=Path, required=True)
+    assemble_ai_holdout.add_argument("--ai-outputs", type=Path, required=True)
+    assemble_ai_holdout.add_argument("--output", type=Path, required=True)
+
     ai_validation = subparsers.add_parser(
         "evaluate-ai-assistant",
         help="compare structured AI outputs with humans on the same hidden holdout cases",
@@ -385,6 +409,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _benchmark_oe_history(args)
     if args.command == "build-decision-outcomes":
         return _build_decision_outcomes(args)
+    if args.command == "prepare-ai-holdout":
+        return _prepare_ai_holdout(args)
+    if args.command == "assemble-ai-holdout":
+        return _assemble_ai_holdout(args)
     if args.command == "evaluate-ai-assistant":
         return _evaluate_ai_assistant(args)
     if args.command == "sync-oe-feed":
@@ -1122,6 +1150,44 @@ def _evaluate_ai_assistant(args: argparse.Namespace) -> int:
     return 0 if report["status"] == "VALIDATED" else 2
 
 
+def _prepare_ai_holdout(args: argparse.Namespace) -> int:
+    human = _read_json_object(args.human_baselines)
+    if human is None:
+        raise ValueError(f"human baseline bundle must be a JSON object: {args.human_baselines}")
+    _require_private_ai_output(args.reference_template)
+    _require_private_ai_output(args.ai_template)
+    expert, ai, summary = prepare_holdout_templates(
+        human,
+        created_at=args.created_at or datetime.now(UTC).isoformat(),
+    )
+    _emit(
+        json.dumps(expert, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        args.reference_template,
+    )
+    _emit(
+        json.dumps(ai, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        args.ai_template,
+    )
+    _emit(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    return 0
+
+
+def _assemble_ai_holdout(args: argparse.Namespace) -> int:
+    human = _read_json_object(args.human_baselines)
+    expert = _read_json_object(args.expert_references)
+    ai = _read_json_object(args.ai_outputs)
+    if human is None:
+        raise ValueError(f"human baseline bundle must be a JSON object: {args.human_baselines}")
+    if expert is None:
+        raise ValueError(f"expert reference bundle must be a JSON object: {args.expert_references}")
+    if ai is None:
+        raise ValueError(f"AI output bundle must be a JSON object: {args.ai_outputs}")
+    _require_private_ai_output(args.output)
+    run = assemble_paired_evaluation(human, expert, ai)
+    _emit(json.dumps(run, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
+    return 0
+
+
 def _build_decision_outcomes(args: argparse.Namespace) -> int:
     benchmark = _read_json_object(args.benchmark)
     if benchmark is None:
@@ -1177,6 +1243,16 @@ def _read_json_object(path: Path) -> dict[str, object] | None:
     except (FileNotFoundError, json.JSONDecodeError, OSError, UnicodeError):
         return None
     return payload if isinstance(payload, dict) else None
+
+
+def _require_private_ai_output(path: Path) -> None:
+    public_root = Path("web/public").resolve()
+    resolved = path.resolve()
+    try:
+        resolved.relative_to(public_root)
+    except ValueError:
+        return
+    raise ValueError(f"private AI evaluation artifacts must not be written under {public_root}")
 
 
 def _load_feed_job_config(path: Path) -> dict[str, object]:
