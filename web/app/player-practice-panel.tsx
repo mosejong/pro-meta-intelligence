@@ -7,6 +7,7 @@ import { championImageUrl } from "./champion-assets";
 import { useChampionNames } from "./champion-names";
 import {
   PRIVATE_PRACTICE_MAX_BYTES,
+  buildPracticeCandidateCoverage,
   classifyPracticeRow,
   parsePrivatePracticeSession,
   practiceRoles,
@@ -18,7 +19,7 @@ import {
   type PrivatePracticeRow,
   type PrivatePracticeSession,
 } from "./player-practice";
-import type { OpponentPlayerProfile, OpponentTeam } from "./radar-types";
+import type { OpponentPlayerProfile, OpponentTeam, RadarEntry } from "./radar-types";
 
 const roleLabels: Record<string, string> = {
   TOP: "탑",
@@ -87,9 +88,18 @@ function downloadJson(fileName: string, value: unknown) {
   URL.revokeObjectURL(url);
 }
 
-export function PlayerPracticePanel({ ownTeam, opponent }: { ownTeam?: OpponentTeam; opponent?: OpponentTeam }) {
+export function PlayerPracticePanel({
+  ownTeam,
+  opponent,
+  reviewCandidates = [],
+}: {
+  ownTeam?: OpponentTeam;
+  opponent?: OpponentTeam;
+  reviewCandidates?: RadarEntry[];
+}) {
   const { catalog, nameOf } = useChampionNames();
   const inputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<HTMLFormElement>(null);
   const [session, setSession] = useState<PrivatePracticeSession | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -118,6 +128,10 @@ export function PlayerPracticePanel({ ownTeam, opponent }: { ownTeam?: OpponentT
   const publicOverlapCount = useMemo(
     () => session?.rows.filter((row) => classifyPracticeRow(row, ownTeam?.player_profiles).status === "PUBLIC_OVERLAP").length ?? 0,
     [ownTeam?.player_profiles, session],
+  );
+  const candidateCoverage = useMemo(
+    () => ownTeam ? buildPracticeCandidateCoverage(reviewCandidates, ownTeam, session) : [],
+    [ownTeam, reviewCandidates, session],
   );
 
   async function loadPractice(event: ChangeEvent<HTMLInputElement>) {
@@ -184,6 +198,18 @@ export function PlayerPracticePanel({ ownTeam, opponent }: { ownTeam?: OpponentT
     setNotice("선택한 연습 기록을 현재 탭에서 제거했습니다.");
   }
 
+  function prepareCandidate(championId: string, role: string) {
+    const player = currentPlayers.find((candidate) => candidate.role === role);
+    setDraft((current) => ({
+      ...current,
+      player_name: player?.player_name ?? current.player_name,
+      role: practiceRoles.includes(role as PracticeRole) ? role as PracticeRole : current.role,
+      champion_id: championId,
+    }));
+    editorRef.current?.scrollIntoView({ behavior: "auto", block: "center" });
+    editorRef.current?.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true });
+  }
+
   function removeSession() {
     setSession(null);
     setError(null);
@@ -214,7 +240,7 @@ export function PlayerPracticePanel({ ownTeam, opponent }: { ownTeam?: OpponentT
         </div>
       </header>
 
-      {ownTeam && <form className="private-practice-editor" onSubmit={saveDraft}>
+      {ownTeam && <form ref={editorRef} className="private-practice-editor" onSubmit={saveDraft}>
         <header><span>빠른 입력</span><strong>JSON 편집 없이 한 줄씩 기록</strong><small>같은 선수·포지션·챔피언은 자동 갱신</small></header>
         <div className="private-practice-fields">
           <label><span>선수</span><input required list="private-practice-player-options" value={draft.player_name} onChange={(event) => changePlayer(event.target.value)} placeholder="선수명" /><datalist id="private-practice-player-options">{currentPlayers.map((player) => <option value={player.player_name} key={player.player_id}>{roleLabels[player.role] ?? player.role}</option>)}</datalist></label>
@@ -242,6 +268,16 @@ export function PlayerPracticePanel({ ownTeam, opponent }: { ownTeam?: OpponentT
           <footer>{summary.last_practiced_at ? `최근 입력 ${new Date(summary.last_practiced_at).toLocaleDateString("ko-KR")}` : "최근 연습일 미입력"} · 자기 보고값, 실력 판정 아님</footer>
         </article>)}</div>
       </div> : <div className="private-practice-empty"><b>{ownTeam.team_name} 내부 기록을 선택적으로 겹쳐보세요.</b><p>샘플 JSON을 내려받아 값을 채운 뒤 불러오세요. 업로드·서버 저장·AI 전송 없이 이 탭의 메모리에만 유지됩니다.</p></div>}
+
+      {ownTeam && candidateCoverage.length > 0 && <section className="practice-candidate-coverage" aria-label="우선 검토 후보 개인 연습 커버리지">
+        <header><div><span>TEAM DECISION × PRIVATE PRACTICE</span><h3>우선 검토 후보의 연습 기록만 빠르게 확인</h3><p>공개 Radar 순위는 그대로 두고, 현재 탭의 내 팀 기록이 있는지만 선수 단위로 교차합니다.</p></div><b>{candidateCoverage.filter((candidate) => candidate.status === "PRACTICE_RECORDED").length} / {candidateCoverage.length} 기록 있음</b></header>
+        <div className="practice-candidate-grid">{candidateCoverage.map((candidate) => <article className={candidate.status.toLowerCase()} key={`${candidate.champion_id}:${candidate.role}`}>
+          <header><span className="practice-candidate-rank">#{String(candidate.radar_rank).padStart(2, "0")}</span><img src={championImageUrl(candidate.champion_id)} alt="" loading="lazy" /><div><small>{roleLabels[candidate.role] ?? candidate.role}</small><strong>{nameOf(candidate.champion_id)}</strong></div><b>{candidate.status === "PRACTICE_RECORDED" ? "기록 있음" : candidate.status === "NO_MATCHING_PRACTICE" ? "일치 기록 없음" : candidate.status === "NO_PRIVATE_SESSION" ? "세션 미입력" : "로스터 제한"}</b></header>
+          <div className="practice-candidate-players">{candidate.players.length ? candidate.players.map((player) => <p className={player.row ? "recorded" : "missing"} key={player.player_id}><span>{player.player_name}</span><strong>{player.row ? `${player.row.games}G${player.row.comfort ? ` · 체감 ${player.row.comfort}/5` : ""}` : "기록 없음"}</strong></p>) : <p className="missing"><span>{roleLabels[candidate.role] ?? candidate.role}</span><strong>공개 현재 선수 없음</strong></p>}</div>
+          <footer><span>{candidate.status === "PRACTICE_RECORDED" ? `합계 ${candidate.total_practice_games}G · 리플레이와 선수 피드백 확인` : candidate.unmatched_row_count > 0 ? `이름 미일치 기록 ${candidate.unmatched_row_count}개 · 먼저 로스터 확인` : "기록 부재는 미숙련을 뜻하지 않음"}</span><button type="button" onClick={() => prepareCandidate(candidate.champion_id, candidate.role)}>이 후보 기록</button></footer>
+        </article>)}</div>
+        <footer><b>NO AUTO-RANKING</b><p>개인 연습값은 Radar 순위, 상대 우선순위, 출전 판단을 변경하지 않습니다. 기록 유무만 회의 전에 확인하세요.</p></footer>
+      </section>}
 
       <footer className="private-practice-boundary"><b>PRIVATE DATA BOUNDARY</b><p>탭을 닫거나 내 팀을 바꾸면 사라집니다. 서버·로컬 저장소·AI·발행 피드로 전송하지 않습니다.</p><span>상대팀 연습 데이터 금지</span></footer>
     </article>

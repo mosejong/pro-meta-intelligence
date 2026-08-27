@@ -1,4 +1,4 @@
-import type { OpponentPlayerProfile, OpponentTeam } from "./radar-types";
+import type { OpponentPlayerProfile, OpponentTeam, RadarEntry } from "./radar-types";
 
 export const PRIVATE_PRACTICE_MAX_BYTES = 256 * 1024;
 export const PRIVATE_PRACTICE_MAX_ROWS = 250;
@@ -40,6 +40,20 @@ export type PracticePublicOverlap = {
   status: "PUBLIC_OVERLAP" | "PRIVATE_ONLY" | "ROSTER_UNMATCHED";
   public_game_count: number;
   public_game_rate: number | null;
+};
+
+export type PracticeCandidateCoverage = {
+  champion_id: string;
+  role: string;
+  radar_rank: number;
+  status: "PRACTICE_RECORDED" | "NO_MATCHING_PRACTICE" | "NO_PRIVATE_SESSION" | "ROSTER_UNAVAILABLE";
+  total_practice_games: number;
+  unmatched_row_count: number;
+  players: Array<{
+    player_id: string;
+    player_name: string;
+    row: PrivatePracticeRow | null;
+  }>;
 };
 
 export class PrivatePracticeError extends Error {}
@@ -180,6 +194,47 @@ export function classifyPracticeRow(
     public_game_count: champion.game_count,
     public_game_rate: champion.game_rate,
   };
+}
+
+export function buildPracticeCandidateCoverage(
+  candidates: RadarEntry[],
+  ownTeam: OpponentTeam,
+  session: PrivatePracticeSession | null,
+): PracticeCandidateCoverage[] {
+  const currentPlayers = (ownTeam.player_profiles ?? []).filter((player) => player.roster_status === "CURRENT");
+  return candidates.map((candidate) => {
+    const rolePlayers = currentPlayers.filter((player) => player.role === candidate.role);
+    const candidateRows = (session?.rows ?? []).filter((row) => (
+      row.role === candidate.role
+      && normalizePlayerKey(row.champion_id) === normalizePlayerKey(candidate.champion_id)
+    ));
+    const players = rolePlayers.map((player) => ({
+      player_id: player.player_id,
+      player_name: player.player_name,
+      row: candidateRows.find(
+        (row) => normalizePlayerKey(row.player_name) === normalizePlayerKey(player.player_name),
+      ) ?? null,
+    }));
+    const matchedRows = players.flatMap((player) => player.row ? [player.row] : []);
+    const matchedNames = new Set(players.filter((player) => player.row).map((player) => normalizePlayerKey(player.player_name)));
+    const unmatchedRowCount = candidateRows.filter((row) => !matchedNames.has(normalizePlayerKey(row.player_name))).length;
+    const status = !rolePlayers.length
+      ? "ROSTER_UNAVAILABLE"
+      : !session
+        ? "NO_PRIVATE_SESSION"
+        : matchedRows.length
+          ? "PRACTICE_RECORDED"
+          : "NO_MATCHING_PRACTICE";
+    return {
+      champion_id: candidate.champion_id,
+      role: candidate.role,
+      radar_rank: candidate.rank,
+      status,
+      total_practice_games: matchedRows.reduce((total, row) => total + row.games, 0),
+      unmatched_row_count: unmatchedRowCount,
+      players,
+    };
+  });
 }
 
 function currentRosterKeys(players: OpponentPlayerProfile[] | undefined) {
