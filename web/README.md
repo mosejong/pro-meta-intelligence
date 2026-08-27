@@ -119,6 +119,15 @@ latest-public-match five-role profile, the report says `TEAM-LEVEL LIMITED`; it 
 players from schedule guesses or community rosters. Recent-game timelines, patch deltas, and series
 diagnostics remain T1-only, keeping the all-team role profiles bounded.
 
+Team Room also includes a Player Lens that keeps two evidence classes visibly separate. Public
+player cards show only latest-public-roster names, observed match counts, and champion repetition
+from the published feed. An optional `private-player-practice-session` JSON can overlay the selected
+own team's games, optional wins, self-reported comfort, and last-practiced date. The browser accepts
+at most 250 rows and 256 KB, rejects a team-name mismatch, and keeps the parsed session only in React
+memory. It is never written to local storage, sent to a server or AI provider, included in a share
+link, or copied into a public export. Changing the own team or closing the tab removes it. Opponent
+private practice is neither accepted nor inferred.
+
 ## Checks
 
 ```bash

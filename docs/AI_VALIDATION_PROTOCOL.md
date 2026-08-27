@@ -54,6 +54,39 @@ reference, add output from the pinned AI system on the same task, assign the fin
 produce the private input contract below. This separation prevents public collection from leaking
 or silently redefining the holdout answer.
 
+## Blinded offline assembly
+
+Prepare two independent, fingerprint-locked templates from the exported human bundle. Keep every
+file in a private directory; never place a human draft, expert answer, AI output, prompt, or paired
+run under `web/public`.
+
+```bash
+python -m pro_meta_intelligence prepare-ai-holdout \
+  --human-baselines private/human-baselines.json \
+  --reference-template private/expert-reference-template.json \
+  --ai-template private/ai-output-template.json \
+  --output private/preparation-summary.json
+```
+
+The expert fills only the reference template. The pinned AI runner fills only the AI template and
+its provider/model/model-version/prompt-version metadata. Neither template contains the human
+selection. Both contain the same immutable task and SHA-256 task fingerprint, so the assembler
+rejects missing, additional, duplicated, or changed cases instead of joining them by position.
+
+After the two paths are complete, assemble the private evaluator input:
+
+```bash
+python -m pro_meta_intelligence assemble-ai-holdout \
+  --human-baselines private/human-baselines.json \
+  --expert-references private/expert-references.json \
+  --ai-outputs private/ai-outputs.json \
+  --output private/paired-holdout.json
+```
+
+The assembler hashes private task keys into case IDs, verifies every expert requirement against the
+frozen choices, pins the system metadata, and keeps invented AI IDs so the deterministic evaluator
+can count them as critical errors. It refuses to write raw output inside `web/public`.
+
 ## Release gates
 
 | Gate | Required result |

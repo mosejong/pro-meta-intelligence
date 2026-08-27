@@ -90,6 +90,12 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /전체 분석 보기/);
   assert.match(html, /분석 링크 복사/);
   assert.match(html, /내 팀 선택 후 공유 가능/);
+  assert.match(html, /PLAYER LENS · PUBLIC \+ PRIVATE/);
+  assert.match(html, /선수 성향과 개인 연습을 섞지 않고 봅니다/);
+  assert.match(html, /개인 연습 세션 오버레이/);
+  assert.match(html, /PRIVATE DATA BOUNDARY/);
+  assert.match(html, /서버·로컬 저장소·AI·발행 피드로 전송하지 않습니다/);
+  assert.match(html, /상대팀 연습 데이터 금지/);
   assert.match(html, /ONE-PAGE · STAFF REVIEW/);
   assert.match(html, /T1 공개 데이터 원페이지 브리프/);
   assert.match(html, /NEXT VERIFIED FIXTURE/);
@@ -998,6 +1004,73 @@ test("filters the large team list by name, alias, and league", async () => {
     assert.equal(matchesTeamQuery(t1, "  t1 lck  "), true);
     assert.equal(matchesTeamQuery(t1, "LEC"), false);
     assert.ok(feed.opponent_prep.teams.filter((team) => matchesTeamQuery(team, "LCK")).length > 1);
+  } finally {
+    await vite.close();
+  }
+});
+
+test("accepts only bounded own-team private practice and summarizes roster matches", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+  assert.ok(t1);
+  assert.ok(t1.player_profiles?.length);
+  const player = t1.player_profiles.find((candidate) => candidate.roster_status === "CURRENT");
+  assert.ok(player);
+
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+
+  try {
+    const {
+      PRIVATE_PRACTICE_MAX_BYTES,
+      parsePrivatePracticeSession,
+      summarizePrivatePractice,
+    } = await vite.ssrLoadModule("/app/player-practice.ts");
+    assert.equal(PRIVATE_PRACTICE_MAX_BYTES, 256 * 1024);
+
+    const payload = {
+      schema_version: "1",
+      artifact_type: "private-player-practice-session",
+      team_name: t1.team_name,
+      recorded_at: "2026-08-27T12:00:00Z",
+      rows: [
+        {
+          player_name: player.player_name,
+          role: player.role,
+          champion_id: player.champions[0]?.champion_id ?? "Azir",
+          games: 8,
+          wins: 5,
+          comfort: 4,
+          last_practiced_at: "2026-08-27T10:00:00Z",
+        },
+      ],
+    };
+    const session = parsePrivatePracticeSession(payload, t1);
+    const summaries = summarizePrivatePractice(session, t1.player_profiles);
+    assert.equal(summaries.length, 1);
+    assert.equal(summaries[0].games, 8);
+    assert.equal(summaries[0].wins, 5);
+    assert.equal(summaries[0].average_comfort, 4);
+    assert.equal(summaries[0].matches_public_roster, true);
+
+    assert.throws(
+      () => parsePrivatePracticeSession({ ...payload, team_name: "Opponent Private Team" }, t1),
+      /선택한 내 팀/,
+    );
+    assert.throws(
+      () => parsePrivatePracticeSession({ ...payload, rows: [{ ...payload.rows[0], wins: 9 }] }, t1),
+      /wins/,
+    );
+    assert.throws(
+      () => parsePrivatePracticeSession({ ...payload, rows: [payload.rows[0], payload.rows[0]] }, t1),
+      /중복/,
+    );
   } finally {
     await vite.close();
   }

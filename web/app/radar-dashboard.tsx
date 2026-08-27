@@ -30,6 +30,7 @@ import { isHistoryStatus, isRadarReport, isScheduleChangeLog, isScheduleSnapshot
 import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
 import { ProductHome } from "./product-home";
+import { PlayerPracticePanel } from "./player-practice-panel";
 import { productRootHref, productSpaceHref, type ProductSpace } from "./product-space";
 import { sampleReport } from "./sample-report";
 import { buildTeamContext } from "./team-context";
@@ -1066,6 +1067,8 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         <a className={selectedMyTeam ? "complete" : "locked"} href="#opponent-prep"><b>2</b><span><small>준비할 상대</small><strong>{selectedMyTeam ? `${selectedOpponent?.team_name ?? "순위 계산 중"}${isDefaultTargetSelected ? " · 기본 타깃" : ""}` : `${DEFAULT_TARGET_TEAM_NAME} 기본 타깃`}</strong></span></a>
         <a className={matchupBattlecard ? "ready" : "locked"} href="#draft-battlecard"><b>3</b><span><small>드래프트 배틀카드</small><strong>{matchupBattlecard ? "확인 준비 완료" : "상대 선택 후 생성"}</strong></span></a>
       </nav>
+
+      {initialSpace === "TEAM" && <PlayerPracticePanel ownTeam={selectedMyTeam} opponent={selectedOpponent} />}
 
       {targetMatchDayBrief && pinnedTargetProfile && <T1OnePageBrief
         brief={targetMatchDayBrief}
