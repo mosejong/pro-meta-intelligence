@@ -173,10 +173,14 @@ post-evaluation material.
 
 Current foundation: deterministic, claim-locked topic briefs, an immutable Radar/Creator snapshot
 feed, a deterministic three-minute Match-day Emergency Brief, and evidence-locked 16:9/9:16 visual
-scene exports are implemented. The visual exporter uses experimental HTML-in-Canvas only as an
-optional enhancement and retains a production fallback. Natural-language querying, multi-scene
-storyboards, provider-backed drafting, long-form script review, and post-outcome miss tracking remain
-future gates.
+scene exports are implemented. Player Lens also includes a deterministic natural-language tendency
+bot that answers from public match IDs, may cross-check only the selected own team's tab-local
+practice rows, refuses personality/mental-state/hidden-account inference, and never uses private
+practice for an opponent answer. It reports that its output is rule-based rather than AI-generated.
+The visual exporter uses experimental HTML-in-Canvas only as an optional enhancement and retains a
+production fallback. Provider-backed drafting remains locked behind the 30-case paired-human release
+gate and a server-side secrets boundary; multi-scene storyboards, long-form script review, and
+post-outcome miss tracking remain future gates.
 
 The T1-first product path also includes a normalized official-schedule Match-Day Control. It keeps
 TBD participants unresolved, verifies whether the selected own team is actually in the same event,

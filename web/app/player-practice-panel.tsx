@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- champion portraits use the stable Riot CDN */
 
 import { type ChangeEvent, type FormEvent, useMemo, useRef, useState } from "react";
+import type { AIValidationStatus } from "./ai-validation";
 import { championImageUrl } from "./champion-assets";
 import { useChampionNames } from "./champion-names";
 import {
@@ -20,6 +21,7 @@ import {
   type PrivatePracticeSession,
 } from "./player-practice";
 import type { OpponentPlayerProfile, OpponentTeam, RadarEntry } from "./radar-types";
+import { PlayerTendencyBotPanel } from "./player-tendency-bot-panel";
 
 const roleLabels: Record<string, string> = {
   TOP: "탑",
@@ -92,10 +94,12 @@ export function PlayerPracticePanel({
   ownTeam,
   opponent,
   reviewCandidates = [],
+  aiValidation,
 }: {
   ownTeam?: OpponentTeam;
   opponent?: OpponentTeam;
   reviewCandidates?: RadarEntry[];
+  aiValidation: AIValidationStatus | null;
 }) {
   const { catalog, nameOf } = useChampionNames();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -227,6 +231,8 @@ export function PlayerPracticePanel({
       <PublicPlayerColumn team={ownTeam} label="MY TEAM · PUBLIC MATCHES" />
       <PublicPlayerColumn team={opponent} label="SELECTED OPPONENT · PUBLIC MATCHES" />
     </div>
+
+    <PlayerTendencyBotPanel ownTeam={ownTeam} opponent={opponent} privateSession={session} aiValidation={aiValidation} />
 
     <article className={`private-practice ${session ? "loaded" : "empty"}`}>
       <header>

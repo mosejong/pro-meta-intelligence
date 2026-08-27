@@ -141,6 +141,13 @@ unmatched-name, and roster-unavailable states and can prefill the editor for a s
 This coverage view never changes Radar rank, opponent priority, a team decision, or a player
 selection; missing practice data remains an unknown rather than negative evidence.
 
+Player Lens also contains a natural-language Tendency Analyst Bot. The production bot routes
+questions deterministically to public champion repetition, own-team practice cross-check,
+same-role comparison, evidence-risk, or refusal responses. Every answer exposes evidence IDs and
+boundaries. Personality, mentality, condition, form, private opponent practice, and hidden-account
+questions are refused. The UI shows the public AI validation count and keeps generative output
+locked; no provider, API key, server chat history, or model request is present in the static client.
+
 ## Checks
 
 ```bash
