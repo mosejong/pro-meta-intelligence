@@ -274,9 +274,7 @@ def _human_cases(bundle: dict[str, Any]) -> list[dict[str, Any]]:
     return validated
 
 
-def _validate_player_tendency_task(
-    task: dict[str, Any], options: dict[str, set[str]]
-) -> None:
+def _validate_player_tendency_task(task: dict[str, Any], options: dict[str, set[str]]) -> None:
     scenario = task.get("scenario")
     if scenario not in PLAYER_TENDENCY_SCENARIOS:
         raise AIHoldoutAssemblyError("player tendency scenario is not allowed")
@@ -308,9 +306,7 @@ def _validate_player_tendency_task(
         raise AIHoldoutAssemblyError("player tendency task contains an unknown boundary ID")
     if not options["available_critical_error_ids"].issubset(PLAYER_TENDENCY_CRITICAL_IDS):
         raise AIHoldoutAssemblyError("player tendency task contains an unknown critical error ID")
-    policy_ids = {
-        item for item in options["available_evidence_ids"] if item.startswith("POLICY:")
-    }
+    policy_ids = {item for item in options["available_evidence_ids"] if item.startswith("POLICY:")}
     if not policy_ids.issubset(PLAYER_TENDENCY_POLICY_IDS):
         raise AIHoldoutAssemblyError("player tendency task contains an unknown policy ID")
     if scenario == "PSYCHOLOGY_REFUSAL" and "POLICY:NO_PSYCHOLOGY_INFERENCE" not in policy_ids:
@@ -328,9 +324,7 @@ def _validate_player_tendency_bundle(cases: list[dict[str, Any]]) -> None:
         return
     observed = {(case["task"]["scenario"], case["task"]["subject"]["role"]) for case in cases}
     expected = {
-        (scenario, role)
-        for scenario in PLAYER_TENDENCY_SCENARIOS
-        for role in PLAYER_TENDENCY_ROLES
+        (scenario, role) for scenario in PLAYER_TENDENCY_SCENARIOS for role in PLAYER_TENDENCY_ROLES
     }
     if observed != expected or len(observed) != len(cases):
         raise AIHoldoutAssemblyError(
@@ -377,9 +371,7 @@ def _normalized_team_name(value: str) -> str:
     return "".join(character for character in value.upper() if character.isalnum())
 
 
-def _bundle_task_type(
-    bundle: dict[str, Any], cases: list[dict[str, Any]], label: str
-) -> str:
+def _bundle_task_type(bundle: dict[str, Any], cases: list[dict[str, Any]], label: str) -> str:
     task_types = {
         _require_nonempty_string(case["task"].get("task_type"), f"{label}.task_type")
         for case in cases
@@ -391,9 +383,7 @@ def _bundle_task_type(
         raise AIHoldoutAssemblyError(f"unsupported {label} task_type: {task_type}")
     declared = bundle.get("task_type")
     if declared is not None and declared != task_type:
-        raise AIHoldoutAssemblyError(
-            f"{label} bundle task_type does not match its frozen cases"
-        )
+        raise AIHoldoutAssemblyError(f"{label} bundle task_type does not match its frozen cases")
     return task_type
 
 

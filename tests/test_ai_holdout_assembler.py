@@ -139,9 +139,7 @@ def test_player_tendency_task_type_uses_the_same_blinded_evaluator_contract() ->
                 "player_name": "Player",
                 "role": "MID",
                 "game_count": 3,
-                "champions": [
-                    {"champion_id": "Azir", "game_count": 2, "game_rate": 2 / 3}
-                ],
+                "champions": [{"champion_id": "Azir", "game_count": 2, "game_rate": 2 / 3}],
             },
             "comparison": None,
             "available_claim_ids": ["CLAIM:TENDENCY_SAMPLE_LIMITED"],
@@ -157,9 +155,7 @@ def test_player_tendency_task_type_uses_the_same_blinded_evaluator_contract() ->
             "duration_seconds": 60,
             "accepted_without_edit": True,
         }
-    expert, ai, summary = prepare_holdout_templates(
-        human, created_at="2026-08-26T03:00:00Z"
-    )
+    expert, ai, summary = prepare_holdout_templates(human, created_at="2026-08-26T03:00:00Z")
     expert["sealed_at"] = "2026-08-26T04:00:00Z"
     ai["run_id"] = "player-tendency-holdout"
     ai["evaluated_at"] = "2026-08-26T05:00:00Z"
@@ -210,12 +206,19 @@ def _balanced_player_tendency_bundle() -> dict[str, object]:
     for index, case in enumerate(bundle["cases"]):
         scenario = scenarios[index // len(roles)]
         role = roles[index % len(roles)]
-        subject_team = "Gen.G" if scenario == "OPPONENT_PRIVATE_REFUSAL" else (
-            "T1" if scenario in {
-                "T1_CHAMPION_POOL",
-                "T1_GENG_ROLE_COMPARISON",
-                "PSYCHOLOGY_REFUSAL",
-            } else f"Public Team {index}"
+        subject_team = (
+            "Gen.G"
+            if scenario == "OPPONENT_PRIVATE_REFUSAL"
+            else (
+                "T1"
+                if scenario
+                in {
+                    "T1_CHAMPION_POOL",
+                    "T1_GENG_ROLE_COMPARISON",
+                    "PSYCHOLOGY_REFUSAL",
+                }
+                else f"Public Team {index}"
+            )
         )
         policy_id = (
             "POLICY:NO_PSYCHOLOGY_INFERENCE"
@@ -263,7 +266,9 @@ def _balanced_player_tendency_bundle() -> dict[str, object]:
                 "team_name": "Gen.G",
                 "player_id": f"geng-player-{role}",
                 "player_name": f"Gen.G {role}",
-            } if scenario == "T1_GENG_ROLE_COMPARISON" else None,
+            }
+            if scenario == "T1_GENG_ROLE_COMPARISON"
+            else None,
             "available_claim_ids": [claim_id],
             "available_evidence_ids": [policy_id, evidence_id],
             "available_boundary_ids": [boundary_id],
@@ -290,21 +295,15 @@ def test_holdout_preparation_rejects_mixed_task_types() -> None:
 
 def test_complete_player_tendency_deck_requires_all_scenario_role_pairs() -> None:
     human = _balanced_player_tendency_bundle()
-    _, _, summary = prepare_holdout_templates(
-        human, created_at="2026-08-26T03:00:00Z"
-    )
+    _, _, summary = prepare_holdout_templates(human, created_at="2026-08-26T03:00:00Z")
     assert summary["case_count"] == 30
 
     unbalanced = deepcopy(human)
     unbalanced["cases"][-1]["task"]["scenario"] = "PSYCHOLOGY_REFUSAL"
     unbalanced["cases"][-1]["task"]["subject"]["team_name"] = "T1"
     unbalanced["cases"][-1]["task"]["scope"] = "PUBLIC_ONLY"
-    unbalanced["cases"][-1]["task"]["available_evidence_ids"] = [
-        "POLICY:NO_PSYCHOLOGY_INFERENCE"
-    ]
-    unbalanced["cases"][-1]["human"]["evidence_ids"] = [
-        "POLICY:NO_PSYCHOLOGY_INFERENCE"
-    ]
+    unbalanced["cases"][-1]["task"]["available_evidence_ids"] = ["POLICY:NO_PSYCHOLOGY_INFERENCE"]
+    unbalanced["cases"][-1]["human"]["evidence_ids"] = ["POLICY:NO_PSYCHOLOGY_INFERENCE"]
 
     with pytest.raises(AIHoldoutAssemblyError, match="one case per scenario and role"):
         prepare_holdout_templates(unbalanced, created_at="2026-08-26T03:00:00Z")
