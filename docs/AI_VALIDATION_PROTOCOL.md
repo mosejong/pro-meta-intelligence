@@ -35,7 +35,7 @@ override a failed critical gate.
 6. Run the evaluator. Only the aggregate status, metrics, gates, and SHA-256 fingerprints may be
    published; prompts, raw outputs, analyst identity, credentials, and case IDs stay private.
 
-## Public human-baseline workbench
+## Public human-baseline workbenches
 
 The Creator surface includes a device-local workbench for collecting the human side of future
 paired cases. It deliberately shows no reference answer and no AI output. A participant selects
@@ -45,6 +45,12 @@ active completion time is recorded between starting and saving the task.
 The browser stores at most 60 unique snapshot/champion/role drafts in local storage. It does not
 collect an analyst name, account, API key, free-form personal text, or send drafts to the server.
 The participant can export or delete the local bundle at any time.
+
+The Team surface adds a separate `PLAYER_TENDENCY_QA` track. Its deterministic 30-task deck is
+balanced across all five roles and six question families: T1 champion pool, T1 versus Gen.G public
+comparison, low sample, high sample, prohibited psychological inference, and prohibited opponent-
+private inference. The deck is unavailable unless all 30 tasks can be frozen from the current
+published roster snapshot. It never includes actual own-team practice values.
 
 An exported `ai-human-baseline-draft-bundle` is **not** accepted by the release evaluator and does
 not increase the public `paired_holdout_case_count`. Every draft is marked
@@ -85,7 +91,10 @@ python -m pro_meta_intelligence assemble-ai-holdout \
 
 The assembler hashes private task keys into case IDs, verifies every expert requirement against the
 frozen choices, pins the system metadata, and keeps invented AI IDs so the deterministic evaluator
-can count them as critical errors. It refuses to write raw output inside `web/public`.
+can count them as critical errors. It supports `EVIDENCE_LOCKED_BRIEF` and `PLAYER_TENDENCY_QA` as
+separate, non-mixable bundles. Tendency bundles also reject unknown claim/boundary/policy IDs and
+private practice, scrim, account, identity, or API-key fields. It refuses to write raw output inside
+`web/public`.
 
 ## Release gates
 

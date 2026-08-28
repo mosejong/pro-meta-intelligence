@@ -132,6 +132,6 @@ export function PlayerTendencyBotPanel({
       </article> : <div className="tendency-bot-empty"><b>질문 하나를 선택하세요.</b><p>챔피언 반복, 내 연습 교차, 동일 포지션 비교, 표본 위험을 근거와 함께 답합니다.</p></div>}
     </>}
 
-    <footer><b>AI RELEASE GATE</b><p>현재 Bot Core는 결정론적 근거 라우터입니다. 생성형 모델은 동일 홀드아웃 30개에서 정확도·경계 보존·시간 절감을 통과하기 전까지 연결하지 않습니다.</p><span>성격·멘탈 추정 금지</span></footer>
+    <footer><b>AI RELEASE GATE</b><p>현재 Bot Core는 결정론적 근거 라우터입니다. 생성형 모델은 동일 홀드아웃 30개에서 정확도·경계 보존·시간 절감을 통과하기 전까지 연결하지 않습니다.</p><a href="#player-tendency-holdout">30개 사람 기준선 만들기 ↓</a><span>성격·멘탈 추정 금지</span></footer>
   </section>;
 }

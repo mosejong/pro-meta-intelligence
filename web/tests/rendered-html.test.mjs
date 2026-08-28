@@ -99,6 +99,10 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /선수 성향 분석봇/);
   assert.match(html, /AI GATE CHECKING/);
   assert.match(html, /성격·멘탈 추정 금지/);
+  assert.match(html, /선수 성향봇 30개 사람 기준선/);
+  assert.match(html, /T1 중심 안전·정확도 30개/);
+  assert.match(html, /균형 과제/);
+  assert.match(html, /기기 로컬 선수 성향 기준선을 확인하는 중/);
   assert.match(html, /ONE-PAGE · STAFF REVIEW/);
   assert.match(html, /T1 공개 데이터 원페이지 브리프/);
   assert.match(html, /NEXT VERIFIED FIXTURE/);
@@ -309,10 +313,91 @@ test("keeps human AI baselines local, bounded, and explicitly ungraded", async (
 
     const bundle = JSON.parse(exportAIHumanBaselineBundle(drafts, "2026-08-26T08:02:00Z"));
     assert.equal(bundle.case_count, 1);
+    assert.equal(bundle.task_type, "EVIDENCE_LOCKED_BRIEF");
     assert.equal(bundle.contains_expert_reference, false);
     assert.equal(bundle.contains_ai_output, false);
     assert.equal(bundle.ready_for_release_evaluation, false);
     assert.equal(bundle.next_action, "ADD_SEALED_REFERENCE_AND_PAIRED_AI_OUTPUT_OFFLINE");
+  } finally {
+    await vite.close();
+  }
+});
+
+test("builds a balanced private-safe 30-case player tendency human baseline deck", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+  try {
+    const {
+      buildPlayerTendencyHoldoutTasks,
+      createPlayerTendencyBaselineDraft,
+      exportPlayerTendencyBaselineBundle,
+      parsePlayerTendencyBaselineDrafts,
+      serializePlayerTendencyBaselineDrafts,
+      upsertPlayerTendencyBaselineDraft,
+    } = await vite.ssrLoadModule("/app/player-tendency-baseline.ts");
+    const tasks = buildPlayerTendencyHoldoutTasks(feed);
+    assert.equal(tasks.length, 30);
+    assert.equal(new Set(tasks.map((task) => task.task_key)).size, 30);
+    assert.ok(tasks.every((task) => task.task.task_type === "PLAYER_TENDENCY_QA"));
+    assert.ok(tasks.every((task) => task.task.available_evidence_ids.length > 0));
+    assert.ok(tasks.every((task) => task.snapshot.source_content_hashes.length > 0));
+
+    const scenarioCounts = Object.fromEntries(Object.entries(Object.groupBy(tasks, (task) => task.task.scenario)).map(([key, values]) => [key, values.length]));
+    assert.deepEqual(scenarioCounts, {
+      T1_CHAMPION_POOL: 5,
+      T1_GENG_ROLE_COMPARISON: 5,
+      LOW_SAMPLE_RISK: 5,
+      HIGH_SAMPLE_RISK: 5,
+      PSYCHOLOGY_REFUSAL: 5,
+      OPPONENT_PRIVATE_REFUSAL: 5,
+    });
+    assert.ok(tasks.filter((task) => task.task.scenario === "T1_CHAMPION_POOL").every((task) => task.task.subject.team_name === "T1"));
+    assert.ok(tasks.filter((task) => task.task.scenario === "T1_GENG_ROLE_COMPARISON").every((task) => task.task.comparison?.team_name === "Gen.G"));
+    assert.ok(tasks.filter((task) => task.task.scenario === "PSYCHOLOGY_REFUSAL").every((task) => task.task.available_evidence_ids.includes("POLICY:NO_PSYCHOLOGY_INFERENCE")));
+    assert.ok(tasks.filter((task) => task.task.scenario === "OPPONENT_PRIVATE_REFUSAL").every((task) => task.task.scope === "OPPONENT_PUBLIC_ONLY" && task.task.available_evidence_ids.includes("POLICY:NO_OPPONENT_PRIVATE")));
+
+    const task = tasks[0];
+    const first = createPlayerTendencyBaselineDraft({
+      task,
+      draftId: "tendency-draft-001",
+      savedAt: "2026-08-27T05:00:00Z",
+      claimIds: ["CLAIM:TENDENCY_TOP_CHAMPION", "CLAIM:INVENTED"],
+      evidenceIds: [task.task.available_evidence_ids[0], "EVIDENCE:INVENTED"],
+      boundaryIds: ["BOUNDARY:PUBLIC_ONLY", "BOUNDARY:INVENTED"],
+      criticalErrorIds: ["CRITICAL:INVENTED"],
+      durationSeconds: 41.8,
+      acceptedWithoutEdit: true,
+    });
+    assert.deepEqual(first.human.claim_ids, ["CLAIM:TENDENCY_TOP_CHAMPION"]);
+    assert.deepEqual(first.human.evidence_ids, [task.task.available_evidence_ids[0]]);
+    assert.deepEqual(first.human.boundary_ids, ["BOUNDARY:PUBLIC_ONLY"]);
+    assert.deepEqual(first.human.critical_error_ids, []);
+    assert.equal(first.human.duration_seconds, 42);
+    assert.equal(first.privacy.analyst_identity_collected, false);
+    assert.equal(first.privacy.api_key_collected, false);
+
+    const replacement = { ...first, draft_id: "tendency-draft-002", saved_at: "2026-08-27T05:01:00Z" };
+    const drafts = upsertPlayerTendencyBaselineDraft([first], replacement);
+    assert.equal(drafts.length, 1);
+    assert.deepEqual(parsePlayerTendencyBaselineDrafts(serializePlayerTendencyBaselineDrafts(drafts)), drafts);
+    assert.deepEqual(parsePlayerTendencyBaselineDrafts("{invalid"), []);
+
+    const bundle = JSON.parse(exportPlayerTendencyBaselineBundle(drafts, "2026-08-27T05:02:00Z"));
+    assert.equal(bundle.task_type, "PLAYER_TENDENCY_QA");
+    assert.equal(bundle.case_count, 1);
+    assert.equal(bundle.contains_private_practice, false);
+    assert.equal(bundle.contains_expert_reference, false);
+    assert.equal(bundle.contains_ai_output, false);
+    assert.equal(bundle.ready_for_release_evaluation, false);
+    assert.equal(bundle.next_action, "COLLECT_30_PLAYER_TENDENCY_HUMAN_BASELINES");
+    assert.doesNotMatch(JSON.stringify(bundle), /practice_session|api_key\s*:/i);
   } finally {
     await vite.close();
   }

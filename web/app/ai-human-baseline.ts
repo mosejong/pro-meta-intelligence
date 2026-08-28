@@ -226,6 +226,7 @@ export function exportAIHumanBaselineBundle(drafts: AIHumanBaselineDraft[], expo
   return JSON.stringify({
     schema_version: "1",
     artifact_type: "ai-human-baseline-draft-bundle",
+    task_type: "EVIDENCE_LOCKED_BRIEF",
     exported_at: exportedAt,
     case_count: drafts.length,
     cases: drafts,

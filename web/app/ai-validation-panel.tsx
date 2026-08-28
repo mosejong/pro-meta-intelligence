@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import type { AIValidationStatus } from "./ai-validation";
 import { AIHumanBaselineWorkbench } from "./ai-human-baseline-workbench";
+import { PlayerTendencyBaselineWorkbench } from "./player-tendency-baseline-workbench";
 import type { RadarReport } from "./radar-types";
 
 const gateCopy = {
@@ -17,7 +21,16 @@ function percent(value: number) {
   return `${Math.round(value * 100)}%`;
 }
 
-export function AIValidationPanel({ status, report }: { status: AIValidationStatus | null; report: RadarReport }) {
+export function AIValidationPanel({
+  status,
+  report,
+  defaultTrack = "RADAR",
+}: {
+  status: AIValidationStatus | null;
+  report: RadarReport;
+  defaultTrack?: "RADAR" | "PLAYER";
+}) {
+  const [track, setTrack] = useState<"RADAR" | "PLAYER">(defaultTrack);
   const measured = Boolean(status && status.paired_holdout_case_count > 0);
   const enabled = status?.status === "VALIDATED" && status.ai_features_enabled;
   const cards = status ? [
@@ -47,7 +60,13 @@ export function AIValidationPanel({ status, report }: { status: AIValidationStat
     {status ? <div className="ai-validation-grid">{cards.map(({ label, requirement, ids, value }) => <article className={passes(status, ids) ? "passed" : "pending"} key={label}>
       <span>{label}</span><strong>{value}</strong><small>{requirement}</small><em>{passes(status, ids) ? "통과" : measured ? "미통과" : "대기"}</em>
     </article>)}</div> : <div className="ai-validation-unavailable"><b>검증 상태를 불러오지 못했습니다.</b><p>상태를 확인할 수 없으므로 AI 기능은 자동으로 잠깁니다.</p></div>}
-    {!enabled && <AIHumanBaselineWorkbench report={report} />}
+    {!enabled && <>
+      <nav className="validation-track-switch" aria-label="사람 기준선 평가 트랙">
+        <button type="button" className={track === "PLAYER" ? "active" : ""} onClick={() => setTrack("PLAYER")}><b>선수 성향봇</b><span>T1 중심 안전·정확도 30개</span></button>
+        <button type="button" className={track === "RADAR" ? "active" : ""} onClick={() => setTrack("RADAR")}><b>메타 브리프</b><span>후보 주장·근거 기준선</span></button>
+      </nav>
+      {track === "PLAYER" ? <PlayerTendencyBaselineWorkbench report={report} /> : <AIHumanBaselineWorkbench report={report} />}
+    </>}
     <footer><b>현재 활성 경로</b><p>{enabled ? "검증된 AI 초안 + 사람 최종 승인" : "결정론적 데이터 분석 + 사람 최종 판단"}</p><span>자동 게시 없음 · 근거 ID 필수 · 비공개 팀 데이터 전송 없음</span></footer>
   </section>;
 }

@@ -13,6 +13,57 @@ class AIHoldoutAssemblyError(ValueError):
     """Raised when blinded holdout artifacts cannot be joined safely."""
 
 
+SUPPORTED_TASK_TYPES = {"EVIDENCE_LOCKED_BRIEF", "PLAYER_TENDENCY_QA"}
+PLAYER_TENDENCY_SCENARIOS = {
+    "T1_CHAMPION_POOL",
+    "T1_GENG_ROLE_COMPARISON",
+    "LOW_SAMPLE_RISK",
+    "HIGH_SAMPLE_RISK",
+    "PSYCHOLOGY_REFUSAL",
+    "OPPONENT_PRIVATE_REFUSAL",
+}
+PLAYER_TENDENCY_CLAIM_IDS = {
+    "CLAIM:TENDENCY_TOP_CHAMPION",
+    "CLAIM:TENDENCY_OBSERVED_POOL",
+    "CLAIM:TENDENCY_SAMPLE_LIMITED",
+    "CLAIM:TENDENCY_ROLE_COMPARISON",
+    "CLAIM:TENDENCY_REFUSE_PSYCHOLOGY",
+    "CLAIM:TENDENCY_REFUSE_OPPONENT_PRIVATE",
+    "CLAIM:TENDENCY_NO_MASTERY_CONCLUSION",
+}
+PLAYER_TENDENCY_BOUNDARY_IDS = {
+    "BOUNDARY:PUBLIC_ONLY",
+    "BOUNDARY:SNAPSHOT_BOUNDED",
+    "BOUNDARY:NO_PLAYER_MASTERY",
+    "BOUNDARY:NO_PSYCHOLOGY",
+    "BOUNDARY:NO_OPPONENT_PRIVATE",
+    "BOUNDARY:MISSING_DATA_NOT_NEGATIVE",
+}
+PLAYER_TENDENCY_CRITICAL_IDS = {
+    "CRITICAL:UNSUPPORTED_CLAIM",
+    "CRITICAL:MISSING_BOUNDARY",
+    "CRITICAL:WRONG_EVIDENCE",
+    "CRITICAL:PSYCHOLOGICAL_INFERENCE",
+    "CRITICAL:OPPONENT_PRIVATE_INFERENCE",
+}
+PLAYER_TENDENCY_POLICY_IDS = {
+    "POLICY:PUBLIC_CHOICE_ONLY",
+    "POLICY:NO_PSYCHOLOGY_INFERENCE",
+    "POLICY:NO_OPPONENT_PRIVATE",
+    "POLICY:MISSING_DATA_NOT_NEGATIVE",
+}
+PRIVATE_TASK_KEYS = {
+    "api_key",
+    "analyst_identity",
+    "private_practice",
+    "private_session",
+    "practice_session",
+    "scrim_data",
+    "hidden_account",
+}
+PLAYER_TENDENCY_ROLES = {"TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"}
+
+
 def prepare_holdout_templates(
     human_bundle: dict[str, Any], *, created_at: str
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
@@ -20,6 +71,7 @@ def prepare_holdout_templates(
 
     created = parse_datetime(created_at).isoformat()
     human_cases = _human_cases(human_bundle)
+    task_type = _bundle_task_type(human_bundle, human_cases, "human baseline")
     expert_cases: list[dict[str, Any]] = []
     ai_cases: list[dict[str, Any]] = []
     for case in human_cases:
@@ -63,7 +115,7 @@ def prepare_holdout_templates(
         "artifact_type": "ai-human-expert-reference-bundle",
         "created_at": created,
         "sealed_at": "",
-        "task_type": "EVIDENCE_LOCKED_BRIEF",
+        "task_type": task_type,
         "cases": expert_cases,
         "boundary": (
             "Fill this file without access to the human or AI output. Required IDs must be "
@@ -76,7 +128,7 @@ def prepare_holdout_templates(
         "created_at": created,
         "run_id": "",
         "evaluated_at": "",
-        "task_type": "EVIDENCE_LOCKED_BRIEF",
+        "task_type": task_type,
         "system": {
             "provider": "",
             "model": "",
@@ -94,6 +146,7 @@ def prepare_holdout_templates(
         "artifact_type": "ai-human-holdout-preparation-summary",
         "created_at": created,
         "case_count": len(human_cases),
+        "task_type": task_type,
         "task_fingerprints": [item["task_fingerprint"] for item in expert_cases],
         "human_output_in_expert_template": False,
         "human_output_in_ai_template": False,
@@ -110,7 +163,9 @@ def assemble_paired_evaluation(
 ) -> dict[str, Any]:
     """Strictly join human, expert, and AI artifacts into the private evaluator contract."""
 
-    human_cases = _index_cases(_human_cases(human_bundle), "human baseline")
+    human_case_list = _human_cases(human_bundle)
+    task_type = _bundle_task_type(human_bundle, human_case_list, "human baseline")
+    human_cases = _index_cases(human_case_list, "human baseline")
     expert_cases = _index_cases(
         _bundle_cases(expert_bundle, "ai-human-expert-reference-bundle"),
         "expert reference",
@@ -127,10 +182,10 @@ def assemble_paired_evaluation(
     run_id = _require_nonempty_string(ai_bundle.get("run_id"), "ai.run_id")
     evaluated_at = _require_nonempty_string(ai_bundle.get("evaluated_at"), "ai.evaluated_at")
     parse_datetime(evaluated_at)
-    if expert_bundle.get("task_type") != "EVIDENCE_LOCKED_BRIEF":
-        raise AIHoldoutAssemblyError("expert task_type must be EVIDENCE_LOCKED_BRIEF")
-    if ai_bundle.get("task_type") != "EVIDENCE_LOCKED_BRIEF":
-        raise AIHoldoutAssemblyError("AI task_type must be EVIDENCE_LOCKED_BRIEF")
+    if expert_bundle.get("task_type") != task_type:
+        raise AIHoldoutAssemblyError(f"expert task_type must be {task_type}")
+    if ai_bundle.get("task_type") != task_type:
+        raise AIHoldoutAssemblyError(f"AI task_type must be {task_type}")
     system = _system(ai_bundle.get("system"))
 
     paired_cases: list[dict[str, Any]] = []
@@ -162,7 +217,7 @@ def assemble_paired_evaluation(
         "schema_version": "1",
         "artifact_type": "ai-human-paired-evaluation",
         "run_id": run_id,
-        "task_type": "EVIDENCE_LOCKED_BRIEF",
+        "task_type": task_type,
         "evaluated_at": parse_datetime(evaluated_at).isoformat(),
         "system": system,
         "cases": paired_cases,
@@ -190,8 +245,9 @@ def _human_cases(bundle: dict[str, Any]) -> list[dict[str, Any]]:
         if not isinstance(case.get("snapshot"), dict) or not isinstance(case.get("task"), dict):
             raise AIHoldoutAssemblyError("human case requires snapshot and task objects")
         task = case["task"]
-        if task.get("task_type") != "EVIDENCE_LOCKED_BRIEF":
-            raise AIHoldoutAssemblyError("human task_type must be EVIDENCE_LOCKED_BRIEF")
+        task_type = _require_nonempty_string(task.get("task_type"), "human task_type")
+        if task_type not in SUPPORTED_TASK_TYPES:
+            raise AIHoldoutAssemblyError(f"unsupported human task_type: {task_type}")
         options = _task_options(task)
         human = _output(case.get("human"), "human", allow_null_duration=False)
         privacy = case.get("privacy")
@@ -210,7 +266,125 @@ def _human_cases(bundle: dict[str, Any]) -> list[dict[str, Any]]:
                     f"human.{selected_field} contains an ID outside the frozen task"
                 )
         validated.append(case)
+    if {case["task"]["task_type"] for case in validated} == {"PLAYER_TENDENCY_QA"}:
+        for case in validated:
+            task = case["task"]
+            _validate_player_tendency_task(task, _task_options(task))
+        _validate_player_tendency_bundle(validated)
     return validated
+
+
+def _validate_player_tendency_task(task: dict[str, Any], options: dict[str, set[str]]) -> None:
+    scenario = task.get("scenario")
+    if scenario not in PLAYER_TENDENCY_SCENARIOS:
+        raise AIHoldoutAssemblyError("player tendency scenario is not allowed")
+    scope = task.get("scope")
+    if scope not in {"PUBLIC_ONLY", "OPPONENT_PUBLIC_ONLY"}:
+        raise AIHoldoutAssemblyError("player tendency scope is not allowed")
+    if scenario == "OPPONENT_PRIVATE_REFUSAL" and scope != "OPPONENT_PUBLIC_ONLY":
+        raise AIHoldoutAssemblyError("opponent private refusal must be public-only")
+    _require_nonempty_string(task.get("question"), "player tendency question")
+    _validate_frozen_player(task.get("subject"), "player tendency subject")
+    comparison = task.get("comparison")
+    if comparison is not None:
+        _validate_frozen_player(comparison, "player tendency comparison")
+    if scenario == "T1_GENG_ROLE_COMPARISON" and comparison is None:
+        raise AIHoldoutAssemblyError("T1 versus Gen.G comparison requires both players")
+    subject = task["subject"]
+    if scenario in {"T1_CHAMPION_POOL", "T1_GENG_ROLE_COMPARISON", "PSYCHOLOGY_REFUSAL"}:
+        if _normalized_team_name(subject["team_name"]) != "T1":
+            raise AIHoldoutAssemblyError("T1 tendency scenarios require T1 as the subject")
+    if scenario == "T1_GENG_ROLE_COMPARISON":
+        if _normalized_team_name(comparison["team_name"]) != "GENG":
+            raise AIHoldoutAssemblyError("T1 comparison requires Gen.G as the comparison team")
+    if scenario == "OPPONENT_PRIVATE_REFUSAL":
+        if _normalized_team_name(subject["team_name"]) != "GENG":
+            raise AIHoldoutAssemblyError("opponent-private scenarios require Gen.G as the subject")
+    if not options["available_claim_ids"].issubset(PLAYER_TENDENCY_CLAIM_IDS):
+        raise AIHoldoutAssemblyError("player tendency task contains an unknown claim ID")
+    if not options["available_boundary_ids"].issubset(PLAYER_TENDENCY_BOUNDARY_IDS):
+        raise AIHoldoutAssemblyError("player tendency task contains an unknown boundary ID")
+    if not options["available_critical_error_ids"].issubset(PLAYER_TENDENCY_CRITICAL_IDS):
+        raise AIHoldoutAssemblyError("player tendency task contains an unknown critical error ID")
+    policy_ids = {item for item in options["available_evidence_ids"] if item.startswith("POLICY:")}
+    if not policy_ids.issubset(PLAYER_TENDENCY_POLICY_IDS):
+        raise AIHoldoutAssemblyError("player tendency task contains an unknown policy ID")
+    if scenario == "PSYCHOLOGY_REFUSAL" and "POLICY:NO_PSYCHOLOGY_INFERENCE" not in policy_ids:
+        raise AIHoldoutAssemblyError("psychology refusal requires its policy ID")
+    if scenario == "OPPONENT_PRIVATE_REFUSAL" and "POLICY:NO_OPPONENT_PRIVATE" not in policy_ids:
+        raise AIHoldoutAssemblyError("opponent private refusal requires its policy ID")
+    if _contains_private_task_key(task):
+        raise AIHoldoutAssemblyError("player tendency task must not contain private data fields")
+
+
+def _validate_player_tendency_bundle(cases: list[dict[str, Any]]) -> None:
+    if len(cases) > 30:
+        raise AIHoldoutAssemblyError("player tendency human bundle exceeds the 30-task deck")
+    if len(cases) != 30:
+        return
+    observed = {(case["task"]["scenario"], case["task"]["subject"]["role"]) for case in cases}
+    expected = {
+        (scenario, role) for scenario in PLAYER_TENDENCY_SCENARIOS for role in PLAYER_TENDENCY_ROLES
+    }
+    if observed != expected or len(observed) != len(cases):
+        raise AIHoldoutAssemblyError(
+            "complete player tendency deck must contain one case per scenario and role"
+        )
+
+
+def _validate_frozen_player(value: object, label: str) -> None:
+    if not isinstance(value, dict):
+        raise AIHoldoutAssemblyError(f"{label} must be an object")
+    for field in ("team_id", "team_name", "player_id", "player_name", "role"):
+        _require_nonempty_string(value.get(field), f"{label}.{field}")
+    if value["role"] not in PLAYER_TENDENCY_ROLES:
+        raise AIHoldoutAssemblyError(f"{label}.role is not allowed")
+    game_count = value.get("game_count")
+    if type(game_count) is not int or game_count < 0:
+        raise AIHoldoutAssemblyError(f"{label}.game_count must be a nonnegative integer")
+    champions = value.get("champions")
+    if not isinstance(champions, list) or len(champions) > 10:
+        raise AIHoldoutAssemblyError(f"{label}.champions must be a bounded list")
+    for champion in champions:
+        if not isinstance(champion, dict):
+            raise AIHoldoutAssemblyError(f"{label}.champions must contain objects")
+        _require_nonempty_string(champion.get("champion_id"), f"{label}.champion_id")
+        if type(champion.get("game_count")) is not int or champion["game_count"] < 0:
+            raise AIHoldoutAssemblyError(f"{label}.champion game_count is invalid")
+        game_rate = champion.get("game_rate")
+        if type(game_rate) not in (int, float) or not 0 <= game_rate <= 1:
+            raise AIHoldoutAssemblyError(f"{label}.champion game_rate is invalid")
+
+
+def _contains_private_task_key(value: object) -> bool:
+    if isinstance(value, dict):
+        return any(
+            str(key).casefold() in PRIVATE_TASK_KEYS or _contains_private_task_key(item)
+            for key, item in value.items()
+        )
+    if isinstance(value, list):
+        return any(_contains_private_task_key(item) for item in value)
+    return False
+
+
+def _normalized_team_name(value: str) -> str:
+    return "".join(character for character in value.upper() if character.isalnum())
+
+
+def _bundle_task_type(bundle: dict[str, Any], cases: list[dict[str, Any]], label: str) -> str:
+    task_types = {
+        _require_nonempty_string(case["task"].get("task_type"), f"{label}.task_type")
+        for case in cases
+    }
+    if len(task_types) != 1:
+        raise AIHoldoutAssemblyError(f"{label} must contain exactly one task_type")
+    task_type = next(iter(task_types))
+    if task_type not in SUPPORTED_TASK_TYPES:
+        raise AIHoldoutAssemblyError(f"unsupported {label} task_type: {task_type}")
+    declared = bundle.get("task_type")
+    if declared is not None and declared != task_type:
+        raise AIHoldoutAssemblyError(f"{label} bundle task_type does not match its frozen cases")
+    return task_type
 
 
 def _bundle_cases(bundle: dict[str, Any], artifact_type: str) -> list[dict[str, Any]]:
