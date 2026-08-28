@@ -389,10 +389,13 @@ def _normalize_game(
             "INVALID_ROLE_SET", "each side must contain top, jungle, mid, bottom, and support"
         )
 
+    first_pick_values = {row["firstPick"].strip() for row in team_rows}
+    if first_pick_values == {""}:
+        raise _GameValidationError("MISSING_FIRST_PICK", "firstPick is missing for both teams")
     first_pick_sides = [side for side, row in side_rows.items() if row["firstPick"].strip() == "1"]
     if len(first_pick_sides) != 1:
         raise _GameValidationError("INVALID_FIRST_PICK", "expected exactly one first-pick team")
-    if {row["firstPick"].strip() for row in team_rows} != {"0", "1"}:
+    if first_pick_values != {"0", "1"}:
         raise _GameValidationError("INVALID_FIRST_PICK", "firstPick values must be 0 and 1")
     first_side = first_pick_sides[0]
     second_side = Side.RED if first_side is Side.BLUE else Side.BLUE

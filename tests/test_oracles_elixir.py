@@ -154,6 +154,38 @@ def test_import_rejects_team_pick_list_that_does_not_match_players(tmp_path) -> 
     assert dict(imported.report.issue_counts) == {"PICK_SET_MISMATCH": 1}
 
 
+def test_import_distinguishes_missing_first_pick_from_a_broken_value(tmp_path) -> None:
+    rows = list(csv.DictReader(FIXTURE.open(encoding="utf-8", newline="")))
+    rows[10]["firstPick"] = ""
+    rows[11]["firstPick"] = ""
+    path = tmp_path / "missing-first-pick.csv"
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=rows[0])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    imported = import_fixture(path)
+
+    assert imported.matches == ()
+    assert dict(imported.report.issue_counts) == {"MISSING_FIRST_PICK": 1}
+    assert imported.report.issues[0].detail == "firstPick is missing for both teams"
+
+
+def test_import_keeps_conflicting_first_pick_values_blocking(tmp_path) -> None:
+    rows = list(csv.DictReader(FIXTURE.open(encoding="utf-8", newline="")))
+    rows[11]["firstPick"] = "1"
+    path = tmp_path / "conflicting-first-pick.csv"
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=rows[0])
+        writer.writeheader()
+        writer.writerows(rows)
+
+    imported = import_fixture(path)
+
+    assert imported.matches == ()
+    assert dict(imported.report.issue_counts) == {"INVALID_FIRST_PICK": 1}
+
+
 def test_import_rejects_file_level_schema_drift(tmp_path) -> None:
     path = tmp_path / "missing-columns.csv"
     path.write_text("gameid,league\nGAME001,LCK\n", encoding="utf-8")

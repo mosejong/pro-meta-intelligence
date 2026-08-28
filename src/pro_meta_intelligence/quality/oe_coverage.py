@@ -10,7 +10,7 @@ from pro_meta_intelligence.ingestion.oracles_elixir import OracleElixirImport
 from pro_meta_intelligence.models import DraftAction
 from pro_meta_intelligence.radar import LeagueRegionMap
 
-KNOWN_EXCLUSION_CODES = frozenset({"INCOMPLETE_GAME", "MISSING_TEAM_ID"})
+KNOWN_EXCLUSION_CODES = frozenset({"INCOMPLETE_GAME", "MISSING_FIRST_PICK", "MISSING_TEAM_ID"})
 BLOCKING_ISSUE_DISPOSITION = "BLOCKING_CONTRACT_ISSUE"
 KNOWN_EXCLUSION_DISPOSITION = "KNOWN_EXCLUSION"
 

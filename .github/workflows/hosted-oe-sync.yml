@@ -118,6 +118,17 @@ jobs:
             --maximum-job-age-hours 30 \
             --maximum-source-age-hours 50 \
             --output "$PRIVATE_STATE_DIR/local-health.json"
+      - name: Preserve public-safe sync diagnostics on success or rejection
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: oe-sync-diagnostics-${{ github.run_id }}
+          path: |
+            outputs/hosted-oe-state/sync-report.json
+            outputs/hosted-oe-state/local-health.json
+            outputs/oe-feed-jobs/latest.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: Repack authenticated private history without publishing raw rows
         run: >-
           python -m pro_meta_intelligence pack-private-oe-archive
