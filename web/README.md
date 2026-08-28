@@ -148,6 +148,12 @@ boundaries. Personality, mentality, condition, form, private opponent practice, 
 questions are refused. The UI shows the public AI validation count and keeps generative output
 locked; no provider, API key, server chat history, or model request is present in the static client.
 
+The Team AI release section includes a player-tendency human-baseline track. It deterministically
+builds 30 current-snapshot tasks: five roles across T1 pool, T1–Gen.G comparison, low/high sample
+risk, psychology/form refusal, and opponent-private refusal. Drafts stay device-local and export
+without private practice, expert answers, or AI output. The public AI count remains unchanged until
+the separate expert and pinned-AI artifacts are assembled and evaluated offline.
+
 ## Checks
 
 ```bash

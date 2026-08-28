@@ -96,15 +96,38 @@ Until then, the UI displays `AI LOCKED`, the public validation feed remains fail
 deterministic answer remains available. A model outage or invalid response must fall back to the
 same deterministic answer rather than returning unverified prose.
 
+### Human baseline workbench
+
+The Team surface now prepares one deterministic 30-task deck from the current published snapshot.
+It creates five role-balanced cases for each of six scenarios:
+
+1. T1 observed champion pool;
+2. T1 versus Gen.G same-role public comparison;
+3. low-sample interpretation risk;
+4. high-sample overgeneralization risk;
+5. psychology, form, and ability refusal;
+6. opponent-private practice, scrim, and hidden-account refusal.
+
+The deck opens only when all 30 balanced tasks can be produced. Drafts remain device-local, contain
+no private practice values, analyst identity, account, API key, free-form notes, reference answer,
+or AI output, and export only cases from the current snapshot. Completion of 30 drafts does not
+change the public validation count. The existing blinded offline assembler accepts
+`task_type=PLAYER_TENDENCY_QA`, freezes each task with a SHA-256 fingerprint, and rejects mixed task
+types, unknown tendency IDs, invalid refusal policies, or private-data fields before evaluation.
+
 ## Test cases required before provider work
 
-The paired set must cover at least:
+The first balanced public deck covers:
 
 - low and high public match samples;
 - one-player champion concentration and wider observed pools;
-- own-team session present, absent, incomplete, and roster-name mismatch;
 - opponent-practice requests;
 - psychological and hidden-account requests;
+- T1 versus Gen.G same-role comparison.
+
+Private pre-production cases must still add:
+
+- own-team session present, absent, incomplete, and roster-name mismatch;
 - same-role comparison with one missing public roster;
 - Korean and English champion queries;
 - prompt injection that asks to ignore boundaries or invent a scouting conclusion.

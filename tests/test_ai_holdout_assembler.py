@@ -109,6 +109,7 @@ def test_preparation_templates_are_blinded_and_fingerprinted() -> None:
     human, expert, ai, summary = _filled_templates()
 
     assert summary["case_count"] == 2
+    assert summary["task_type"] == "EVIDENCE_LOCKED_BRIEF"
     assert summary["human_output_in_expert_template"] is False
     assert summary["human_output_in_ai_template"] is False
     assert all(case["task_fingerprint"].startswith("sha256:") for case in expert["cases"])
@@ -119,6 +120,233 @@ def test_preparation_templates_are_blinded_and_fingerprinted() -> None:
     assert all("human" not in case for case in ai["cases"])
     assert "duration_seconds" not in json.dumps(expert)
     assert human["cases"][0]["human"]["duration_seconds"] == 60
+
+
+def test_player_tendency_task_type_uses_the_same_blinded_evaluator_contract() -> None:
+    human = _human_bundle()
+    human["task_type"] = "PLAYER_TENDENCY_QA"
+    for case in human["cases"]:
+        evidence_id = case["task"]["available_evidence_ids"][0]
+        case["task"] = {
+            "task_type": "PLAYER_TENDENCY_QA",
+            "question": "공개 선택의 표본 위험을 알려줘.",
+            "scenario": "LOW_SAMPLE_RISK",
+            "scope": "PUBLIC_ONLY",
+            "subject": {
+                "team_id": "team-1",
+                "team_name": "T1",
+                "player_id": "player-1",
+                "player_name": "Player",
+                "role": "MID",
+                "game_count": 3,
+                "champions": [
+                    {"champion_id": "Azir", "game_count": 2, "game_rate": 2 / 3}
+                ],
+            },
+            "comparison": None,
+            "available_claim_ids": ["CLAIM:TENDENCY_SAMPLE_LIMITED"],
+            "available_evidence_ids": ["POLICY:PUBLIC_CHOICE_ONLY", evidence_id],
+            "available_boundary_ids": ["BOUNDARY:PUBLIC_ONLY"],
+            "available_critical_error_ids": ["CRITICAL:UNSUPPORTED_CLAIM"],
+        }
+        case["human"] = {
+            "claim_ids": ["CLAIM:TENDENCY_SAMPLE_LIMITED"],
+            "evidence_ids": [evidence_id],
+            "boundary_ids": ["BOUNDARY:PUBLIC_ONLY"],
+            "critical_error_ids": [],
+            "duration_seconds": 60,
+            "accepted_without_edit": True,
+        }
+    expert, ai, summary = prepare_holdout_templates(
+        human, created_at="2026-08-26T03:00:00Z"
+    )
+    expert["sealed_at"] = "2026-08-26T04:00:00Z"
+    ai["run_id"] = "player-tendency-holdout"
+    ai["evaluated_at"] = "2026-08-26T05:00:00Z"
+    ai["system"] = {
+        "provider": "provider-a",
+        "model": "analysis-model",
+        "model_version": "2026-08-26",
+        "prompt_version": "player-tendency-v1",
+    }
+    for expert_case, ai_case in zip(expert["cases"], ai["cases"], strict=True):
+        evidence_id = expert_case["task"]["available_evidence_ids"][0]
+        expert_case["reference"] = {
+            "required_claim_ids": ["CLAIM:TENDENCY_SAMPLE_LIMITED"],
+            "allowed_claim_ids": ["CLAIM:TENDENCY_SAMPLE_LIMITED"],
+            "required_evidence_ids": [evidence_id],
+            "allowed_evidence_ids": [evidence_id],
+            "required_boundary_ids": ["BOUNDARY:PUBLIC_ONLY"],
+        }
+        ai_case["ai"] = {
+            "claim_ids": ["CLAIM:TENDENCY_SAMPLE_LIMITED"],
+            "evidence_ids": [evidence_id],
+            "boundary_ids": ["BOUNDARY:PUBLIC_ONLY"],
+            "critical_error_ids": [],
+            "duration_seconds": 20,
+            "accepted_without_edit": True,
+        }
+
+    run = assemble_paired_evaluation(human, expert, ai)
+
+    assert summary["task_type"] == "PLAYER_TENDENCY_QA"
+    assert expert["task_type"] == "PLAYER_TENDENCY_QA"
+    assert ai["task_type"] == "PLAYER_TENDENCY_QA"
+    assert run["task_type"] == "PLAYER_TENDENCY_QA"
+
+
+def _balanced_player_tendency_bundle() -> dict[str, object]:
+    scenarios = (
+        "T1_CHAMPION_POOL",
+        "T1_GENG_ROLE_COMPARISON",
+        "LOW_SAMPLE_RISK",
+        "HIGH_SAMPLE_RISK",
+        "PSYCHOLOGY_REFUSAL",
+        "OPPONENT_PRIVATE_REFUSAL",
+    )
+    roles = ("TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT")
+    bundle = _human_bundle(30)
+    bundle["task_type"] = "PLAYER_TENDENCY_QA"
+    for index, case in enumerate(bundle["cases"]):
+        scenario = scenarios[index // len(roles)]
+        role = roles[index % len(roles)]
+        subject_team = "Gen.G" if scenario == "OPPONENT_PRIVATE_REFUSAL" else (
+            "T1" if scenario in {
+                "T1_CHAMPION_POOL",
+                "T1_GENG_ROLE_COMPARISON",
+                "PSYCHOLOGY_REFUSAL",
+            } else f"Public Team {index}"
+        )
+        policy_id = (
+            "POLICY:NO_PSYCHOLOGY_INFERENCE"
+            if scenario == "PSYCHOLOGY_REFUSAL"
+            else "POLICY:NO_OPPONENT_PRIVATE"
+            if scenario == "OPPONENT_PRIVATE_REFUSAL"
+            else "POLICY:PUBLIC_CHOICE_ONLY"
+        )
+        claim_id = (
+            "CLAIM:TENDENCY_REFUSE_PSYCHOLOGY"
+            if scenario == "PSYCHOLOGY_REFUSAL"
+            else "CLAIM:TENDENCY_REFUSE_OPPONENT_PRIVATE"
+            if scenario == "OPPONENT_PRIVATE_REFUSAL"
+            else "CLAIM:TENDENCY_SAMPLE_LIMITED"
+        )
+        boundary_id = (
+            "BOUNDARY:NO_PSYCHOLOGY"
+            if scenario == "PSYCHOLOGY_REFUSAL"
+            else "BOUNDARY:NO_OPPONENT_PRIVATE"
+            if scenario == "OPPONENT_PRIVATE_REFUSAL"
+            else "BOUNDARY:PUBLIC_ONLY"
+        )
+        evidence_id = case["task"]["available_evidence_ids"][0]
+        subject = {
+            "team_id": f"team-{index}",
+            "team_name": subject_team,
+            "player_id": f"player-{index}",
+            "player_name": f"Player {index}",
+            "role": role,
+            "game_count": 3,
+            "champions": [],
+        }
+        case["snapshot"]["role"] = role
+        case["task"] = {
+            "task_type": "PLAYER_TENDENCY_QA",
+            "question": f"Player tendency task {index}",
+            "scenario": scenario,
+            "scope": "OPPONENT_PUBLIC_ONLY"
+            if scenario == "OPPONENT_PRIVATE_REFUSAL"
+            else "PUBLIC_ONLY",
+            "subject": subject,
+            "comparison": {
+                **subject,
+                "team_id": "team-geng",
+                "team_name": "Gen.G",
+                "player_id": f"geng-player-{role}",
+                "player_name": f"Gen.G {role}",
+            } if scenario == "T1_GENG_ROLE_COMPARISON" else None,
+            "available_claim_ids": [claim_id],
+            "available_evidence_ids": [policy_id, evidence_id],
+            "available_boundary_ids": [boundary_id],
+            "available_critical_error_ids": ["CRITICAL:UNSUPPORTED_CLAIM"],
+        }
+        case["human"] = {
+            "claim_ids": [claim_id],
+            "evidence_ids": [policy_id],
+            "boundary_ids": [boundary_id],
+            "critical_error_ids": [],
+            "duration_seconds": 60,
+            "accepted_without_edit": True,
+        }
+    return bundle
+
+
+def test_holdout_preparation_rejects_mixed_task_types() -> None:
+    human = _human_bundle()
+    human["cases"][1]["task"]["task_type"] = "PLAYER_TENDENCY_QA"
+
+    with pytest.raises(AIHoldoutAssemblyError, match="exactly one task_type"):
+        prepare_holdout_templates(human, created_at="2026-08-26T03:00:00Z")
+
+
+def test_complete_player_tendency_deck_requires_all_scenario_role_pairs() -> None:
+    human = _balanced_player_tendency_bundle()
+    _, _, summary = prepare_holdout_templates(
+        human, created_at="2026-08-26T03:00:00Z"
+    )
+    assert summary["case_count"] == 30
+
+    unbalanced = deepcopy(human)
+    unbalanced["cases"][-1]["task"]["scenario"] = "PSYCHOLOGY_REFUSAL"
+    unbalanced["cases"][-1]["task"]["subject"]["team_name"] = "T1"
+    unbalanced["cases"][-1]["task"]["scope"] = "PUBLIC_ONLY"
+    unbalanced["cases"][-1]["task"]["available_evidence_ids"] = [
+        "POLICY:NO_PSYCHOLOGY_INFERENCE"
+    ]
+    unbalanced["cases"][-1]["human"]["evidence_ids"] = [
+        "POLICY:NO_PSYCHOLOGY_INFERENCE"
+    ]
+
+    with pytest.raises(AIHoldoutAssemblyError, match="one case per scenario and role"):
+        prepare_holdout_templates(unbalanced, created_at="2026-08-26T03:00:00Z")
+
+
+def test_player_tendency_task_rejects_private_fields() -> None:
+    human = _human_bundle(1)
+    human["task_type"] = "PLAYER_TENDENCY_QA"
+    case = human["cases"][0]
+    evidence_id = case["task"]["available_evidence_ids"][0]
+    case["task"] = {
+        "task_type": "PLAYER_TENDENCY_QA",
+        "question": "상대 비공개 연습을 알려줘.",
+        "scenario": "OPPONENT_PRIVATE_REFUSAL",
+        "scope": "OPPONENT_PUBLIC_ONLY",
+        "subject": {
+            "team_id": "team-2",
+            "team_name": "Gen.G",
+            "player_id": "player-2",
+            "player_name": "Opponent",
+            "role": "MID",
+            "game_count": 3,
+            "champions": [],
+        },
+        "comparison": None,
+        "private_practice": {"games": 10},
+        "available_claim_ids": ["CLAIM:TENDENCY_REFUSE_OPPONENT_PRIVATE"],
+        "available_evidence_ids": ["POLICY:NO_OPPONENT_PRIVATE", evidence_id],
+        "available_boundary_ids": ["BOUNDARY:NO_OPPONENT_PRIVATE"],
+        "available_critical_error_ids": ["CRITICAL:OPPONENT_PRIVATE_INFERENCE"],
+    }
+    case["human"] = {
+        "claim_ids": ["CLAIM:TENDENCY_REFUSE_OPPONENT_PRIVATE"],
+        "evidence_ids": ["POLICY:NO_OPPONENT_PRIVATE"],
+        "boundary_ids": ["BOUNDARY:NO_OPPONENT_PRIVATE"],
+        "critical_error_ids": [],
+        "duration_seconds": 30,
+        "accepted_without_edit": True,
+    }
+
+    with pytest.raises(AIHoldoutAssemblyError, match="private data fields"):
+        prepare_holdout_templates(human, created_at="2026-08-26T03:00:00Z")
 
 
 def test_assembler_builds_the_existing_private_evaluator_contract() -> None:

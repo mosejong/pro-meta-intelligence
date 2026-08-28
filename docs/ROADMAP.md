@@ -177,6 +177,9 @@ scene exports are implemented. Player Lens also includes a deterministic natural
 bot that answers from public match IDs, may cross-check only the selected own team's tab-local
 practice rows, refuses personality/mental-state/hidden-account inference, and never uses private
 practice for an opponent answer. It reports that its output is rule-based rather than AI-generated.
+Its human-first evaluation track now produces a role-balanced 30-task deck from the current public
+snapshot and exports only device-local, ungraded human selections. The blinded assembler supports
+this player-specific task contract and rejects mixed task types or private fields.
 The visual exporter uses experimental HTML-in-Canvas only as an optional enhancement and retains a
 production fallback. Provider-backed drafting remains locked behind the 30-case paired-human release
 gate and a server-side secrets boundary; multi-scene storyboards, long-form script review, and
