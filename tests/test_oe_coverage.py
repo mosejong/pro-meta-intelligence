@@ -162,6 +162,27 @@ def test_oe_coverage_blocks_selected_patch_contract_issues(tmp_path) -> None:
     assert audit["selected_patch_import_quality"]["issue_counts"] == {"INVALID_FIRST_PICK": 1}
 
 
+def test_oe_coverage_treats_fully_missing_first_pick_as_a_known_exclusion(tmp_path) -> None:
+    valid = _game_rows(game_id="VALID", patch="16.16")
+    missing = _game_rows(game_id="MISSING", patch="16.16")
+    missing[10]["firstPick"] = ""
+    missing[11]["firstPick"] = ""
+    imported = _import_games(tmp_path, [valid, missing])
+
+    audit = audit_oe_coverage(
+        imported,
+        LeagueRegionMap.load_default(),
+        OECoverageCriteria(minimum_matches=1, minimum_distinct_teams=2, minimum_regions=1),
+    ).to_dict()
+
+    assert audit["ready_for_radar"] is True
+    assert audit["blocking_reasons"] == []
+    assert audit["warnings"] == ["PATCH_HAS_KNOWN_IMPORT_EXCLUSIONS"]
+    assert audit["selected_patch_import_quality"]["known_exclusion_game_count"] == 1
+    assert audit["selected_patch_import_quality"]["blocking_issue_game_count"] == 0
+    assert audit["selected_patch_import_quality"]["issue_counts"] == {"MISSING_FIRST_PICK": 1}
+
+
 def test_oe_coverage_warns_without_blocking_for_past_patch_contract_issues(tmp_path) -> None:
     current = _game_rows(game_id="CURRENT", patch="16.16", date="2026-08-20 10:00:00")
     past = _game_rows(game_id="PAST", patch="16.15", date="2026-08-19 10:00:00")
@@ -196,6 +217,7 @@ def test_default_region_map_covers_reviewed_current_publication_leagues() -> Non
         "LRN": "LATIN_AMERICA",
         "LRS": "LATIN_AMERICA",
         "NACL": "NORTH_AMERICA",
+        "NL": "EMEA",
         "NLC": "EMEA",
         "PRM": "EMEA",
         "RL": "EMEA",

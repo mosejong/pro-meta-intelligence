@@ -103,6 +103,12 @@ def test_hosted_oe_collector_restores_private_state_and_publishes_only_safe_head
     assert "check-oe-feed-health" in workflow
     assert "pack-private-oe-archive" in workflow
     assert "oe-private-history-state-${{ github.run_id }}" in workflow
+    assert "oe-sync-diagnostics-${{ github.run_id }}" in workflow
+    assert "Preserve public-safe sync diagnostics on success or rejection" in workflow
+    assert "if: ${{ always() }}" in workflow
+    assert "outputs/oe-feed-jobs/latest.json" in workflow
+    assert "if-no-files-found: warn" in workflow
+    assert "retention-days: 14" in workflow
     assert "retention-days: 90" in workflow
     assert "compression-level: 0" in workflow
     assert "actions/artifacts/$artifact_id" in workflow
