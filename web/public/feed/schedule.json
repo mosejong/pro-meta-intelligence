@@ -1,94 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-08-27T09:43:49.788398+00:00",
+  "available_at": "2026-08-28T00:54:43.933338+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:2688d8e981f964170be194319947a438f681eb59904f9641ee4abf70229cbbb1",
+  "content_hash": "sha256:1a2a30ef69b9a80736b9f43bbef178fc8ab9720136dfc501012b080139ddae03",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Play In Knockouts",
-      "event_id": "lolesports:015c08d29f55140c7c39",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "EDG",
-          "name": "EDWARD GAMING"
-        },
-        {
-          "code": "NIP",
-          "name": "Shenzhen NINJAS IN PYJAMAS"
-        }
-      ],
-      "start_at": "2026-08-28T06:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Play-Ins",
-      "event_id": "lolesports:6c8872ffd170f935dbdb",
-      "league": "LCK",
-      "participants": [
-        {
-          "code": "TBD",
-          "name": "TBD"
-        },
-        {
-          "code": "BRO",
-          "name": "HANJIN BRION"
-        }
-      ],
-      "start_at": "2026-08-28T08:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Play In Knockouts",
-      "event_id": "lolesports:37c60058989caa5f0b13",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "TT",
-          "name": "THUNDER TALK GAMING"
-        },
-        {
-          "code": "IG",
-          "name": "Invictus Gaming"
-        }
-      ],
-      "start_at": "2026-08-28T09:00:00+00:00"
-    },
-    {
-      "best_of": 3,
-      "block": "Week 6",
-      "event_id": "lolesports:4a1ff331b73613b44d4e",
-      "league": "LEC",
-      "participants": [
-        {
-          "code": "TH",
-          "name": "Team Heretics"
-        },
-        {
-          "code": "SHFT",
-          "name": "Shifters"
-        }
-      ],
-      "start_at": "2026-08-28T15:00:00+00:00"
-    },
-    {
-      "best_of": 3,
-      "block": "Week 6",
-      "event_id": "lolesports:3bba467e65080c4ad583",
-      "league": "LEC",
-      "participants": [
-        {
-          "code": "VIT",
-          "name": "Team Vitality"
-        },
-        {
-          "code": "FNC",
-          "name": "Fnatic"
-        }
-      ],
-      "start_at": "2026-08-28T17:15:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Playoffs",
@@ -695,10 +610,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 40,
-    "tbd_participant_count": 39
+    "event_count": 35,
+    "tbd_participant_count": 38
   },
-  "retrieved_at": "2026-08-27T09:43:49.788398+00:00",
+  "retrieved_at": "2026-08-28T00:54:43.933338+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
