@@ -2,10 +2,10 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:79b4f6156cc7e4a866c0303ab771349981e5f41a779d9088e648c0f6e45d49ae",
-    "retrieved_at": "2026-08-28T20:11:21.296071+00:00"
+    "content_hash": "sha256:7fd21b42fdff4d93834f54b2f09d0b91de0cf0551bd81ebe69620b07ca372ebb",
+    "retrieved_at": "2026-08-29T07:01:54.058982+00:00"
   },
-  "generated_at": "2026-08-28T20:11:21.296071+00:00",
+  "generated_at": "2026-08-29T07:01:54.058982+00:00",
   "history": [
     {
       "change_id": "schedule-change:1f4acdec296665fa9a8b",
@@ -67,43 +67,13 @@
     }
   ],
   "latest_run": {
-    "change_count": 1,
-    "changes": [
-      {
-        "change_id": "schedule-change:1f4acdec296665fa9a8b",
-        "correlation_method": "UNMATCHED",
-        "current_event": {
-          "best_of": 5,
-          "block": "Playoffs",
-          "event_id": "lolesports:fe7f13f3ecd9062a558c",
-          "league": "LCK",
-          "participants": [
-            {
-              "code": "T1",
-              "name": "T1"
-            },
-            {
-              "code": "BFX",
-              "name": "BNK FEARX"
-            }
-          ],
-          "start_at": "2026-08-29T08:00:00+00:00"
-        },
-        "detected_at": "2026-08-28T20:11:21.296071+00:00",
-        "fields_changed": [
-          "event"
-        ],
-        "previous_event": null,
-        "severity": "REVIEW",
-        "summary": "new T1 fixture added",
-        "type": "EVENT_ADDED"
-      }
-    ],
-    "status": "CHANGED"
+    "change_count": 0,
+    "changes": [],
+    "status": "UNCHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:1a2a30ef69b9a80736b9f43bbef178fc8ab9720136dfc501012b080139ddae03",
-    "retrieved_at": "2026-08-28T00:54:43.933338+00:00"
+    "content_hash": "sha256:79b4f6156cc7e4a866c0303ab771349981e5f41a779d9088e648c0f6e45d49ae",
+    "retrieved_at": "2026-08-28T20:11:21.296071+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
