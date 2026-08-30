@@ -1,8 +1,8 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-08-29T13:49:11.711626+00:00",
+  "available_at": "2026-08-30T05:21:24.954938+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:99c0a462b8e3f60e717c289aac75b3d5378688029e290c1b461853d75490e8f4",
+  "content_hash": "sha256:68e015fb3b2b3ac670fa3c1e311d9e8d615dc152fd1e20ae67092c0ef8818900",
   "events": [
     {
       "best_of": 5,
@@ -160,7 +160,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:4921194b0c5dbae9404d",
+      "event_id": "lolesports:d5f6eeba61fbd333f69b",
       "league": "LCK",
       "participants": [
         {
@@ -168,8 +168,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "BFX",
+          "name": "BNK FEARX"
         }
       ],
       "start_at": "2026-09-03T08:00:00+00:00"
@@ -211,12 +211,12 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:0f6ebd04e150415692d2",
+      "event_id": "lolesports:458b82cabee56699529e",
       "league": "LPL",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "LGD",
+          "name": "LGD GAMING"
         },
         {
           "code": "AL",
@@ -228,12 +228,12 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:7a6cfa68036bd90ed715",
+      "event_id": "lolesports:dcd683cb2a50a9dfe5e7",
       "league": "LPL",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "TES",
+          "name": "TOP ESPORTS"
         },
         {
           "code": "NIP",
@@ -598,6 +598,40 @@
         }
       ],
       "start_at": "2026-09-19T09:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:5573aad8b6ffa3922063",
+      "league": "LCS",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-19T20:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Playoffs",
+      "event_id": "lolesports:57e78be7d1e1465afae1",
+      "league": "LCS",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-09-20T20:00:00+00:00"
     }
   ],
   "league_slugs": [
@@ -610,10 +644,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 35,
-    "tbd_participant_count": 42
+    "event_count": 37,
+    "tbd_participant_count": 43
   },
-  "retrieved_at": "2026-08-29T13:49:11.711626+00:00",
+  "retrieved_at": "2026-08-30T05:21:24.954938+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
