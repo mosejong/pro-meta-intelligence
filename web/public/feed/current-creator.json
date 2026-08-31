@@ -26,15 +26,15 @@
   "publication_ready": false,
   "schema_version": "1",
   "source_snapshot": {
-    "cutoff": "2026-08-28T03:58:41.941634+00:00",
+    "cutoff": "2026-08-31T23:12:19.903174+00:00",
     "fixture_only": false,
     "patch_id": "16.16",
     "radar_schema_version": "1",
     "source_versions": [
       {
-        "content_hash": "sha256:5ed5bdede9d339a9cf6aadb8eab7386b1d8ef98d56ef79139b87460bbd3c6018",
+        "content_hash": "sha256:ac095cb85b3381c1a1093188b2be9f24aca606260e574decd6d0fa8649b5c289",
         "source_id": "oracles-elixir-match-data",
-        "source_version": "sha256:5ed5bdede9d339a9cf6aadb8eab7386b1d8ef98d56ef79139b87460bbd3c6018"
+        "source_version": "sha256:ac095cb85b3381c1a1093188b2be9f24aca606260e574decd6d0fa8649b5c289"
       }
     ]
   },
@@ -43,45 +43,45 @@
     {
       "approved_claims": [
         {
-          "claim_id": "Lee Sin:JUNGLE:pick-presence",
+          "claim_id": "Lulu:SUPPORT:pick-presence",
           "metric": "pick_presence_delta",
-          "text": "최근 7일 Lee Sin JUNGLE 픽 점유율은 22.5%이며 이전 구간 대비 +6.4pp 변했다.",
-          "value": 0.064486
+          "text": "최근 7일 Lulu SUPPORT 픽 점유율은 21.3%이며 이전 구간 대비 +7.5pp 변했다.",
+          "value": 0.075272
         },
         {
-          "claim_id": "Lee Sin:JUNGLE:team-demand",
+          "claim_id": "Lulu:SUPPORT:team-demand",
           "metric": "demand_velocity",
-          "text": "최근 채택 팀은 48개이며 팀 수요는 이전 구간 대비 +14.3pp 변했다.",
-          "value": 0.14316
+          "text": "최근 채택 팀은 36개이며 팀 수요는 이전 구간 대비 +15.0pp 변했다.",
+          "value": 0.150362
         },
         {
-          "claim_id": "Lee Sin:JUNGLE:regional-divergence",
+          "claim_id": "Lulu:SUPPORT:regional-divergence",
           "metric": "most_divergent_region_delta",
-          "text": "CHINA의 최근 픽 점유율은 글로벌 점유율과 +10.8pp 차이가 난다.",
-          "value": 0.108225
+          "text": "CHINA의 최근 픽 점유율은 글로벌 점유율과 +12.0pp 차이가 난다.",
+          "value": 0.11985
         }
       ],
-      "candidate_id": "Lee Sin:JUNGLE",
-      "champion_id": "Lee Sin",
+      "candidate_id": "Lulu:SUPPORT",
+      "champion_id": "Lulu",
       "chapter_outline": [
         {
           "chapter": "HOOK",
           "uses": [
-            "Lee Sin:JUNGLE:pick-presence"
+            "Lulu:SUPPORT:pick-presence"
           ]
         },
         {
           "chapter": "WHAT CHANGED",
           "uses": [
-            "Lee Sin:JUNGLE:pick-presence",
-            "Lee Sin:JUNGLE:team-demand",
-            "Lee Sin:JUNGLE:regional-divergence"
+            "Lulu:SUPPORT:pick-presence",
+            "Lulu:SUPPORT:team-demand",
+            "Lulu:SUPPORT:regional-divergence"
           ]
         },
         {
           "chapter": "WHY IT MAY MATTER",
           "uses": [
-            "Lee Sin:JUNGLE:team-demand"
+            "Lulu:SUPPORT:team-demand"
           ]
         },
         {
@@ -97,70 +97,70 @@
       "data_cards": [
         {
           "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.225108,
-          "prior": 0.160622
+          "current": 0.213483,
+          "prior": 0.138211
         },
         {
           "card": "TEAM_DEMAND_COMPARISON",
-          "current": 0.360902,
-          "prior": 0.217742
+          "current": 0.375,
+          "prior": 0.224638
         },
         {
           "card": "REGIONAL_PRESENCE",
           "values": [
             {
-              "delta_from_global": -0.067213,
-              "match_count": 19,
-              "pick_count": 3,
-              "pick_presence": 0.157895,
+              "delta_from_global": 0.072231,
+              "match_count": 7,
+              "pick_count": 2,
+              "pick_presence": 0.285714,
               "region": "BRAZIL",
               "sample_eligible": true
             },
             {
-              "delta_from_global": 0.108225,
-              "match_count": 12,
-              "pick_count": 4,
+              "delta_from_global": 0.11985,
+              "match_count": 6,
+              "pick_count": 2,
               "pick_presence": 0.333333,
               "region": "CHINA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.03156,
-              "match_count": 124,
-              "pick_count": 24,
-              "pick_presence": 0.193548,
+              "delta_from_global": -0.01156,
+              "match_count": 104,
+              "pick_count": 21,
+              "pick_presence": 0.201923,
               "region": "EMEA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": 0.043184,
-              "match_count": 41,
-              "pick_count": 11,
-              "pick_presence": 0.268293,
+              "delta_from_global": -0.007601,
+              "match_count": 34,
+              "pick_count": 7,
+              "pick_presence": 0.205882,
               "region": "KOREA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": 0.024892,
-              "match_count": 8,
-              "pick_count": 2,
-              "pick_presence": 0.25,
+              "delta_from_global": -0.070626,
+              "match_count": 7,
+              "pick_count": 1,
+              "pick_presence": 0.142857,
               "region": "LATIN_AMERICA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": 0.108225,
-              "match_count": 15,
-              "pick_count": 5,
-              "pick_presence": 0.333333,
+              "delta_from_global": 0.017286,
+              "match_count": 13,
+              "pick_count": 3,
+              "pick_presence": 0.230769,
               "region": "NORTH_AMERICA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": 0.024892,
-              "match_count": 12,
-              "pick_count": 3,
-              "pick_presence": 0.25,
+              "delta_from_global": 0.072231,
+              "match_count": 7,
+              "pick_count": 2,
+              "pick_presence": 0.285714,
               "region": "PACIFIC",
               "sample_eligible": true
             }
@@ -168,89 +168,78 @@
         }
       ],
       "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_217469:pick:3",
-        "oe:AL:LOLTMNT05_217509:pick:1",
-        "oe:AL:LOLTMNT05_219216:pick:7",
-        "oe:AL:LOLTMNT05_219314:pick:4",
-        "oe:CBLOL:LOLTMNT02_449761:pick:2",
-        "oe:CBLOL:LOLTMNT02_456885:pick:1",
-        "oe:CBLOL:LOLTMNT02_457626:pick:3",
-        "oe:CD:LOLTMNT02_451623:pick:7",
-        "oe:CD:LOLTMNT02_452131:pick:4",
-        "oe:CD:LOLTMNT02_459736:pick:8",
-        "oe:EBL:LOLTMNT05_219357:pick:2",
-        "oe:EBL:LOLTMNT05_220300:pick:1",
-        "oe:HLL:LOLTMNT02_458367:pick:7",
-        "oe:HM:LOLTMNT02_452438:pick:3",
-        "oe:HM:LOLTMNT02_453314:pick:2",
-        "oe:HM:LOLTMNT02_459422:pick:2",
-        "oe:HM:LOLTMNT02_459682:pick:2",
-        "oe:KeSPA Cup:LOLTMNT02_449945:pick:1",
-        "oe:KeSPA Cup:LOLTMNT02_451363:pick:6",
-        "oe:LCK:LOLTMNT02_452633:pick:4",
-        "oe:LCK:LOLTMNT02_454038:pick:3",
-        "oe:LCK:LOLTMNT02_454084:pick:2",
-        "oe:LCK:LOLTMNT02_456447:pick:4",
-        "oe:LCK:LOLTMNT02_456749:pick:4",
-        "oe:LCK:LOLTMNT02_457093:pick:3",
-        "oe:LCK:LOLTMNT02_457532:pick:3",
-        "oe:LCK:LOLTMNT02_457803:pick:3",
-        "oe:LCK:LOLTMNT02_458575:pick:6",
-        "oe:LCK:LOLTMNT02_458778:pick:3",
-        "oe:LCKC:LOLTMNT02_450971:pick:7",
-        "oe:LCKC:LOLTMNT02_451703:pick:4",
-        "oe:LCKC:LOLTMNT02_452972:pick:2",
-        "oe:LCKC:LOLTMNT02_453093:pick:1",
-        "oe:LCKC:LOLTMNT02_457029:pick:3",
-        "oe:LCKC:LOLTMNT02_457040:pick:2",
-        "oe:LCKC:LOLTMNT02_459023:pick:2",
-        "oe:LCKC:LOLTMNT02_459050:pick:1",
-        "oe:LCP:LOLTMNT02_456193:pick:3",
-        "oe:LCP:LOLTMNT02_457495:pick:1",
-        "oe:LCP:LOLTMNT05_220110:pick:2",
-        "oe:LCS:LOLTMNT02_456676:pick:7",
-        "oe:LCS:LOLTMNT02_456695:pick:6",
-        "oe:LCS:LOLTMNT02_456935:pick:4",
-        "oe:LEC:LOLTMNT05_217160:pick:9",
-        "oe:LEC:LOLTMNT05_218053:pick:1",
-        "oe:LEC:LOLTMNT05_218159:pick:4",
-        "oe:LEC:LOLTMNT05_219068:pick:7",
-        "oe:LEC:LOLTMNT05_219186:pick:8",
-        "oe:LEC:LOLTMNT05_220100:pick:3",
-        "oe:LEC:LOLTMNT05_220148:pick:1",
-        "oe:LFL:LOLTMNT05_217330:pick:3",
-        "oe:LFL:LOLTMNT05_219306:pick:6",
-        "oe:LIT:LOLTMNT05_218530:pick:9",
-        "oe:LPL:13425-13425_game_2:pick:4",
-        "oe:LPL:13426-13426_game_3:pick:8",
-        "oe:LPL:13427-13427_game_1:pick:3",
-        "oe:LPL:13428-13428_game_1:pick:3",
-        "oe:LRN:LOLTMNT02_459249:pick:5",
-        "oe:LRS:LOLTMNT02_453017:pick:6",
-        "oe:LRS:LOLTMNT02_458474:pick:6",
-        "oe:NACL:LOLTMNT02_453395:pick:6",
-        "oe:NACL:LOLTMNT02_454307:pick:9",
-        "oe:NACL:LOLTMNT02_457370:pick:2",
-        "oe:NACL:LOLTMNT02_459742:pick:6",
-        "oe:NLC:LOLTMNT05_217459:pick:3",
-        "oe:NLC:LOLTMNT05_220216:pick:1",
-        "oe:PRM:LOLTMNT05_217434:pick:1",
-        "oe:PRM:LOLTMNT05_219332:pick:2",
-        "oe:PRM:LOLTMNT05_220236:pick:3",
-        "oe:RL:LOLTMNT02_451550:pick:1",
-        "oe:RL:LOLTMNT02_452410:pick:6",
-        "oe:RL:LOLTMNT02_453287:pick:1",
-        "oe:RL:LOLTMNT02_458418:pick:3",
-        "oe:RL:LOLTMNT02_458442:pick:2",
-        "oe:RL:LOLTMNT02_458702:pick:2",
-        "oe:RL:LOLTMNT02_459947:pick:2",
-        "oe:ROL:LOLTMNT05_217506:pick:9",
-        "oe:ROL:LOLTMNT05_220362:pick:9",
-        "oe:ROL:LOLTMNT05_220390:pick:8",
-        "oe:TCL:LOLTMNT05_218440:pick:7",
-        "oe:TCL:LOLTMNT05_219260:pick:3",
-        "oe:TCL:LOLTMNT05_219354:pick:7",
-        "oe:TCL:LOLTMNT05_220233:pick:1"
+        "oe:AL:LOLTMNT05_217509:pick:5",
+        "oe:AL:LOLTMNT05_220240:pick:9",
+        "oe:CBLOL:LOLTMNT02_457661:pick:1",
+        "oe:CD:LOLTMNT02_451623:pick:5",
+        "oe:CD:LOLTMNT02_459224:pick:3",
+        "oe:CD:LOLTMNT02_459500:pick:3",
+        "oe:CD:LOLTMNT02_459736:pick:2",
+        "oe:EBL:LOLTMNT05_217503:pick:7",
+        "oe:HLL:LOLTMNT02_458353:pick:9",
+        "oe:HM:LOLTMNT02_453314:pick:5",
+        "oe:HM:LOLTMNT02_458403:pick:9",
+        "oe:HM:LOLTMNT02_458698:pick:5",
+        "oe:HM:LOLTMNT02_458934:pick:3",
+        "oe:HM:LOLTMNT02_459667:pick:6",
+        "oe:HM:LOLTMNT02_459912:pick:10",
+        "oe:LCK:LOLTMNT02_452633:pick:9",
+        "oe:LCK:LOLTMNT02_454038:pick:5",
+        "oe:LCK:LOLTMNT02_454084:pick:10",
+        "oe:LCK:LOLTMNT02_456427:pick:5",
+        "oe:LCK:LOLTMNT02_456759:pick:2",
+        "oe:LCK:LOLTMNT02_457144:pick:3",
+        "oe:LCK:LOLTMNT02_457183:pick:3",
+        "oe:LCK:LOLTMNT02_457811:pick:3",
+        "oe:LCK:LOLTMNT02_458797:pick:3",
+        "oe:LCK:LOLTMNT02_459565:pick:3",
+        "oe:LCK:LOLTMNT02_461110:pick:2",
+        "oe:LCK:LOLTMNT02_461258:pick:5",
+        "oe:LCK:LOLTMNT02_461430:pick:2",
+        "oe:LCKC:LOLTMNT02_451359:pick:10",
+        "oe:LCKC:LOLTMNT02_451719:pick:7",
+        "oe:LCKC:LOLTMNT02_452972:pick:7",
+        "oe:LCKC:LOLTMNT02_457064:pick:3",
+        "oe:LCKC:LOLTMNT02_459013:pick:7",
+        "oe:LCKC:LOLTMNT02_460541:pick:5",
+        "oe:LCKC:LOLTMNT02_461581:pick:5",
+        "oe:LCP:LOLTMNT02_453185:pick:8",
+        "oe:LCP:LOLTMNT02_460274:pick:3",
+        "oe:LCP:LOLTMNT02_460401:pick:4",
+        "oe:LCS:LOLTMNT02_457969:pick:3",
+        "oe:LEC:LOLTMNT05_219167:pick:5",
+        "oe:LFL:LOLTMNT05_217330:pick:8",
+        "oe:LFL:LOLTMNT05_219303:pick:3",
+        "oe:LIT:LOLTMNT02_458701:pick:2",
+        "oe:LPL:13426-13426_game_3:pick:5",
+        "oe:LPL:13427-13427_game_1:pick:7",
+        "oe:LPL:13428-13428_game_1:pick:9",
+        "oe:LPL:13430-13430_game_2:pick:7",
+        "oe:LPL:13492-13492_game_2:pick:3",
+        "oe:LPL:13493-13493_game_1:pick:2",
+        "oe:LRN:LOLTMNT02_459255:pick:5",
+        "oe:LRS:LOLTMNT02_453033:pick:3",
+        "oe:NACL:LOLTMNT02_459742:pick:5",
+        "oe:NACL:LOLTMNT02_461195:pick:9",
+        "oe:NACL:LOLTMNT02_461209:pick:9",
+        "oe:NL:LOLTMNT05_219521:pick:10",
+        "oe:NLC:LOLTMNT02_458723:pick:9",
+        "oe:PRM:LOLTMNT05_217453:pick:9",
+        "oe:PRM:LOLTMNT05_217516:pick:5",
+        "oe:PRM:LOLTMNT05_219220:pick:2",
+        "oe:PRM:LOLTMNT05_219380:pick:5",
+        "oe:RL:LOLTMNT02_451550:pick:6",
+        "oe:RL:LOLTMNT02_451979:pick:3",
+        "oe:RL:LOLTMNT02_458418:pick:4",
+        "oe:RL:LOLTMNT02_458938:pick:9",
+        "oe:RL:LOLTMNT02_459701:pick:4",
+        "oe:RL:LOLTMNT02_459947:pick:3",
+        "oe:ROL:LOLTMNT05_218545:pick:5",
+        "oe:ROL:LOLTMNT05_219230:pick:10",
+        "oe:ROL:LOLTMNT05_219379:pick:3",
+        "oe:TCL:LOLTMNT05_218475:pick:3",
+        "oe:TCL:LOLTMNT05_219204:pick:5",
+        "oe:TCL:LOLTMNT05_219354:pick:3"
       ],
       "falsifiers": [
         {
@@ -262,64 +251,64 @@
           "metric": "current_distinct_team_count"
         }
       ],
-      "hook": "Lee Sin JUNGLE의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "hook": "Lulu SUPPORT의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
       "quality_flags": [],
       "radar_rank": 1,
       "review_state": "HUMAN_REVIEW_REQUIRED",
-      "role": "JUNGLE",
-      "short_summary": "Lee Sin JUNGLE의 최근 픽 점유율은 22.5%로, 이전 구간 대비 +6.4pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "role": "SUPPORT",
+      "short_summary": "Lulu SUPPORT의 최근 픽 점유율은 21.3%로, 이전 구간 대비 +7.5pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
       "thumbnail_copy": [
-        "Lee Sin JUNGLE",
-        "+6.4pp"
+        "Lulu SUPPORT",
+        "+7.5pp"
       ],
       "title_candidates": [
-        "왜 지금 Lee Sin JUNGLE인가: +6.4pp 변화의 근거",
-        "CHINA에서 먼저 보인 Lee Sin JUNGLE, 글로벌과 +10.8pp 차이",
-        "Lee Sin JUNGLE은 진짜 신호일까? 데이터와 반론"
+        "왜 지금 Lulu SUPPORT인가: +7.5pp 변화의 근거",
+        "CHINA에서 먼저 보인 Lulu SUPPORT, 글로벌과 +12.0pp 차이",
+        "Lulu SUPPORT은 진짜 신호일까? 데이터와 반론"
       ]
     },
     {
       "approved_claims": [
         {
-          "claim_id": "Seraphine:SUPPORT:pick-presence",
+          "claim_id": "Ashe:BOTTOM:pick-presence",
           "metric": "pick_presence_delta",
-          "text": "최근 7일 Seraphine SUPPORT 픽 점유율은 15.2%이며 이전 구간 대비 +5.8pp 변했다.",
-          "value": 0.058251
+          "text": "최근 7일 Ashe BOTTOM 픽 점유율은 14.0%이며 이전 구간 대비 +6.7pp 변했다.",
+          "value": 0.067279
         },
         {
-          "claim_id": "Seraphine:SUPPORT:team-demand",
+          "claim_id": "Ashe:BOTTOM:team-demand",
           "metric": "demand_velocity",
-          "text": "최근 채택 팀은 30개이며 팀 수요는 이전 구간 대비 +9.7pp 변했다.",
-          "value": 0.096532
+          "text": "최근 채택 팀은 22개이며 팀 수요는 이전 구간 대비 +11.3pp 변했다.",
+          "value": 0.113225
         },
         {
-          "claim_id": "Seraphine:SUPPORT:regional-divergence",
+          "claim_id": "Ashe:BOTTOM:regional-divergence",
           "metric": "most_divergent_region_delta",
-          "text": "CHINA의 최근 픽 점유율은 글로벌 점유율과 +18.2pp 차이가 난다.",
-          "value": 0.181818
+          "text": "CHINA의 최근 픽 점유율은 글로벌 점유율과 +19.3pp 차이가 난다.",
+          "value": 0.192884
         }
       ],
-      "candidate_id": "Seraphine:SUPPORT",
-      "champion_id": "Seraphine",
+      "candidate_id": "Ashe:BOTTOM",
+      "champion_id": "Ashe",
       "chapter_outline": [
         {
           "chapter": "HOOK",
           "uses": [
-            "Seraphine:SUPPORT:pick-presence"
+            "Ashe:BOTTOM:pick-presence"
           ]
         },
         {
           "chapter": "WHAT CHANGED",
           "uses": [
-            "Seraphine:SUPPORT:pick-presence",
-            "Seraphine:SUPPORT:team-demand",
-            "Seraphine:SUPPORT:regional-divergence"
+            "Ashe:BOTTOM:pick-presence",
+            "Ashe:BOTTOM:team-demand",
+            "Ashe:BOTTOM:regional-divergence"
           ]
         },
         {
           "chapter": "WHY IT MAY MATTER",
           "uses": [
-            "Seraphine:SUPPORT:team-demand"
+            "Ashe:BOTTOM:team-demand"
           ]
         },
         {
@@ -335,70 +324,70 @@
       "data_cards": [
         {
           "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.151515,
-          "prior": 0.093264
+          "current": 0.140449,
+          "prior": 0.073171
         },
         {
           "card": "TEAM_DEMAND_COMPARISON",
-          "current": 0.225564,
-          "prior": 0.129032
+          "current": 0.229167,
+          "prior": 0.115942
         },
         {
           "card": "REGIONAL_PRESENCE",
           "values": [
             {
-              "delta_from_global": 0.059011,
-              "match_count": 19,
-              "pick_count": 4,
-              "pick_presence": 0.210526,
+              "delta_from_global": 0.002408,
+              "match_count": 7,
+              "pick_count": 1,
+              "pick_presence": 0.142857,
               "region": "BRAZIL",
               "sample_eligible": true
             },
             {
-              "delta_from_global": 0.181818,
-              "match_count": 12,
-              "pick_count": 4,
+              "delta_from_global": 0.192884,
+              "match_count": 6,
+              "pick_count": 2,
               "pick_presence": 0.333333,
               "region": "CHINA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.006354,
-              "match_count": 124,
-              "pick_count": 18,
-              "pick_presence": 0.145161,
+              "delta_from_global": 0.003781,
+              "match_count": 104,
+              "pick_count": 15,
+              "pick_presence": 0.144231,
               "region": "EMEA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.029564,
-              "match_count": 41,
-              "pick_count": 5,
-              "pick_presence": 0.121951,
+              "delta_from_global": -0.022802,
+              "match_count": 34,
+              "pick_count": 4,
+              "pick_presence": 0.117647,
               "region": "KOREA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.026515,
-              "match_count": 8,
+              "delta_from_global": 0.002408,
+              "match_count": 7,
               "pick_count": 1,
-              "pick_presence": 0.125,
+              "pick_presence": 0.142857,
               "region": "LATIN_AMERICA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.018182,
-              "match_count": 15,
-              "pick_count": 2,
-              "pick_presence": 0.133333,
+              "delta_from_global": -0.063526,
+              "match_count": 13,
+              "pick_count": 1,
+              "pick_presence": 0.076923,
               "region": "NORTH_AMERICA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.068182,
-              "match_count": 12,
+              "delta_from_global": 0.002408,
+              "match_count": 7,
               "pick_count": 1,
-              "pick_presence": 0.083333,
+              "pick_presence": 0.142857,
               "region": "PACIFIC",
               "sample_eligible": true
             }
@@ -406,59 +395,49 @@
         }
       ],
       "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_218542:pick:7",
-        "oe:CBLOL:LOLTMNT02_456624:pick:9",
-        "oe:CBLOL:LOLTMNT02_457619:pick:5",
-        "oe:CD:LOLTMNT02_458207:pick:10",
-        "oe:CD:LOLTMNT02_459491:pick:9",
-        "oe:HLL:LOLTMNT02_458392:pick:5",
-        "oe:HLL:LOLTMNT02_458416:pick:5",
-        "oe:KeSPA Cup:LOLTMNT02_452010:pick:3",
-        "oe:LCK:LOLTMNT02_451793:pick:7",
-        "oe:LCK:LOLTMNT02_451854:pick:4",
-        "oe:LCK:LOLTMNT02_454063:pick:7",
-        "oe:LCK:LOLTMNT02_456427:pick:7",
-        "oe:LCK:LOLTMNT02_457144:pick:5",
-        "oe:LCK:LOLTMNT02_457183:pick:9",
-        "oe:LCK:LOLTMNT02_458575:pick:3",
-        "oe:LCK:LOLTMNT02_458808:pick:3",
-        "oe:LCKC:LOLTMNT02_451382:pick:5",
-        "oe:LCKC:LOLTMNT02_452374:pick:5",
-        "oe:LCKC:LOLTMNT02_454003:pick:8",
-        "oe:LCP:LOLTMNT02_454077:pick:5",
-        "oe:LCP:LOLTMNT05_220071:pick:3",
-        "oe:LCS:LOLTMNT02_456676:pick:5",
-        "oe:LCS:LOLTMNT02_456935:pick:8",
-        "oe:LEC:LOLTMNT05_217280:pick:9",
-        "oe:LEC:LOLTMNT05_219026:pick:9",
-        "oe:LEC:LOLTMNT05_219177:pick:5",
-        "oe:LEC:LOLTMNT05_220042:pick:3",
-        "oe:LEC:LOLTMNT05_220100:pick:5",
-        "oe:LEC:LOLTMNT05_220182:pick:10",
-        "oe:LFL:LOLTMNT05_219303:pick:5",
-        "oe:LPL:13421-13421_game_2:pick:5",
-        "oe:LPL:13425-13425_game_1:pick:4",
-        "oe:LPL:13426-13426_game_1:pick:5",
-        "oe:LPL:13428-13428_game_3:pick:1",
-        "oe:LPL:13430-13430_game_1:pick:3",
-        "oe:LRN:LOLTMNT02_459255:pick:6",
-        "oe:NLC:LOLTMNT05_217281:pick:10",
-        "oe:NLC:LOLTMNT05_217300:pick:9",
-        "oe:NLC:LOLTMNT05_220187:pick:10",
-        "oe:PRM:LOLTMNT05_217516:pick:3",
-        "oe:PRM:LOLTMNT05_219332:pick:1",
-        "oe:RL:LOLTMNT02_458457:pick:5",
-        "oe:RL:LOLTMNT02_458713:pick:5",
-        "oe:RL:LOLTMNT02_458938:pick:10",
-        "oe:RL:LOLTMNT02_459419:pick:5",
-        "oe:RL:LOLTMNT02_459947:pick:5",
-        "oe:ROL:LOLTMNT05_218548:pick:9",
-        "oe:ROL:LOLTMNT05_219379:pick:5",
-        "oe:TCL:LOLTMNT05_217340:pick:5",
-        "oe:TCL:LOLTMNT05_217512:pick:9",
-        "oe:TCL:LOLTMNT05_218458:pick:4",
-        "oe:TCL:LOLTMNT05_219217:pick:3",
-        "oe:TCL:LOLTMNT05_219296:pick:5"
+        "oe:AL:LOLTMNT05_218542:pick:10",
+        "oe:CBLOL:LOLTMNT02_456624:pick:8",
+        "oe:CBLOL:LOLTMNT02_457619:pick:4",
+        "oe:CD:LOLTMNT02_459491:pick:8",
+        "oe:HLL:LOLTMNT02_458392:pick:4",
+        "oe:HLL:LOLTMNT02_458416:pick:1",
+        "oe:LCK:LOLTMNT02_454063:pick:10",
+        "oe:LCK:LOLTMNT02_457144:pick:4",
+        "oe:LCK:LOLTMNT02_458575:pick:2",
+        "oe:LCK:LOLTMNT02_458808:pick:6",
+        "oe:LCK:LOLTMNT02_461430:pick:4",
+        "oe:LCKC:LOLTMNT02_452374:pick:4",
+        "oe:LCKC:LOLTMNT02_460541:pick:10",
+        "oe:LCP:LOLTMNT02_454077:pick:4",
+        "oe:LCP:LOLTMNT02_460274:pick:8",
+        "oe:LCP:LOLTMNT05_220071:pick:2",
+        "oe:LEC:LOLTMNT05_219026:pick:8",
+        "oe:LEC:LOLTMNT05_219177:pick:4",
+        "oe:LEC:LOLTMNT05_220042:pick:2",
+        "oe:LEC:LOLTMNT05_220100:pick:4",
+        "oe:LFL:LOLTMNT05_219303:pick:4",
+        "oe:LFL:LOLTMNT05_219360:pick:10",
+        "oe:LPL:13428-13428_game_3:pick:5",
+        "oe:LPL:13492-13492_game_1:pick:4",
+        "oe:LPL:13493-13493_game_2:pick:2",
+        "oe:LRN:LOLTMNT02_459255:pick:3",
+        "oe:NACL:LOLTMNT02_461204:pick:2",
+        "oe:NL:LOLTMNT05_219504:pick:2",
+        "oe:NL:LOLTMNT05_219524:pick:4",
+        "oe:PRM:LOLTMNT05_217516:pick:2",
+        "oe:PRM:LOLTMNT05_219332:pick:4",
+        "oe:RL:LOLTMNT02_458457:pick:4",
+        "oe:RL:LOLTMNT02_458713:pick:4",
+        "oe:RL:LOLTMNT02_458938:pick:7",
+        "oe:RL:LOLTMNT02_459419:pick:4",
+        "oe:RL:LOLTMNT02_459947:pick:4",
+        "oe:ROL:LOLTMNT05_218548:pick:8",
+        "oe:ROL:LOLTMNT05_219379:pick:4",
+        "oe:TCL:LOLTMNT05_217340:pick:4",
+        "oe:TCL:LOLTMNT05_217512:pick:8",
+        "oe:TCL:LOLTMNT05_218458:pick:2",
+        "oe:TCL:LOLTMNT05_219217:pick:2",
+        "oe:TCL:LOLTMNT05_219296:pick:4"
       ],
       "falsifiers": [
         {
@@ -470,20 +449,20 @@
           "metric": "current_distinct_team_count"
         }
       ],
-      "hook": "Seraphine SUPPORT의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "hook": "Ashe BOTTOM의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
       "quality_flags": [],
       "radar_rank": 2,
       "review_state": "HUMAN_REVIEW_REQUIRED",
-      "role": "SUPPORT",
-      "short_summary": "Seraphine SUPPORT의 최근 픽 점유율은 15.2%로, 이전 구간 대비 +5.8pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "role": "BOTTOM",
+      "short_summary": "Ashe BOTTOM의 최근 픽 점유율은 14.0%로, 이전 구간 대비 +6.7pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
       "thumbnail_copy": [
-        "Seraphine SUPPORT",
-        "+5.8pp"
+        "Ashe BOTTOM",
+        "+6.7pp"
       ],
       "title_candidates": [
-        "왜 지금 Seraphine SUPPORT인가: +5.8pp 변화의 근거",
-        "CHINA에서 먼저 보인 Seraphine SUPPORT, 글로벌과 +18.2pp 차이",
-        "Seraphine SUPPORT은 진짜 신호일까? 데이터와 반론"
+        "왜 지금 Ashe BOTTOM인가: +6.7pp 변화의 근거",
+        "CHINA에서 먼저 보인 Ashe BOTTOM, 글로벌과 +19.3pp 차이",
+        "Ashe BOTTOM은 진짜 신호일까? 데이터와 반론"
       ]
     },
     {
@@ -491,20 +470,20 @@
         {
           "claim_id": "Syndra:MID:pick-presence",
           "metric": "pick_presence_delta",
-          "text": "최근 7일 Syndra MID 픽 점유율은 21.6%이며 이전 구간 대비 +3.5pp 변했다.",
-          "value": 0.035103
+          "text": "최근 7일 Syndra MID 픽 점유율은 20.2%이며 이전 구간 대비 +4.0pp 변했다.",
+          "value": 0.039646
         },
         {
           "claim_id": "Syndra:MID:team-demand",
           "metric": "demand_velocity",
-          "text": "최근 채택 팀은 47개이며 팀 수요는 이전 구간 대비 +9.5pp 변했다.",
-          "value": 0.095319
+          "text": "최근 채택 팀은 35개이며 팀 수요는 이전 구간 대비 +10.4pp 변했다.",
+          "value": 0.103714
         },
         {
           "claim_id": "Syndra:MID:regional-divergence",
           "metric": "most_divergent_region_delta",
-          "text": "NORTH_AMERICA의 최근 픽 점유율은 글로벌 점유율과 +5.0pp 차이가 난다.",
-          "value": 0.050216
+          "text": "CHINA의 최근 픽 점유율은 글로벌 점유율과 -20.2pp 차이가 난다.",
+          "value": -0.202247
         }
       ],
       "candidate_id": "Syndra:MID",
@@ -543,70 +522,70 @@
       "data_cards": [
         {
           "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.21645,
-          "prior": 0.181347
+          "current": 0.202247,
+          "prior": 0.162602
         },
         {
           "card": "TEAM_DEMAND_COMPARISON",
-          "current": 0.353383,
-          "prior": 0.258065
+          "current": 0.364583,
+          "prior": 0.26087
         },
         {
           "card": "REGIONAL_PRESENCE",
           "values": [
             {
-              "delta_from_global": -0.005924,
-              "match_count": 19,
-              "pick_count": 4,
-              "pick_presence": 0.210526,
+              "delta_from_global": 0.083467,
+              "match_count": 7,
+              "pick_count": 2,
+              "pick_presence": 0.285714,
               "region": "BRAZIL",
               "sample_eligible": true
             },
             {
-              "delta_from_global": 0.03355,
-              "match_count": 12,
-              "pick_count": 3,
-              "pick_presence": 0.25,
+              "delta_from_global": -0.202247,
+              "match_count": 6,
+              "pick_count": 0,
+              "pick_presence": 0.0,
               "region": "CHINA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": 0.001292,
-              "match_count": 124,
-              "pick_count": 27,
-              "pick_presence": 0.217742,
+              "delta_from_global": 0.038137,
+              "match_count": 104,
+              "pick_count": 25,
+              "pick_presence": 0.240385,
               "region": "EMEA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.021328,
-              "match_count": 41,
-              "pick_count": 8,
-              "pick_presence": 0.195122,
+              "delta_from_global": -0.055188,
+              "match_count": 34,
+              "pick_count": 5,
+              "pick_presence": 0.147059,
               "region": "KOREA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": 0.03355,
-              "match_count": 8,
+              "delta_from_global": 0.083467,
+              "match_count": 7,
               "pick_count": 2,
-              "pick_presence": 0.25,
+              "pick_presence": 0.285714,
               "region": "LATIN_AMERICA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": 0.050216,
-              "match_count": 15,
-              "pick_count": 4,
-              "pick_presence": 0.266667,
+              "delta_from_global": -0.048401,
+              "match_count": 13,
+              "pick_count": 2,
+              "pick_presence": 0.153846,
               "region": "NORTH_AMERICA",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.049784,
-              "match_count": 12,
-              "pick_count": 2,
-              "pick_presence": 0.166667,
+              "delta_from_global": -0.202247,
+              "match_count": 7,
+              "pick_count": 0,
+              "pick_presence": 0.0,
               "region": "PACIFIC",
               "sample_eligible": true
             }
@@ -616,7 +595,6 @@
       "evidence_event_ids": [
         "oe:AL:LOLTMNT05_220240:pick:5",
         "oe:AL:LOLTMNT05_220314:pick:1",
-        "oe:CBLOL:LOLTMNT02_450785:pick:10",
         "oe:CBLOL:LOLTMNT02_456885:pick:3",
         "oe:CD:LOLTMNT02_452520:pick:8",
         "oe:CD:LOLTMNT02_458476:pick:3",
@@ -632,7 +610,6 @@
         "oe:HM:LOLTMNT02_453274:pick:5",
         "oe:HM:LOLTMNT02_459682:pick:9",
         "oe:HM:LOLTMNT02_459912:pick:6",
-        "oe:KeSPA Cup:LOLTMNT02_452010:pick:8",
         "oe:KeSPA Cup:LOLTMNT02_452325:pick:3",
         "oe:LCK:LOLTMNT02_451793:pick:10",
         "oe:LCK:LOLTMNT02_451854:pick:7",
@@ -643,23 +620,16 @@
         "oe:LCK:LOLTMNT02_457558:pick:6",
         "oe:LCK:LOLTMNT02_458808:pick:1",
         "oe:LCK:LOLTMNT02_459565:pick:10",
-        "oe:LCKC:LOLTMNT02_449946:pick:7",
+        "oe:LCK:LOLTMNT02_461046:pick:2",
+        "oe:LCK:LOLTMNT02_461410:pick:7",
         "oe:LCKC:LOLTMNT02_451359:pick:1",
         "oe:LCKC:LOLTMNT02_452349:pick:1",
         "oe:LCKC:LOLTMNT02_454003:pick:4",
         "oe:LCKC:LOLTMNT02_456039:pick:8",
+        "oe:LCKC:LOLTMNT02_460563:pick:1",
         "oe:LCP:LOLTMNT02_457142:pick:2",
         "oe:LCP:LOLTMNT05_220113:pick:6",
-        "oe:LCS:LOLTMNT02_449488:pick:9",
-        "oe:LCS:LOLTMNT02_449792:pick:8",
-        "oe:LCS:LOLTMNT02_450870:pick:10",
         "oe:LCS:LOLTMNT02_456676:pick:3",
-        "oe:LEC:LOLTMNT05_217248:pick:9",
-        "oe:LEC:LOLTMNT05_217274:pick:2",
-        "oe:LEC:LOLTMNT05_218045:pick:2",
-        "oe:LEC:LOLTMNT05_218159:pick:5",
-        "oe:LEC:LOLTMNT05_218255:pick:5",
-        "oe:LEC:LOLTMNT05_218323:pick:6",
         "oe:LEC:LOLTMNT05_219021:pick:4",
         "oe:LEC:LOLTMNT05_220100:pick:1",
         "oe:LFL:LOLTMNT05_217457:pick:1",
@@ -680,9 +650,9 @@
         "oe:NACL:LOLTMNT02_457348:pick:1",
         "oe:NACL:LOLTMNT02_457363:pick:2",
         "oe:NACL:LOLTMNT02_459738:pick:2",
+        "oe:NACL:LOLTMNT02_461209:pick:4",
+        "oe:NL:LOLTMNT05_219523:pick:1",
         "oe:NL:LOLTMNT05_220112:pick:1",
-        "oe:NLC:LOLTMNT05_217281:pick:2",
-        "oe:NLC:LOLTMNT05_218327:pick:2",
         "oe:NLC:LOLTMNT05_219291:pick:1",
         "oe:PRM:LOLTMNT05_217453:pick:1",
         "oe:PRM:LOLTMNT05_219358:pick:2",
@@ -715,14 +685,14 @@
       "radar_rank": 3,
       "review_state": "HUMAN_REVIEW_REQUIRED",
       "role": "MID",
-      "short_summary": "Syndra MID의 최근 픽 점유율은 21.6%로, 이전 구간 대비 +3.5pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "short_summary": "Syndra MID의 최근 픽 점유율은 20.2%로, 이전 구간 대비 +4.0pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
       "thumbnail_copy": [
         "Syndra MID",
-        "+3.5pp"
+        "+4.0pp"
       ],
       "title_candidates": [
-        "왜 지금 Syndra MID인가: +3.5pp 변화의 근거",
-        "NORTH_AMERICA에서 먼저 보인 Syndra MID, 글로벌과 +5.0pp 차이",
+        "왜 지금 Syndra MID인가: +4.0pp 변화의 근거",
+        "CHINA에서 먼저 보인 Syndra MID, 글로벌과 -20.2pp 차이",
         "Syndra MID은 진짜 신호일까? 데이터와 반론"
       ]
     }
