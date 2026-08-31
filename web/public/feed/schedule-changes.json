@@ -2,11 +2,40 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:fe1a62b912fe4bec143d337dd14746ec2deaf6f08e5b0feeab669d74fbd41cf2",
-    "retrieved_at": "2026-08-30T13:47:10.767531+00:00"
+    "content_hash": "sha256:9218bc26cdc427f273d082a1a054e1a7f35559e17337c3320584d251c78acdbf",
+    "retrieved_at": "2026-08-31T05:30:07.255468+00:00"
   },
-  "generated_at": "2026-08-30T13:47:10.767531+00:00",
+  "generated_at": "2026-08-31T05:30:07.255468+00:00",
   "history": [
+    {
+      "change_id": "schedule-change:507bd583403048f0021e",
+      "correlation_method": "UNMATCHED",
+      "current_event": {
+        "best_of": 5,
+        "block": "Playoffs",
+        "event_id": "lolesports:3d329666f372b26f2094",
+        "league": "LCK",
+        "participants": [
+          {
+            "code": "HLE",
+            "name": "Hanwha Life Esports"
+          },
+          {
+            "code": "T1",
+            "name": "T1"
+          }
+        ],
+        "start_at": "2026-09-02T08:00:00+00:00"
+      },
+      "detected_at": "2026-08-31T05:30:07.255468+00:00",
+      "fields_changed": [
+        "event"
+      ],
+      "previous_event": null,
+      "severity": "REVIEW",
+      "summary": "new T1 fixture added",
+      "type": "EVENT_ADDED"
+    },
     {
       "change_id": "schedule-change:1f2ca579d0054e26df5d",
       "correlation_method": "UNMATCHED",
@@ -96,13 +125,43 @@
     }
   ],
   "latest_run": {
-    "change_count": 0,
-    "changes": [],
-    "status": "UNCHANGED"
+    "change_count": 1,
+    "changes": [
+      {
+        "change_id": "schedule-change:507bd583403048f0021e",
+        "correlation_method": "UNMATCHED",
+        "current_event": {
+          "best_of": 5,
+          "block": "Playoffs",
+          "event_id": "lolesports:3d329666f372b26f2094",
+          "league": "LCK",
+          "participants": [
+            {
+              "code": "HLE",
+              "name": "Hanwha Life Esports"
+            },
+            {
+              "code": "T1",
+              "name": "T1"
+            }
+          ],
+          "start_at": "2026-09-02T08:00:00+00:00"
+        },
+        "detected_at": "2026-08-31T05:30:07.255468+00:00",
+        "fields_changed": [
+          "event"
+        ],
+        "previous_event": null,
+        "severity": "REVIEW",
+        "summary": "new T1 fixture added",
+        "type": "EVENT_ADDED"
+      }
+    ],
+    "status": "CHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:68e015fb3b2b3ac670fa3c1e311d9e8d615dc152fd1e20ae67092c0ef8818900",
-    "retrieved_at": "2026-08-30T05:21:24.954938+00:00"
+    "content_hash": "sha256:fe1a62b912fe4bec143d337dd14746ec2deaf6f08e5b0feeab669d74fbd41cf2",
+    "retrieved_at": "2026-08-30T13:47:10.767531+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
