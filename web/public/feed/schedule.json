@@ -1,26 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-08-31T16:08:52.084409+00:00",
+  "available_at": "2026-09-01T05:04:12.847843+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:92ca1719ebe6ed13601d0f7b6ad53bafb6e34b8044ed458f950506766f39adc7",
+  "content_hash": "sha256:ec6491e72b6bfb5de65bd9163210a0c5551101aabb382c30c5c785e30d9f272f",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:d5e938e7d85f42956350",
-      "league": "LCK",
-      "participants": [
-        {
-          "code": "GEN",
-          "name": "Gen.G Esports"
-        },
-        {
-          "code": "KT",
-          "name": "kt Rolster"
-        }
-      ],
-      "start_at": "2026-09-01T08:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Playoffs",
@@ -610,10 +593,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 35,
+    "event_count": 34,
     "tbd_participant_count": 48
   },
-  "retrieved_at": "2026-08-31T16:08:52.084409+00:00",
+  "retrieved_at": "2026-09-01T05:04:12.847843+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
