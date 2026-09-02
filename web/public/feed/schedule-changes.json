@@ -2,10 +2,10 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:30f9606160713711a70335ffac496469e9640347005867f873d206816e8dc1ad",
-    "retrieved_at": "2026-09-02T04:29:31.762475+00:00"
+    "content_hash": "sha256:271f9a01a95b2cecb663915ee866de1a11509420d5912a8db448b739b4e63fc1",
+    "retrieved_at": "2026-09-02T12:45:28.903668+00:00"
   },
-  "generated_at": "2026-09-02T04:29:31.762475+00:00",
+  "generated_at": "2026-09-02T12:45:28.903668+00:00",
   "history": [
     {
       "change_id": "schedule-change:627f33ef861da91a5eb6",
@@ -154,43 +154,13 @@
     }
   ],
   "latest_run": {
-    "change_count": 1,
-    "changes": [
-      {
-        "change_id": "schedule-change:627f33ef861da91a5eb6",
-        "correlation_method": "UNMATCHED",
-        "current_event": null,
-        "detected_at": "2026-09-02T04:29:31.762475+00:00",
-        "fields_changed": [
-          "event"
-        ],
-        "previous_event": {
-          "best_of": 5,
-          "block": "Playoffs",
-          "event_id": "lolesports:3d329666f372b26f2094",
-          "league": "LCK",
-          "participants": [
-            {
-              "code": "HLE",
-              "name": "Hanwha Life Esports"
-            },
-            {
-              "code": "T1",
-              "name": "T1"
-            }
-          ],
-          "start_at": "2026-09-02T08:00:00+00:00"
-        },
-        "severity": "REVIEW",
-        "summary": "T1 fixture left the future schedule",
-        "type": "EVENT_REMOVED"
-      }
-    ],
-    "status": "CHANGED"
+    "change_count": 0,
+    "changes": [],
+    "status": "UNCHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:c3adb79ceb10ab1ebd7f8e70d443a4a8a584ab87d3768f5c7b39eaf14846dfbd",
-    "retrieved_at": "2026-09-01T13:29:02.527072+00:00"
+    "content_hash": "sha256:30f9606160713711a70335ffac496469e9640347005867f873d206816e8dc1ad",
+    "retrieved_at": "2026-09-02T04:29:31.762475+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
