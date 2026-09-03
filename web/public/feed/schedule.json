@@ -1,43 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-02T19:22:48.135780+00:00",
+  "available_at": "2026-09-03T04:20:11.811691+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:758362b14b3ab899f71d5a9642d039111f1c9532b73236ec1857f5ad2ebea868",
+  "content_hash": "sha256:bb0bd5f352c9e0b382c927d903288c93401f0bd8ccb585bea24cd30eed94a59e",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:d874b7b537bc0a607bc8",
-      "league": "LCK",
-      "participants": [
-        {
-          "code": "DK",
-          "name": "Dplus KIA"
-        },
-        {
-          "code": "BFX",
-          "name": "BNK FEARX"
-        }
-      ],
-      "start_at": "2026-09-03T08:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:d33e3ca86f1a1f7c4399",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "WE",
-          "name": "Xi'an Team WE"
-        },
-        {
-          "code": "BLG",
-          "name": "BILIBILI GAMING"
-        }
-      ],
-      "start_at": "2026-09-03T09:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Playoffs",
@@ -695,10 +661,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 40,
+    "event_count": 38,
     "tbd_participant_count": 54
   },
-  "retrieved_at": "2026-09-02T19:22:48.135780+00:00",
+  "retrieved_at": "2026-09-03T04:20:11.811691+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
