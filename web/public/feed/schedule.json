@@ -1,22 +1,22 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-03T12:48:34.620148+00:00",
+  "available_at": "2026-09-03T19:17:13.133827+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:819919cd84196ff85fc9c2227ba25f92ac142f5c8db1945585aa72834b5978ec",
+  "content_hash": "sha256:2ec4cd3390d024da5ddbe9e184423479846736fa4e4ffcf64e5fff5e7c746ed3",
   "events": [
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:6df1002d103ca92dff0d",
+      "event_id": "lolesports:423b9dfa678ed0cdd7df",
       "league": "LCK",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "KT",
+          "name": "kt Rolster"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "DK",
+          "name": "Dplus KIA"
         }
       ],
       "start_at": "2026-09-04T08:00:00+00:00"
@@ -58,16 +58,16 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:2b447fbff69cf4f6fbf2",
+      "event_id": "lolesports:1802eb7d8e76e0cc79c5",
       "league": "LCK",
       "participants": [
         {
-          "code": "HLE",
-          "name": "Hanwha Life Esports"
-        },
-        {
           "code": "GEN",
           "name": "Gen.G Esports"
+        },
+        {
+          "code": "HLE",
+          "name": "Hanwha Life Esports"
         }
       ],
       "start_at": "2026-09-05T08:00:00+00:00"
@@ -160,7 +160,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:189aa56fa34769b1e6c3",
+      "event_id": "lolesports:0b939fac9fa9de0f67f6",
       "league": "LPL",
       "participants": [
         {
@@ -168,8 +168,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "WE",
+          "name": "Xi'an Team WE"
         }
       ],
       "start_at": "2026-09-06T06:00:00+00:00"
@@ -177,7 +177,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:b06edfa215d23195520a",
+      "event_id": "lolesports:c9cdb5c1d9f7f791024f",
       "league": "LCK",
       "participants": [
         {
@@ -185,8 +185,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "T1",
+          "name": "T1"
         }
       ],
       "start_at": "2026-09-06T08:00:00+00:00"
@@ -262,7 +262,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:fa136b47dc03e77b7108",
+      "event_id": "lolesports:3e861c8ef29ab83a3259",
       "league": "LPL",
       "participants": [
         {
@@ -270,8 +270,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "BLG",
+          "name": "BILIBILI GAMING"
         }
       ],
       "start_at": "2026-09-07T09:00:00+00:00"
@@ -649,6 +649,23 @@
         }
       ],
       "start_at": "2026-10-03T20:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Finals",
+      "event_id": "lolesports:262936b17a96e5c0ccfb",
+      "league": "LCS",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-04T20:00:00+00:00"
     }
   ],
   "league_slugs": [
@@ -661,10 +678,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 38,
-    "tbd_participant_count": 54
+    "event_count": 39,
+    "tbd_participant_count": 51
   },
-  "retrieved_at": "2026-09-03T12:48:34.620148+00:00",
+  "retrieved_at": "2026-09-03T19:17:13.133827+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"

@@ -2,11 +2,40 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:819919cd84196ff85fc9c2227ba25f92ac142f5c8db1945585aa72834b5978ec",
-    "retrieved_at": "2026-09-03T12:48:34.620148+00:00"
+    "content_hash": "sha256:2ec4cd3390d024da5ddbe9e184423479846736fa4e4ffcf64e5fff5e7c746ed3",
+    "retrieved_at": "2026-09-03T19:17:13.133827+00:00"
   },
-  "generated_at": "2026-09-03T12:48:34.620148+00:00",
+  "generated_at": "2026-09-03T19:17:13.133827+00:00",
   "history": [
+    {
+      "change_id": "schedule-change:526b383709c84a408788",
+      "correlation_method": "UNMATCHED",
+      "current_event": {
+        "best_of": 5,
+        "block": "Playoffs",
+        "event_id": "lolesports:c9cdb5c1d9f7f791024f",
+        "league": "LCK",
+        "participants": [
+          {
+            "code": "TBD",
+            "name": "TBD"
+          },
+          {
+            "code": "T1",
+            "name": "T1"
+          }
+        ],
+        "start_at": "2026-09-06T08:00:00+00:00"
+      },
+      "detected_at": "2026-09-03T19:17:13.133827+00:00",
+      "fields_changed": [
+        "event"
+      ],
+      "previous_event": null,
+      "severity": "REVIEW",
+      "summary": "new T1 fixture added",
+      "type": "EVENT_ADDED"
+    },
     {
       "change_id": "schedule-change:627f33ef861da91a5eb6",
       "correlation_method": "UNMATCHED",
@@ -154,13 +183,43 @@
     }
   ],
   "latest_run": {
-    "change_count": 0,
-    "changes": [],
-    "status": "UNCHANGED"
+    "change_count": 1,
+    "changes": [
+      {
+        "change_id": "schedule-change:526b383709c84a408788",
+        "correlation_method": "UNMATCHED",
+        "current_event": {
+          "best_of": 5,
+          "block": "Playoffs",
+          "event_id": "lolesports:c9cdb5c1d9f7f791024f",
+          "league": "LCK",
+          "participants": [
+            {
+              "code": "TBD",
+              "name": "TBD"
+            },
+            {
+              "code": "T1",
+              "name": "T1"
+            }
+          ],
+          "start_at": "2026-09-06T08:00:00+00:00"
+        },
+        "detected_at": "2026-09-03T19:17:13.133827+00:00",
+        "fields_changed": [
+          "event"
+        ],
+        "previous_event": null,
+        "severity": "REVIEW",
+        "summary": "new T1 fixture added",
+        "type": "EVENT_ADDED"
+      }
+    ],
+    "status": "CHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:bb0bd5f352c9e0b382c927d903288c93401f0bd8ccb585bea24cd30eed94a59e",
-    "retrieved_at": "2026-09-03T04:20:11.811691+00:00"
+    "content_hash": "sha256:819919cd84196ff85fc9c2227ba25f92ac142f5c8db1945585aa72834b5978ec",
+    "retrieved_at": "2026-09-03T12:48:34.620148+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
