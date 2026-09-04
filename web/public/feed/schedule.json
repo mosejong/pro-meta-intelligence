@@ -1,8 +1,8 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-04T12:42:45.338921+00:00",
+  "available_at": "2026-09-04T18:58:49.919059+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:44962da5eb0b26e858f8bf580053186603fdee76cbd9a2a3dbc0a30fcf272ad1",
+  "content_hash": "sha256:ebb419475d5cdee655429400fc5b5a181d5aeb5bbc8d3f20f84c4da6ebce1b59",
   "events": [
     {
       "best_of": 5,
@@ -143,12 +143,12 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:c9cdb5c1d9f7f791024f",
+      "event_id": "lolesports:542f2964445c9b444e49",
       "league": "LCK",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "DK",
+          "name": "Dplus KIA"
         },
         {
           "code": "T1",
@@ -160,7 +160,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:12fc97c3c03f4505e44c",
+      "event_id": "lolesports:557440ce754ae4e029e7",
       "league": "LPL",
       "participants": [
         {
@@ -168,8 +168,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "LGD",
+          "name": "LGD GAMING"
         }
       ],
       "start_at": "2026-09-06T09:00:00+00:00"
@@ -228,16 +228,16 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:3e861c8ef29ab83a3259",
+      "event_id": "lolesports:2aa9ad9dad0312cf41cd",
       "league": "LPL",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
-        },
-        {
           "code": "BLG",
           "name": "BILIBILI GAMING"
+        },
+        {
+          "code": "AL",
+          "name": "Anyone's Legend"
         }
       ],
       "start_at": "2026-09-07T09:00:00+00:00"
@@ -645,9 +645,9 @@
   "locale": "en-US",
   "quality": {
     "event_count": 37,
-    "tbd_participant_count": 51
+    "tbd_participant_count": 48
   },
-  "retrieved_at": "2026-09-04T12:42:45.338921+00:00",
+  "retrieved_at": "2026-09-04T18:58:49.919059+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
