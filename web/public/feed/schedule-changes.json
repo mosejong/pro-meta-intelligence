@@ -2,10 +2,10 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:ebb419475d5cdee655429400fc5b5a181d5aeb5bbc8d3f20f84c4da6ebce1b59",
-    "retrieved_at": "2026-09-04T18:58:49.919059+00:00"
+    "content_hash": "sha256:fecb76c924d9b800067c8dc04ba1ef8224e72da3fc76287f74aa4031cd63a248",
+    "retrieved_at": "2026-09-05T04:23:20.699526+00:00"
   },
-  "generated_at": "2026-09-04T18:58:49.919059+00:00",
+  "generated_at": "2026-09-05T04:23:20.699526+00:00",
   "history": [
     {
       "change_id": "schedule-change:f945826b47bc16a4dd46",
@@ -228,59 +228,13 @@
     }
   ],
   "latest_run": {
-    "change_count": 1,
-    "changes": [
-      {
-        "change_id": "schedule-change:f945826b47bc16a4dd46",
-        "correlation_method": "SAME_SLOT",
-        "current_event": {
-          "best_of": 5,
-          "block": "Playoffs",
-          "event_id": "lolesports:542f2964445c9b444e49",
-          "league": "LCK",
-          "participants": [
-            {
-              "code": "DK",
-              "name": "Dplus KIA"
-            },
-            {
-              "code": "T1",
-              "name": "T1"
-            }
-          ],
-          "start_at": "2026-09-06T08:00:00+00:00"
-        },
-        "detected_at": "2026-09-04T18:58:49.919059+00:00",
-        "fields_changed": [
-          "participants"
-        ],
-        "previous_event": {
-          "best_of": 5,
-          "block": "Playoffs",
-          "event_id": "lolesports:c9cdb5c1d9f7f791024f",
-          "league": "LCK",
-          "participants": [
-            {
-              "code": "TBD",
-              "name": "TBD"
-            },
-            {
-              "code": "T1",
-              "name": "T1"
-            }
-          ],
-          "start_at": "2026-09-06T08:00:00+00:00"
-        },
-        "severity": "ACTION_REQUIRED",
-        "summary": "T1 opponent confirmed as Dplus KIA",
-        "type": "PARTICIPANT_CONFIRMED"
-      }
-    ],
-    "status": "CHANGED"
+    "change_count": 0,
+    "changes": [],
+    "status": "UNCHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:44962da5eb0b26e858f8bf580053186603fdee76cbd9a2a3dbc0a30fcf272ad1",
-    "retrieved_at": "2026-09-04T12:42:45.338921+00:00"
+    "content_hash": "sha256:ebb419475d5cdee655429400fc5b5a181d5aeb5bbc8d3f20f84c4da6ebce1b59",
+    "retrieved_at": "2026-09-04T18:58:49.919059+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",

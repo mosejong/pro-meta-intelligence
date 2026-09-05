@@ -1,128 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-04T18:58:49.919059+00:00",
+  "available_at": "2026-09-05T04:23:20.699526+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:ebb419475d5cdee655429400fc5b5a181d5aeb5bbc8d3f20f84c4da6ebce1b59",
+  "content_hash": "sha256:fecb76c924d9b800067c8dc04ba1ef8224e72da3fc76287f74aa4031cd63a248",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:72c8e5fb067c82341ac9",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "IG",
-          "name": "Invictus Gaming"
-        },
-        {
-          "code": "TES",
-          "name": "TOP ESPORTS"
-        }
-      ],
-      "start_at": "2026-09-05T06:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:1802eb7d8e76e0cc79c5",
-      "league": "LCK",
-      "participants": [
-        {
-          "code": "GEN",
-          "name": "Gen.G Esports"
-        },
-        {
-          "code": "HLE",
-          "name": "Hanwha Life Esports"
-        }
-      ],
-      "start_at": "2026-09-05T08:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:5b09aac172d73c9435b2",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "NIP",
-          "name": "Shenzhen NINJAS IN PYJAMAS"
-        },
-        {
-          "code": "JDG",
-          "name": "Beijing JDG Esports"
-        }
-      ],
-      "start_at": "2026-09-05T09:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:f3ba3c70ee3f44ad973c",
-      "league": "LEC",
-      "participants": [
-        {
-          "code": "VIT",
-          "name": "Team Vitality"
-        },
-        {
-          "code": "G2",
-          "name": "G2 Esports"
-        }
-      ],
-      "start_at": "2026-09-05T10:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:90682eea5457dbe5245c",
-      "league": "LEC",
-      "participants": [
-        {
-          "code": "KC",
-          "name": "Karmine Corp"
-        },
-        {
-          "code": "GX",
-          "name": "GIANTX"
-        }
-      ],
-      "start_at": "2026-09-05T15:00:00+00:00"
-    },
-    {
-      "best_of": 3,
-      "block": "Week 7",
-      "event_id": "lolesports:f84e6e6210914ffb8463",
-      "league": "LCS",
-      "participants": [
-        {
-          "code": "SEN",
-          "name": "Sentinels"
-        },
-        {
-          "code": "C9",
-          "name": "Cloud9 Kia"
-        }
-      ],
-      "start_at": "2026-09-05T20:00:00+00:00"
-    },
-    {
-      "best_of": 3,
-      "block": "Week 7",
-      "event_id": "lolesports:7dd9212acf4ba75d46a0",
-      "league": "LCS",
-      "participants": [
-        {
-          "code": "DIG",
-          "name": "Dignitas"
-        },
-        {
-          "code": "TLAW",
-          "name": "Team Liquid Alienware"
-        }
-      ],
-      "start_at": "2026-09-05T23:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Playoffs",
@@ -644,10 +525,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 37,
+    "event_count": 30,
     "tbd_participant_count": 48
   },
-  "retrieved_at": "2026-09-04T18:58:49.919059+00:00",
+  "retrieved_at": "2026-09-05T04:23:20.699526+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
