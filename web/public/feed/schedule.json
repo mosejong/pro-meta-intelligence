@@ -1,22 +1,22 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-05T11:49:30.186948+00:00",
+  "available_at": "2026-09-05T18:15:52.594320+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:2ae21c107b31546137a7a4513efa16fe0a2dde2b1539938967686cc0f107520d",
+  "content_hash": "sha256:e177fe091edecb148066bc68fc67238ecdd1413d24bfc76b16b5da7b53256a52",
   "events": [
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:0b939fac9fa9de0f67f6",
+      "event_id": "lolesports:134c0377cf0164672e04",
       "league": "LPL",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
-        },
-        {
           "code": "WE",
           "name": "Xi'an Team WE"
+        },
+        {
+          "code": "IG",
+          "name": "Invictus Gaming"
         }
       ],
       "start_at": "2026-09-06T06:00:00+00:00"
@@ -160,7 +160,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:ea55e15916ca58893fc6",
+      "event_id": "lolesports:df7101fc94e658c75b8e",
       "league": "LCK",
       "participants": [
         {
@@ -168,8 +168,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "HLE",
+          "name": "Hanwha Life Esports"
         }
       ],
       "start_at": "2026-09-12T05:00:00+00:00"
@@ -228,7 +228,7 @@
     {
       "best_of": 5,
       "block": "Finals",
-      "event_id": "lolesports:46a0ec11e4100846fdb5",
+      "event_id": "lolesports:4c091829a51c8ea28bbc",
       "league": "LCK",
       "participants": [
         {
@@ -236,8 +236,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "GEN",
+          "name": "Gen.G Esports"
         }
       ],
       "start_at": "2026-09-13T05:00:00+00:00"
@@ -526,9 +526,9 @@
   "locale": "en-US",
   "quality": {
     "event_count": 30,
-    "tbd_participant_count": 48
+    "tbd_participant_count": 45
   },
-  "retrieved_at": "2026-09-05T11:49:30.186948+00:00",
+  "retrieved_at": "2026-09-05T18:15:52.594320+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
