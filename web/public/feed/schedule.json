@@ -1,111 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-06T04:35:08.696779+00:00",
+  "available_at": "2026-09-06T12:07:56.468329+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:71aa91ed06f7de5b9e3d7ffe199d274eb3b8aae9e2ab4dc4d44369ed3ebad34d",
+  "content_hash": "sha256:2aeb90b6e9d3827b407417cb08ceaefba6305a810f900aac7753c585f1678f86",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:134c0377cf0164672e04",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "WE",
-          "name": "Xi'an Team WE"
-        },
-        {
-          "code": "IG",
-          "name": "Invictus Gaming"
-        }
-      ],
-      "start_at": "2026-09-06T06:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:542f2964445c9b444e49",
-      "league": "LCK",
-      "participants": [
-        {
-          "code": "DK",
-          "name": "Dplus KIA"
-        },
-        {
-          "code": "T1",
-          "name": "T1"
-        }
-      ],
-      "start_at": "2026-09-06T08:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:4a1be5572073e9faeb59",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "LGD",
-          "name": "LGD GAMING"
-        },
-        {
-          "code": "NIP",
-          "name": "Shenzhen NINJAS IN PYJAMAS"
-        }
-      ],
-      "start_at": "2026-09-06T09:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:9470c539c99e84957b2e",
-      "league": "LEC",
-      "participants": [
-        {
-          "code": "G2",
-          "name": "G2 Esports"
-        },
-        {
-          "code": "KC",
-          "name": "Karmine Corp"
-        }
-      ],
-      "start_at": "2026-09-06T15:00:00+00:00"
-    },
-    {
-      "best_of": 3,
-      "block": "Week 7",
-      "event_id": "lolesports:2564e6c6d3e8c5636a39",
-      "league": "LCS",
-      "participants": [
-        {
-          "code": "FLY",
-          "name": "FlyQuest"
-        },
-        {
-          "code": "SR",
-          "name": "Shopify Rebellion"
-        }
-      ],
-      "start_at": "2026-09-06T20:00:00+00:00"
-    },
-    {
-      "best_of": 3,
-      "block": "Week 7",
-      "event_id": "lolesports:d606ad1115566d2ea935",
-      "league": "LCS",
-      "participants": [
-        {
-          "code": "DSG",
-          "name": "Disguised"
-        },
-        {
-          "code": "LYON",
-          "name": "LYON"
-        }
-      ],
-      "start_at": "2026-09-06T23:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Playoffs",
@@ -525,10 +423,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 30,
+    "event_count": 24,
     "tbd_participant_count": 42
   },
-  "retrieved_at": "2026-09-06T04:35:08.696779+00:00",
+  "retrieved_at": "2026-09-06T12:07:56.468329+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
