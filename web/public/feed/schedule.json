@@ -1,8 +1,8 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-06T12:07:56.468329+00:00",
+  "available_at": "2026-09-06T18:15:52.879514+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:2aeb90b6e9d3827b407417cb08ceaefba6305a810f900aac7753c585f1678f86",
+  "content_hash": "sha256:5138fe2490dd081674638eb94a05701a2fdf5b675a8d40b050b852b62f55f475",
   "events": [
     {
       "best_of": 5,
@@ -24,7 +24,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:08d1f73ab556c5cf80ff",
+      "event_id": "lolesports:44d1437d82c4f150f69e",
       "league": "LPL",
       "participants": [
         {
@@ -32,8 +32,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "IG",
+          "name": "Invictus Gaming"
         }
       ],
       "start_at": "2026-09-08T09:00:00+00:00"
@@ -58,12 +58,12 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:df7101fc94e658c75b8e",
+      "event_id": "lolesports:c251d1d18f75308216d7",
       "league": "LCK",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "T1",
+          "name": "T1"
         },
         {
           "code": "HLE",
@@ -424,9 +424,9 @@
   "locale": "en-US",
   "quality": {
     "event_count": 24,
-    "tbd_participant_count": 42
+    "tbd_participant_count": 40
   },
-  "retrieved_at": "2026-09-06T12:07:56.468329+00:00",
+  "retrieved_at": "2026-09-06T18:15:52.879514+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
