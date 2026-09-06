@@ -1,8 +1,8 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-05T18:15:52.594320+00:00",
+  "available_at": "2026-09-06T04:35:08.696779+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:e177fe091edecb148066bc68fc67238ecdd1413d24bfc76b16b5da7b53256a52",
+  "content_hash": "sha256:71aa91ed06f7de5b9e3d7ffe199d274eb3b8aae9e2ab4dc4d44369ed3ebad34d",
   "events": [
     {
       "best_of": 5,
@@ -41,16 +41,16 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:557440ce754ae4e029e7",
+      "event_id": "lolesports:4a1be5572073e9faeb59",
       "league": "LPL",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
-        },
-        {
           "code": "LGD",
           "name": "LGD GAMING"
+        },
+        {
+          "code": "NIP",
+          "name": "Shenzhen NINJAS IN PYJAMAS"
         }
       ],
       "start_at": "2026-09-06T09:00:00+00:00"
@@ -58,16 +58,16 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:d118265330403ff1bd86",
+      "event_id": "lolesports:9470c539c99e84957b2e",
       "league": "LEC",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "G2",
+          "name": "G2 Esports"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "KC",
+          "name": "Karmine Corp"
         }
       ],
       "start_at": "2026-09-06T15:00:00+00:00"
@@ -526,9 +526,9 @@
   "locale": "en-US",
   "quality": {
     "event_count": 30,
-    "tbd_participant_count": 45
+    "tbd_participant_count": 42
   },
-  "retrieved_at": "2026-09-05T18:15:52.594320+00:00",
+  "retrieved_at": "2026-09-06T04:35:08.696779+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
