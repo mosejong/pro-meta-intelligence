@@ -106,3 +106,54 @@ def test_history_status_surfaces_a_collection_gap() -> None:
     status = build_history_status(benchmark)
 
     assert status["continuity"]["status"] == "GAP_DETECTED"
+
+
+def test_history_status_uses_latest_archive_time_while_gating_the_active_cohort() -> None:
+    benchmark = _benchmark()
+    benchmark["history_readiness"].update(
+        {
+            "active_cohort": 1,
+            "archive_collection": {
+                "retrieval_count": 5,
+                "unique_normalized_state_count": 5,
+                "collection_span_hours": 240.0,
+                "matured_cutoff_count": 2,
+                "cohort_count": 2,
+                "last_retrieved_at": "2026-09-01T03:00:00+00:00",
+            },
+            "cohorts": [
+                {
+                    "cohort_id": 1,
+                    "active": True,
+                    "ready": False,
+                    "collection": benchmark["history_readiness"]["collection"],
+                },
+                {
+                    "cohort_id": 2,
+                    "active": False,
+                    "ready": False,
+                    "collection": {
+                        "retrieval_count": 2,
+                        "first_retrieved_at": "2026-08-31T03:00:00+00:00",
+                        "last_retrieved_at": "2026-09-01T03:00:00+00:00",
+                    },
+                },
+            ],
+        }
+    )
+
+    status = build_history_status(benchmark)
+
+    assert status["as_of"] == "2026-09-01T03:00:00+00:00"
+    assert status["collection"]["retrieval_count"] == 2
+    assert status["archive"] == {
+        "retrieval_count": 5,
+        "unique_normalized_state_count": 5,
+        "collection_span_days": 10.0,
+        "matured_cutoff_count": 2,
+        "cohort_count": 2,
+        "active_cohort": 1,
+        "last_retrieved_at": "2026-09-01T03:00:00+00:00",
+    }
+    assert status["forecast"]["next_collection_due_at"] == "2026-09-02T03:00:00+00:00"
+    assert status["forecast"]["continuity_deadline_at"] == "2026-09-03T03:00:00+00:00"

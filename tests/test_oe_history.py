@@ -91,10 +91,72 @@ def test_oe_history_audit_exposes_continuity_failures_without_a_score(tmp_path) 
     assert audit["ready_for_historical_backtest"] is False
     assert audit["blocking_reasons"] == [
         "RETRIEVAL_COUNT_BELOW_MINIMUM",
-        "COLLECTION_GAP_ABOVE_MAXIMUM",
+        "NORMALIZED_STATE_COUNT_BELOW_MINIMUM",
+        "COLLECTION_SPAN_BELOW_MINIMUM",
+        "MATURED_CUTOFF_COUNT_BELOW_MINIMUM",
     ]
     assert len(audit["gaps_above_maximum"]) == 2
+    assert audit["active_cohort"] == 3
+    assert audit["collection"]["retrieval_count"] == 1
+    assert audit["archive_collection"]["retrieval_count"] == 3
+    assert audit["archive_collection"]["matured_cutoff_count"] == 2
+    assert len(audit["cohorts"]) == 3
+    assert audit["warnings"] == ["HISTORICAL_GAPS_EXCLUDED_FROM_ACTIVE_COHORT"]
     assert "score" not in audit
+
+
+def test_oe_history_keeps_the_latest_ready_cohort_after_a_later_gap(tmp_path) -> None:
+    base = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
+    rows = base.splitlines(keepends=True)
+    header, game = rows[0], b"".join(rows[1:])
+    second_game = game.replace(b"GAME001", b"GAME002").replace(
+        b"2026-08-20 10:00:00", b"2026-08-22 12:00:00"
+    )
+    third_game = game.replace(b"GAME001", b"GAME003").replace(
+        b"2026-08-20 10:00:00", b"2026-08-23 12:00:00"
+    )
+    versions = (
+        (START, base),
+        (START + timedelta(days=1), header + game + second_game),
+        (START + timedelta(days=2), header + game + second_game + third_game),
+        (START + timedelta(days=10), header + game + second_game + third_game),
+    )
+    archive = SnapshotArchive(tmp_path)
+    for retrieved_at, body in versions:
+        archive.store(
+            RawSourceArtifact.create(
+                source_id=SOURCE_ID,
+                request_url=SOURCE_URL,
+                final_url=SOURCE_URL,
+                media_type="text/csv",
+                retrieved_at=retrieved_at,
+                body=body,
+            )
+        )
+
+    audit = audit_oe_history(
+        archive.inspect(SOURCE_ID),
+        SourceRegistry.load_default(),
+        source_timezone="UTC",
+        criteria=OEHistoryCriteria(
+            minimum_retrievals=3,
+            minimum_unique_states=3,
+            minimum_collection_span_days=2,
+            maximum_gap_hours=48,
+            outcome_horizon_days=1,
+            minimum_matured_cutoffs=2,
+        ),
+    ).to_dict()
+
+    assert audit["ready_for_historical_backtest"] is True
+    assert audit["blocking_reasons"] == []
+    assert audit["active_cohort"] == 1
+    assert audit["collection"]["retrieval_count"] == 3
+    assert audit["collection"]["matured_cutoff_count"] == 2
+    assert audit["archive_collection"]["retrieval_count"] == 4
+    assert audit["cohorts"][0]["ready"] is True
+    assert audit["cohorts"][1]["ready"] is False
+    assert audit["warnings"] == ["HISTORICAL_GAPS_EXCLUDED_FROM_ACTIVE_COHORT"]
 
 
 def test_oe_history_audit_rejects_an_empty_archive() -> None:

@@ -31,7 +31,7 @@ def _benchmark(*, ready: bool = False):
         "history_readiness": {
             "collection": {
                 "last_retrieved_at": AS_OF,
-            }
+            },
         },
         "cutoffs": [_cutoff()] if ready else [],
     }
@@ -131,6 +131,17 @@ def test_decision_outcomes_stays_empty_until_history_is_ready() -> None:
     assert "raw archive" in serialized
     assert "c:\\" not in serialized
     assert ".csv" not in serialized
+
+
+def test_decision_outcomes_uses_latest_archive_time_when_active_cohort_is_older() -> None:
+    benchmark = _benchmark()
+    benchmark["history_readiness"]["archive_collection"] = {
+        "last_retrieved_at": "2026-09-01T03:00:00+00:00"
+    }
+
+    outcomes = build_decision_outcomes(benchmark)
+
+    assert outcomes["as_of"] == "2026-09-01T03:00:00+00:00"
 
 
 def test_decision_outcomes_publish_only_matured_public_safe_evidence(tmp_path) -> None:

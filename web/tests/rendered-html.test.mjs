@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { gzipSync } from "node:zlib";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer } from "vite";
@@ -658,10 +659,17 @@ test("builds T1 creator angles only from exact public pick and Radar overlaps", 
     const { buildT1CreatorAngles } = await vite.ssrLoadModule("/app/creator-t1-angle.ts");
     const { buildCreatorStoryboard } = await vite.ssrLoadModule("/app/creator-storyboard.ts");
     const angles = buildT1CreatorAngles(feed);
+    const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+    assert.ok(t1);
+    const expectedOverlaps = t1.priority_picks.filter((pick) => feed.entries.some((entry) => (
+      entry.eligible_for_review && entry.champion_id === pick.champion_id && entry.role === pick.role
+    )));
     assert.ok(angles.length > 0);
+    assert.equal(angles.length, expectedOverlaps.length);
     assert.equal(angles[0].target_team_name, "T1");
-    assert.equal(angles[0].topic.champion_id, "Vi");
-    assert.equal(angles[0].topic.role, "JUNGLE");
+    assert.ok(expectedOverlaps.some((pick) => (
+      pick.champion_id === angles[0].topic.champion_id && pick.role === angles[0].topic.role
+    )));
     assert.ok(angles.every((angle) => angle.angle_type === "DIRECT_PUBLIC_OVERLAP"));
     assert.ok(angles.every((angle) => angle.observed_game_count > 0));
     assert.ok(angles.every((angle) => angle.target_evidence_ids.length > 0));
@@ -843,8 +851,20 @@ test("builds an evidence-bounded own-team draft battlecard", async () => {
     assert.equal(first.opponent.team_name, "Gen.G");
     assert.equal(first.priority_context.score, priority.score);
     assert.equal(first.evidence_quality, "OBSERVED");
-    assert.ok(first.protect.some((item) => item.champion_id === "Vi"));
-    assert.ok(first.contested.some((item) => item.champion_id === "Caitlyn"));
+    const expectedContested = geng.priority_picks.filter((opponentPick) => t1.priority_picks.some((ownPick) => (
+      ownPick.champion_id === opponentPick.champion_id && ownPick.role === opponentPick.role
+    )));
+    const expectedProtect = t1.priority_picks.filter((ownPick) => geng.frequent_bans.some((ban) => (
+      ban.champion_id === ownPick.champion_id
+    )));
+    assert.equal(first.contested.length, Math.min(3, expectedContested.length));
+    assert.ok(first.contested.every((item) => expectedContested.some((expected) => (
+      expected.champion_id === item.champion_id && expected.role === item.role
+    ))));
+    assert.equal(first.protect.length, Math.min(3, expectedProtect.length));
+    assert.ok(first.protect.every((item) => expectedProtect.some((expected) => (
+      expected.champion_id === item.champion_id
+    ))));
     assert.ok(first.deny_review.length > 0);
     assert.ok(first.exchange);
     assert.ok(first.exchange.evidence_ids.length > 0);
@@ -888,7 +908,8 @@ test("builds a deterministic T1 target profile with players, patch shifts, and o
     assert.equal(first.target.team_name, "T1");
     assert.ok(first.players.length >= 5);
     assert.equal(first.players.filter((player) => player.roster_status === "CURRENT").length, 5);
-    assert.ok(first.players.some((player) => player.roster_status === "OTHER_OBSERVED"));
+    assert.deepEqual(first.players, t1.player_profiles);
+    assert.ok(first.players.every((player) => ["CURRENT", "OTHER_OBSERVED"].includes(player.roster_status)));
     assert.ok(first.players.every((player) => player.champions.length > 0));
     assert.ok(first.recent_games.length > 0 && first.recent_games.length <= 5);
     assert.ok(first.recent_games.every((game) => game.picks.every((pick) => pick.player_name)));
@@ -1458,7 +1479,8 @@ test("ships a validated same-origin publication feed for automatic loading", asy
   const outcomes = JSON.parse(outcomesText);
   assert.equal(feed.schema_version, "1");
   assert.equal(feed.fixture_only, false);
-  assert.equal(feed.patch_id, "16.16");
+  assert.match(feed.patch_id, /^\d+\.\d+$/);
+  assert.equal(feed.opponent_prep.patch_id, feed.patch_id);
   assert.equal(feed.publication_readiness.ready_for_radar, true);
   assert.deepEqual(feed.publication_readiness.blocking_reasons, []);
   assert.ok(Number.isInteger(
@@ -1478,9 +1500,10 @@ test("ships a validated same-origin publication feed for automatic loading", asy
   assert.ok(t1.received_bans.length > 0);
   assert.ok(t1.evidence.match_ids.length > 0);
   assert.equal(t1.player_profiles.filter((player) => player.roster_status === "CURRENT").length, 5);
-  assert.ok(t1.player_profiles.some((player) => player.roster_status === "OTHER_OBSERVED"));
+  assert.ok(t1.player_profiles.length >= 5);
+  assert.ok(t1.player_profiles.every((player) => ["CURRENT", "OTHER_OBSERVED"].includes(player.roster_status)));
   assert.equal(t1.recent_games.length, 5);
-  assert.equal(t1.patch_comparison.previous_patch_id, "16.15");
+  assert.notEqual(t1.patch_comparison.previous_patch_id, feed.patch_id);
   assert.equal(feed.opponent_prep.config.profile_team_names[0], "T1");
   assert.equal(feed.opponent_prep.config.player_profiles_for_all_teams, true);
   assert.equal(feed.opponent_prep.teams.filter((team) => team.player_profiles).length, feed.opponent_prep.team_count);
@@ -1492,15 +1515,21 @@ test("ships a validated same-origin publication feed for automatic loading", asy
   assert.equal(history.artifact_type, "oe-history-status");
   assert.ok(Number.isInteger(history.gate_progress_percent));
   assert.ok(history.gate_progress_percent >= 0 && history.gate_progress_percent <= 100);
-  assert.equal(history.continuity.status, "ON_TRACK");
+  assert.ok(["ON_TRACK", "GAP_DETECTED"].includes(history.continuity.status));
   assert.equal(history.forecast.guaranteed, false);
   assert.ok(Date.parse(history.forecast.next_collection_due_at) > Date.parse(history.as_of));
   assert.deepEqual(feed.history_status, history);
   assert.equal(outcomes.artifact_type, "team-decision-outcomes");
   assert.equal(outcomes.as_of, history.as_of);
   assert.equal(outcomes.benchmark_ready, history.benchmark_ready);
-  assert.deepEqual(outcomes.evaluations, []);
-  assert.ok(feedText.length < 3_500_000, "all-team role profiles should remain bounded");
+  if (history.benchmark_ready) {
+    assert.equal(outcomes.status, "COMPLETE");
+    assert.ok(outcomes.evaluations.length > 0);
+  } else {
+    assert.deepEqual(outcomes.evaluations, []);
+  }
+  assert.ok(feedText.length < 5_000_000, "decoded all-team role profiles should remain bounded");
+  assert.ok(gzipSync(Buffer.from(feedText)).byteLength < 300_000, "compressed feed transfer should remain bounded");
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(historyText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(outcomesText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);

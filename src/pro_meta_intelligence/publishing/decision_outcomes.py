@@ -41,11 +41,14 @@ def build_decision_outcomes(benchmark: dict[str, Any]) -> dict[str, Any]:
         "missed_adoption_count": sum(len(item["missed_adoptions"]) for item in evaluations),
     }
     collection = history["collection"]
+    archive_collection = history.get("archive_collection", collection)
+    if not isinstance(archive_collection, dict):
+        raise ValueError("benchmark report has invalid archive collection metadata")
     return {
         "schema_version": "1",
         "artifact_type": "team-decision-outcomes",
         "source_id": benchmark.get("source_id"),
-        "as_of": collection.get("last_retrieved_at"),
+        "as_of": archive_collection.get("last_retrieved_at"),
         "status": "COMPLETE" if benchmark_ready else benchmark.get("status"),
         "benchmark_ready": benchmark_ready,
         "candidate_policy": {

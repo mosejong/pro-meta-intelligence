@@ -95,6 +95,9 @@ def benchmark_oe_blind_spots(
             "blocking_reasons": history["blocking_reasons"],
             "criteria": history["criteria"],
             "collection": history["collection"],
+            "archive_collection": history["archive_collection"],
+            "active_cohort": history["active_cohort"],
+            "cohorts": history["cohorts"],
             "warnings": history["warnings"],
         },
         "candidate_policy": {
