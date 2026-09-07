@@ -22,6 +22,7 @@ main { min-height: 100vh; }
 .snapshot-state { font: 650 11px var(--font-geist-mono); letter-spacing: .03em; white-space: nowrap; }
 .snapshot-state i, .legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); margin-right: 7px; }
 .snapshot-state.published i, .legend i.good { background: #5aaa37; box-shadow: 0 0 0 3px #5aaa3720; }
+.snapshot-state.published.stale i, .home-feed-state.stale i { background: var(--danger); box-shadow: 0 0 0 3px #c9483420; }
 .snapshot-state.connecting i { background: var(--violet); box-shadow: 0 0 0 3px #6054ff20; }
 .snapshot-state.demo i { background: #d28c26; box-shadow: 0 0 0 3px #d28c2620; }
 .snapshot-state.uploaded i { background: var(--ink); }

@@ -1,4 +1,4 @@
-import { snapshotFreshness, type FreshnessLevel } from "./freshness";
+import { PUBLICATION_FRESHNESS_POLICY, snapshotFreshness, type FreshnessLevel } from "./freshness";
 
 export type FeedTrustKind = "connecting" | "published" | "demo" | "uploaded";
 export type ScheduleTrustState = "connecting" | "connected" | "stale" | "unavailable";
@@ -51,7 +51,7 @@ export function DataTrustBar({
   scheduleState,
   scheduleSourceUrl,
 }: DataTrustBarProps) {
-  const data = snapshotFreshness(dataCutoff, checkedAt, { freshHours: 12, staleHours: 24 });
+  const data = snapshotFreshness(dataCutoff, checkedAt, PUBLICATION_FRESHNESS_POLICY);
   const schedule = snapshotFreshness(scheduleRetrievedAt, checkedAt, { freshHours: 12, staleHours: 36 });
   const dataLevel = feedKind === "demo" ? "STALE" : feedKind === "connecting" ? "UNKNOWN" : data.level;
   const scheduleLevel = scheduleState === "stale"
@@ -62,10 +62,27 @@ export function DataTrustBar({
   const protectionActive = scheduleState === "stale" || scheduleState === "unavailable";
   const reviewOnly = dataLevel === "STALE" || feedKind === "demo";
   const checking = dataLevel === "UNKNOWN" || scheduleLevel === "UNKNOWN";
-  const guardClass = protectionActive || reviewOnly ? "guarded" : checking ? "checking" : "ready";
-  const guardLabel = protectionActive ? "오래된 일정 제외" : reviewOnly ? "검토 전용" : checking ? "확인 중" : "사용 가능";
+  const guardClass = reviewOnly || protectionActive ? "guarded" : checking ? "checking" : "ready";
+  const guardLabel = feedKind === "demo"
+    ? "예시 화면"
+    : reviewOnly
+      ? "현재 판단 잠금"
+      : protectionActive
+        ? "일정 보호"
+        : checking
+          ? "확인 중"
+          : "사용 가능";
+  const guardDetail = feedKind === "demo"
+    ? "예시 데이터는 제품 탐색용이며 실제 팀 판단에 사용하지 않습니다."
+    : reviewOnly
+      ? "오래된 발행본은 과거 검토용입니다. 새 픽·상대 권고로 사용하지 않습니다."
+      : protectionActive
+        ? "오래되거나 없는 일정은 상대 우선순위 계산에서 자동 제외합니다."
+        : checking
+          ? "데이터와 일정 시각을 확인하고 있습니다. 미확정 상대·오래된 일정은 우선순위에서 자동 제외합니다."
+          : "최신성 경계를 통과한 공개 근거만 현재 검토에 사용합니다.";
 
-  return <section className="data-trust-bar" aria-label="데이터 최신성과 일정 신뢰 상태">
+  return <section className="data-trust-bar" aria-label="데이터 최신성과 일정 신뢰 상태" role="status">
     <div className={`trust-signal ${dataLevel.toLowerCase()}`}>
       <span><i />분석 데이터</span>
       <strong>{dataLabel(feedKind, dataLevel)}</strong>
@@ -79,7 +96,7 @@ export function DataTrustBar({
     <div className={`trust-guard ${guardClass}`}>
       <span>자동 보호</span>
       <strong>{guardLabel}</strong>
-      <small>미확정 상대·오래된 일정은 우선순위에서 자동 제외합니다.</small>
+      <small>{guardDetail}</small>
     </div>
     <details>
       <summary>어떻게 판단했나요? <span>＋</span></summary>

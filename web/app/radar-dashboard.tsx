@@ -27,6 +27,7 @@ import {
   type DecisionOutcomesFeed,
 } from "./decision-outcomes";
 import { isHistoryStatus, isRadarReport, isScheduleChangeLog, isScheduleSnapshot, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport, type ScheduleChangeLog, type ScheduleSnapshot } from "./radar-types";
+import { PUBLICATION_FRESHNESS_POLICY, snapshotFreshness } from "./freshness";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
 import { ProductHome } from "./product-home";
@@ -527,10 +528,16 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
       }
       const sharedOpponent = publishedTeams.find((team) => team.team_id === requestedOpponentId.current);
       setOpponentId(sharedOpponent?.team_id ?? findDefaultTargetTeam(publishedTeams)?.team_id ?? publishedTeams[0]?.team_id ?? "");
+      const publishedFreshness = snapshotFreshness(
+        publishedReport.cutoff,
+        checkedAt,
+        PUBLICATION_FRESHNESS_POLICY,
+      );
+      const stalePublication = !publishedReport.fixture_only && publishedFreshness.level === "STALE";
       setFeedState({
         kind: publishedReport.fixture_only ? "demo" : "published",
-        label: publishedReport.fixture_only ? "PUBLISHED DEMO FEED" : "LIVE PUBLISHED FEED",
-        detail: publishedReport.fixture_only ? "자동 연결됨 · 합성 데이터" : "자동 연결됨 · 검증된 발행본",
+        label: publishedReport.fixture_only ? "PUBLISHED DEMO FEED" : stalePublication ? "STALE · REVIEW ONLY" : "LIVE PUBLISHED FEED",
+        detail: publishedReport.fixture_only ? "자동 연결됨 · 합성 데이터" : stalePublication ? `자동 연결됨 · ${publishedFreshness.ageLabel} 발행본 · 현재 판단 잠금` : "자동 연결됨 · 검증된 발행본",
       });
     } catch {
       setCreatorBrief(null);
@@ -834,6 +841,11 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
 
   const t1Focus = defaultTargetTeam?.priority_picks[0] ?? null;
   const metaFocus = report.entries.find((entry) => entry.eligible_for_review) ?? null;
+  const isHistoricalPublication = feedState.kind === "published" && snapshotFreshness(
+    report.cutoff,
+    feedCheckedAt,
+    PUBLICATION_FRESHNESS_POLICY,
+  ).level === "STALE";
 
   if (initialSpace === "ONBOARDING") {
     return <ProductHome
@@ -873,7 +885,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
     RADAR: { index: "04", eyebrow: "META RADAR", title: "전체 신호와 경계를 탐색하세요.", detail: "지역 차이, 수요 변화, 표본 경고와 원본 이벤트를 분석가 관점으로 확인합니다.", action: "신호 탐색", target: "#radar" },
   }[initialSpace];
 
-  const sectionGuide = {
+  const currentSectionGuide = {
     TEAM: {
       conclusion: selectedMyTeam
         ? `${selectedMyTeam.team_name} 기준 상대 준비가 열렸습니다.`
@@ -919,6 +931,13 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
       target: "#radar",
     },
   }[initialSpace];
+  const sectionGuide = isHistoricalPublication ? {
+    conclusion: "최신 데이터 수집이 지연되어 현재 판단을 잠갔습니다.",
+    reason: "마지막 발행본은 당시 공개 근거를 복기하는 용도로만 유지합니다. 새 픽, 현재 상대 준비나 출전 판단으로 확대하지 않습니다.",
+    evidence: `마지막 발행 ${formatCutoff(report.cutoff)} · 패치 ${report.patch_id} · 과거 검토 전용`,
+    action: "마지막 근거 확인",
+    target: "#radar",
+  } : currentSectionGuide;
 
   return (
     <main className={`section-space space-${initialSpace.toLowerCase()} ${viewMode === "QUICK" ? "quick-view" : "full-view"}`}>
@@ -934,7 +953,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
           <a className={initialSpace === "RADAR" ? "active" : ""} href={productSpaceHref(initialSpace, "RADAR")}>메타 레이더</a>
         </nav>
         <div className="topbar-actions">
-          <span className={`snapshot-state ${feedState.kind}`} title={feedState.detail} aria-live="polite"><i />{feedState.label}</span>
+          <span className={`snapshot-state ${feedState.kind} ${isHistoricalPublication ? "stale" : ""}`} title={feedState.detail} aria-live="polite"><i />{feedState.label}</span>
           <button className="view-mode-button" type="button" aria-pressed={viewMode === "FULL"} onClick={toggleViewMode}>{viewMode === "QUICK" ? "전체 근거 보기" : "쉬운 화면으로"}</button>
           <button className="refresh-button" type="button" onClick={() => { manualOverride.current = false; void loadPublishedFeed(); }} aria-label="발행 피드 새로고침">↻</button>
           <button className="load-button" type="button" onClick={() => fileInput.current?.click()}>
@@ -973,9 +992,9 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
 
       <section className="decision-hero">
         <div className="decision-hero-copy">
-          <div className="kicker-row"><p className="eyebrow">PATCH {report.patch_id} · TEAM MODE</p><span>{feedState.detail}</span></div>
-          <h1>오늘 팀이<br /><em>결정할 3가지.</em></h1>
-          <p className="lede">티어표가 아니라 회의 시작점입니다. 지금 테스트할 후보, 더 지켜볼 후보, 보류할 근거를 공개 경기 데이터로 압축했습니다.</p>
+          <div className="kicker-row"><p className="eyebrow">PATCH {report.patch_id} · {isHistoricalPublication ? "HISTORICAL REVIEW" : "TEAM MODE"}</p><span>{feedState.detail}</span></div>
+          <h1>{isHistoricalPublication ? <>마지막 발행본<br /><em>검토 전용.</em></> : <>오늘 팀이<br /><em>결정할 3가지.</em></>}</h1>
+          <p className="lede">{isHistoricalPublication ? "현재 의사결정용 데이터가 아닙니다. 당시 공개 경기 근거와 분석 구조를 확인할 때만 사용하세요." : "티어표가 아니라 회의 시작점입니다. 지금 테스트할 후보, 더 지켜볼 후보, 보류할 근거를 공개 경기 데이터로 압축했습니다."}</p>
           <div className="decision-hero-actions">
             <a href="#t1-brief">원페이지 브리프</a>
             <a href="#opponent-prep">T1 분석 바로가기</a>

@@ -1440,7 +1440,20 @@ test("classifies publication freshness at explicit safety boundaries", async () 
     }));
     assert.match(staleMarkup, /오래된 데이터/);
     assert.match(staleMarkup, /일정 갱신 필요/);
-    assert.match(staleMarkup, /오래된 일정 제외/);
+    assert.match(staleMarkup, /현재 판단 잠금/);
+    assert.match(staleMarkup, /과거 검토용/);
+    assert.doesNotMatch(staleMarkup, />사용 가능</);
+
+    const staleScheduleMarkup = renderToStaticMarkup(createElement(DataTrustBar, {
+      dataCutoff: "2026-08-25T00:00:00Z",
+      checkedAt: "2026-08-25T06:00:00Z",
+      feedKind: "published",
+      scheduleRetrievedAt: "2026-08-23T00:00:00Z",
+      scheduleState: "stale",
+      scheduleSourceUrl: null,
+    }));
+    assert.match(staleScheduleMarkup, /일정 보호/);
+    assert.match(staleScheduleMarkup, /상대 우선순위 계산에서 자동 제외/);
   } finally {
     await vite.close();
   }
