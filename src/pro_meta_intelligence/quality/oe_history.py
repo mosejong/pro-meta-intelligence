@@ -146,38 +146,30 @@ def audit_oe_history(
         if previous is None or first_retrieved_at < previous[0]:
             first_seen_by_state[state_hash] = (first_retrieved_at, content_hash)
 
-    matured_cutoffs = []
     horizon = timedelta(days=criteria.outcome_horizon_days)
-    ordered_states = sorted(first_seen_by_state.items(), key=lambda item: (item[1][0], item[0]))
-    for state_hash, (cutoff, content_hash) in ordered_states:
-        later_states = [
-            (
-                other_state,
-                other_time,
-                other_content,
-                sum(
-                    observed_at > cutoff for observed_at in state_observed_at[other_state].values()
-                ),
-            )
-            for other_state, (other_time, other_content) in first_seen_by_state.items()
-            if other_state != state_hash
-            and other_time >= cutoff + horizon
-            and any(observed_at > cutoff for observed_at in state_observed_at[other_state].values())
-        ]
-        if later_states:
-            outcome_state, _, outcome_content, future_match_count = min(
-                later_states, key=lambda item: (item[1], item[0])
-            )
-            matured_cutoffs.append(
-                {
-                    "content_hash": content_hash,
-                    "normalized_state_hash": state_hash,
-                    "cutoff": cutoff.isoformat(),
-                    "outcome_available_from_hash": outcome_content,
-                    "outcome_normalized_state_hash": outcome_state,
-                    "outcome_future_match_count": future_match_count,
-                }
-            )
+    archive_matured_cutoffs = _matured_cutoffs(
+        first_seen_by_state,
+        state_observed_at,
+        horizon,
+    )
+    cohorts = _contiguous_cohorts(snapshots, valid_hashes, criteria.maximum_gap_hours)
+    cohort_audits = [
+        _audit_cohort(
+            cohort,
+            validated,
+            state_observed_at,
+            criteria,
+            horizon,
+        )
+        for cohort in cohorts
+    ]
+    ready_cohorts = [index for index, cohort in enumerate(cohort_audits) if cohort["ready"]]
+    active_cohort_index = ready_cohorts[-1] if ready_cohorts else len(cohort_audits) - 1
+    active_cohort = cohort_audits[active_cohort_index] if cohort_audits else None
+    active_collection = (
+        active_cohort["collection"] if active_cohort else _empty_collection_summary()
+    )
+    matured_cutoffs = active_cohort["matured_cutoffs"] if active_cohort else []
 
     state_sequence: list[tuple[datetime, str, str]] = []
     for snapshot in snapshots:
@@ -192,6 +184,8 @@ def audit_oe_history(
         warnings.append("KNOWN_IMPORT_EXCLUSIONS_PRESENT")
     if any(summary["blocking_issue_game_count"] for summary in validated.values()):
         warnings.append("BLOCKING_GAME_IMPORT_ISSUES_PRESENT")
+    if gaps:
+        warnings.append("HISTORICAL_GAPS_EXCLUDED_FROM_ACTIVE_COHORT")
     for previous, current in zip(state_sequence, state_sequence[1:], strict=False):
         previous_time, previous_state, previous_content = previous
         current_time, current_state, current_content = current
@@ -219,7 +213,7 @@ def audit_oe_history(
         if revised_count and "HISTORICAL_MATCH_REVISIONS_OBSERVED" not in warnings:
             warnings.append("HISTORICAL_MATCH_REVISIONS_OBSERVED")
 
-    collection_span_hours = (
+    archive_collection_span_hours = (
         (retrieval_times[-1] - retrieval_times[0]).total_seconds() / 3600
         if len(retrieval_times) >= 2
         else 0.0
@@ -237,21 +231,21 @@ def audit_oe_history(
             reasons.append("ARCHIVE_INTEGRITY_ISSUES_PRESENT")
         if validation_issues:
             reasons.append("SNAPSHOT_IMPORT_ISSUES_PRESENT")
-        if duplicate_times:
+        active_times = set(active_cohort["retrieval_times"]) if active_cohort else set()
+        active_duplicate_times = [value for value in duplicate_times if value in active_times]
+        if active_duplicate_times:
             reasons.append("CONFLICTING_RETRIEVAL_TIMESTAMPS")
-        if len(snapshots) < criteria.minimum_retrievals:
+        if active_collection["retrieval_count"] < criteria.minimum_retrievals:
             reasons.append("RETRIEVAL_COUNT_BELOW_MINIMUM")
-        if len(first_seen_by_state) < criteria.minimum_unique_states:
+        if active_collection["unique_normalized_state_count"] < criteria.minimum_unique_states:
             reasons.append("NORMALIZED_STATE_COUNT_BELOW_MINIMUM")
-        if collection_span_hours < criteria.minimum_collection_span_days * 24:
+        if active_collection["collection_span_hours"] < criteria.minimum_collection_span_days * 24:
             reasons.append("COLLECTION_SPAN_BELOW_MINIMUM")
-        if gaps:
-            reasons.append("COLLECTION_GAP_ABOVE_MAXIMUM")
         if len(matured_cutoffs) < criteria.minimum_matured_cutoffs:
             reasons.append("MATURED_CUTOFF_COUNT_BELOW_MINIMUM")
 
     payload = {
-        "schema_version": "1",
+        "schema_version": "2",
         "source_id": inspection.source_id,
         "ready_for_historical_backtest": not reasons,
         "blocking_reasons": reasons,
@@ -267,8 +261,10 @@ def audit_oe_history(
             "defer_game_issue_scope_to_benchmark_patch": True,
             "allow_known_import_exclusions": True,
             "known_exclusion_codes": sorted(KNOWN_EXCLUSION_CODES),
+            "cohort_selection": "LATEST_READY_ELSE_LATEST_CONTIGUOUS",
         },
-        "collection": {
+        "collection": active_collection,
+        "archive_collection": {
             "retrieval_count": len(snapshots),
             "retrieval_timestamp_count": len(retrieval_times),
             "unique_content_count": len(by_hash),
@@ -277,9 +273,20 @@ def audit_oe_history(
             "unchanged_retrieval_count": len(snapshots) - len(by_hash),
             "first_retrieved_at": retrieval_times[0].isoformat() if retrieval_times else None,
             "last_retrieved_at": retrieval_times[-1].isoformat() if retrieval_times else None,
-            "collection_span_hours": round(collection_span_hours, 6),
-            "matured_cutoff_count": len(matured_cutoffs),
+            "collection_span_hours": round(archive_collection_span_hours, 6),
+            "matured_cutoff_count": len(archive_matured_cutoffs),
+            "cohort_count": len(cohort_audits),
         },
+        "active_cohort": active_cohort_index + 1 if active_cohort else None,
+        "cohorts": [
+            {
+                "cohort_id": index + 1,
+                "active": index == active_cohort_index,
+                "ready": cohort["ready"],
+                "collection": cohort["collection"],
+            }
+            for index, cohort in enumerate(cohort_audits)
+        ],
         "content_snapshots": sorted(
             validated.values(), key=lambda item: (item["first_retrieved_at"], item["content_hash"])
         ),
@@ -297,9 +304,121 @@ def audit_oe_history(
             "game-level contract issues are scoped to the selected patch by the benchmark",
             "later distinct normalized state is required to mature an outcome window",
             "a matured outcome state must contain matches observed after its cutoff",
+            "gaps start a new cohort and never invalidate an earlier ready cohort",
+            "only matured cutoffs inside the selected contiguous cohort are evaluated",
         ],
     }
     return OEHistoryAudit(payload)
+
+
+def _contiguous_cohorts(snapshots, valid_hashes: set[str], maximum_gap_hours: int):
+    ordered = sorted(
+        (snapshot for snapshot in snapshots if snapshot.content_hash in valid_hashes),
+        key=lambda item: (item.retrieved_at, item.content_hash),
+    )
+    cohorts = []
+    for snapshot in ordered:
+        if not cohorts:
+            cohorts.append([snapshot])
+            continue
+        previous = cohorts[-1][-1]
+        gap_hours = (snapshot.retrieved_at - previous.retrieved_at).total_seconds() / 3600
+        if gap_hours > maximum_gap_hours:
+            cohorts.append([snapshot])
+        else:
+            cohorts[-1].append(snapshot)
+    return cohorts
+
+
+def _audit_cohort(cohort, validated, state_observed_at, criteria, horizon):
+    retrieval_times = sorted({snapshot.retrieved_at for snapshot in cohort})
+    content_hashes = {snapshot.content_hash for snapshot in cohort}
+    first_seen_by_state: dict[str, tuple[datetime, str]] = {}
+    for snapshot in cohort:
+        state_hash = validated[snapshot.content_hash]["normalized_state_hash"]
+        previous = first_seen_by_state.get(state_hash)
+        if previous is None or snapshot.retrieved_at < previous[0]:
+            first_seen_by_state[state_hash] = (snapshot.retrieved_at, snapshot.content_hash)
+    matured = _matured_cutoffs(first_seen_by_state, state_observed_at, horizon)
+    span_hours = (
+        (retrieval_times[-1] - retrieval_times[0]).total_seconds() / 3600
+        if len(retrieval_times) >= 2
+        else 0.0
+    )
+    collection = {
+        "retrieval_count": len(cohort),
+        "retrieval_timestamp_count": len(retrieval_times),
+        "unique_content_count": len(content_hashes),
+        "validated_content_count": len(content_hashes),
+        "unique_normalized_state_count": len(first_seen_by_state),
+        "unchanged_retrieval_count": len(cohort) - len(content_hashes),
+        "first_retrieved_at": retrieval_times[0].isoformat() if retrieval_times else None,
+        "last_retrieved_at": retrieval_times[-1].isoformat() if retrieval_times else None,
+        "collection_span_hours": round(span_hours, 6),
+        "matured_cutoff_count": len(matured),
+    }
+    ready = (
+        collection["retrieval_count"] >= criteria.minimum_retrievals
+        and collection["unique_normalized_state_count"] >= criteria.minimum_unique_states
+        and collection["collection_span_hours"] >= criteria.minimum_collection_span_days * 24
+        and collection["matured_cutoff_count"] >= criteria.minimum_matured_cutoffs
+    )
+    return {
+        "ready": ready,
+        "collection": collection,
+        "matured_cutoffs": matured,
+        "retrieval_times": [item.isoformat() for item in retrieval_times],
+    }
+
+
+def _matured_cutoffs(first_seen_by_state, state_observed_at, horizon):
+    matured = []
+    ordered_states = sorted(first_seen_by_state.items(), key=lambda item: (item[1][0], item[0]))
+    for state_hash, (cutoff, content_hash) in ordered_states:
+        later_states = [
+            (
+                other_state,
+                other_time,
+                other_content,
+                sum(
+                    observed_at > cutoff for observed_at in state_observed_at[other_state].values()
+                ),
+            )
+            for other_state, (other_time, other_content) in first_seen_by_state.items()
+            if other_state != state_hash
+            and other_time >= cutoff + horizon
+            and any(observed_at > cutoff for observed_at in state_observed_at[other_state].values())
+        ]
+        if later_states:
+            outcome_state, _, outcome_content, future_match_count = min(
+                later_states, key=lambda item: (item[1], item[0])
+            )
+            matured.append(
+                {
+                    "content_hash": content_hash,
+                    "normalized_state_hash": state_hash,
+                    "cutoff": cutoff.isoformat(),
+                    "outcome_available_from_hash": outcome_content,
+                    "outcome_normalized_state_hash": outcome_state,
+                    "outcome_future_match_count": future_match_count,
+                }
+            )
+    return matured
+
+
+def _empty_collection_summary():
+    return {
+        "retrieval_count": 0,
+        "retrieval_timestamp_count": 0,
+        "unique_content_count": 0,
+        "validated_content_count": 0,
+        "unique_normalized_state_count": 0,
+        "unchanged_retrieval_count": 0,
+        "first_retrieved_at": None,
+        "last_retrieved_at": None,
+        "collection_span_hours": 0.0,
+        "matured_cutoff_count": 0,
+    }
 
 
 def _match_fingerprints(imported: OracleElixirImport) -> dict[str, str]:

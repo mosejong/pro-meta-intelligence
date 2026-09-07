@@ -17,8 +17,13 @@ def build_history_status(benchmark: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(history, dict):
         raise ValueError("benchmark report is missing history_readiness")
     collection = history.get("collection")
+    archive_collection = history.get("archive_collection", collection)
     criteria = history.get("criteria")
-    if not isinstance(collection, dict) or not isinstance(criteria, dict):
+    if (
+        not isinstance(collection, dict)
+        or not isinstance(archive_collection, dict)
+        or not isinstance(criteria, dict)
+    ):
         raise ValueError("history readiness is missing collection or criteria")
 
     gates = (
@@ -50,20 +55,22 @@ def build_history_status(benchmark: dict[str, Any]) -> dict[str, Any]:
     benchmark_ready = bool(benchmark.get("benchmark_ready"))
     history_ready = bool(history.get("ready"))
     collection_summary = _collection_summary(collection)
-    forecast = _readiness_forecast(collection, criteria, gates)
+    latest_collection = _latest_cohort_collection(history, collection)
+    forecast = _readiness_forecast(collection, criteria, gates, latest_collection)
     return {
         "schema_version": "1",
         "artifact_type": "oe-history-status",
         "source_id": benchmark.get("source_id"),
-        "as_of": collection.get("last_retrieved_at"),
+        "as_of": archive_collection.get("last_retrieved_at"),
         "status": benchmark.get("status"),
         "history_ready": history_ready,
         "benchmark_ready": benchmark_ready,
         "gates": list(gates),
         "gate_progress_percent": _gate_progress(gates),
         "collection": collection_summary,
+        "archive": _archive_summary(archive_collection, history),
         "continuity": {
-            "status": _continuity_status(collection, history),
+            "status": _continuity_status(latest_collection, history),
             "maximum_gap_hours": criteria["maximum_gap_hours"],
             "next_collection_due_at": forecast["next_collection_due_at"],
             "continuity_deadline_at": forecast["continuity_deadline_at"],
@@ -130,6 +137,34 @@ def _collection_summary(collection: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _archive_summary(archive: dict[str, Any], history: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "retrieval_count": archive.get("retrieval_count", 0),
+        "unique_normalized_state_count": archive.get("unique_normalized_state_count", 0),
+        "collection_span_days": round(float(archive.get("collection_span_hours", 0)) / 24, 3),
+        "matured_cutoff_count": archive.get("matured_cutoff_count", 0),
+        "cohort_count": archive.get("cohort_count", 1 if archive.get("retrieval_count") else 0),
+        "active_cohort": history.get("active_cohort"),
+        "last_retrieved_at": archive.get("last_retrieved_at"),
+    }
+
+
+def _latest_cohort_collection(history: dict[str, Any], fallback: dict[str, Any]) -> dict[str, Any]:
+    cohorts = history.get("cohorts")
+    if not isinstance(cohorts, list):
+        return fallback
+    candidates = [
+        item
+        for item in cohorts
+        if isinstance(item, dict)
+        and isinstance(item.get("cohort_id"), int)
+        and isinstance(item.get("collection"), dict)
+    ]
+    if not candidates:
+        return fallback
+    return max(candidates, key=lambda item: item["cohort_id"])["collection"]
+
+
 def _gate_progress(gates: tuple[dict[str, Any], ...]) -> int:
     ratios = [
         min(1.0, float(gate["current"]) / float(gate["required"]))
@@ -151,6 +186,7 @@ def _readiness_forecast(
     collection: dict[str, Any],
     criteria: dict[str, Any],
     gates: tuple[dict[str, Any], ...],
+    timeline_collection: dict[str, Any],
 ) -> dict[str, Any]:
     by_id = {gate["id"]: gate for gate in gates}
     remaining = {
@@ -161,9 +197,12 @@ def _readiness_forecast(
     }
     first = _parse_datetime(collection.get("first_retrieved_at"))
     last = _parse_datetime(collection.get("last_retrieved_at"))
-    next_collection = last + timedelta(days=1) if last else None
+    timeline_last = _parse_datetime(timeline_collection.get("last_retrieved_at"))
+    next_collection = timeline_last + timedelta(days=1) if timeline_last else None
     continuity_deadline = (
-        last + timedelta(hours=float(criteria["maximum_gap_hours"])) if last else None
+        timeline_last + timedelta(hours=float(criteria["maximum_gap_hours"]))
+        if timeline_last
+        else None
     )
     possible_ready = None
     if first and last:

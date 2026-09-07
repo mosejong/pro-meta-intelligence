@@ -235,6 +235,15 @@ export type HistoryStatus = {
     first_retrieved_at: string | null;
     last_retrieved_at: string | null;
   };
+  archive?: {
+    retrieval_count: number;
+    unique_normalized_state_count: number;
+    collection_span_days: number;
+    matured_cutoff_count: number;
+    cohort_count: number;
+    active_cohort: number | null;
+    last_retrieved_at: string | null;
+  };
   continuity?: {
     status: "NOT_STARTED" | "ON_TRACK" | "GAP_DETECTED";
     maximum_gap_hours: number;
@@ -348,6 +357,7 @@ export function isHistoryStatus(value: unknown): value is HistoryStatus {
     typeof value.benchmark_ready === "boolean" &&
     (value.gate_progress_percent === undefined || typeof value.gate_progress_percent === "number") &&
     (value.collection === undefined || isHistoryCollection(value.collection)) &&
+    (value.archive === undefined || isHistoryArchive(value.archive)) &&
     (value.continuity === undefined || isHistoryContinuity(value.continuity)) &&
     (value.forecast === undefined || isHistoryForecast(value.forecast)) &&
     Array.isArray(value.gates) && value.gates.every(isHistoryGate) &&
@@ -457,6 +467,19 @@ function isHistoryCollection(value: unknown) {
     typeof value.collection_span_days === "number" &&
     typeof value.matured_cutoff_count === "number" &&
     (value.first_retrieved_at === null || typeof value.first_retrieved_at === "string") &&
+    (value.last_retrieved_at === null || typeof value.last_retrieved_at === "string"),
+  );
+}
+
+function isHistoryArchive(value: unknown) {
+  return Boolean(
+    isRecord(value) &&
+    typeof value.retrieval_count === "number" &&
+    typeof value.unique_normalized_state_count === "number" &&
+    typeof value.collection_span_days === "number" &&
+    typeof value.matured_cutoff_count === "number" &&
+    typeof value.cohort_count === "number" &&
+    (value.active_cohort === null || typeof value.active_cohort === "number") &&
     (value.last_retrieved_at === null || typeof value.last_retrieved_at === "string"),
   );
 }

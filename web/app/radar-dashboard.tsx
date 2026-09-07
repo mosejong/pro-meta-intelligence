@@ -1157,6 +1157,11 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
               <em>{gate.passed ? "충족" : "수집 중"}</em>
             </article>;
           })}</div>
+          {report.history_status.archive && report.history_status.archive.cohort_count > 1 && <aside className="history-cohort-note">
+            <div><span>ARCHIVE · CONTIGUOUS COHORTS</span><strong>전체 {report.history_status.archive.retrieval_count}회 · {report.history_status.archive.cohort_count}개 구간</strong></div>
+            <p>수집 공백 전후 기록을 한 번에 섞지 않습니다. 판정 게이트는 {report.history_status.archive.active_cohort ? `${report.history_status.archive.active_cohort}번` : "선택된"} 연속 구간의 {report.history_status.collection?.retrieval_count ?? 0}회만 사용하고, 나머지 원본은 감사·재현용으로 보존합니다.</p>
+            <b>전체 성숙 컷오프 {report.history_status.archive.matured_cutoff_count}개</b>
+          </aside>}
           {report.history_status.continuity && report.history_status.forecast && <div className="history-operations">
             <article className={report.history_status.continuity.status === "GAP_DETECTED" ? "history-operation-alert" : ""}>
               <span>COLLECTION CONTINUITY</span>
