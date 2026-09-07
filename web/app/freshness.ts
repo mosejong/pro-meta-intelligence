@@ -11,6 +11,11 @@ export type FreshnessStatus = {
   ageLabel: string;
 };
 
+export const PUBLICATION_FRESHNESS_POLICY: FreshnessPolicy = {
+  freshHours: 12,
+  staleHours: 24,
+};
+
 function formatAge(ageHours: number) {
   if (ageHours < 1) return "1시간 이내";
   if (ageHours < 24) return `${Math.floor(ageHours)}시간 전`;

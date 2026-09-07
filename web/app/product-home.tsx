@@ -8,6 +8,7 @@ import { championImageUrl } from "./champion-assets";
 import { useChampionNames } from "./champion-names";
 import { DataTrustBar, type FeedTrustKind, type ScheduleTrustState } from "./data-trust-bar";
 import { homeSpaceForQuestion } from "./home-intent";
+import { PUBLICATION_FRESHNESS_POLICY, snapshotFreshness } from "./freshness";
 import type { ProductSpace } from "./product-space";
 import { productRootHref, productSpaceHref } from "./product-space";
 
@@ -78,6 +79,11 @@ export function ProductHome({
   const rootHref = productRootHref(currentSpace);
   const [question, setQuestion] = useState("");
   const aiEnabled = aiValidation?.ai_features_enabled === true;
+  const dataIsStale = feedKind === "published" && snapshotFreshness(
+    dataCutoff,
+    checkedAt,
+    PUBLICATION_FRESHNESS_POLICY,
+  ).level === "STALE";
 
   function openQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -88,15 +94,15 @@ export function ProductHome({
     <header className="home-topbar">
       <a className="brand" href={productSpaceHref(currentSpace, "ONBOARDING")} aria-label="Pro Meta Intelligence 홈"><span className="brand-mark">PM</span><span><strong>PRO META</strong><small>INTELLIGENCE</small></span></a>
       <nav aria-label="분야별 분석"><a href={productSpaceHref(currentSpace, "T1")}>T1 오늘 준비</a><a href={productSpaceHref(currentSpace, "TEAM")}>내 팀 분석</a><a href={productSpaceHref(currentSpace, "CREATOR")}>영상 소재</a><a href={productSpaceHref(currentSpace, "RADAR")}>전체 데이터</a></nav>
-      <span className="home-feed-state"><i />{feedLabel}</span>
+      <span className={`home-feed-state ${dataIsStale ? "stale" : ""}`}><i />{dataIsStale ? "STALE · REVIEW ONLY" : feedLabel}</span>
     </header>
 
     <section className="home-hero">
       <div className="home-hero-copy">
-        <span>T1 FIRST · PUBLIC MATCH EVIDENCE</span>
-        <h1>T1, 오늘<br /><em>뭐부터 볼까?</em></h1>
-        <p>다음 경기, 자주 나온 픽, 이번 패치에서 올라오는 후보를 먼저 보여드립니다. 복잡한 수치는 궁금할 때만 열어보세요.</p>
-        <div><a href="#home-today">오늘의 핵심 3개</a><a href={productSpaceHref(currentSpace, "TEAM")}>내 팀으로 분석하기</a></div>
+        <span>{dataIsStale ? "HISTORICAL SNAPSHOT · CURRENT DECISIONS LOCKED" : "T1 FIRST · PUBLIC MATCH EVIDENCE"}</span>
+        <h1>{dataIsStale ? <>데이터 갱신을<br /><em>기다리고 있어요.</em></> : <>T1, 오늘<br /><em>뭐부터 볼까?</em></>}</h1>
+        <p>{dataIsStale ? "마지막 검증 발행본은 과거 근거로만 열어둡니다. 새 데이터가 확인되기 전에는 현재 픽이나 상대 준비로 권고하지 않습니다." : "다음 경기, 자주 나온 픽, 이번 패치에서 올라오는 후보를 먼저 보여드립니다. 복잡한 수치는 궁금할 때만 열어보세요."}</p>
+        <div><a href="#home-today">{dataIsStale ? "마지막 발행 근거 3개" : "오늘의 핵심 3개"}</a><a href={productSpaceHref(currentSpace, "TEAM")}>{dataIsStale ? "과거 팀 분석 보기" : "내 팀으로 분석하기"}</a></div>
         <small>가입 없음 · 공개 경기 데이터 · 모르는 내용은 추정하지 않음</small>
       </div>
       <figure><img src={`${rootHref}meta-radar-hero-v2.png`} alt="지역별 메타 신호가 분석 후보로 모이는 일러스트" /><figcaption><span>현재 패치 {patchId}</span><b>지금 더 볼 후보 {reviewCount}개</b></figcaption></figure>
@@ -112,7 +118,7 @@ export function ProductHome({
     />
 
     <section className="home-today" id="home-today" aria-labelledby="home-today-title">
-      <header><span>TODAY · 30 SECOND BRIEF</span><h2 id="home-today-title">오늘은 이것만 먼저 보세요.</h2><p>결론을 먼저 읽고, 더 궁금한 카드만 자세히 확인할 수 있습니다.</p></header>
+      <header><span>{dataIsStale ? "LAST VERIFIED SNAPSHOT · REVIEW ONLY" : "TODAY · 30 SECOND BRIEF"}</span><h2 id="home-today-title">{dataIsStale ? "마지막 발행본은 이렇게 보세요." : "오늘은 이것만 먼저 보세요."}</h2><p>{dataIsStale ? "현재 판단은 잠겨 있습니다. 당시 공개 근거를 복기하거나 제품 구조를 확인할 때만 사용하세요." : "결론을 먼저 읽고, 더 궁금한 카드만 자세히 확인할 수 있습니다."}</p></header>
       <div>
         <a className="fixture" href={productSpaceHref(currentSpace, "T1")}>
           <span className="home-today-number">01</span><div className="home-team-mark" aria-hidden="true">T1</div>
@@ -120,11 +126,11 @@ export function ProductHome({
         </a>
         <a className="pick" href={productSpaceHref(currentSpace, "T1")}>
           <span className="home-today-number">02</span>{t1Focus ? <img src={championImageUrl(t1Focus.championId)} alt="" /> : <div className="home-team-mark muted" aria-hidden="true">?</div>}
-          <div><small>T1 공개 경기 반복 픽</small><h3>{t1Focus ? `${nameOf(t1Focus.championId)} · ${roleLabels[t1Focus.role ?? ""] ?? t1Focus.role ?? "역할 확인"}` : "공개 표본 대기"}</h3><p>{t1Focus ? `${t1Focus.gameCount}경기에서 관측 · 경기 기준 ${percent(t1Focus.gameRate)}` : "새 경기 표본이 들어오면 가장 반복된 픽을 표시합니다."}</p></div><b>픽·밴 근거 보기 →</b>
+          <div><small>{dataIsStale ? "마지막 발행본 · T1 반복 픽" : "T1 공개 경기 반복 픽"}</small><h3>{t1Focus ? `${nameOf(t1Focus.championId)} · ${roleLabels[t1Focus.role ?? ""] ?? t1Focus.role ?? "역할 확인"}` : "공개 표본 대기"}</h3><p>{t1Focus ? `${t1Focus.gameCount}경기에서 관측 · 경기 기준 ${percent(t1Focus.gameRate)}` : "새 경기 표본이 들어오면 가장 반복된 픽을 표시합니다."}</p></div><b>픽·밴 근거 보기 →</b>
         </a>
         <a className="meta" href={productSpaceHref(currentSpace, "RADAR")}>
           <span className="home-today-number">03</span>{metaFocus ? <img src={championImageUrl(metaFocus.championId)} alt="" /> : <div className="home-team-mark muted" aria-hidden="true">?</div>}
-          <div><small>이번 패치 주목 후보</small><h3>{metaFocus ? `${nameOf(metaFocus.championId)} · ${roleLabels[metaFocus.role] ?? metaFocus.role}` : "검토 후보 대기"}</h3><p>{metaFocus ? `최근 ${metaFocus.teamCount}개 팀 관측 · ${metaFocus.pickPresenceDelta > 0 ? "이전보다 사용 증가" : "추가 관찰 필요"}` : "표본 기준을 통과한 후보가 생기면 표시합니다."}</p></div><b>쉬운 설명과 근거 →</b>
+          <div><small>{dataIsStale ? "마지막 발행 패치 후보" : "이번 패치 주목 후보"}</small><h3>{metaFocus ? `${nameOf(metaFocus.championId)} · ${roleLabels[metaFocus.role] ?? metaFocus.role}` : "검토 후보 대기"}</h3><p>{metaFocus ? `${dataIsStale ? "당시" : "최근"} ${metaFocus.teamCount}개 팀 관측 · ${metaFocus.pickPresenceDelta > 0 ? "이전보다 사용 증가" : "추가 관찰 필요"}` : "표본 기준을 통과한 후보가 생기면 표시합니다."}</p></div><b>쉬운 설명과 근거 →</b>
         </a>
       </div>
     </section>
@@ -141,8 +147,8 @@ export function ProductHome({
     </section>
 
     <section className="home-live-strip" aria-label="현재 공개 데이터 상태">
-      <article><span>현재 패치</span><strong>{patchId}</strong><small>검증된 공개 데이터</small></article>
-      <article><span>분석 가능한 팀</span><strong>{teamCount}</strong><small>공개 경기 팀 프로필</small></article>
+      <article><span>{dataIsStale ? "발행 패치" : "현재 패치"}</span><strong>{patchId}</strong><small>{dataIsStale ? "과거 검토 전용" : "검증된 공개 데이터"}</small></article>
+      <article><span>{dataIsStale ? "발행 당시 팀" : "분석 가능한 팀"}</span><strong>{teamCount}</strong><small>공개 경기 팀 프로필</small></article>
       <article><span>T1 다음 일정</span><strong>{fixtureTitle}</strong><small>{fixtureDetail}</small></article>
       <article><span>더 볼 후보</span><strong>{reviewCount}</strong><small>표본 기준 통과</small></article>
     </section>
