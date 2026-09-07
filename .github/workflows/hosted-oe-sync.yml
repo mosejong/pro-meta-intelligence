@@ -37,10 +37,10 @@ jobs:
       PRIVATE_ARCHIVE_DIR: outputs/oracles-elixir/raw
       PRIVATE_STATE_FILE: outputs/hosted-oe-state/oe-private-history-state.pmi
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
@@ -120,7 +120,7 @@ jobs:
             --output "$PRIVATE_STATE_DIR/local-health.json"
       - name: Preserve public-safe sync diagnostics on success or rejection
         if: ${{ always() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: oe-sync-diagnostics-${{ github.run_id }}
           path: |
@@ -137,7 +137,7 @@ jobs:
           --report "$PRIVATE_STATE_DIR/pack-report.json"
       - name: Upload redundant rolling private history state
         id: archive-upload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: oe-private-history-state-${{ github.run_id }}
           path: |
@@ -167,8 +167,8 @@ jobs:
       - name: Validate and build the independent Pages artifact
         working-directory: web
         run: npm ci && npm run lint && npm run test:pages
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: web/dist-pages
       - name: Publish only the reviewed public feed heads
@@ -214,4 +214,4 @@ jobs:
     steps:
       - name: Deploy hosted OE publication to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
