@@ -267,8 +267,10 @@ audited and leaves the existing public feed unchanged.
 
 Historical backtests have a stricter contract. `audit-oe-history` verifies every archived metadata
 record and raw file, deeply imports each distinct content version at its earliest retrieval time,
-measures collection gaps, and counts cutoffs with a later outcome window. It performs no network
-request and never treats repeated unchanged bytes as a new historical state.
+splits gaps above the configured limit into independent contiguous cohorts, and counts cutoffs with
+a later outcome window only inside the selected cohort. Full-archive totals remain visible for
+audit, but missing intervals are never joined into one walk-forward evaluation. It performs no
+network request and never treats repeated unchanged bytes as a new historical state.
 
 `benchmark-oe` measures import, Radar construction, serialization, throughput, and output size over
 a caller-supplied real file. Its committed report contains only aggregate evidence and a source hash;

@@ -5,8 +5,8 @@ recreate what was knowable weeks earlier: every row in that file receives the lo
 as `available_at`. Historical backtesting therefore requires a sequence of immutable daily raw
 snapshots collected over time.
 
-`audit-oe-history` answers whether that sequence is intact, semantically importable, continuous,
-and old enough to contain observable outcome windows.
+`audit-oe-history` answers whether the archive is intact and semantically importable, then selects
+one continuous retrieval cohort that is old enough to contain observable outcome windows.
 
 ## Command
 
@@ -52,7 +52,7 @@ There is no composite readiness score. The starting operational defaults require
 - 14 archived retrieval records,
 - 3 distinct, fully validated normalized match states,
 - 14 days between first and last retrieval,
-- no collection gap longer than 48 hours,
+- no collection gap longer than 48 hours inside the selected cohort,
 - a 7-day future-outcome horizon,
 - 2 cutoff snapshots with a later distinct normalized state at least 7 days away,
 - zero archive-integrity or file-level import failures.
@@ -64,8 +64,15 @@ only a cutoff whose selected patch (or unattributed input) contains those contra
 matches current publication policy and prevents an old unrelated invalid row from disabling every
 later patch, while excluded games never enter features or outcomes.
 
+When a gap exceeds 48 hours, the audit starts a new cohort instead of joining evidence across the
+missing interval. It selects the latest cohort that passes every history gate; if none is ready, it
+selects the latest contiguous cohort and keeps reporting the remaining gates. An older ready cohort
+therefore remains reproducible after a later outage, while an incomplete newer cohort cannot be
+silently combined with it. Archive-integrity and file-import failures remain global blockers.
+
 These are collection-operability defaults, not proof of statistical power. They can be overridden
-with the matching CLI options, while measured counts, gaps, and blocking reason codes remain visible.
+with the matching CLI options, while selected-cohort measurements, full-archive totals, gap records,
+and blocking reason codes remain visible.
 
 ## Retrievals, content versions, and matured cutoffs
 
@@ -81,6 +88,10 @@ harness from calling the newest snapshot evaluable before future outcomes exist.
 ready, `benchmark-oe-history` consumes only these named cutoff/outcome hash pairs; see
 [`BLIND_SPOT_BENCHMARK.md`](BLIND_SPOT_BENCHMARK.md).
 
+Cutoff/outcome pairs are created only from the selected cohort. The detailed audit separately keeps
+`archive_collection`, `active_cohort`, and compact `cohorts` summaries so operators can reconcile
+all retained evidence without letting a historical gap leak into one walk-forward evaluation.
+
 Consecutive normalized states also produce a revision ledger with added, removed, revised, and
 unchanged match counts. Additions are expected for an annual append-oriented file. Removals and
 revisions are surfaced as warnings so later backtests can pin the exact state that was available at
@@ -93,12 +104,14 @@ audit and walk-forward benchmark maintenance under the same writer lock, then at
 compact `web/public/feed/history-status.json`. A separate scheduled audit is optional diagnostics,
 not a requirement for keeping the public readiness indicator current.
 
-The public status contains the four default gate measurements plus a compact collection ledger. The
-ledger reports the average gate-fill percentage, first and last verified retrievals, continuity
-deadline, remaining counts, and an earliest-possible readiness date. That date is explicitly a lower
-bound under uninterrupted daily collection and required distinct source-state changes; it is not a
-promise that games, source updates, or matured cutoffs will arrive. Aggregate benchmark metrics remain
-hidden until the benchmark is genuinely ready.
+The public status contains the four default gate measurements plus compact selected-cohort and
+full-archive ledgers. When more than one cohort exists, the dashboard identifies the cohort used by
+the gates and explains that the other immutable snapshots remain available for audit and
+reproduction. Operational next-run and continuity timestamps come from the newest cohort even when
+an older ready cohort supplies benchmark cutoffs. The forecast date is explicitly a lower bound
+under uninterrupted daily collection and required distinct source-state changes; it is not a
+promise that games, source updates, or matured cutoffs will arrive. Aggregate benchmark metrics
+remain hidden until the benchmark is genuinely ready.
 
 Keep the raw archive and detailed audit private under `outputs/`; neither provider rows nor local
 filesystem paths belong in the public feed. The compact forecast is derived only from verified archive
