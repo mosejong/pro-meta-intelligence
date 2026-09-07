@@ -1,26 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-07T04:36:03.959203+00:00",
+  "available_at": "2026-09-07T14:13:56.813938+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:b0d5bbcfc8d8c112caa0686319b99d95ad95f7f13d948823425adc9b1cfc7baa",
+  "content_hash": "sha256:0ed1db1ad2d0a2fdffa11b2a4df02fa2a60a0f96671ef64b170eb00c393835cd",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:2aa9ad9dad0312cf41cd",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "BLG",
-          "name": "BILIBILI GAMING"
-        },
-        {
-          "code": "AL",
-          "name": "Anyone's Legend"
-        }
-      ],
-      "start_at": "2026-09-07T09:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Playoffs",
@@ -262,7 +245,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:b9a7885182f9a1a3a633",
+      "event_id": "lolesports:67ca81f5bc640d023247",
       "league": "LEC",
       "participants": [
         {
@@ -270,8 +253,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "KC",
+          "name": "Karmine Corp"
         }
       ],
       "start_at": "2026-09-19T15:00:00+00:00"
@@ -296,7 +279,7 @@
     {
       "best_of": 5,
       "block": "Finals",
-      "event_id": "lolesports:b08f641122f198fd6d5b",
+      "event_id": "lolesports:cf20093a4dbd9adad3b9",
       "league": "LEC",
       "participants": [
         {
@@ -304,8 +287,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "G2",
+          "name": "G2 Esports"
         }
       ],
       "start_at": "2026-09-20T15:00:00+00:00"
@@ -423,10 +406,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 24,
-    "tbd_participant_count": 39
+    "event_count": 23,
+    "tbd_participant_count": 37
   },
-  "retrieved_at": "2026-09-07T04:36:03.959203+00:00",
+  "retrieved_at": "2026-09-07T14:13:56.813938+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
