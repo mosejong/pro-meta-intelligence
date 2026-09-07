@@ -40,10 +40,13 @@ prevents monitoring from paging merely because the leakage-safe benchmark correc
 before future outcomes exist.
 
 The public history panel also exposes collection continuity and an earliest-possible readiness date.
-Treat `ON_TRACK` as “no audited gap above the configured 48-hour ceiling,” not proof that the next
-download will contain a distinct state. `GAP_DETECTED` requires operator review. The date forecast is
-not guaranteed and assumes uninterrupted daily retrievals plus every distinct state needed to mature
-the future-outcome cutoffs.
+Treat `ON_TRACK` as “the newest contiguous cohort has a next-run timeline,” not proof that the next
+download will contain a distinct state. A gap above the configured 48-hour ceiling starts another
+cohort; the panel preserves the full archive count and identifies the cohort actually used by the
+benchmark instead of permanently joining or invalidating both sides of the gap. `GAP_DETECTED` from
+an older public contract still requires operator review. The date forecast is not guaranteed and
+assumes uninterrupted daily retrievals plus every distinct state needed to mature the
+future-outcome cutoffs.
 
 Default health limits are intentionally wider than the 24-hour provider interval:
 
