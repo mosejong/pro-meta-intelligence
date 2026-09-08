@@ -1,26 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-08T04:31:40.330185+00:00",
+  "available_at": "2026-09-08T12:51:27.411584+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:4a45f07796b5b2bafb6ee3ac02bbe2e7833afb6b09ae688e33ede8e04f1f09e7",
+  "content_hash": "sha256:7ba3637418262cfd2708a2ab91514d978435ea64bd49f177c0e46c495dbf72e7",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:79591aa00f938f60c683",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "LGD",
-          "name": "LGD GAMING"
-        },
-        {
-          "code": "IG",
-          "name": "Invictus Gaming"
-        }
-      ],
-      "start_at": "2026-09-08T09:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Playoffs",
@@ -406,10 +389,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 23,
+    "event_count": 22,
     "tbd_participant_count": 33
   },
-  "retrieved_at": "2026-09-08T04:31:40.330185+00:00",
+  "retrieved_at": "2026-09-08T12:51:27.411584+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
