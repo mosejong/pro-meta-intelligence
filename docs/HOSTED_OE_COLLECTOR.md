@@ -4,9 +4,9 @@
 
 The hosted collector removes the developer workstation from the public feed's critical path while
 preserving the point-in-time raw history required for later walk-forward evaluation. It runs on
-GitHub Actions twice daily; the source adapter still permits at most one provider download per exact
-24-hour interval. The second run is a policy-safe retry window for delayed cron starts and provider
-outages, not permission to double-fetch.
+GitHub Actions once daily. This scheduler-level budget ensures repeated provider failures cannot
+turn into twice-daily download attempts; successful retrievals remain additionally protected by the
+source adapter's exact 24-hour interval.
 
 ## Private state model
 
@@ -40,7 +40,7 @@ are isolated under the `hosted-ops` extra and tested in CI.
 
 ## Hosted workflow
 
-`.github/workflows/hosted-oe-sync.yml` executes at `07:13` and `19:13` UTC. One run:
+`.github/workflows/hosted-oe-sync.yml` executes at `07:13` UTC. One run:
 
 1. requires the repository secret `OE_ARCHIVE_KEY`;
 2. restores and authenticates the newest `oe-private-history-state-*` artifact;
@@ -50,8 +50,10 @@ are isolated under the `hosted-ops` extra and tested in CI.
 6. repacks and uploads the authenticated rolling history before any Git push;
 7. keeps the two newest encrypted history generations;
 8. builds and validates the Pages artifact;
-9. permits tracked changes only to Radar, Creator, history, and decision-outcome public heads;
-10. performs a normal non-force push and deploys the already validated Pages artifact.
+9. permits tracked changes only to Radar, Creator, history, decision-outcome, and bounded
+   collection-status public heads;
+10. performs a normal non-force push and deploys the already validated Pages artifact; and
+11. when source freshness fails, deploys the bounded status but still fails the workflow.
 
 No hosted run can silently reset history. If no prior artifact exists, `workflow_dispatch` must name
 an encrypted `bootstrap_asset_id` or explicitly set `allow_fresh_start=true`. Scheduled runs always
@@ -86,7 +88,8 @@ result rather than trusting either collector.
 - `source archive integrity failed`: retain both encrypted generations and inspect the named
   metadata/hash issue before collecting or publishing.
 - provider unavailable with a healthy restored state: keep the last good publication; the next
-  12-hour retry may collect after the policy interval.
+  daily scheduled run may collect after the policy interval. Use manual dispatch only for a reviewed
+  incident response, not as an automatic retry loop.
 - non-fast-forward feed push: do not rebase or force-push from automation. Preserve the encrypted
   artifact and let the next run recompute from current `main`.
 - both encrypted generations unavailable: require an explicit bootstrap or acknowledged fresh
