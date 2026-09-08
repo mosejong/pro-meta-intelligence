@@ -709,9 +709,7 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
 
     audit = json.loads(output.read_text(encoding="utf-8"))
     current = json.loads((feed / "current.json").read_text(encoding="utf-8"))
-    collection_status = json.loads(
-        (feed / "collection-status.json").read_text(encoding="utf-8")
-    )
+    collection_status = json.loads((feed / "collection-status.json").read_text(encoding="utf-8"))
     assert audit["status"] == "SUCCEEDED"
     assert audit["result"]["source_acquisition"]["status"] == "DOWNLOADED"
     assert audit["result"]["network_collection_performed"] is True
@@ -891,8 +889,6 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
         "PATCH_REGION_COUNT_BELOW_MINIMUM",
     ]
     assert not (feed / "current.json").exists()
-    collection_status = json.loads(
-        (feed / "collection-status.json").read_text(encoding="utf-8")
-    )
+    collection_status = json.loads((feed / "collection-status.json").read_text(encoding="utf-8"))
     assert collection_status["state"] == "PUBLICATION_REJECTED"
     assert collection_status["reason_code"] == "READINESS_GATE_REJECTED"

@@ -53,8 +53,7 @@ def build_collection_status(audit: dict[str, Any]) -> dict[str, Any]:
         },
         "automation": {
             "retry_mode": "AUTOMATIC_POLICY_GATED",
-            "operator_action_required": state
-            in {"PUBLICATION_REJECTED", "RUN_FAILED", "UNKNOWN"},
+            "operator_action_required": state in {"PUBLICATION_REJECTED", "RUN_FAILED", "UNKNOWN"},
         },
         "boundary": (
             "Collection availability only; excludes raw rows, local paths, provider URLs, and "
