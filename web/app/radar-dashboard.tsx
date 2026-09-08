@@ -5,6 +5,7 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { championImageUrl } from "./champion-assets";
 import { ChampionNameProvider, useChampionNames } from "./champion-names";
+import { collectionStatusMessage, isCollectionStatus, type CollectionStatus } from "./collection-status";
 import { DataTrustBar } from "./data-trust-bar";
 import { AIValidationPanel } from "./ai-validation-panel";
 import { isAIValidationStatus, type AIValidationStatus } from "./ai-validation";
@@ -299,6 +300,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   const [creatorBrief, setCreatorBrief] = useState<CreatorBrief | null>(null);
   const [decisionOutcomes, setDecisionOutcomes] = useState<DecisionOutcomesFeed | null>(null);
   const [aiValidation, setAIValidation] = useState<AIValidationStatus | null>(null);
+  const [collectionStatus, setCollectionStatus] = useState<CollectionStatus | null>(null);
   const [scheduleCheckedAt, setScheduleCheckedAt] = useState<string | null>(null);
   const [feedCheckedAt, setFeedCheckedAt] = useState<string | null>(null);
   const [scheduleState, setScheduleState] = useState<"connecting" | "connected" | "stale" | "unavailable">("connecting");
@@ -431,8 +433,20 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
       const parsed: unknown = await response.json();
       if (!isRadarReport(parsed)) throw new Error("unsupported report");
       let publishedReport = parsed;
+      let publishedCollectionStatus: CollectionStatus | null = null;
       const checkedAt = new Date().toISOString();
       setFeedCheckedAt(checkedAt);
+      try {
+        const collectionUrl = new URL("feed/collection-status.json", publicationBase);
+        const collectionResponse = await fetch(collectionUrl, { cache: "no-store" });
+        if (!collectionResponse.ok) throw new Error(`collection status returned ${collectionResponse.status}`);
+        const collectionPayload: unknown = await collectionResponse.json();
+        if (!isCollectionStatus(collectionPayload)) throw new Error("unsupported collection status");
+        publishedCollectionStatus = collectionPayload;
+        setCollectionStatus(collectionPayload);
+      } catch {
+        setCollectionStatus(null);
+      }
       try {
         const creatorUrl = new URL("feed/current-creator.json", publicationBase);
         const creatorResponse = await fetch(creatorUrl, { cache: "no-store" });
@@ -534,15 +548,17 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         PUBLICATION_FRESHNESS_POLICY,
       );
       const stalePublication = !publishedReport.fixture_only && publishedFreshness.level === "STALE";
+      const collectionDetail = collectionStatusMessage(publishedCollectionStatus);
       setFeedState({
         kind: publishedReport.fixture_only ? "demo" : "published",
         label: publishedReport.fixture_only ? "PUBLISHED DEMO FEED" : stalePublication ? "STALE · REVIEW ONLY" : "LIVE PUBLISHED FEED",
-        detail: publishedReport.fixture_only ? "자동 연결됨 · 합성 데이터" : stalePublication ? `자동 연결됨 · ${publishedFreshness.ageLabel} 발행본 · 현재 판단 잠금` : "자동 연결됨 · 검증된 발행본",
+        detail: publishedReport.fixture_only ? "자동 연결됨 · 합성 데이터" : stalePublication ? `자동 연결됨 · ${publishedFreshness.ageLabel} 발행본 · ${collectionDetail ?? "현재 판단 잠금"}` : "자동 연결됨 · 검증된 발행본",
       });
     } catch {
       setCreatorBrief(null);
       setDecisionOutcomes(null);
       setAIValidation(null);
+      setCollectionStatus(null);
       setFeedCheckedAt(null);
       setFeedState({
         kind: "demo",
@@ -653,6 +669,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
       setVisibleLimit(12);
       setCreatorBrief(null);
       setDecisionOutcomes(null);
+      setCollectionStatus(null);
       requestedTeamId.current = "";
       requestedOpponentId.current = "";
       setOpponentId(findDefaultTargetTeam(parsed.opponent_prep?.teams ?? [])?.team_id ?? parsed.opponent_prep?.teams[0]?.team_id ?? "");
@@ -863,6 +880,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
       scheduleRetrievedAt={schedule?.retrieved_at ?? null}
       scheduleState={scheduleState}
       scheduleSourceUrl={schedule?.source_url ?? null}
+      collectionStatus={collectionStatus}
       t1Focus={t1Focus ? {
         championId: t1Focus.champion_id,
         role: t1Focus.role ?? null,
@@ -975,6 +993,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         scheduleRetrievedAt={schedule?.retrieved_at ?? null}
         scheduleState={scheduleState}
         scheduleSourceUrl={schedule?.source_url ?? null}
+        collectionStatus={collectionStatus}
       />
 
       <section className="section-plain-guide" aria-labelledby="plain-guide-title">

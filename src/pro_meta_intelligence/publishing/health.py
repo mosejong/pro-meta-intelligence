@@ -92,6 +92,7 @@ def assess_publication_watchdog(
     decision_outcomes: dict[str, Any] | None,
     schedule_feed: dict[str, Any] | None,
     ai_validation: dict[str, Any] | None,
+    collection_status: dict[str, Any] | None = None,
     *,
     checked_at: datetime | None = None,
     maximum_radar_age_hours: float = 50,
@@ -121,6 +122,7 @@ def assess_publication_watchdog(
         _history_outcomes_pair_check(history_status, decision_outcomes),
         _schedule_publication_check(schedule_feed),
         _ai_validation_artifact_check(ai_validation),
+        _collection_status_artifact_check(collection_status),
         _freshness_check(
             "RADAR_PUBLICATION_FRESHNESS",
             current_feed.get("cutoff") if isinstance(current_feed, dict) else None,
@@ -141,6 +143,7 @@ def assess_publication_watchdog(
                 "decision_outcomes": decision_outcomes,
                 "schedule": schedule_feed,
                 "ai_validation": ai_validation,
+                "collection_status": collection_status,
             }
         ),
     ]
@@ -173,6 +176,9 @@ def assess_publication_watchdog(
             else None,
             "ai_validation_status": ai_validation.get("status")
             if isinstance(ai_validation, dict)
+            else None,
+            "collection_state": collection_status.get("state")
+            if isinstance(collection_status, dict)
             else None,
         },
         "boundary": (
@@ -473,6 +479,79 @@ def _ai_validation_artifact_check(ai_validation: dict[str, Any] | None) -> dict[
     )
 
 
+def _collection_status_artifact_check(
+    collection_status: dict[str, Any] | None,
+) -> dict[str, Any]:
+    if not isinstance(collection_status, dict):
+        return _check(
+            "COLLECTION_STATUS_VALID",
+            False,
+            {"present": False},
+            "public-safe collection state with timestamps and automatic retry policy",
+        )
+    attempt = collection_status.get("last_attempt")
+    source = collection_status.get("source")
+    publication = collection_status.get("publication")
+    automation = collection_status.get("automation")
+    state = collection_status.get("state")
+    allowed_states = {
+        "CURRENT",
+        "SOURCE_DELAYED",
+        "SOURCE_UNAVAILABLE",
+        "PUBLICATION_REJECTED",
+        "RUN_FAILED",
+        "UNKNOWN",
+    }
+    allowed_reason_codes = {
+        "NONE",
+        "PROVIDER_QUOTA_OR_HTML_RESPONSE",
+        "PROVIDER_SCHEMA_REJECTED",
+        "PROVIDER_REQUEST_FAILED",
+        "READINESS_GATE_REJECTED",
+        "COLLECTOR_JOB_FAILED",
+        "UNKNOWN_RESULT",
+    }
+    timestamp_values = [
+        collection_status.get("updated_at"),
+        attempt.get("started_at") if isinstance(attempt, dict) else None,
+        attempt.get("finished_at") if isinstance(attempt, dict) else None,
+    ]
+    timestamps_valid = all(_is_timestamp(value) for value in timestamp_values)
+    last_verified_at = source.get("last_verified_at") if isinstance(source, dict) else None
+    last_verified_at_valid = last_verified_at is None or _is_timestamp(last_verified_at)
+    passed = (
+        collection_status.get("schema_version") == "1"
+        and collection_status.get("artifact_type") == "oe-collection-status"
+        and state in allowed_states
+        and collection_status.get("reason_code") in allowed_reason_codes
+        and timestamps_valid
+        and last_verified_at_valid
+        and isinstance(attempt, dict)
+        and isinstance(attempt.get("job_status"), str)
+        and (attempt.get("exit_code") is None or type(attempt.get("exit_code")) is int)
+        and isinstance(attempt.get("network_request_performed"), bool)
+        and isinstance(source, dict)
+        and isinstance(source.get("source_id"), str)
+        and isinstance(source.get("acquisition_status"), str)
+        and isinstance(publication, dict)
+        and isinstance(publication.get("result_status"), str)
+        and isinstance(publication.get("head_accepted"), bool)
+        and isinstance(automation, dict)
+        and automation.get("retry_mode") == "AUTOMATIC_POLICY_GATED"
+        and isinstance(automation.get("operator_action_required"), bool)
+    )
+    return _check(
+        "COLLECTION_STATUS_VALID",
+        passed,
+        {
+            "state": state,
+            "reason_code": collection_status.get("reason_code"),
+            "timestamps_valid": timestamps_valid and last_verified_at_valid,
+        },
+        "versioned collection state with bounded codes, valid timestamps, and retry policy",
+    )
+
+
 def _history_artifact_check(history_status: dict[str, Any] | None) -> dict[str, Any]:
     artifact_type = (
         history_status.get("artifact_type") if isinstance(history_status, dict) else None
@@ -770,6 +849,16 @@ def _freshness_check(
     )
 
 
+def _is_timestamp(value: object) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+    try:
+        parse_datetime(value)
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
 def _check(check_id: str, passed: bool, observed: object, required: object) -> dict[str, Any]:
     return {
         "id": check_id,
@@ -803,6 +892,8 @@ def _next_action(failed: list[str], history_status: dict[str, Any] | None) -> st
 def _public_watchdog_next_action(failed: list[str]) -> str:
     if "PUBLIC_BOUNDARY_SAFE" in failed:
         return "HALT_PUBLICATION"
+    if "COLLECTION_STATUS_VALID" in failed:
+        return "RESTORE_COLLECTION_STATUS"
     if "PUBLIC_FEED_READY" in failed:
         return "RESTORE_RADAR_FEED"
     if "CREATOR_FEED_READY" in failed or "RADAR_CREATOR_PAIRED" in failed:

@@ -709,6 +709,7 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
 
     audit = json.loads(output.read_text(encoding="utf-8"))
     current = json.loads((feed / "current.json").read_text(encoding="utf-8"))
+    collection_status = json.loads((feed / "collection-status.json").read_text(encoding="utf-8"))
     assert audit["status"] == "SUCCEEDED"
     assert audit["result"]["source_acquisition"]["status"] == "DOWNLOADED"
     assert audit["result"]["network_collection_performed"] is True
@@ -717,6 +718,8 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
     assert current["input"]["authenticity"] == "REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD"
     assert "network_collection_performed" not in current["input"]
     assert current["history_status"]["artifact_type"] == "oe-history-status"
+    assert collection_status["state"] == "CURRENT"
+    assert collection_status["source"]["acquisition_status"] == "DOWNLOADED"
     assert current["history_status"]["next_action"] == "KEEP_DAILY_COLLECTION"
     assert (
         json.loads((feed / "history-status.json").read_text(encoding="utf-8"))
@@ -735,6 +738,9 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
     assert reused["result"]["network_collection_performed"] is False
     assert reused["result"]["created"] is False
     assert (feed / "current.json").read_bytes() == current_before_cache_reuse
+    reused_status = json.loads((feed / "collection-status.json").read_text(encoding="utf-8"))
+    assert reused_status["state"] == "CURRENT"
+    assert reused_status["source"]["acquisition_status"] == "REUSED_DAILY_CACHE"
 
 
 def test_sync_oe_feed_publishes_with_audited_known_exclusions(tmp_path, monkeypatch) -> None:
@@ -883,3 +889,6 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
         "PATCH_REGION_COUNT_BELOW_MINIMUM",
     ]
     assert not (feed / "current.json").exists()
+    collection_status = json.loads((feed / "collection-status.json").read_text(encoding="utf-8"))
+    assert collection_status["state"] == "PUBLICATION_REJECTED"
+    assert collection_status["reason_code"] == "READINESS_GATE_REJECTED"

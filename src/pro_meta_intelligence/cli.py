@@ -48,9 +48,11 @@ from pro_meta_intelligence.publishing import (
     SnapshotFeedPublisher,
     assess_oe_feed_health,
     assess_publication_watchdog,
+    build_collection_status,
     build_decision_outcomes,
     build_history_status,
     build_schedule_change_log,
+    publish_collection_status,
     publish_decision_outcomes,
     publish_history_status,
 )
@@ -868,6 +870,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
         )
         payload = result.audit
         exit_code = result.exit_code
+        publish_collection_status(args.feed_dir, build_collection_status(result.audit))
     except FeedJobAlreadyRunning as error:
         payload = {
             "schema_version": "1",
@@ -1130,6 +1133,7 @@ def _check_publication_watchdog(args: argparse.Namespace) -> int:
         _read_json_object(args.feed_dir / "decision-outcomes.json"),
         _read_json_object(args.feed_dir / "schedule.json"),
         _read_json_object(args.feed_dir / "ai-validation.json"),
+        _read_json_object(args.feed_dir / "collection-status.json"),
         checked_at=parse_datetime(args.now) if args.now else datetime.now(UTC),
         maximum_radar_age_hours=args.maximum_radar_age_hours,
         maximum_schedule_age_hours=args.maximum_schedule_age_hours,

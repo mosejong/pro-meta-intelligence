@@ -25,6 +25,8 @@ test("builds direct-loadable onboarding and field pages", async () => {
 test("copies the same-origin feed and social card", async () => {
   const feedText = await readFile(new URL("feed/current.json", root), "utf8");
   const feed = JSON.parse(feedText);
+  const collectionStatusText = await readFile(new URL("feed/collection-status.json", root), "utf8");
+  const collectionStatus = JSON.parse(collectionStatusText);
   const historyText = await readFile(new URL("feed/history-status.json", root), "utf8");
   const history = JSON.parse(historyText);
   const outcomesText = await readFile(new URL("feed/decision-outcomes.json", root), "utf8");
@@ -49,6 +51,11 @@ test("copies the same-origin feed and social card", async () => {
   ));
   assert.ok(feed.publication_readiness.selected_patch_import_quality.known_exclusion_game_count >= 0);
   assert.ok(feed.entries.length > 0);
+  assert.equal(collectionStatus.artifact_type, "oe-collection-status");
+  assert.equal(collectionStatus.schema_version, "1");
+  assert.equal(collectionStatus.state, "SOURCE_DELAYED");
+  assert.equal(collectionStatus.reason_code, "PROVIDER_QUOTA_OR_HTML_RESPONSE");
+  assert.equal(collectionStatus.automation.retry_mode, "AUTOMATIC_POLICY_GATED");
   assert.equal(history.artifact_type, "oe-history-status");
   assert.equal(history.schema_version, "1");
   assert.equal(history.gates.length, 4);
@@ -74,6 +81,7 @@ test("copies the same-origin feed and social card", async () => {
   assert.equal(creator.human_review_required, true);
   assert.ok(creator.topic_candidates.length > 0);
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
+  assert.doesNotMatch(collectionStatusText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(historyText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(outcomesText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(aiValidationText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);

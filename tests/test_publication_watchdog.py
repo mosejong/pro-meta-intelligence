@@ -114,9 +114,50 @@ def _ai_validation(**updates):
     return value
 
 
+def _collection_status(**updates):
+    value = {
+        "schema_version": "1",
+        "artifact_type": "oe-collection-status",
+        "updated_at": "2026-08-25T11:05:00+00:00",
+        "state": "CURRENT",
+        "reason_code": "NONE",
+        "last_attempt": {
+            "started_at": "2026-08-25T11:00:00+00:00",
+            "finished_at": "2026-08-25T11:05:00+00:00",
+            "job_status": "SUCCEEDED",
+            "exit_code": 0,
+            "network_request_performed": True,
+        },
+        "source": {
+            "source_id": "oracles-elixir-match-data",
+            "acquisition_status": "DOWNLOADED",
+            "last_verified_at": CUTOFF,
+        },
+        "publication": {
+            "result_status": "PUBLISHED",
+            "head_accepted": True,
+            "history_status": "HISTORY_NOT_READY",
+        },
+        "automation": {
+            "retry_mode": "AUTOMATIC_POLICY_GATED",
+            "operator_action_required": False,
+        },
+        "boundary": "Collection availability only; no raw rows, paths, or provider URLs.",
+    }
+    value.update(updates)
+    return value
+
+
 def test_publication_watchdog_accepts_paired_fresh_feeds_during_history_collection() -> None:
     report = assess_publication_watchdog(
-        _radar(), _creator(), _history(), _outcomes(), _schedule(), _ai_validation(), checked_at=NOW
+        _radar(),
+        _creator(),
+        _history(),
+        _outcomes(),
+        _schedule(),
+        _ai_validation(),
+        _collection_status(),
+        checked_at=NOW,
     )
 
     assert report["healthy"] is True
@@ -131,7 +172,14 @@ def test_publication_watchdog_fails_closed_for_an_unpaired_creator() -> None:
     creator["source_snapshot"] = {**creator["source_snapshot"], "patch_id": "16.15"}
 
     report = assess_publication_watchdog(
-        _radar(), creator, _history(), _outcomes(), _schedule(), _ai_validation(), checked_at=NOW
+        _radar(),
+        creator,
+        _history(),
+        _outcomes(),
+        _schedule(),
+        _ai_validation(),
+        _collection_status(),
+        checked_at=NOW,
     )
 
     assert report["failed_checks"] == ["RADAR_CREATOR_PAIRED"]
@@ -155,6 +203,7 @@ def test_publication_watchdog_distinguishes_radar_and_schedule_staleness() -> No
         outcomes,
         _schedule(retrieved_at="2026-08-20T00:00:00+00:00"),
         _ai_validation(),
+        _collection_status(),
         checked_at=NOW,
     )
 
@@ -166,7 +215,7 @@ def test_publication_watchdog_distinguishes_radar_and_schedule_staleness() -> No
 
 
 def test_publication_watchdog_rejects_missing_or_unsafe_public_artifacts() -> None:
-    missing = assess_publication_watchdog(None, None, None, None, None, None, checked_at=NOW)
+    missing = assess_publication_watchdog(None, None, None, None, None, None, None, checked_at=NOW)
     assert missing["healthy"] is False
     assert "PUBLIC_FEED_READY" in missing["failed_checks"]
     assert "CREATOR_FEED_READY" in missing["failed_checks"]
@@ -179,6 +228,7 @@ def test_publication_watchdog_rejects_missing_or_unsafe_public_artifacts() -> No
         _outcomes(),
         _schedule(),
         _ai_validation(),
+        _collection_status(),
         checked_at=NOW,
     )
     boundary = next(check for check in unsafe["checks"] if check["id"] == "PUBLIC_BOUNDARY_SAFE")
@@ -199,11 +249,28 @@ def test_publication_watchdog_rejects_a_forged_ai_enablement() -> None:
         _outcomes(),
         _schedule(),
         forged,
+        _collection_status(),
         checked_at=NOW,
     )
 
     assert "AI_VALIDATION_STATUS_VALID" in report["failed_checks"]
     assert report["next_action"] == "RESTORE_FAIL_CLOSED_AI_STATUS"
+
+
+def test_publication_watchdog_rejects_unbounded_collection_status() -> None:
+    report = assess_publication_watchdog(
+        _radar(),
+        _creator(),
+        _history(),
+        _outcomes(),
+        _schedule(),
+        _ai_validation(),
+        _collection_status(reason_code="PRIVATE_PROVIDER_ERROR"),
+        checked_at=NOW,
+    )
+
+    assert "COLLECTION_STATUS_VALID" in report["failed_checks"]
+    assert report["next_action"] == "RESTORE_COLLECTION_STATUS"
 
 
 def test_publication_watchdog_rejects_invalid_time_configuration() -> None:
@@ -215,6 +282,7 @@ def test_publication_watchdog_rejects_invalid_time_configuration() -> None:
             _outcomes(),
             _schedule(),
             _ai_validation(),
+            _collection_status(),
             checked_at=datetime(2026, 8, 25),
         )
     with pytest.raises(ValueError, match="positive"):
@@ -225,6 +293,7 @@ def test_publication_watchdog_rejects_invalid_time_configuration() -> None:
             _outcomes(),
             _schedule(),
             _ai_validation(),
+            _collection_status(),
             checked_at=NOW,
             maximum_radar_age_hours=0,
         )
@@ -240,6 +309,7 @@ def test_publication_watchdog_cli_writes_machine_readable_report(tmp_path) -> No
         ("decision-outcomes.json", _outcomes()),
         ("schedule.json", _schedule()),
         ("ai-validation.json", _ai_validation()),
+        ("collection-status.json", _collection_status()),
     ):
         (feed_dir / name).write_text(json.dumps(payload), encoding="utf-8")
     output = tmp_path / "watchdog.json"

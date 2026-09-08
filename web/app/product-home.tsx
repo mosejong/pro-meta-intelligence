@@ -6,6 +6,7 @@ import { type FormEvent, useState } from "react";
 import type { AIValidationStatus } from "./ai-validation";
 import { championImageUrl } from "./champion-assets";
 import { useChampionNames } from "./champion-names";
+import type { CollectionStatus } from "./collection-status";
 import { DataTrustBar, type FeedTrustKind, type ScheduleTrustState } from "./data-trust-bar";
 import { homeSpaceForQuestion } from "./home-intent";
 import { PUBLICATION_FRESHNESS_POLICY, snapshotFreshness } from "./freshness";
@@ -40,6 +41,7 @@ type ProductHomeProps = {
   scheduleRetrievedAt: string | null;
   scheduleState: ScheduleTrustState;
   scheduleSourceUrl: string | null;
+  collectionStatus: CollectionStatus | null;
   aiValidation: AIValidationStatus | null;
   t1Focus: ChampionFocus | null;
   metaFocus: MetaFocus | null;
@@ -71,6 +73,7 @@ export function ProductHome({
   scheduleRetrievedAt,
   scheduleState,
   scheduleSourceUrl,
+  collectionStatus,
   aiValidation,
   t1Focus,
   metaFocus,
@@ -115,6 +118,7 @@ export function ProductHome({
       scheduleRetrievedAt={scheduleRetrievedAt}
       scheduleState={scheduleState}
       scheduleSourceUrl={scheduleSourceUrl}
+      collectionStatus={collectionStatus}
     />
 
     <section className="home-today" id="home-today" aria-labelledby="home-today-title">
