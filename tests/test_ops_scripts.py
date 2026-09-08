@@ -1,6 +1,35 @@
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+MINIMUM_SUPPORTED_ACTION_MAJORS = {
+    "actions/checkout": 5,
+    "actions/setup-node": 5,
+    "actions/setup-python": 6,
+    "actions/configure-pages": 6,
+    "actions/upload-pages-artifact": 5,
+    "actions/deploy-pages": 5,
+    "actions/upload-artifact": 5,
+}
+
+
+def assert_action_major_at_least(workflow: str, action: str, minimum: int) -> None:
+    majors = re.findall(rf"uses:\s*{re.escape(action)}@v(\d+)\b", workflow)
+    assert majors, f"{action} is missing"
+    assert all(int(major) >= minimum for major in majors), (
+        f"{action} must use v{minimum} or newer; found {majors}"
+    )
+
+
+def test_github_workflows_avoid_deprecated_node20_action_runtimes() -> None:
+    workflow = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted((ROOT / ".github" / "workflows").glob("*.yml"))
+    )
+
+    for action, minimum in MINIMUM_SUPPORTED_ACTION_MAJORS.items():
+        assert_action_major_at_least(workflow, action, minimum)
 
 
 def test_isolated_publisher_has_a_seven_file_allowlist_and_no_force_push() -> None:
@@ -48,8 +77,8 @@ def test_github_schedule_refresh_respects_policy_interval_and_narrow_publish_sco
     assert "web/public/feed/schedule.json" in workflow
     assert "web/public/feed/schedule-changes.json" in workflow
     assert "git push origin HEAD:main" in workflow
-    assert "actions/upload-pages-artifact@v3" in workflow
-    assert "actions/deploy-pages@v4" in workflow
+    assert_action_major_at_least(workflow, "actions/upload-pages-artifact", 5)
+    assert_action_major_at_least(workflow, "actions/deploy-pages", 5)
     assert "--force" not in workflow
 
 
@@ -79,7 +108,7 @@ def test_production_watchdog_checks_live_publication_and_reconciles_one_incident
     assert "gh issue create" in workflow
     assert "gh issue edit" in workflow
     assert "gh issue close" in workflow
-    assert "actions/upload-artifact@v4" in workflow
+    assert_action_major_at_least(workflow, "actions/upload-artifact", 5)
     assert "retention-days: 14" in workflow
     assert "steps.health.outcome != 'success'" in workflow
     assert "git push" not in workflow
@@ -114,7 +143,7 @@ def test_hosted_oe_collector_restores_private_state_and_publishes_only_safe_head
     assert "actions/artifacts/$artifact_id" in workflow
     assert "gh api --method DELETE" in workflow
     assert "git push origin HEAD:main" in workflow
-    assert "actions/deploy-pages@v4" in workflow
+    assert_action_major_at_least(workflow, "actions/deploy-pages", 5)
     assert "web/public/feed/current.json" in workflow
     assert "web/public/feed/current-creator.json" in workflow
     assert "web/public/feed/history-status.json" in workflow
