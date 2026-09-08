@@ -31,6 +31,7 @@ jobs:
     timeout-minutes: 30
     outputs:
       archive_artifact_id: ${{ steps.archive-upload.outputs.artifact-id }}
+      pages_ready: ${{ steps.pages-upload.outcome == 'success' }}
     env:
       OE_ARCHIVE_KEY: ${{ secrets.OE_ARCHIVE_KEY }}
       PRIVATE_STATE_DIR: outputs/hosted-oe-state
@@ -100,9 +101,11 @@ jobs:
           fi
           echo "restore_source=$restore_source" >> "$GITHUB_OUTPUT"
       - name: Run policy-gated OE sync and fail-closed local health check
+        id: sync-health
+        continue-on-error: true
         shell: bash
         run: |
-          set -euo pipefail
+          set +e
           python -m pro_meta_intelligence sync-oe-feed \
             --year 2026 \
             --source-timezone UTC \
@@ -112,12 +115,18 @@ jobs:
             --creator-top-k 3 \
             --max-index-entries 50 \
             --output "$PRIVATE_STATE_DIR/sync-report.json"
+          sync_status=$?
           python -m pro_meta_intelligence check-oe-feed-health \
             --run-dir outputs/oe-feed-jobs \
             --feed-dir web/public/feed \
             --maximum-job-age-hours 30 \
             --maximum-source-age-hours 50 \
             --output "$PRIVATE_STATE_DIR/local-health.json"
+          health_status=$?
+          set -e
+          if [[ "$sync_status" -ne 0 || "$health_status" -ne 0 ]]; then
+            exit 1
+          fi
       - name: Preserve public-safe sync diagnostics on success or rejection
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -169,13 +178,14 @@ jobs:
         run: npm ci && npm run lint && npm run test:pages
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
+        id: pages-upload
         with:
           path: web/dist-pages
       - name: Publish only the reviewed public feed heads
         shell: bash
         run: |
           set -euo pipefail
-          allowed_pattern='^(web/public/feed/current\.json|web/public/feed/current-creator\.json|web/public/feed/history-status\.json|web/public/feed/decision-outcomes\.json)$'
+          allowed_pattern='^(web/public/feed/current\.json|web/public/feed/current-creator\.json|web/public/feed/history-status\.json|web/public/feed/decision-outcomes\.json|web/public/feed/collection-status\.json)$'
           unexpected=$(git diff --name-only | grep -Ev "$allowed_pattern" || true)
           if [[ -n "$unexpected" ]]; then
             echo "Unexpected tracked changes from hosted sync:" >&2
@@ -186,7 +196,8 @@ jobs:
             web/public/feed/current.json \
             web/public/feed/current-creator.json \
             web/public/feed/history-status.json \
-            web/public/feed/decision-outcomes.json; then
+            web/public/feed/decision-outcomes.json \
+            web/public/feed/collection-status.json; then
             echo "Public OE feed heads are already current."
             exit 0
           fi
@@ -196,7 +207,8 @@ jobs:
             web/public/feed/current.json \
             web/public/feed/current-creator.json \
             web/public/feed/history-status.json \
-            web/public/feed/decision-outcomes.json
+            web/public/feed/decision-outcomes.json \
+            web/public/feed/collection-status.json
           staged=$(git diff --cached --name-only | grep -Ev "$allowed_pattern" || true)
           if [[ -n "$staged" ]]; then
             echo "Unexpected staged paths: $staged" >&2
@@ -204,6 +216,9 @@ jobs:
           fi
           git commit -m "chore(data): refresh hosted OE publication"
           git push origin HEAD:main
+      - name: Preserve failed collection health after publishing its public status
+        if: always() && steps.sync-health.outcome != 'success'
+        run: exit 1
 
   deploy:
     environment:
@@ -211,6 +226,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: sync
+    if: always() && needs.sync.outputs.pages_ready == 'true'
     steps:
       - name: Deploy hosted OE publication to GitHub Pages
         id: deployment

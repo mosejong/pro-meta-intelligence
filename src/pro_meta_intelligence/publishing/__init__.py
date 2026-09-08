@@ -1,3 +1,7 @@
+from pro_meta_intelligence.publishing.collection_status import (
+    build_collection_status,
+    publish_collection_status,
+)
 from pro_meta_intelligence.publishing.decision_outcomes import (
     build_decision_outcomes,
     publish_decision_outcomes,
@@ -28,9 +32,11 @@ __all__ = [
     "SnapshotFeedPublisher",
     "assess_oe_feed_health",
     "assess_publication_watchdog",
+    "build_collection_status",
     "build_decision_outcomes",
     "build_history_status",
     "build_schedule_change_log",
     "publish_decision_outcomes",
+    "publish_collection_status",
     "publish_history_status",
 ]

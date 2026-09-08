@@ -32,8 +32,9 @@ def test_github_workflows_avoid_deprecated_node20_action_runtimes() -> None:
         assert_action_major_at_least(workflow, action, minimum)
 
 
-def test_isolated_publisher_has_a_seven_file_allowlist_and_no_force_push() -> None:
+def test_isolated_publisher_has_an_eight_file_allowlist_and_no_force_push() -> None:
     script = (ROOT / "ops" / "windows" / "publish-oe-feed.ps1").read_text(encoding="utf-8")
+    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
 
     assert '"web/public/feed/current.json"' in script
     assert '"web/public/feed/history-status.json"' in script
@@ -42,7 +43,9 @@ def test_isolated_publisher_has_a_seven_file_allowlist_and_no_force_push() -> No
     assert '"web/public/feed/current-creator.json"' in script
     assert '"web/public/feed/decision-outcomes.json"' in script
     assert '"web/public/feed/ai-validation.json"' in script
-    assert "Publish seven allowlisted public feed artifacts" in script
+    assert '"web/public/feed/collection-status.json"' in script
+    assert "!web/public/feed/collection-status.json" in gitignore
+    assert "Publish eight allowlisted public feed artifacts" in script
     assert "worktree add --detach --lock" in script
     assert 'push $RemoteName "HEAD:$PublishBranch"' in script
     assert "--force" not in script
@@ -99,6 +102,7 @@ def test_production_watchdog_checks_live_publication_and_reconciles_one_incident
         "history-status.json",
         "decision-outcomes.json",
         "schedule.json",
+        "collection-status.json",
     ):
         assert artifact in workflow
     assert "curl --fail" in workflow
@@ -148,6 +152,12 @@ def test_hosted_oe_collector_restores_private_state_and_publishes_only_safe_head
     assert "web/public/feed/current-creator.json" in workflow
     assert "web/public/feed/history-status.json" in workflow
     assert "web/public/feed/decision-outcomes.json" in workflow
+    assert "web/public/feed/collection-status.json" in workflow
+    assert "id: sync-health" in workflow
+    assert "continue-on-error: true" in workflow
+    assert "pages_ready: ${{ steps.pages-upload.outcome == 'success' }}" in workflow
+    assert "Preserve failed collection health after publishing its public status" in workflow
+    assert "always() && needs.sync.outputs.pages_ready == 'true'" in workflow
     assert "schedule.json" not in workflow
     assert "--force" not in workflow
 

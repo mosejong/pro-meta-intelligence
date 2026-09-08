@@ -9,6 +9,7 @@ const publishedFiles = [
   "meta-radar-hero-v2.png",
   "og.png",
   "feed/current.json",
+  "feed/collection-status.json",
   "feed/history-status.json",
   "feed/decision-outcomes.json",
   "feed/ai-validation.json",

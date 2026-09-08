@@ -1424,6 +1424,7 @@ test("classifies publication freshness at explicit safety boundaries", async () 
       scheduleRetrievedAt: "2026-08-25T02:00:00Z",
       scheduleState: "connected",
       scheduleSourceUrl: "https://example.com/schedule",
+      collectionStatus: null,
     }));
     assert.match(freshMarkup, /최신 데이터/);
     assert.match(freshMarkup, /공식 일정 확인됨/);
@@ -1437,10 +1438,18 @@ test("classifies publication freshness at explicit safety boundaries", async () 
       scheduleRetrievedAt: "2026-08-25T00:00:00Z",
       scheduleState: "stale",
       scheduleSourceUrl: null,
+      collectionStatus: {
+        state: "SOURCE_DELAYED",
+        reason_code: "PROVIDER_QUOTA_OR_HTML_RESPONSE",
+        last_attempt: { finished_at: "2026-08-26T18:00:00Z" },
+      },
     }));
     assert.match(staleMarkup, /오래된 데이터/);
     assert.match(staleMarkup, /일정 갱신 필요/);
     assert.match(staleMarkup, /현재 판단 잠금/);
+    assert.match(staleMarkup, /원천 갱신 지연/);
+    assert.match(staleMarkup, /원천 제공량 제한/);
+    assert.match(staleMarkup, /자동 재시도/);
     assert.match(staleMarkup, /과거 검토용/);
     assert.doesNotMatch(staleMarkup, />사용 가능</);
 
@@ -1451,6 +1460,7 @@ test("classifies publication freshness at explicit safety boundaries", async () 
       scheduleRetrievedAt: "2026-08-23T00:00:00Z",
       scheduleState: "stale",
       scheduleSourceUrl: null,
+      collectionStatus: null,
     }));
     assert.match(staleScheduleMarkup, /일정 보호/);
     assert.match(staleScheduleMarkup, /상대 우선순위 계산에서 자동 제외/);

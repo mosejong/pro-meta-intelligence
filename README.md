@@ -252,9 +252,9 @@ failed or stale job, stale source snapshot, invalid public feed, or missing hist
 nonzero exit code. A reviewed Windows runner and Task Scheduler registration script are documented
 in [`docs/PRODUCTION_OPERATIONS.md`](docs/PRODUCTION_OPERATIONS.md).
 
-The reviewed Windows publisher can optionally copy only the seven allowlisted Radar, Creator,
-history, decision-outcome, schedule, schedule-change, and AI-validation heads into a locked detached worktree and
-fast-forward them to the publication branch. It refuses dirty
+The reviewed Windows publisher can optionally copy only the eight allowlisted Radar, Creator,
+history, decision-outcome, schedule, schedule-change, AI-validation, and collection-status heads
+into a locked detached worktree and fast-forward them to the publication branch. It refuses dirty
 state, unexpected staged paths, unhealthy feeds, and non-fast-forward pushes; raw archives never
 enter the publisher worktree.
 

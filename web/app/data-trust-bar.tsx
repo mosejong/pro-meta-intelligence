@@ -1,3 +1,4 @@
+import { collectionStatusMessage, type CollectionStatus } from "./collection-status";
 import { PUBLICATION_FRESHNESS_POLICY, snapshotFreshness, type FreshnessLevel } from "./freshness";
 
 export type FeedTrustKind = "connecting" | "published" | "demo" | "uploaded";
@@ -10,6 +11,7 @@ type DataTrustBarProps = {
   scheduleRetrievedAt: string | null;
   scheduleState: ScheduleTrustState;
   scheduleSourceUrl: string | null;
+  collectionStatus: CollectionStatus | null;
 };
 
 function formatTimestamp(value: string | null) {
@@ -43,6 +45,14 @@ function scheduleLabel(state: ScheduleTrustState) {
   return "공식 일정 확인 중";
 }
 
+function collectionGuardLabel(status: CollectionStatus | null) {
+  if (status?.state === "SOURCE_DELAYED") return "원천 갱신 지연";
+  if (status?.state === "SOURCE_UNAVAILABLE") return "원천 수집 중단";
+  if (status?.state === "PUBLICATION_REJECTED") return "품질 게이트 차단";
+  if (status?.state === "RUN_FAILED") return "수집 오류 보호";
+  return "현재 판단 잠금";
+}
+
 export function DataTrustBar({
   dataCutoff,
   checkedAt,
@@ -50,6 +60,7 @@ export function DataTrustBar({
   scheduleRetrievedAt,
   scheduleState,
   scheduleSourceUrl,
+  collectionStatus,
 }: DataTrustBarProps) {
   const data = snapshotFreshness(dataCutoff, checkedAt, PUBLICATION_FRESHNESS_POLICY);
   const schedule = snapshotFreshness(scheduleRetrievedAt, checkedAt, { freshHours: 12, staleHours: 36 });
@@ -62,11 +73,12 @@ export function DataTrustBar({
   const protectionActive = scheduleState === "stale" || scheduleState === "unavailable";
   const reviewOnly = dataLevel === "STALE" || feedKind === "demo";
   const checking = dataLevel === "UNKNOWN" || scheduleLevel === "UNKNOWN";
+  const collectionMessage = collectionStatusMessage(collectionStatus);
   const guardClass = reviewOnly || protectionActive ? "guarded" : checking ? "checking" : "ready";
   const guardLabel = feedKind === "demo"
     ? "예시 화면"
     : reviewOnly
-      ? "현재 판단 잠금"
+      ? collectionGuardLabel(collectionStatus)
       : protectionActive
         ? "일정 보호"
         : checking
@@ -75,7 +87,7 @@ export function DataTrustBar({
   const guardDetail = feedKind === "demo"
     ? "예시 데이터는 제품 탐색용이며 실제 팀 판단에 사용하지 않습니다."
     : reviewOnly
-      ? "오래된 발행본은 과거 검토용입니다. 새 픽·상대 권고로 사용하지 않습니다."
+      ? `${collectionMessage ? `${collectionMessage} ` : ""}현재 판단 잠금: 마지막 발행본은 과거 검토용이며 새 픽·상대 권고로 사용하지 않습니다.`
       : protectionActive
         ? "오래되거나 없는 일정은 상대 우선순위 계산에서 자동 제외합니다."
         : checking
@@ -102,6 +114,7 @@ export function DataTrustBar({
       <summary>어떻게 판단했나요? <span>＋</span></summary>
       <div>
         <p><b>경기 데이터</b> 12시간 이내 최신, 24시간 초과 시 오래됨으로 표시합니다. 기준 시각은 분석 컷오프입니다.</p>
+        {collectionStatus && <p><b>수집 상태</b> {collectionMessage} 마지막 시도 {formatTimestamp(collectionStatus.last_attempt.finished_at)} KST.</p>}
         <p><b>공식 일정</b> 36시간을 넘으면 상대 우선순위 계산에서 제외합니다. 일정 변경과 TBD는 다음 수집 때 다시 확인합니다.</p>
         <p><b>출처</b> 경기 기록은 발행 스냅샷의 원본 해시를 유지합니다. {scheduleSourceUrl ? <a href={scheduleSourceUrl}>공식 일정 원본 보기 →</a> : "일정 원본 연결을 확인 중입니다."}</p>
       </div>

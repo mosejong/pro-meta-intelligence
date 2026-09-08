@@ -137,7 +137,7 @@ first operational rollout observable and reversible.
 
 `publish-oe-feed.ps1` uses a locked, detached Git worktree outside the developer checkout. It first
 runs the health gate, fetches the remote publication branch, refuses a dirty publisher worktree, and
-copies exactly seven allowlisted artifacts:
+copies exactly eight allowlisted artifacts:
 
 - `web/public/feed/current.json`
 - `web/public/feed/current-creator.json`
@@ -146,13 +146,15 @@ copies exactly seven allowlisted artifacts:
 - `web/public/feed/schedule.json`
 - `web/public/feed/schedule-changes.json`
 - `web/public/feed/ai-validation.json`
+- `web/public/feed/collection-status.json`
 
 It stages those exact paths, rejects any unexpected staged file, creates no commit when bytes are
 unchanged, and performs a normal fast-forward push. It never force-pushes and never copies the raw
 archive, local audit files, source CSV, Creator working files, or unrelated developer changes.
-Whether a run downloaded the provider file or reused the daily cache remains in the local job audit,
-not `current.json`. The same source snapshot therefore produces byte-identical public evidence and
-does not create a timestamp-only or cache-status-only publication commit.
+The raw provider error and private paths remain in the local job audit. A separate bounded
+`collection-status.json` publishes only allowlisted state and reason codes, timestamps, and the
+automatic retry policy. The same source snapshot still produces byte-identical evidence heads;
+collection availability can change without implying a new analytical result.
 
 ## GitHub schedule watch
 
