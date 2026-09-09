@@ -4,8 +4,11 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from pro_meta_intelligence.cli import main
-from pro_meta_intelligence.ingestion import OracleElixirDownloadIntervalError
-from pro_meta_intelligence.sources import RawSourceArtifact, SnapshotArchive
+from pro_meta_intelligence.ingestion import (
+    OracleElixirDownloadError,
+    OracleElixirDownloadIntervalError,
+)
+from pro_meta_intelligence.sources import RawSourceArtifact, SnapshotArchive, SourceAttemptLedger
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -652,10 +655,20 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
         def __init__(self, registry) -> None:
             assert registry.get(self.source_id) is not None
 
-        def fetch_year(self, year, *, last_retrieved_at=None):
+        def fetch_year(
+            self,
+            year,
+            *,
+            last_retrieved_at=None,
+            last_attempted_at=None,
+            on_request_started=None,
+        ):
             assert year == 2026
-            if last_retrieved_at is not None:
-                raise OracleElixirDownloadIntervalError(last_retrieved_at + timedelta(days=1))
+            previous = last_attempted_at or last_retrieved_at
+            if previous is not None:
+                raise OracleElixirDownloadIntervalError(previous + timedelta(days=1))
+            if on_request_started is not None:
+                on_request_started(retrieved_at)
             url = "https://drive.usercontent.google.com/download?id=reviewed"
             return SimpleNamespace(
                 file=SimpleNamespace(year=year, filename="2026_test.csv"),
@@ -757,7 +770,16 @@ def test_sync_oe_feed_publishes_with_audited_known_exclusions(tmp_path, monkeypa
         def __init__(self, registry) -> None:
             assert registry.get(self.source_id) is not None
 
-        def fetch_year(self, year, *, last_retrieved_at=None):
+        def fetch_year(
+            self,
+            year,
+            *,
+            last_retrieved_at=None,
+            last_attempted_at=None,
+            on_request_started=None,
+        ):
+            if on_request_started is not None:
+                on_request_started(retrieved_at)
             url = "https://drive.usercontent.google.com/download?id=reviewed"
             return SimpleNamespace(
                 file=SimpleNamespace(year=year, filename="2026_test.csv"),
@@ -837,7 +859,16 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
         def __init__(self, registry) -> None:
             assert registry.get(self.source_id) is not None
 
-        def fetch_year(self, year, *, last_retrieved_at=None):
+        def fetch_year(
+            self,
+            year,
+            *,
+            last_retrieved_at=None,
+            last_attempted_at=None,
+            on_request_started=None,
+        ):
+            if on_request_started is not None:
+                on_request_started(retrieved_at)
             url = "https://drive.usercontent.google.com/download?id=reviewed"
             return SimpleNamespace(
                 file=SimpleNamespace(year=year, filename="2026_test.csv"),
@@ -892,3 +923,69 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
     collection_status = json.loads((feed / "collection-status.json").read_text(encoding="utf-8"))
     assert collection_status["state"] == "PUBLICATION_REJECTED"
     assert collection_status["reason_code"] == "READINESS_GATE_REJECTED"
+
+
+def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, monkeypatch) -> None:
+    attempted_at = datetime(2026, 9, 9, 7, 13, tzinfo=UTC)
+    call_count = 0
+
+    class FailingDownloadAdapter:
+        source_id = "oracles-elixir-match-data"
+
+        def __init__(self, registry) -> None:
+            assert registry.get(self.source_id) is not None
+
+        def fetch_year(
+            self,
+            year,
+            *,
+            last_retrieved_at=None,
+            last_attempted_at=None,
+            on_request_started=None,
+        ):
+            nonlocal call_count
+            if last_attempted_at is not None:
+                raise OracleElixirDownloadIntervalError(
+                    last_attempted_at + timedelta(days=1)
+                )
+            call_count += 1
+            assert on_request_started is not None
+            on_request_started(attempted_at)
+            raise OracleElixirDownloadError("provider quota")
+
+    monkeypatch.setattr(
+        "pro_meta_intelligence.cli.OracleElixirPublishedDownloadAdapter",
+        FailingDownloadAdapter,
+    )
+    archive_dir = tmp_path / "raw"
+    output = tmp_path / "sync.json"
+    command = [
+        "sync-oe-feed",
+        "--year",
+        "2026",
+        "--source-timezone",
+        "UTC",
+        "--archive-dir",
+        str(archive_dir),
+        "--feed-dir",
+        str(tmp_path / "feed"),
+        "--run-dir",
+        str(tmp_path / "jobs"),
+        "--output",
+        str(output),
+    ]
+
+    assert main(command) == 4
+    first = json.loads(output.read_text(encoding="utf-8"))
+    assert first["result"]["source_acquisition"]["status"] == "SOURCE_ERROR_NO_CACHE"
+    assert first["result"]["network_collection_performed"] is True
+    assert SourceAttemptLedger(archive_dir).latest_attempted_at(
+        FailingDownloadAdapter.source_id,
+        "FETCH_PUBLISHED_CSV",
+    ) == attempted_at
+
+    assert main(command) == 4
+    second = json.loads(output.read_text(encoding="utf-8"))
+    assert second["result"]["source_acquisition"]["status"] == "REUSED_DAILY_CACHE"
+    assert second["result"]["network_collection_performed"] is False
+    assert call_count == 1

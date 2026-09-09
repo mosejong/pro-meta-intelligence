@@ -6,6 +6,10 @@ from pro_meta_intelligence.sources.artifacts import (
     SnapshotArchive,
     SnapshotArchiveIntegrityError,
 )
+from pro_meta_intelligence.sources.attempts import (
+    SourceAttemptLedger,
+    SourceAttemptLedgerError,
+)
 from pro_meta_intelligence.sources.registry import (
     PolicyDecision,
     PolicyGate,
@@ -25,6 +29,8 @@ __all__ = [
     "RawSourceArtifact",
     "SnapshotArchive",
     "SnapshotArchiveIntegrityError",
+    "SourceAttemptLedger",
+    "SourceAttemptLedgerError",
     "SourceAccessMethod",
     "SourcePolicyError",
     "SourceRegistration",

@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path, PurePosixPath
 from typing import Any, BinaryIO
 
-from pro_meta_intelligence.sources import SnapshotArchive
+from pro_meta_intelligence.sources import SnapshotArchive, SourceAttemptLedger
 
 SOURCE_ID = "oracles-elixir-match-data"
 MAGIC = b"PMIOEA01"
@@ -47,6 +47,7 @@ def pack_private_oe_archive(
         raise PrivateArchiveError(f"source archive integrity failed: {', '.join(codes)}")
     if not inspection.snapshots:
         raise PrivateArchiveError("source archive has no verified OE snapshots")
+    attempt_ledger_present = SourceAttemptLedger(archive_dir).validate(SOURCE_ID)
     source_dir = archive_dir.resolve() / SOURCE_ID
     if not source_dir.is_dir():
         raise PrivateArchiveError("verified source archive directory is missing")
@@ -96,6 +97,7 @@ def pack_private_oe_archive(
         "unique_content_count": len({item.content_hash for item in inspection.snapshots}),
         "source_file_count": len(files),
         "source_byte_count": source_byte_count,
+        "request_attempt_ledger_present": attempt_ledger_present,
         "encrypted_byte_count": output.stat().st_size,
         "encrypted_content_hash": _file_sha256(output),
         "compression": "ZSTANDARD_LEVEL_10_LONG_DISTANCE_128M_WINDOW",
@@ -134,6 +136,7 @@ def restore_private_oe_archive(
             raise PrivateArchiveError(f"restored archive integrity failed: {', '.join(codes)}")
         if not inspection.snapshots:
             raise PrivateArchiveError("restored archive has no verified OE snapshots")
+        attempt_ledger_present = SourceAttemptLedger(staging).validate(SOURCE_ID)
         os.replace(staging, archive_dir)
     finally:
         if staging.exists():
@@ -144,6 +147,7 @@ def restore_private_oe_archive(
         "artifact_type": "restored-private-oe-archive",
         "source_id": SOURCE_ID,
         "snapshot_count": len(inspection.snapshots),
+        "request_attempt_ledger_present": attempt_ledger_present,
         "unique_content_count": len({item.content_hash for item in inspection.snapshots}),
         "encrypted_byte_count": encrypted_input.stat().st_size,
         "encrypted_content_hash": _file_sha256(encrypted_input),

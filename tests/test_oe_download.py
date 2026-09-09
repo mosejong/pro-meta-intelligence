@@ -71,6 +71,34 @@ def test_adapter_enforces_provider_daily_interval_before_network() -> None:
     assert transport.calls == []
 
 
+def test_adapter_persists_request_start_before_transport_even_when_response_fails() -> None:
+    transport = FakeTransport(
+        b"<!DOCTYPE html><title>Google Drive - Quota exceeded</title>", "text/html"
+    )
+    adapter = OracleElixirPublishedDownloadAdapter(
+        SourceRegistry.load_default(),
+        transport=transport,
+        clock=lambda: RETRIEVED_AT,
+    )
+    attempts: list[datetime] = []
+
+    with pytest.raises(OracleElixirDownloadError, match="quota-limited"):
+        adapter.fetch_year(2026, on_request_started=attempts.append)
+
+    assert attempts == [RETRIEVED_AT]
+    assert len(transport.calls) == 1
+
+    with pytest.raises(OracleElixirDownloadIntervalError):
+        adapter.fetch_year(
+            2026,
+            last_attempted_at=attempts[-1],
+            on_request_started=attempts.append,
+        )
+
+    assert attempts == [RETRIEVED_AT]
+    assert len(transport.calls) == 1
+
+
 def test_adapter_rejects_drive_quota_html_and_schema_drift() -> None:
     quota = FakeTransport(
         b"<!DOCTYPE html><title>Google Drive - Quota exceeded</title>", "text/html"

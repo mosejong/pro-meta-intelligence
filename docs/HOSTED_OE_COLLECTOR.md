@@ -5,14 +5,16 @@
 The hosted collector removes the developer workstation from the public feed's critical path while
 preserving the point-in-time raw history required for later walk-forward evaluation. It runs on
 GitHub Actions once daily. This scheduler-level budget ensures repeated provider failures cannot
-turn into twice-daily download attempts; successful retrievals remain additionally protected by the
-source adapter's exact 24-hour interval.
+turn into twice-daily download attempts. The source adapter also enforces the exact 24-hour interval
+from the most recent network attempt, including an attempt that returned quota HTML or another
+rejected response.
 
 ## Private state model
 
 Provider CSV rows are never committed, deployed to Pages, attached to a release in plaintext, or
 placed in a public cache. The rolling state contains only the reviewed
-`outputs/oracles-elixir/raw/oracles-elixir-match-data` archive and is:
+`outputs/oracles-elixir/raw/oracles-elixir-match-data` archive plus a bounded request-attempt ledger
+and is:
 
 1. integrity-checked using every metadata byte length and SHA-256 hash;
 2. streamed into a deterministic tar layout;
@@ -20,6 +22,11 @@ placed in a public cache. The rolling state contains only the reviewed
 4. encrypted in 4 MiB chunks with AES-256-GCM and a unique nonce prefix;
 5. terminated by an authenticated final frame so truncation and trailing data fail closed; and
 6. uploaded as a private-state Actions artifact with no plaintext intermediate archive.
+
+The request-attempt ledger contains only source ID, operation name, and timezone-aware request start
+time. It is written atomically immediately before transport, is excluded from snapshot-history
+counts, and remains inside the encrypted private state. Persisting failed starts prevents manual
+dispatch followed by the regular schedule from bypassing the provider's interval.
 
 Restore also caps the Zstandard decoder window at 256 MiB, each member at 256 MiB, the archive at 2,048
 files, and total restored bytes at 8 GiB. These fail-closed limits bound decompression and disk-use
@@ -88,8 +95,9 @@ result rather than trusting either collector.
 - `source archive integrity failed`: retain both encrypted generations and inspect the named
   metadata/hash issue before collecting or publishing.
 - provider unavailable with a healthy restored state: keep the last good publication; the next
-  daily scheduled run may collect after the policy interval. Use manual dispatch only for a reviewed
-  incident response, not as an automatic retry loop.
+  scheduled run may collect only after the persisted request-attempt interval. Use manual dispatch
+  only for a reviewed incident response, not as an automatic retry loop; early dispatches reuse the
+  cache without contacting the provider.
 - non-fast-forward feed push: do not rebase or force-push from automation. Preserve the encrypted
   artifact and let the next run recompute from current `main`.
 - both encrypted generations unavailable: require an explicit bootstrap or acknowledged fresh

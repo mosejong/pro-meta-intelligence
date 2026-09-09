@@ -11,7 +11,7 @@ from pro_meta_intelligence.operations.private_archive import (
     pack_private_oe_archive,
     restore_private_oe_archive,
 )
-from pro_meta_intelligence.sources import RawSourceArtifact, SnapshotArchive
+from pro_meta_intelligence.sources import RawSourceArtifact, SnapshotArchive, SourceAttemptLedger
 
 SOURCE_ID = "oracles-elixir-match-data"
 KEY_ENV = "PMI_TEST_ARCHIVE_KEY"
@@ -46,6 +46,8 @@ def _archive(root):
 def test_round_trip(tmp_path, monkeypatch) -> None:
     source = tmp_path / "source"
     _archive(source)
+    attempted_at = datetime(2026, 8, 25, 3, 0, tzinfo=UTC)
+    SourceAttemptLedger(source).record(SOURCE_ID, "FETCH_PUBLISHED_CSV", attempted_at)
     encrypted = tmp_path / "history.pmi"
     restored = tmp_path / "restored"
     monkeypatch.setenv(KEY_ENV, _key())
@@ -60,6 +62,8 @@ def test_round_trip(tmp_path, monkeypatch) -> None:
     assert packed["raw_rows_in_output"] is False
     assert packed["encrypted_content_hash"].startswith("sha256:")
     assert restored_report["authenticated"] is True
+    assert packed["request_attempt_ledger_present"] is True
+    assert restored_report["request_attempt_ledger_present"] is True
     assert restored_report["snapshot_count"] == 2
     inspection = SnapshotArchive(restored).inspect(SOURCE_ID)
     assert inspection.issues == ()
@@ -68,6 +72,10 @@ def test_round_trip(tmp_path, monkeypatch) -> None:
     assert {path.name: path.read_bytes() for path in (source / SOURCE_ID).glob("*.csv")} == {
         path.name: path.read_bytes() for path in (restored / SOURCE_ID).glob("*.csv")
     }
+    assert (
+        SourceAttemptLedger(restored).latest_attempted_at(SOURCE_ID, "FETCH_PUBLISHED_CSV")
+        == attempted_at
+    )
 
 
 def test_rejects_tampering(tmp_path, monkeypatch) -> None:

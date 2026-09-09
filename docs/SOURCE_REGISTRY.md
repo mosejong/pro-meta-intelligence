@@ -47,10 +47,12 @@ file ID checked into `oe_published_files.json` after it has been verified in the
 Google Drive folder. It does not enumerate the folder, accept arbitrary URLs, or crawl HTML. The
 reviewed registry interval is one day because the provider says files update once daily.
 
-The downloader enforces that interval across processes using the latest archived retrieval
-metadata. It rejects HTML quota/error pages, validates the CSV header before archival, limits the
-response to 200 MiB, and stores the original bytes under a SHA-256 filename. There is deliberately
-no force flag for bypassing the provider interval.
+The downloader enforces that interval across processes using the later of the latest archived
+retrieval and the latest persisted network-attempt start. The attempt ledger is private, encrypted
+in hosted state, and updated immediately before transport, so rejected quota/error responses also
+block early retries. The downloader validates the CSV header before archival, limits the response
+to 200 MiB, and stores accepted original bytes under a SHA-256 filename. There is deliberately no
+force flag for bypassing the provider interval.
 
 The importer hashes the complete file, treats the hash as the mutable annual file's version, checks
 the 2026 column contract, and validates every game as one contiguous group containing participant

@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from importlib.resources import files
@@ -92,18 +93,27 @@ class OracleElixirPublishedDownloadAdapter:
         year: int,
         *,
         last_retrieved_at: datetime | None = None,
+        last_attempted_at: datetime | None = None,
+        on_request_started: Callable[[datetime], None] | None = None,
     ) -> PublishedCSVDownload:
         now = self.clock()
         registration = self.gate.require(self.source_id, "FETCH_PUBLISHED_CSV", now)
         published = self.files.get(year)
         if published is None:
             raise ValueError("year is not present in the reviewed Oracle's Elixir manifest")
-        if last_retrieved_at is not None:
-            retry_at = last_retrieved_at + timedelta(seconds=registration.minimum_interval_seconds)
+        previous_times = [
+            value for value in (last_retrieved_at, last_attempted_at) if value is not None
+        ]
+        if previous_times:
+            retry_at = max(previous_times) + timedelta(
+                seconds=registration.minimum_interval_seconds
+            )
             if now < retry_at:
                 raise OracleElixirDownloadIntervalError(retry_at)
         query = urlencode({"id": published.file_id, "export": "download", "confirm": "t"})
         url = f"https://drive.usercontent.google.com/download?{query}"
+        if on_request_started is not None:
+            on_request_started(now)
         response = self.transport.fetch(
             url,
             maximum_bytes=registration.maximum_response_bytes,
