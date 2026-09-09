@@ -768,6 +768,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
         network_attempted = False
         acquisition_status: str
         acquisition_error: str | None = None
+        next_attempt_at: str | None = None
         try:
             downloaded = adapter.fetch_year(
                 args.year,
@@ -786,8 +787,16 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 raise AssertionError("downloaded source did not enter the archive")
             acquisition_status = "DOWNLOADED"
             assert archived.data_path == latest.data_path
-        except OracleElixirDownloadIntervalError:
-            acquisition_status = "REUSED_DAILY_CACHE"
+        except OracleElixirDownloadIntervalError as error:
+            failed_attempt_is_newer = last_attempted_at is not None and (
+                latest is None or last_attempted_at > latest.retrieved_at
+            )
+            acquisition_status = (
+                "REUSED_CACHE_DURING_SOURCE_BACKOFF"
+                if failed_attempt_is_newer
+                else "REUSED_DAILY_CACHE"
+            )
+            next_attempt_at = error.retry_at.isoformat()
         except OracleElixirDownloadError as error:
             network_attempted = True
             acquisition_status = (
@@ -824,6 +833,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 "source_acquisition": {
                     "status": acquisition_status,
                     "error": acquisition_error,
+                    "next_attempt_at": next_attempt_at,
                 },
                 "history_status": history_status,
                 "decision_outcomes": _decision_outcomes_summary(decision_outcomes),
@@ -881,6 +891,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
         payload["source_acquisition"] = {
             "status": acquisition_status,
             "error": acquisition_error,
+            "next_attempt_at": next_attempt_at,
             "retrieved_at": latest.retrieved_at.isoformat(),
             "content_hash": latest.content_hash,
         }

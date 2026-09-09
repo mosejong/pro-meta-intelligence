@@ -987,8 +987,12 @@ def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, m
 
     assert main(command) == 4
     second = json.loads(output.read_text(encoding="utf-8"))
-    assert second["result"]["source_acquisition"]["status"] == "REUSED_DAILY_CACHE"
+    assert second["result"]["source_acquisition"]["status"] == "REUSED_CACHE_DURING_SOURCE_BACKOFF"
     assert second["result"]["network_collection_performed"] is False
+    assert (
+        second["result"]["source_acquisition"]["next_attempt_at"]
+        == (attempted_at + timedelta(days=1)).isoformat()
+    )
     assert call_count == 1
 
 
@@ -1063,4 +1067,10 @@ def test_sync_oe_feed_seeds_missing_private_ledger_from_public_network_attempt(
             "FETCH_PUBLISHED_CSV",
         )
         == finished_at
+    )
+    public_status = json.loads((feed_dir / "collection-status.json").read_text(encoding="utf-8"))
+    assert public_status["state"] == "SOURCE_UNAVAILABLE"
+    assert public_status["reason_code"] == "POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR"
+    assert (
+        public_status["source"]["next_attempt_at"] == (finished_at + timedelta(days=1)).isoformat()
     )

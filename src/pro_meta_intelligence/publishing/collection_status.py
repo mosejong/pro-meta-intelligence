@@ -26,7 +26,11 @@ def build_collection_status(audit: dict[str, Any]) -> dict[str, Any]:
     result_status = _string(result.get("status")) or "UNKNOWN"
     acquisition_status = _string(acquisition.get("status")) or "UNKNOWN"
     state = _state(job_status, result_status, acquisition_status)
-    reason_code = _reason_code(state, _string(acquisition.get("error")))
+    reason_code = _reason_code(
+        state,
+        acquisition_status,
+        _string(acquisition.get("error")),
+    )
 
     return {
         "schema_version": "1",
@@ -48,6 +52,7 @@ def build_collection_status(audit: dict[str, Any]) -> dict[str, Any]:
             "acquisition_status": acquisition_status,
             "last_verified_at": _string(acquisition.get("retrieved_at"))
             or _string(history.get("as_of")),
+            "next_attempt_at": _string(acquisition.get("next_attempt_at")),
         },
         "publication": {
             "result_status": result_status,
@@ -119,14 +124,19 @@ def _state(job_status: str, result_status: str, acquisition_status: str) -> str:
         return "SOURCE_UNAVAILABLE"
     if job_status == "REJECTED" or result_status.startswith("REJECTED_"):
         return "PUBLICATION_REJECTED"
-    if acquisition_status == "REUSED_CACHE_AFTER_SOURCE_ERROR":
+    if acquisition_status in {
+        "REUSED_CACHE_AFTER_SOURCE_ERROR",
+        "REUSED_CACHE_DURING_SOURCE_BACKOFF",
+    }:
         return "SOURCE_DELAYED"
     if job_status == "SUCCEEDED" and acquisition_status in {"DOWNLOADED", "REUSED_DAILY_CACHE"}:
         return "CURRENT"
     return "UNKNOWN"
 
 
-def _reason_code(state: str, error: str | None) -> str:
+def _reason_code(state: str, acquisition_status: str, error: str | None) -> str:
+    if acquisition_status == "REUSED_CACHE_DURING_SOURCE_BACKOFF":
+        return "POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR"
     normalized = (error or "").lower()
     if state in {"SOURCE_DELAYED", "SOURCE_UNAVAILABLE"}:
         if "html instead of csv" in normalized or "quota" in normalized:

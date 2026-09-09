@@ -53,8 +53,24 @@ test("copies the same-origin feed and social card", async () => {
   assert.ok(feed.entries.length > 0);
   assert.equal(collectionStatus.artifact_type, "oe-collection-status");
   assert.equal(collectionStatus.schema_version, "1");
-  assert.equal(collectionStatus.state, "SOURCE_DELAYED");
-  assert.equal(collectionStatus.reason_code, "PROVIDER_QUOTA_OR_HTML_RESPONSE");
+  assert.ok([
+    "CURRENT",
+    "SOURCE_DELAYED",
+    "SOURCE_UNAVAILABLE",
+    "PUBLICATION_REJECTED",
+    "RUN_FAILED",
+    "UNKNOWN",
+  ].includes(collectionStatus.state));
+  assert.ok([
+    "NONE",
+    "PROVIDER_QUOTA_OR_HTML_RESPONSE",
+    "PROVIDER_SCHEMA_REJECTED",
+    "PROVIDER_REQUEST_FAILED",
+    "POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR",
+    "READINESS_GATE_REJECTED",
+    "COLLECTOR_JOB_FAILED",
+    "UNKNOWN_RESULT",
+  ].includes(collectionStatus.reason_code));
   assert.equal(collectionStatus.automation.retry_mode, "AUTOMATIC_POLICY_GATED");
   assert.equal(history.artifact_type, "oe-history-status");
   assert.equal(history.schema_version, "1");

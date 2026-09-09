@@ -510,6 +510,7 @@ def _collection_status_artifact_check(
         "PROVIDER_QUOTA_OR_HTML_RESPONSE",
         "PROVIDER_SCHEMA_REJECTED",
         "PROVIDER_REQUEST_FAILED",
+        "POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR",
         "READINESS_GATE_REJECTED",
         "COLLECTOR_JOB_FAILED",
         "UNKNOWN_RESULT",
@@ -522,6 +523,8 @@ def _collection_status_artifact_check(
     timestamps_valid = all(_is_timestamp(value) for value in timestamp_values)
     last_verified_at = source.get("last_verified_at") if isinstance(source, dict) else None
     last_verified_at_valid = last_verified_at is None or _is_timestamp(last_verified_at)
+    next_attempt_at = source.get("next_attempt_at") if isinstance(source, dict) else None
+    next_attempt_at_valid = next_attempt_at is None or _is_timestamp(next_attempt_at)
     passed = (
         collection_status.get("schema_version") == "1"
         and collection_status.get("artifact_type") == "oe-collection-status"
@@ -529,6 +532,7 @@ def _collection_status_artifact_check(
         and collection_status.get("reason_code") in allowed_reason_codes
         and timestamps_valid
         and last_verified_at_valid
+        and next_attempt_at_valid
         and isinstance(attempt, dict)
         and isinstance(attempt.get("job_status"), str)
         and (attempt.get("exit_code") is None or type(attempt.get("exit_code")) is int)
@@ -549,7 +553,9 @@ def _collection_status_artifact_check(
         {
             "state": state,
             "reason_code": collection_status.get("reason_code"),
-            "timestamps_valid": timestamps_valid and last_verified_at_valid,
+            "timestamps_valid": (
+                timestamps_valid and last_verified_at_valid and next_attempt_at_valid
+            ),
         },
         "versioned collection state with bounded codes, valid timestamps, and retry policy",
     )
