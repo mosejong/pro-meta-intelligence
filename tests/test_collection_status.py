@@ -1,7 +1,12 @@
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
-from pro_meta_intelligence.publishing import build_collection_status, publish_collection_status
+from pro_meta_intelligence.publishing import (
+    build_collection_status,
+    publish_collection_status,
+    read_collection_network_attempt,
+)
 
 
 def _audit(*, acquisition_status: str, error: str | None = None) -> dict[str, object]:
@@ -83,3 +88,20 @@ def test_collection_status_distinguishes_current_rejected_and_failed_runs() -> N
     )
     assert failed["state"] == "RUN_FAILED"
     assert failed["reason_code"] == "COLLECTOR_JOB_FAILED"
+
+
+def test_collection_status_supplies_only_a_conservative_network_attempt_seed(tmp_path) -> None:
+    path = publish_collection_status(
+        tmp_path,
+        build_collection_status(_audit(acquisition_status="REUSED_CACHE_AFTER_SOURCE_ERROR")),
+    )
+
+    assert read_collection_network_attempt(path, "oracles-elixir-match-data") == datetime(
+        2026, 9, 8, 12, 8, 45, tzinfo=UTC
+    )
+    assert read_collection_network_attempt(path, "another-source") is None
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["last_attempt"]["network_request_performed"] = False
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    assert read_collection_network_attempt(path, "oracles-elixir-match-data") is None

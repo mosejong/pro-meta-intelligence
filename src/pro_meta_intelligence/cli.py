@@ -55,6 +55,7 @@ from pro_meta_intelligence.publishing import (
     publish_collection_status,
     publish_decision_outcomes,
     publish_history_status,
+    read_collection_network_attempt,
 )
 from pro_meta_intelligence.quality import (
     OECoverageCriteria,
@@ -752,6 +753,18 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             adapter.source_id,
             fetch_operation,
         )
+        if last_attempted_at is None:
+            migration_seed = read_collection_network_attempt(
+                args.feed_dir / "collection-status.json",
+                adapter.source_id,
+            )
+            if migration_seed is not None:
+                attempt_ledger.record(
+                    adapter.source_id,
+                    fetch_operation,
+                    migration_seed,
+                )
+                last_attempted_at = migration_seed
         network_attempted = False
         acquisition_status: str
         acquisition_error: str | None = None

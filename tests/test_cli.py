@@ -990,3 +990,77 @@ def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, m
     assert second["result"]["source_acquisition"]["status"] == "REUSED_DAILY_CACHE"
     assert second["result"]["network_collection_performed"] is False
     assert call_count == 1
+
+
+def test_sync_oe_feed_seeds_missing_private_ledger_from_public_network_attempt(
+    tmp_path, monkeypatch
+) -> None:
+    finished_at = datetime(2026, 9, 8, 14, 12, 45, tzinfo=UTC)
+    observed_previous: list[datetime | None] = []
+
+    class IntervalAdapter:
+        source_id = "oracles-elixir-match-data"
+
+        def __init__(self, registry) -> None:
+            assert registry.get(self.source_id) is not None
+
+        def fetch_year(
+            self,
+            year,
+            *,
+            last_retrieved_at=None,
+            last_attempted_at=None,
+            on_request_started=None,
+        ):
+            observed_previous.append(last_attempted_at)
+            assert on_request_started is not None
+            raise OracleElixirDownloadIntervalError(last_attempted_at + timedelta(days=1))
+
+    monkeypatch.setattr(
+        "pro_meta_intelligence.cli.OracleElixirPublishedDownloadAdapter",
+        IntervalAdapter,
+    )
+    archive_dir = tmp_path / "raw"
+    feed_dir = tmp_path / "feed"
+    feed_dir.mkdir()
+    (feed_dir / "collection-status.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1",
+                "artifact_type": "oe-collection-status",
+                "source": {"source_id": IntervalAdapter.source_id},
+                "last_attempt": {
+                    "finished_at": finished_at.isoformat(),
+                    "network_request_performed": True,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    assert (
+        main(
+            [
+                "sync-oe-feed",
+                "--year",
+                "2026",
+                "--source-timezone",
+                "UTC",
+                "--archive-dir",
+                str(archive_dir),
+                "--feed-dir",
+                str(feed_dir),
+                "--run-dir",
+                str(tmp_path / "jobs"),
+            ]
+        )
+        == 4
+    )
+    assert observed_previous == [finished_at]
+    assert (
+        SourceAttemptLedger(archive_dir).latest_attempted_at(
+            IntervalAdapter.source_id,
+            "FETCH_PUBLISHED_CSV",
+        )
+        == finished_at
+    )
