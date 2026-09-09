@@ -1,6 +1,7 @@
 from pro_meta_intelligence.publishing.collection_status import (
     build_collection_status,
     publish_collection_status,
+    read_collection_network_attempt,
 )
 from pro_meta_intelligence.publishing.decision_outcomes import (
     build_decision_outcomes,
@@ -38,5 +39,6 @@ __all__ = [
     "build_schedule_change_log",
     "publish_decision_outcomes",
     "publish_collection_status",
+    "read_collection_network_attempt",
     "publish_history_status",
 ]

@@ -28,6 +28,12 @@ time. It is written atomically immediately before transport, is excluded from sn
 counts, and remains inside the encrypted private state. Persisting failed starts prevents manual
 dispatch followed by the regular schedule from bypassing the provider's interval.
 
+During the one-time migration from an older encrypted state without a ledger, `sync-oe-feed` may
+seed the gate from a schema-checked public `collection-status.json` only when that status explicitly
+records that a network request occurred. It uses the later job-finish boundary, not the earlier job
+start, so migration can delay a request by seconds but cannot make it early. Once written, encrypted
+private state is authoritative.
+
 Restore also caps the Zstandard decoder window at 256 MiB, each member at 256 MiB, the archive at 2,048
 files, and total restored bytes at 8 GiB. These fail-closed limits bound decompression and disk-use
 abuse. Reaching the 8 GiB raw-history ceiling is an operator signal to move matured history into the

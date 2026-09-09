@@ -5,8 +5,11 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from pro_meta_intelligence.models import require_aware
 
 
 def build_collection_status(audit: dict[str, Any]) -> dict[str, Any]:
@@ -79,6 +82,31 @@ def publish_collection_status(root: Path, status: dict[str, Any]) -> Path:
         if os.path.exists(temporary):
             os.unlink(temporary)
     return path
+
+
+def read_collection_network_attempt(path: Path, source_id: str) -> datetime | None:
+    """Read a conservative migration seed from a valid public collection status."""
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict) or payload.get("schema_version") != "1":
+        return None
+    if payload.get("artifact_type") != "oe-collection-status":
+        return None
+    source = payload.get("source")
+    attempt = payload.get("last_attempt")
+    if not isinstance(source, dict) or source.get("source_id") != source_id:
+        return None
+    if not isinstance(attempt, dict) or attempt.get("network_request_performed") is not True:
+        return None
+    try:
+        finished_at = datetime.fromisoformat(attempt["finished_at"])
+        require_aware(finished_at, "finished_at")
+    except (KeyError, TypeError, ValueError):
+        return None
+    return finished_at
 
 
 def _state(job_status: str, result_status: str, acquisition_status: str) -> str:
