@@ -2,7 +2,7 @@ name: Hosted OE collector and publisher
 
 on:
   schedule:
-    - cron: "13 7 * * *"
+    - cron: "13 7,19 * * *"
   workflow_dispatch:
     inputs:
       bootstrap_asset_id:
