@@ -570,6 +570,16 @@ h1 em { font-style: normal; color: var(--violet); }
 .human-baseline-progress strong { color: white; font: 800 28px var(--font-geist-mono); }
 .human-baseline-progress strong small { margin-left: 4px; color: #aeb2b6; font-size: 10px; }
 .human-baseline-progress > span { color: #aeb2b6 !important; font-size: 8px !important; }
+.human-baseline-matrix { overflow-x: auto; padding: 12px 20px; border-bottom: 1px solid #56595f; background: #181b20; }
+.human-baseline-matrix-row { display: grid; grid-template-columns: minmax(120px, 1.7fr) repeat(5, minmax(48px, 1fr)); min-width: 480px; border-top: 1px solid #353940; }
+.human-baseline-matrix-row:first-child { border-top: 0; }
+.human-baseline-matrix-row > b, .human-baseline-matrix-row > span { display: grid; min-height: 28px; place-items: center; padding: 5px 7px; border-left: 1px solid #353940; font-size: 8px; }
+.human-baseline-matrix-row > b { place-items: center start; border-left: 0; color: #c7c9cc; }
+.human-baseline-matrix-row.heading > b, .human-baseline-matrix-row.heading > span { color: #888d94; font: 750 8px var(--font-geist-mono); }
+.human-baseline-matrix-row > span.pending { color: #777d84; }
+.human-baseline-matrix-row > span.current { background: color-mix(in srgb, var(--signal) 14%, transparent); color: var(--signal); font-weight: 850; }
+.human-baseline-matrix-row > span.complete { background: #20392e; color: #78d6a3; font-weight: 850; }
+.human-baseline-matrix-row > span.unavailable { color: #ef8b76; }
 .tendency-scenario-mix { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; border-bottom: 1px solid #666970; background: #56595f; }
 .tendency-scenario-mix span { display: flex; align-items: center; gap: 7px; min-height: 47px; padding: 9px 10px; background: #25282e; color: #b8bbc0; font-size: 8px; line-height: 1.35; }
 .tendency-scenario-mix b { color: var(--signal); font: 850 15px var(--font-geist-mono); }

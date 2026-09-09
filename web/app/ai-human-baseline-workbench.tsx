@@ -7,6 +7,8 @@ import { championImageUrl } from "./champion-assets";
 import { useChampionNames } from "./champion-names";
 import {
   AI_HUMAN_BASELINE_STORAGE_KEY,
+  EVIDENCE_BASELINE_ROLES,
+  EVIDENCE_BASELINE_SCENARIOS,
   baselineBoundaryOptions,
   baselineClaimOptions,
   baselineCriticalErrorOptions,
@@ -151,6 +153,21 @@ export function AIHumanBaselineWorkbench({ report }: { report: RadarReport }) {
       <div><span>STEP 1 · HUMAN BASELINE</span><h3 id="human-baseline-title">AI와 비교할 사람 기준선부터 모으기</h3><p>정답과 AI 출력은 보여주지 않습니다. 같은 공개 근거를 보고 사람이 고른 주장·근거·한계와 실제 판단 시간만 기록합니다.</p></div>
       <div className="human-baseline-progress"><strong>{completedForSnapshot}<small>/30 균형 과제</small></strong><span>6개 상황 × 5개 포지션</span></div>
     </header>
+
+    <div className="human-baseline-matrix" aria-label="검증 상황과 포지션별 진행 상태">
+      <div className="human-baseline-matrix-row heading"><b>검증 범위</b>{EVIDENCE_BASELINE_ROLES.map((role) => <span key={role}>{roleLabels[role] ?? role}</span>)}</div>
+      {EVIDENCE_BASELINE_SCENARIOS.map((scenario) => <div className="human-baseline-matrix-row" key={scenario}>
+        <b>{evidenceBaselineScenarioLabels[scenario]}</b>
+        {EVIDENCE_BASELINE_ROLES.map((role) => {
+          const task = tasks.find((item) => item.scenario === scenario && item.entry.role === role);
+          const complete = Boolean(task && snapshotDrafts.some((draft) => draft.task_key === task.taskKey));
+          const current = task?.taskKey === currentTask?.taskKey;
+          const state = !task ? "unavailable" : complete ? "complete" : current ? "current" : "pending";
+          const label = !task ? "없음" : complete ? "완료" : current ? "다음" : "대기";
+          return <span className={state} key={role} title={task ? `${nameOf(task.entry.champion_id)} · ${roleLabels[role] ?? role}` : "과제 생성 불가"}>{label}</span>;
+        })}
+      </div>)}
+    </div>
 
     {!ready ? <div className="human-baseline-empty">기기 로컬 기록을 확인하는 중입니다.</div> : !storageAvailable ? <div className="human-baseline-empty"><b>기기 저장소를 사용할 수 없습니다.</b><span>개인정보 보호 설정에서 로컬 저장을 허용해야 기준선 기록을 남길 수 있습니다.</span></div> : active && currentEntry ? <div className="human-baseline-task">
       <article className="human-task-brief">

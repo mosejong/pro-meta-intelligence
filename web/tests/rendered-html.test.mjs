@@ -251,6 +251,9 @@ test("server-renders a five-scene creator workflow with human review", async () 
   assert.match(html, /글로벌 Radar/);
   assert.match(html, /STEP 1 · HUMAN BASELINE/);
   assert.match(html, /AI와 비교할 사람 기준선부터 모으기/);
+  assert.match(html, /검증 상황과 포지션별 진행 상태/);
+  assert.match(html, /급부상 신호/);
+  assert.match(html, /정체·하락 반례/);
   assert.match(html, /아직 AI 평가에 포함되지 않음/);
   assert.match(html, /기기 로컬 기록을 확인하는 중/);
 });
