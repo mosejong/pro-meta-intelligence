@@ -5,7 +5,10 @@ import json
 from copy import deepcopy
 from typing import Any
 
-from pro_meta_intelligence.ai_validation.evaluator import evaluate_ai_against_human
+from pro_meta_intelligence.ai_validation.evaluator import (
+    EVIDENCE_LOCKED_SCENARIOS,
+    evaluate_ai_against_human,
+)
 from pro_meta_intelligence.temporal import parse_datetime
 
 
@@ -62,6 +65,7 @@ PRIVATE_TASK_KEYS = {
     "hidden_account",
 }
 PLAYER_TENDENCY_ROLES = {"TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"}
+EVIDENCE_LOCKED_ROLES = PLAYER_TENDENCY_ROLES
 
 
 def prepare_holdout_templates(
@@ -207,6 +211,7 @@ def assemble_paired_evaluation(
             {
                 "case_id": f"case-{index + 1:03d}-{case_suffix}",
                 "split": split,
+                "stratum": _case_stratum(human_case),
                 "reference": reference,
                 "human": human,
                 "ai": ai,
@@ -266,12 +271,51 @@ def _human_cases(bundle: dict[str, Any]) -> list[dict[str, Any]]:
                     f"human.{selected_field} contains an ID outside the frozen task"
                 )
         validated.append(case)
-    if {case["task"]["task_type"] for case in validated} == {"PLAYER_TENDENCY_QA"}:
+    task_types = {case["task"]["task_type"] for case in validated}
+    if task_types == {"EVIDENCE_LOCKED_BRIEF"}:
+        _validate_evidence_locked_bundle(validated)
+    if task_types == {"PLAYER_TENDENCY_QA"}:
         for case in validated:
             task = case["task"]
             _validate_player_tendency_task(task, _task_options(task))
         _validate_player_tendency_bundle(validated)
     return validated
+
+
+def _validate_evidence_locked_bundle(cases: list[dict[str, Any]]) -> None:
+    if len(cases) > 30:
+        raise AIHoldoutAssemblyError("evidence-locked human bundle exceeds the 30-task deck")
+    for case in cases:
+        scenario = case["task"].get("scenario")
+        role = case["snapshot"].get("role")
+        if scenario is not None and scenario not in EVIDENCE_LOCKED_SCENARIOS:
+            raise AIHoldoutAssemblyError("evidence-locked scenario is not allowed")
+        if role not in EVIDENCE_LOCKED_ROLES:
+            raise AIHoldoutAssemblyError("evidence-locked role is not allowed")
+    if len(cases) != 30:
+        return
+    observed = {(case["task"].get("scenario"), case["snapshot"]["role"]) for case in cases}
+    expected = {
+        (scenario, role) for scenario in EVIDENCE_LOCKED_SCENARIOS for role in EVIDENCE_LOCKED_ROLES
+    }
+    if observed != expected or len(observed) != len(cases):
+        raise AIHoldoutAssemblyError(
+            "complete evidence-locked deck must contain one case per scenario and role"
+        )
+
+
+def _case_stratum(case: dict[str, Any]) -> dict[str, str]:
+    task = case["task"]
+    scenario = task.get("scenario")
+    role = (
+        task.get("subject", {}).get("role")
+        if task["task_type"] == "PLAYER_TENDENCY_QA"
+        else case["snapshot"].get("role")
+    )
+    return {
+        "scenario": scenario if isinstance(scenario, str) else "LEGACY_UNSTRATIFIED",
+        "role": role if isinstance(role, str) else "UNKNOWN",
+    }
 
 
 def _validate_player_tendency_task(task: dict[str, Any], options: dict[str, set[str]]) -> None:

@@ -10,9 +10,22 @@ from pro_meta_intelligence.cli import main
 
 
 def _case(index: int, *, ai_duration: float = 20, ai_claims: list[str] | None = None):
+    scenarios = (
+        "EMERGENCE",
+        "REGIONAL_DIVERGENCE",
+        "TEAM_CONCENTRATION",
+        "HIGH_ADOPTION",
+        "LOW_SAMPLE",
+        "STABLE_OR_DECLINING",
+    )
+    roles = ("TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT")
     return {
         "case_id": f"case-{index:03d}",
         "split": "HOLDOUT",
+        "stratum": {
+            "scenario": scenarios[(index // len(roles)) % len(scenarios)],
+            "role": roles[index % len(roles)],
+        },
         "reference": {
             "required_claim_ids": ["CLAIM:OBSERVED"],
             "allowed_claim_ids": ["CLAIM:OBSERVED", "CLAIM:COUNTERPOINT"],
@@ -74,7 +87,7 @@ def test_ai_validation_withholds_an_underpowered_run() -> None:
 
     assert report["status"] == "NOT_VALIDATED"
     assert report["ai_features_enabled"] is False
-    assert report["failed_gates"] == ["PAIRED_HOLDOUT_SAMPLE"]
+    assert report["failed_gates"] == ["PAIRED_HOLDOUT_SAMPLE", "REPRESENTATIVE_HOLDOUT"]
     assert report["next_action"] == "COLLECT_PAIRED_HUMAN_HOLDOUTS"
 
 
@@ -88,6 +101,21 @@ def test_ai_validation_rejects_unsupported_claims_even_when_fast() -> None:
     assert report["ai_features_enabled"] is False
     assert "ZERO_CRITICAL_ERRORS" in report["failed_gates"]
     assert "CLAIM_ACCURACY_NONINFERIOR" in report["failed_gates"]
+
+
+def test_ai_validation_rejects_thirty_duplicate_strata() -> None:
+    run = _run()
+    for case in run["cases"]:
+        case["stratum"] = {"scenario": "EMERGENCE", "role": "MID"}
+
+    report = evaluate_ai_against_human(run)
+
+    assert report["status"] == "REJECTED"
+    assert "REPRESENTATIVE_HOLDOUT" in report["failed_gates"]
+    assert report["next_action"] == "REBALANCE_HOLDOUT"
+    gate = next(item for item in report["gates"] if item["id"] == "REPRESENTATIVE_HOLDOUT")
+    assert gate["observed"]["covered_strata"] == 1
+    assert gate["observed"]["duplicate_count"] == 29
 
 
 def test_ai_validation_ignores_dev_cases_for_the_release_gate() -> None:

@@ -24,8 +24,9 @@ override a failed critical gate.
 
 ## Paired holdout procedure
 
-1. Select at least 30 representative cases from immutable snapshots. Keep `DEV` cases separate
-   from `HOLDOUT` cases.
+1. Select at least 30 representative cases from immutable snapshots. A release holdout must cover
+   every cell in the task's six-scenario by five-role matrix. Keep `DEV` cases separate from
+   `HOLDOUT` cases.
 2. Freeze allowed and required claim IDs, evidence IDs, and boundary IDs before either participant
    sees the task.
 3. Give the human and AI path the same snapshot-scoped input. Do not expose the reference answer.
@@ -42,7 +43,12 @@ paired cases. It deliberately shows no reference answer and no AI output. A part
 claims, source event IDs, and interpretation boundaries from one immutable published snapshot;
 active completion time is recorded between starting and saving the task.
 
-The browser stores at most 60 unique snapshot/champion/role drafts in local storage. It does not
+The Radar workbench builds a deterministic 30-task deck across all five roles and six evidence
+conditions: emergence, regional divergence, team concentration, high adoption, low sample, and
+stable or declining signals. A champion-role entry is not reused in the same deck. This prevents
+an easy top-ranked slice from standing in for difficult boundary and counterexample cases.
+
+The browser stores at most 60 unique snapshot/scenario/champion/role drafts in local storage. It does not
 collect an analyst name, account, API key, free-form personal text, or send drafts to the server.
 The participant can export or delete the local bundle at any time.
 
@@ -96,11 +102,16 @@ separate, non-mixable bundles. Tendency bundles also reject unknown claim/bounda
 private practice, scrim, account, identity, or API-key fields. It refuses to write raw output inside
 `web/public`.
 
+Both complete task types must contain exactly one case for every scenario-role pair. The assembler
+embeds only that public-safe stratum in the private paired run, and the evaluator independently
+rechecks 100% matrix coverage. Thirty duplicate or convenient cases therefore cannot unlock AI.
+
 ## Release gates
 
 | Gate | Required result |
 | --- | --- |
 | Paired hidden sample | At least 30 `HOLDOUT` cases |
+| Representative holdout | 100% coverage of the task's 6-scenario × 5-role matrix; no unknown strata |
 | Claim accuracy | AI macro F1 at least 0.90 and no more than 0.02 below the paired human result |
 | Evidence accuracy | AI macro F1 at least 0.90 and no more than 0.02 below the paired human result |
 | Critical errors | Zero unsupported claims, missing required boundaries, or expert critical errors |
@@ -138,6 +149,7 @@ The evaluator accepts one private JSON object:
     {
       "case_id": "private-case-id",
       "split": "HOLDOUT",
+      "stratum": { "scenario": "EMERGENCE", "role": "MID" },
       "reference": {
         "required_claim_ids": ["CLAIM:OBSERVED"],
         "allowed_claim_ids": ["CLAIM:OBSERVED", "CLAIM:COUNTERPOINT"],

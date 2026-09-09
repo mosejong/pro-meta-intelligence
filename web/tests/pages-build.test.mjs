@@ -86,7 +86,7 @@ test("copies the same-origin feed and social card", async () => {
   assert.equal(aiValidation.status, "NOT_VALIDATED");
   assert.equal(aiValidation.ai_features_enabled, false);
   assert.equal(aiValidation.paired_holdout_case_count, 0);
-  assert.equal(aiValidation.gates.length, 7);
+  assert.equal(aiValidation.gates.length, 8);
   assert.equal(schedule.artifact_type, "pro-schedule-snapshot");
   assert.ok(schedule.events.length > 0);
   assert.equal(scheduleChanges.artifact_type, "pro-schedule-change-log");

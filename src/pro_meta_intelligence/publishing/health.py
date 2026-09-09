@@ -353,6 +353,7 @@ def _schedule_publication_check(schedule_feed: dict[str, Any] | None) -> dict[st
 def _ai_validation_artifact_check(ai_validation: dict[str, Any] | None) -> dict[str, Any]:
     expected_gate_ids = {
         "PAIRED_HOLDOUT_SAMPLE",
+        "REPRESENTATIVE_HOLDOUT",
         "ZERO_CRITICAL_ERRORS",
         "CLAIM_ACCURACY_NONINFERIOR",
         "EVIDENCE_ACCURACY_NONINFERIOR",
@@ -412,6 +413,31 @@ def _ai_validation_artifact_check(ai_validation: dict[str, Any] | None) -> dict[
         and sample_gate["required"].get("minimum") == minimum_cases
         and sample_gate.get("passed") is (case_count >= minimum_cases)
     )
+    representative_gate = gates_by_id.get("REPRESENTATIVE_HOLDOUT")
+    minimum_coverage = policy.get("minimum_stratum_coverage") if isinstance(policy, dict) else None
+    representative_observed = (
+        representative_gate.get("observed") if isinstance(representative_gate, dict) else None
+    )
+    representative_consistent = (
+        minimum_coverage == 1.0
+        and isinstance(representative_observed, dict)
+        and type(representative_observed.get("coverage")) in (int, float)
+        and 0 <= representative_observed["coverage"] <= 1
+        and type(representative_observed.get("covered_strata")) is int
+        and 0 <= representative_observed["covered_strata"] <= 30
+        and representative_observed.get("required_strata") == 30
+        and type(representative_observed.get("duplicate_count")) is int
+        and representative_observed["duplicate_count"] >= 0
+        and type(representative_observed.get("unknown_count")) is int
+        and representative_observed["unknown_count"] >= 0
+        and isinstance(representative_gate.get("required"), dict)
+        and representative_gate["required"].get("minimum_coverage") == minimum_coverage
+        and representative_gate.get("passed")
+        is (
+            representative_observed["coverage"] >= minimum_coverage
+            and (minimum_coverage == 0 or representative_observed["unknown_count"] == 0)
+        )
+    )
     failed_gates = ai_validation.get("failed_gates")
     expected_failed_gates = (
         [gate["id"] for gate in gates if isinstance(gate, dict) and gate.get("passed") is False]
@@ -464,6 +490,7 @@ def _ai_validation_artifact_check(ai_validation: dict[str, Any] | None) -> dict[
         and type(ai_validation.get("paired_holdout_case_count")) is int
         and ai_validation["paired_holdout_case_count"] >= 0
         and failure_list_consistent
+        and representative_consistent
         and lifecycle_valid
         and fingerprints_valid
     )

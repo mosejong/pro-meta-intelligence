@@ -14,7 +14,7 @@ const gateCopy = {
   accuracy: ["정확도", "주장·근거 F1 90% 이상", ["CLAIM_ACCURACY_NONINFERIOR", "EVIDENCE_ACCURACY_NONINFERIOR"]],
   safety: ["안전성", "치명적 오류 0 · 경계 100%", ["ZERO_CRITICAL_ERRORS", "BOUNDARY_RETENTION"]],
   speed: ["편의성", "사람 시간의 50% 이하", ["HUMAN_TIME_SAVED"]],
-  sample: ["검증 표본", "동일 숨김 과제 30건", ["PAIRED_HOLDOUT_SAMPLE"]],
+  sample: ["검증 표본", "6개 상황 × 5개 포지션", ["PAIRED_HOLDOUT_SAMPLE", "REPRESENTATIVE_HOLDOUT"]],
 } as const;
 
 function passes(status: AIValidationStatus, ids: readonly string[]) {

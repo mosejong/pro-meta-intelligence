@@ -130,7 +130,7 @@ data path:
   maintaining one incident.
 - a provider-neutral paired human-vs-AI evaluator that withholds AI output until claim/evidence
   accuracy, zero critical errors, boundary retention, edit burden, and time savings all pass on at
-  least 30 hidden cases.
+  least 30 hidden cases, with mandatory coverage of all six scenarios across all five roles.
 - a hosted OE collector that restores AES-GCM-authenticated rolling history, applies the same policy
   and readiness gates, retains two encrypted recovery generations, and publishes no raw provider rows.
 - account-free analysis links that restore the selected own team and opponent in the focused T1
