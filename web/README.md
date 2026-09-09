@@ -13,6 +13,7 @@ Open `http://localhost:3000`. The onboarding home separates the product into fou
 
 - `/team/` — own-team selection, opponent priority, review candidates, and Draft Battlecard.
 - `/t1/` — official T1 fixture, one-page staff brief, target profile, and match-day control.
+- `/proof/` — submission narrative, live readiness gates, T1 case flow, and a printable three-minute demo script.
 - `/creator/` — evidence-locked YouTube, Shorts, and editor JSON exports.
 - `/radar/` — full regional signal, audit, history, and raw evidence exploration.
 

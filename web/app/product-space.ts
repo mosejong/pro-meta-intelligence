@@ -1,4 +1,4 @@
-export type ProductSpace = "ONBOARDING" | "TEAM" | "T1" | "CREATOR" | "RADAR";
+export type ProductSpace = "ONBOARDING" | "TEAM" | "T1" | "CREATOR" | "RADAR" | "PROOF";
 
 const slugs: Record<ProductSpace, string> = {
   ONBOARDING: "",
@@ -6,6 +6,7 @@ const slugs: Record<ProductSpace, string> = {
   T1: "t1/",
   CREATOR: "creator/",
   RADAR: "radar/",
+  PROOF: "proof/",
 };
 
 export function productSpaceFromPath(pathname: string): ProductSpace {
@@ -15,6 +16,7 @@ export function productSpaceFromPath(pathname: string): ProductSpace {
   if (leaf === "t1") return "T1";
   if (leaf === "creator") return "CREATOR";
   if (leaf === "radar") return "RADAR";
+  if (leaf === "proof") return "PROOF";
   return "ONBOARDING";
 }
 
