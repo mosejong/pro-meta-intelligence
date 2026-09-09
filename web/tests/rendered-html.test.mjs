@@ -1210,8 +1210,16 @@ test("accepts only bounded own-team private practice and summarizes roster match
     assert.match(editorHtml, /NO AUTO-RANKING/);
     assert.match(editorHtml, /Radar 순위, 상대 우선순위, 출전 판단을 변경하지 않습니다/);
     assert.match(editorHtml, /선수 성향 분석봇/);
-    assert.match(editorHtml, /AI LOCKED · 0\/30/);
+    assert.match(editorHtml, /AI LOCKED · PLAYER 0\/30/);
     assert.match(editorHtml, /생성형 AI 호출·서버 저장·대화 기록 없음/);
+    const wrongTrackValidatedHtml = renderToStaticMarkup(createElement(PlayerPracticePanel, {
+      ownTeam: t1,
+      opponent: null,
+      reviewCandidates: [candidate],
+      aiValidation: { ...aiStatus, status: "VALIDATED", ai_features_enabled: true },
+    }));
+    assert.match(wrongTrackValidatedHtml, /AI LOCKED · PLAYER 0\/30/);
+    assert.doesNotMatch(wrongTrackValidatedHtml, /AI VALIDATED/);
 
     const { answerPlayerTendencyQuestion, routeTendencyQuestion } = await vite.ssrLoadModule("/app/player-tendency-bot.ts");
     assert.equal(routeTendencyQuestion("내 연습 기록과 어디가 겹쳐?"), "PRACTICE_CROSSCHECK");
@@ -1593,13 +1601,17 @@ test("ships a fail-closed human-paired AI validation status", async () => {
     logLevel: "silent",
   });
   try {
-    const { isAIValidationStatus } = await vite.ssrLoadModule("/app/ai-validation.ts");
+    const { isAIValidationStatus, validationForTask } = await vite.ssrLoadModule("/app/ai-validation.ts");
     assert.equal(isAIValidationStatus(status), true);
+    assert.equal(validationForTask(status, "EVIDENCE_LOCKED_BRIEF"), status);
+    assert.equal(validationForTask(status, "PLAYER_TENDENCY_QA"), null);
+    assert.equal(isAIValidationStatus({ ...status, task_type: "UNSCOPED" }), false);
   } finally {
     await vite.close();
   }
   assert.equal(status.status, "NOT_VALIDATED");
   assert.equal(status.ai_features_enabled, false);
+  assert.equal(status.task_type, "EVIDENCE_LOCKED_BRIEF");
   assert.equal(status.paired_holdout_case_count, 0);
   assert.equal(status.gates.length, 7);
   assert.equal(status.next_action, "COLLECT_PAIRED_HUMAN_HOLDOUTS");

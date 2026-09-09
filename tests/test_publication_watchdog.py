@@ -257,6 +257,22 @@ def test_publication_watchdog_rejects_a_forged_ai_enablement() -> None:
     assert report["next_action"] == "RESTORE_FAIL_CLOSED_AI_STATUS"
 
 
+def test_publication_watchdog_rejects_an_unknown_ai_task_type() -> None:
+    report = assess_publication_watchdog(
+        _radar(),
+        _creator(),
+        _history(),
+        _outcomes(),
+        _schedule(),
+        _ai_validation(task_type="GLOBAL_AI_UNLOCK"),
+        _collection_status(),
+        checked_at=NOW,
+    )
+
+    assert "AI_VALIDATION_STATUS_VALID" in report["failed_checks"]
+    assert report["next_action"] == "RESTORE_FAIL_CLOSED_AI_STATUS"
+
+
 def test_publication_watchdog_rejects_unbounded_collection_status() -> None:
     report = assess_publication_watchdog(
         _radar(),

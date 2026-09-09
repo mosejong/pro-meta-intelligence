@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- checked-in art and stable Riot CDN assets */
 
 import { type FormEvent, useState } from "react";
-import type { AIValidationStatus } from "./ai-validation";
+import { validationForTask, type AIValidationStatus } from "./ai-validation";
 import { championImageUrl } from "./champion-assets";
 import { useChampionNames } from "./champion-names";
 import type { CollectionStatus } from "./collection-status";
@@ -81,7 +81,8 @@ export function ProductHome({
   const { nameOf } = useChampionNames();
   const rootHref = productRootHref(currentSpace);
   const [question, setQuestion] = useState("");
-  const aiEnabled = aiValidation?.ai_features_enabled === true;
+  const briefValidation = validationForTask(aiValidation, "EVIDENCE_LOCKED_BRIEF");
+  const aiEnabled = briefValidation?.ai_features_enabled === true;
   const dataIsStale = feedKind === "published" && snapshotFreshness(
     dataCutoff,
     checkedAt,
@@ -159,7 +160,7 @@ export function ProductHome({
 
     <details className={`home-ai-trust ${aiEnabled ? "validated" : "locked"}`}>
       <summary><span><i />{aiEnabled ? "AI 사람 비교 검증 통과" : "AI 검증 전 · 자동 판단 안 함"}</span><small>현재 보이는 핵심 내용은 공개 데이터 규칙으로 계산되며, 검증 전 AI 문장은 결과에 섞지 않습니다.</small><b>검증 기준 보기</b></summary>
-      <div><dl><div><dt>사람과 같은 숨김 과제</dt><dd>{aiValidation?.paired_holdout_case_count ?? 0} / {aiValidation?.policy.minimum_paired_holdout_cases ?? 30}</dd></div><div><dt>AI 상태</dt><dd>{aiEnabled ? "사용 가능" : "잠금"}</dd></div><div><dt>현재 결과 생성</dt><dd>{aiEnabled ? "검증 AI + 사람 승인" : "규칙 기반 분석"}</dd></div></dl><p>정확도, 치명적 오류 0건, 근거 경계, 시간 절감을 모두 통과해야 AI 초안이 열립니다. 자동 게시는 하지 않습니다.</p><a href={productSpaceHref(currentSpace, "CREATOR")}>전체 검증 기준 →</a></div>
+      <div><dl><div><dt>메타 브리프 숨김 과제</dt><dd>{briefValidation?.paired_holdout_case_count ?? 0} / {briefValidation?.policy.minimum_paired_holdout_cases ?? 30}</dd></div><div><dt>AI 상태</dt><dd>{aiEnabled ? "사용 가능" : "잠금"}</dd></div><div><dt>현재 결과 생성</dt><dd>{aiEnabled ? "검증 AI + 사람 승인" : "규칙 기반 분석"}</dd></div></dl><p>정확도, 치명적 오류 0건, 근거 경계, 시간 절감을 모두 통과해야 AI 초안이 열립니다. 자동 게시는 하지 않습니다.</p><a href={productSpaceHref(currentSpace, "CREATOR")}>전체 검증 기준 →</a></div>
     </details>
 
     <section className="home-spaces" aria-labelledby="home-spaces-title">

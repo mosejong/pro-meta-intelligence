@@ -96,6 +96,11 @@ Until then, the UI displays `AI LOCKED`, the public validation feed remains fail
 deterministic answer remains available. A model outage or invalid response must fall back to the
 same deterministic answer rather than returning unverified prose.
 
+The player path accepts validation only when the public status has
+`task_type=PLAYER_TENDENCY_QA`. A validated Meta/Creator brief status cannot unlock this bot or
+contribute its case count; a missing or different task type is displayed as a player holdout with
+zero published cases.
+
 ### Human baseline workbench
 
 The Team surface now prepares one deterministic 30-task deck from the current published snapshot.

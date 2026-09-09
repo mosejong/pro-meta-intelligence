@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- champion portraits use the stable Riot CDN */
 
 import { type FormEvent, useMemo, useState } from "react";
-import type { AIValidationStatus } from "./ai-validation";
+import { validationForTask, type AIValidationStatus } from "./ai-validation";
 import { championImageUrl } from "./champion-assets";
 import { useChampionNames } from "./champion-names";
 import type { PrivatePracticeSession } from "./player-practice";
@@ -65,13 +65,16 @@ export function PlayerTendencyBotPanel({
   const selectedPlayer = players.find((player) => player.player_id === playerId);
   const contextKey = `${scope}:${team?.team_id ?? "none"}:${playerId}`;
   const answer = answerState?.contextKey === contextKey ? answerState.answer : null;
-  const minimumCases = aiValidation?.policy.minimum_paired_holdout_cases ?? 30;
-  const pairedCases = aiValidation?.paired_holdout_case_count ?? 0;
-  const aiGateLabel = aiValidation?.ai_features_enabled
+  const playerValidation = validationForTask(aiValidation, "PLAYER_TENDENCY_QA");
+  const minimumCases = playerValidation?.policy.minimum_paired_holdout_cases ?? 30;
+  const pairedCases = playerValidation?.paired_holdout_case_count ?? 0;
+  const aiGateLabel = playerValidation?.ai_features_enabled
     ? "AI VALIDATED · PROVIDER NOT CONNECTED"
-    : aiValidation
+    : playerValidation
       ? `AI LOCKED · ${pairedCases}/${minimumCases}`
-      : "AI GATE CHECKING";
+      : aiValidation
+        ? `AI LOCKED · PLAYER ${pairedCases}/${minimumCases}`
+        : "AI GATE CHECKING";
 
   function analyze(nextQuery: string) {
     if (!team || !playerId) {
@@ -103,7 +106,7 @@ export function PlayerTendencyBotPanel({
   return <section className="player-tendency-bot" aria-label="선수 선택 성향 분석봇">
     <header>
       <div><span>TENDENCY ANALYST BOT · EVIDENCE FIRST</span><h3>선수 성향 분석봇</h3><p>선수의 성격이 아니라 공개 경기의 선택 패턴을 답합니다. 내 팀 질문일 때만 현재 탭의 개인 연습 기록을 교차합니다.</p></div>
-      <b className={aiValidation?.ai_features_enabled ? "validated" : "locked"}><i /> {aiGateLabel}</b>
+      <b className={playerValidation?.ai_features_enabled ? "validated" : "locked"}><i /> {aiGateLabel}</b>
     </header>
 
     {!ownTeam ? <div className="tendency-bot-setup"><b>내 팀을 선택하면 분석봇이 열립니다.</b><p>질문은 저장하거나 서버로 보내지 않습니다.</p></div> : <>
