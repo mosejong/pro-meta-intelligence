@@ -48,6 +48,7 @@ test("server-renders the onboarding home as a focused product entry", async () =
   assert.match(html, /href="\.\/t1\/"/);
   assert.match(html, /href="\.\/creator\/"/);
   assert.match(html, /href="\.\/radar\/"/);
+  assert.match(html, /href="\.\/proof\/"/);
   assert.doesNotMatch(html, /chatgpt|openai|gpt login|sign in/i);
 });
 
@@ -230,6 +231,19 @@ test("server-renders every focused workspace route", async () => {
     assert.match(html, /세 줄로 먼저 이해하세요/);
     assert.match(html, new RegExp(guideAction));
   }
+});
+
+test("server-renders a truthful submission proof and demo script", async () => {
+  const response = await render("/proof");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /TEAM SUBMISSION · EVIDENCE BEFORE CLAIMS/);
+  assert.match(html, /연습할 후보를/);
+  assert.match(html, /LIVE T1 CASE/);
+  assert.match(html, /3 MINUTE DEMO/);
+  assert.match(html, /예측 효용은 아직 주장하지 않으며/);
+  assert.match(html, /인쇄 \/ PDF/);
+  assert.doesNotMatch(html, /chatgpt|openai|gpt login|sign in/i);
 });
 
 test("server-renders a five-scene creator workflow with human review", async () => {
@@ -1380,9 +1394,11 @@ test("maps direct paths and relative navigation across product spaces", async ()
     assert.equal(productSpaceFromPath("/pro-meta-intelligence/t1/index.html"), "T1");
     assert.equal(productSpaceFromPath("/creator/"), "CREATOR");
     assert.equal(productSpaceFromPath("/radar"), "RADAR");
+    assert.equal(productSpaceFromPath("/pro-meta-intelligence/proof/"), "PROOF");
     assert.equal(productSpaceHref("ONBOARDING", "TEAM"), "./team/");
     assert.equal(productSpaceHref("TEAM", "ONBOARDING"), "../");
     assert.equal(productSpaceHref("CREATOR", "T1"), "../t1/");
+    assert.equal(productSpaceHref("PROOF", "ONBOARDING"), "../");
   } finally {
     await vite.close();
   }

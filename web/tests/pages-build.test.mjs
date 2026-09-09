@@ -11,6 +11,7 @@ test("builds direct-loadable onboarding and field pages", async () => {
     ["t1/index.html", "T1 브리프 · Pro Meta Intelligence"],
     ["creator/index.html", "Creator Studio · Pro Meta Intelligence"],
     ["radar/index.html", "Meta Radar · Pro Meta Intelligence"],
+    ["proof/index.html", "제출 증거 · Pro Meta Intelligence"],
   ];
 
   for (const [path, title] of pages) {

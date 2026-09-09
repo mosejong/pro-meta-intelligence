@@ -97,7 +97,7 @@ export function ProductHome({
   return <main className="product-home">
     <header className="home-topbar">
       <a className="brand" href={productSpaceHref(currentSpace, "ONBOARDING")} aria-label="Pro Meta Intelligence 홈"><span className="brand-mark">PM</span><span><strong>PRO META</strong><small>INTELLIGENCE</small></span></a>
-      <nav aria-label="분야별 분석"><a href={productSpaceHref(currentSpace, "T1")}>T1 오늘 준비</a><a href={productSpaceHref(currentSpace, "TEAM")}>내 팀 분석</a><a href={productSpaceHref(currentSpace, "CREATOR")}>영상 소재</a><a href={productSpaceHref(currentSpace, "RADAR")}>전체 데이터</a></nav>
+      <nav aria-label="분야별 분석"><a href={productSpaceHref(currentSpace, "T1")}>T1 오늘 준비</a><a href={productSpaceHref(currentSpace, "TEAM")}>내 팀 분석</a><a href={productSpaceHref(currentSpace, "CREATOR")}>영상 소재</a><a href={productSpaceHref(currentSpace, "RADAR")}>전체 데이터</a><a href={productSpaceHref(currentSpace, "PROOF")}>제출 증거</a></nav>
       <span className={`home-feed-state ${dataIsStale ? "stale" : ""}`}><i />{dataIsStale ? "STALE · REVIEW ONLY" : feedLabel}</span>
     </header>
 
@@ -175,7 +175,7 @@ export function ProductHome({
 
     <section className="home-principles"><article><b>01</b><h3>결론부터</h3><p>먼저 세 줄로 보고, 궁금한 내용만 자세히 펼칩니다.</p></article><article><b>02</b><h3>모르면 대기</h3><p>TBD 상대, 스크림, 선수 컨디션과 팀 내부 계획은 추정하지 않습니다.</p></article><article><b>03</b><h3>근거는 그대로</h3><p>쉬운 설명과 팀 자료, 영상 소재가 같은 공개 경기 근거를 공유합니다.</p></article></section>
 
-    <footer className="home-footer"><span>PRO META INTELLIGENCE</span><p>공개 경기 근거를 누구나 이해할 수 있는 T1 브리프와 분석 콘텐츠로 전환합니다.</p><a href={productSpaceHref(currentSpace, "RADAR")}>데이터 경계 확인 →</a></footer>
+    <footer className="home-footer"><span>PRO META INTELLIGENCE</span><p>공개 경기 근거를 누구나 이해할 수 있는 T1 브리프와 분석 콘텐츠로 전환합니다.</p><a href={productSpaceHref(currentSpace, "PROOF")}>제출 증거와 검증 상태 →</a></footer>
     <section className="legal-notice" aria-label="Riot Games 비제휴 고지">캐릭터 이미지는 Riot Games Data Dragon을 통해 제공됩니다. Pro Meta Intelligence isn&apos;t endorsed by Riot Games and doesn&apos;t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing League of Legends properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</section>
   </main>;
 }

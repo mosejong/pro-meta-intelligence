@@ -217,6 +217,12 @@ Required presentation package:
 - 3–5 minute demo
 - separate esports data/strategy resume entry
 
+Current foundation: `/proof/` is a live submission surface that explains the staff problem, walks
+through the reproducible T1 case flow, exposes production/source/benchmark/AI readiness separately,
+and supplies a printable three-minute demonstration script. It deliberately calls the current
+system a working real-data prototype until the Phase 3 benchmark matures. The remaining package is
+the measured case-study result and final resume-specific wording, not another disconnected mockup.
+
 ## Submission Rule
 
 Do not submit because the UI looks finished.

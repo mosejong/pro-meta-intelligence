@@ -32,6 +32,7 @@ import { PUBLICATION_FRESHNESS_POLICY, snapshotFreshness } from "./freshness";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
 import { ProductHome } from "./product-home";
+import { SubmissionProof } from "./submission-proof";
 import { PlayerPracticePanel } from "./player-practice-panel";
 import { productRootHref, productSpaceHref, type ProductSpace } from "./product-space";
 import { sampleReport } from "./sample-report";
@@ -893,6 +894,16 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         teamCount: metaFocus.metrics.current_distinct_team_count,
         pickPresenceDelta: metaFocus.metrics.pick_presence_delta,
       } : null}
+    />;
+  }
+
+  if (initialSpace === "PROOF") {
+    return <SubmissionProof
+      currentSpace={initialSpace}
+      report={report}
+      collectionStatus={collectionStatus}
+      aiValidation={aiValidation}
+      feedLabel={feedState.label}
     />;
   }
 
