@@ -14,6 +14,7 @@ from pathlib import Path
 from pro_meta_intelligence.models import require_aware
 
 SAFE_SOURCE_ID = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
+ATTEMPT_LEDGER_FILENAME = "_request_attempts.json"
 
 
 @dataclass(frozen=True, slots=True)
@@ -244,7 +245,9 @@ class SnapshotArchive:
         data_files = {
             path.name
             for path in source_dir.iterdir()
-            if path.is_file() and not path.name.endswith(".meta.json")
+            if path.is_file()
+            and not path.name.endswith(".meta.json")
+            and path.name != ATTEMPT_LEDGER_FILENAME
         }
         for orphan in sorted(data_files - referenced_data_files):
             issues.append(ArchiveIntegrityIssue("ORPHAN_DATA_FILE", None, orphan))

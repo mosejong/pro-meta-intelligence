@@ -63,7 +63,7 @@ from pro_meta_intelligence.quality import (
     audit_oe_history,
 )
 from pro_meta_intelligence.radar import LeagueRegionMap, MetaRadar, MetaRadarConfig
-from pro_meta_intelligence.sources import SnapshotArchive, SourceRegistry
+from pro_meta_intelligence.sources import SnapshotArchive, SourceAttemptLedger, SourceRegistry
 from pro_meta_intelligence.temporal import parse_datetime
 
 
@@ -746,6 +746,12 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
         registry = _load_registry(args.registry)
         adapter = OracleElixirPublishedDownloadAdapter(registry)
         latest = archive.latest(adapter.source_id)
+        attempt_ledger = SourceAttemptLedger(args.archive_dir)
+        fetch_operation = "FETCH_PUBLISHED_CSV"
+        last_attempted_at = attempt_ledger.latest_attempted_at(
+            adapter.source_id,
+            fetch_operation,
+        )
         network_attempted = False
         acquisition_status: str
         acquisition_error: str | None = None
@@ -753,6 +759,12 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             downloaded = adapter.fetch_year(
                 args.year,
                 last_retrieved_at=latest.retrieved_at if latest else None,
+                last_attempted_at=last_attempted_at,
+                on_request_started=lambda attempted_at: attempt_ledger.record(
+                    adapter.source_id,
+                    fetch_operation,
+                    attempted_at,
+                ),
             )
             network_attempted = True
             archived = archive.store(downloaded.artifact)

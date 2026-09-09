@@ -12,9 +12,11 @@ through `pick5`.
 
 `FETCH_PUBLISHED_CSV` is now enabled for the exact 2026 file ID verified in that official folder.
 The downloader does not enumerate Drive or accept caller-supplied URLs. It enforces the provider's
-daily interval using local archive metadata, rejects quota/error HTML and schema drift, stores the
-original CSV by content hash, and never republishes the raw file. `IMPORT_LOCAL_CSV` remains
-available for a file obtained manually from the same provider page.
+daily interval using both verified retrieval metadata and a private persistent request-attempt
+ledger, rejects quota/error HTML and schema drift, stores the original CSV by content hash, and
+never republishes the raw file. A rejected response still advances the request-attempt gate, so a
+manual run cannot create an early retry. `IMPORT_LOCAL_CSV` remains available for a file obtained
+manually from the same provider page.
 
 For unattended operation, `sync-oe-feed` holds the single-writer lock across acquisition,
 normalization, Radar/Creator generation, and publication. A provider error can reuse a previously
@@ -107,7 +109,8 @@ archived point-in-time state.
 - A local manual import remains `UNVERIFIED_CALLER_SUPPLIED_FILE`; an adapter download records the
   exact reviewed official file ID and retrieval URL.
 - Google Drive can temporarily return a quota page. This is reported as source unavailable and is
-  never archived or interpreted as CSV.
+  never archived or interpreted as CSV. Its request start time is retained only in encrypted
+  operational state to enforce the next allowed attempt.
 - Full annual-file performance has been measured locally and documented in
   [`OE_REAL_FILE_BENCHMARK.md`](OE_REAL_FILE_BENCHMARK.md); CI continues to use structural fixtures
   because the provider dataset is not redistributed.

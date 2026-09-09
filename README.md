@@ -223,11 +223,12 @@ catalog is normalized into a temporal snapshot only when a separately verified p
 provided with `--release-at`.
 
 The Oracle's Elixir downloader is restricted to exact annual file IDs verified in the provider's
-official folder, enforces the published daily interval, rejects HTML quota pages and schema drift,
-and archives the raw CSV by content hash without republishing it. The importer also accepts a
-caller-supplied local file, rejects malformed games, normalizes validated match and pick records,
-and uses the explicit retrieval time as conservative `available_at`. A current annual file is never
-backdated into an earlier historical cutoff.
+official folder, enforces the published daily interval from every persisted network attempt,
+rejects HTML quota pages and schema drift, and archives the raw CSV by content hash without
+republishing it. The private attempt ledger means failed responses cannot trigger an early retry.
+The importer also accepts a caller-supplied local file, rejects malformed games, normalizes
+validated match and pick records, and uses the explicit retrieval time as conservative
+`available_at`. A current annual file is never backdated into an earlier historical cutoff.
 
 `sync-oe-feed` is the unattended path. Under one exclusive writer lock it downloads the reviewed
 file when the daily interval permits, otherwise reuses only the newest verified archive, validates
