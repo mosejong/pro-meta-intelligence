@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { AIValidationStatus } from "./ai-validation";
+import {
+  validationForTask,
+  type AIValidationStatus,
+  type AIValidationTask,
+} from "./ai-validation";
 import { AIHumanBaselineWorkbench } from "./ai-human-baseline-workbench";
 import { PlayerTendencyBaselineWorkbench } from "./player-tendency-baseline-workbench";
 import type { RadarReport } from "./radar-types";
@@ -31,35 +35,39 @@ export function AIValidationPanel({
   defaultTrack?: "RADAR" | "PLAYER";
 }) {
   const [track, setTrack] = useState<"RADAR" | "PLAYER">(defaultTrack);
-  const measured = Boolean(status && status.paired_holdout_case_count > 0);
-  const enabled = status?.status === "VALIDATED" && status.ai_features_enabled;
-  const cards = status ? [
+  const taskType: AIValidationTask = track === "PLAYER"
+    ? "PLAYER_TENDENCY_QA"
+    : "EVIDENCE_LOCKED_BRIEF";
+  const activeStatus = validationForTask(status, taskType);
+  const measured = Boolean(activeStatus && activeStatus.paired_holdout_case_count > 0);
+  const enabled = activeStatus?.status === "VALIDATED" && activeStatus.ai_features_enabled;
+  const cards = activeStatus ? [
     {
       label: gateCopy.accuracy[0], requirement: gateCopy.accuracy[1], ids: gateCopy.accuracy[2],
-      value: measured ? `${percent(status.metrics.ai.claim_f1)} / ${percent(status.metrics.ai.evidence_f1)}` : "측정 전",
+      value: measured ? `${percent(activeStatus.metrics.ai.claim_f1)} / ${percent(activeStatus.metrics.ai.evidence_f1)}` : "측정 전",
     },
     {
       label: gateCopy.safety[0], requirement: gateCopy.safety[1], ids: gateCopy.safety[2],
-      value: measured ? `${status.metrics.ai.critical_error_count}건 / ${percent(status.metrics.ai.boundary_recall)}` : "측정 전",
+      value: measured ? `${activeStatus.metrics.ai.critical_error_count}건 / ${percent(activeStatus.metrics.ai.boundary_recall)}` : "측정 전",
     },
     {
       label: gateCopy.speed[0], requirement: gateCopy.speed[1], ids: gateCopy.speed[2],
-      value: status.metrics.paired_comparison.median_time_ratio === null ? "측정 전" : `${percent(1 - status.metrics.paired_comparison.median_time_ratio)} 절감`,
+      value: activeStatus.metrics.paired_comparison.median_time_ratio === null ? "측정 전" : `${percent(1 - activeStatus.metrics.paired_comparison.median_time_ratio)} 절감`,
     },
     {
       label: gateCopy.sample[0], requirement: gateCopy.sample[1], ids: gateCopy.sample[2],
-      value: `${status.paired_holdout_case_count} / ${status.policy.minimum_paired_holdout_cases}`,
+      value: `${activeStatus.paired_holdout_case_count} / ${activeStatus.policy.minimum_paired_holdout_cases}`,
     },
   ] : [];
 
   return <section className={`ai-validation ${enabled ? "validated" : "locked"}`} aria-labelledby="ai-validation-title">
     <header>
       <div><span>AI RELEASE GATE · HUMAN-PAIRED</span><h2 id="ai-validation-title">AI는 사람보다 정확하고 빨라야 열립니다.</h2><p>같은 숨김 과제에서 사람과 나란히 측정합니다. 한 조건이라도 실패하면 결정론적 분석만 유지하고 AI 초안은 사용자에게 보여주지 않습니다.</p></div>
-      <b><i />{enabled ? "검증 통과 · AI 초안 사용 가능" : status?.status === "REJECTED" ? "검증 실패 · AI 잠금" : "검증 전 · AI 잠금"}</b>
+      <b><i />{enabled ? "검증 통과 · AI 초안 사용 가능" : activeStatus?.status === "REJECTED" ? "검증 실패 · AI 잠금" : "검증 전 · AI 잠금"}</b>
     </header>
-    {status ? <div className="ai-validation-grid">{cards.map(({ label, requirement, ids, value }) => <article className={passes(status, ids) ? "passed" : "pending"} key={label}>
-      <span>{label}</span><strong>{value}</strong><small>{requirement}</small><em>{passes(status, ids) ? "통과" : measured ? "미통과" : "대기"}</em>
-    </article>)}</div> : <div className="ai-validation-unavailable"><b>검증 상태를 불러오지 못했습니다.</b><p>상태를 확인할 수 없으므로 AI 기능은 자동으로 잠깁니다.</p></div>}
+    {activeStatus ? <div className="ai-validation-grid">{cards.map(({ label, requirement, ids, value }) => <article className={passes(activeStatus, ids) ? "passed" : "pending"} key={label}>
+      <span>{label}</span><strong>{value}</strong><small>{requirement}</small><em>{passes(activeStatus, ids) ? "통과" : measured ? "미통과" : "대기"}</em>
+    </article>)}</div> : <div className="ai-validation-unavailable"><b>{status ? "이 과제 트랙의 검증 결과가 아직 발행되지 않았습니다." : "검증 상태를 불러오지 못했습니다."}</b><p>일치하는 과제 검증을 확인할 수 없으므로 AI 기능은 자동으로 잠깁니다.</p></div>}
     {!enabled && <>
       <nav className="validation-track-switch" aria-label="사람 기준선 평가 트랙">
         <button type="button" className={track === "PLAYER" ? "active" : ""} onClick={() => setTrack("PLAYER")}><b>선수 성향봇</b><span>T1 중심 안전·정확도 30개</span></button>

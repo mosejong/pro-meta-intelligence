@@ -5,6 +5,9 @@ export type AIValidationGate = {
   required: unknown;
 };
 
+export const AI_VALIDATION_TASKS = ["EVIDENCE_LOCKED_BRIEF", "PLAYER_TENDENCY_QA"] as const;
+export type AIValidationTask = (typeof AI_VALIDATION_TASKS)[number];
+
 export type AIValidationStatus = {
   schema_version: "1";
   artifact_type: "ai-human-validation-status";
@@ -12,6 +15,7 @@ export type AIValidationStatus = {
   status: "NOT_VALIDATED" | "REJECTED" | "VALIDATED";
   ai_features_enabled: boolean;
   evaluation_mode: "PAIRED_HUMAN_HOLDOUT";
+  task_type: AIValidationTask;
   paired_holdout_case_count: number;
   policy: {
     minimum_paired_holdout_cases: number;
@@ -66,6 +70,7 @@ export function isAIValidationStatus(value: unknown): value is AIValidationStatu
     && ["NOT_VALIDATED", "REJECTED", "VALIDATED"].includes(String(item.status))
     && typeof item.ai_features_enabled === "boolean"
     && item.evaluation_mode === "PAIRED_HUMAN_HOLDOUT"
+    && AI_VALIDATION_TASKS.includes(item.task_type as AIValidationTask)
     && Number.isInteger(item.paired_holdout_case_count)
     && typeof policy === "object"
     && finiteNumber(policy.minimum_paired_holdout_cases)
@@ -85,4 +90,11 @@ export function isAIValidationStatus(value: unknown): value is AIValidationStatu
     && Array.isArray(item.failed_gates)
     && typeof item.next_action === "string"
     && typeof item.boundary === "string";
+}
+
+export function validationForTask(
+  status: AIValidationStatus | null,
+  taskType: AIValidationTask,
+): AIValidationStatus | null {
+  return status?.task_type === taskType ? status : null;
 }

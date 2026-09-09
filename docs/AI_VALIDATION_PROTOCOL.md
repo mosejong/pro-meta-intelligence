@@ -112,6 +112,11 @@ private practice, scrim, account, identity, or API-key fields. It refuses to wri
 `NOT_VALIDATED` means the holdout is not yet large enough. `REJECTED` means enough cases exist but
 at least one gate failed. Only `VALIDATED` sets `ai_features_enabled=true`.
 
+Validation is task-scoped. A status for `EVIDENCE_LOCKED_BRIEF` may unlock only the Meta/Creator
+brief path; a status for `PLAYER_TENDENCY_QA` may unlock only the player-tendency path. Every
+consumer must match `task_type` exactly and fail closed when the matching status is absent. Passing
+one track never transfers accuracy, safety, or time-saving evidence to the other track.
+
 ## Input contract
 
 The evaluator accepts one private JSON object:

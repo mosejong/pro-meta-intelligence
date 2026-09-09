@@ -396,6 +396,7 @@ def _ai_validation_artifact_check(ai_validation: dict[str, Any] | None) -> dict[
     )
     status = ai_validation.get("status")
     enabled = ai_validation.get("ai_features_enabled")
+    task_type = ai_validation.get("task_type")
     case_count = ai_validation.get("paired_holdout_case_count")
     policy = ai_validation.get("policy")
     minimum_cases = policy.get("minimum_paired_holdout_cases") if isinstance(policy, dict) else None
@@ -459,6 +460,7 @@ def _ai_validation_artifact_check(ai_validation: dict[str, Any] | None) -> dict[
         ai_validation.get("schema_version") == "1"
         and ai_validation.get("artifact_type") == "ai-human-validation-status"
         and ai_validation.get("evaluation_mode") == "PAIRED_HUMAN_HOLDOUT"
+        and task_type in {"EVIDENCE_LOCKED_BRIEF", "PLAYER_TENDENCY_QA"}
         and type(ai_validation.get("paired_holdout_case_count")) is int
         and ai_validation["paired_holdout_case_count"] >= 0
         and failure_list_consistent
@@ -470,6 +472,7 @@ def _ai_validation_artifact_check(ai_validation: dict[str, Any] | None) -> dict[
         passed,
         {
             "status": status,
+            "task_type": task_type,
             "ai_features_enabled": enabled,
             "paired_holdout_case_count": case_count,
             "gate_count": len(gates) if isinstance(gates, list) else 0,

@@ -66,6 +66,7 @@ test("copies the same-origin feed and social card", async () => {
   assert.equal(outcomes.benchmark_ready, history.benchmark_ready);
   assert.deepEqual(outcomes.evaluations, []);
   assert.equal(aiValidation.artifact_type, "ai-human-validation-status");
+  assert.equal(aiValidation.task_type, "EVIDENCE_LOCKED_BRIEF");
   assert.equal(aiValidation.status, "NOT_VALIDATED");
   assert.equal(aiValidation.ai_features_enabled, false);
   assert.equal(aiValidation.paired_holdout_case_count, 0);
