@@ -285,6 +285,24 @@ def _balanced_player_tendency_bundle() -> dict[str, object]:
     return bundle
 
 
+def _balanced_evidence_locked_bundle() -> dict[str, object]:
+    scenarios = (
+        "EMERGENCE",
+        "REGIONAL_DIVERGENCE",
+        "TEAM_CONCENTRATION",
+        "HIGH_ADOPTION",
+        "LOW_SAMPLE",
+        "STABLE_OR_DECLINING",
+    )
+    roles = ("TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT")
+    bundle = _human_bundle(30)
+    bundle["task_type"] = "EVIDENCE_LOCKED_BRIEF"
+    for index, case in enumerate(bundle["cases"]):
+        case["task"]["scenario"] = scenarios[index // len(roles)]
+        case["snapshot"]["role"] = roles[index % len(roles)]
+    return bundle
+
+
 def test_holdout_preparation_rejects_mixed_task_types() -> None:
     human = _human_bundle()
     human["cases"][1]["task"]["task_type"] = "PLAYER_TENDENCY_QA"
@@ -304,6 +322,18 @@ def test_complete_player_tendency_deck_requires_all_scenario_role_pairs() -> Non
     unbalanced["cases"][-1]["task"]["scope"] = "PUBLIC_ONLY"
     unbalanced["cases"][-1]["task"]["available_evidence_ids"] = ["POLICY:NO_PSYCHOLOGY_INFERENCE"]
     unbalanced["cases"][-1]["human"]["evidence_ids"] = ["POLICY:NO_PSYCHOLOGY_INFERENCE"]
+
+    with pytest.raises(AIHoldoutAssemblyError, match="one case per scenario and role"):
+        prepare_holdout_templates(unbalanced, created_at="2026-08-26T03:00:00Z")
+
+
+def test_complete_evidence_locked_deck_requires_all_scenario_role_pairs() -> None:
+    human = _balanced_evidence_locked_bundle()
+    _, _, summary = prepare_holdout_templates(human, created_at="2026-08-26T03:00:00Z")
+    assert summary["case_count"] == 30
+
+    unbalanced = deepcopy(human)
+    unbalanced["cases"][-1]["task"]["scenario"] = "LOW_SAMPLE"
 
     with pytest.raises(AIHoldoutAssemblyError, match="one case per scenario and role"):
         prepare_holdout_templates(unbalanced, created_at="2026-08-26T03:00:00Z")
@@ -352,7 +382,10 @@ def test_assembler_builds_the_existing_private_evaluator_contract() -> None:
     human, expert, ai, _ = _filled_templates()
 
     run = assemble_paired_evaluation(human, expert, ai)
-    report = evaluate_ai_against_human(run, AIValidationPolicy(minimum_paired_holdout_cases=2))
+    report = evaluate_ai_against_human(
+        run,
+        AIValidationPolicy(minimum_paired_holdout_cases=2, minimum_stratum_coverage=0),
+    )
 
     assert run["artifact_type"] == "ai-human-paired-evaluation"
     assert len(run["cases"]) == 2
@@ -379,7 +412,10 @@ def test_ai_hallucinated_ids_reach_the_deterministic_critical_gate() -> None:
     ai["cases"][0]["ai"]["claim_ids"] = ["CLAIM:INVENTED"]
 
     run = assemble_paired_evaluation(human, expert, ai)
-    report = evaluate_ai_against_human(run, AIValidationPolicy(minimum_paired_holdout_cases=2))
+    report = evaluate_ai_against_human(
+        run,
+        AIValidationPolicy(minimum_paired_holdout_cases=2, minimum_stratum_coverage=0),
+    )
 
     assert report["status"] == "REJECTED"
     assert "ZERO_CRITICAL_ERRORS" in report["failed_gates"]

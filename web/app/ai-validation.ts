@@ -26,6 +26,7 @@ export type AIValidationStatus = {
     maximum_median_time_ratio: number;
     minimum_faster_case_rate: number;
     minimum_accepted_without_edit_rate: number;
+    minimum_stratum_coverage: number;
   };
   metrics: {
     ai: {
@@ -74,6 +75,7 @@ export function isAIValidationStatus(value: unknown): value is AIValidationStatu
     && Number.isInteger(item.paired_holdout_case_count)
     && typeof policy === "object"
     && finiteNumber(policy.minimum_paired_holdout_cases)
+    && finiteNumber(policy.minimum_stratum_coverage)
     && typeof metrics === "object"
     && typeof ai === "object"
     && finiteNumber(ai.claim_f1)
@@ -85,7 +87,7 @@ export function isAIValidationStatus(value: unknown): value is AIValidationStatu
     && finiteNumber(human.evidence_f1)
     && typeof paired === "object"
     && Array.isArray(gates)
-    && gates.length === 7
+    && gates.length === 8
     && gates.every((gate) => Boolean(gate) && typeof gate === "object" && typeof (gate as AIValidationGate).id === "string" && typeof (gate as AIValidationGate).passed === "boolean")
     && Array.isArray(item.failed_gates)
     && typeof item.next_action === "string"

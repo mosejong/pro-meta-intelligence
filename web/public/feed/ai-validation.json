@@ -1,12 +1,13 @@
 {
   "ai_features_enabled": false,
   "artifact_type": "ai-human-validation-status",
-  "boundary": "AI output is withheld unless the same hidden cases show noninferior accuracy, zero critical errors, complete boundary retention, and measured human time savings.",
+  "boundary": "AI output is withheld unless a representative matrix of the same hidden cases shows noninferior accuracy, zero critical errors, complete boundary retention, and measured human time savings.",
   "dataset_fingerprint": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
   "evaluated_at": "2026-08-25T12:00:00+00:00",
   "evaluation_mode": "PAIRED_HUMAN_HOLDOUT",
   "failed_gates": [
     "PAIRED_HOLDOUT_SAMPLE",
+    "REPRESENTATIVE_HOLDOUT",
     "CLAIM_ACCURACY_NONINFERIOR",
     "EVIDENCE_ACCURACY_NONINFERIOR",
     "BOUNDARY_RETENTION",
@@ -19,6 +20,22 @@
       "observed": 0,
       "passed": false,
       "required": { "minimum": 30, "split": "HOLDOUT" }
+    },
+    {
+      "id": "REPRESENTATIVE_HOLDOUT",
+      "observed": {
+        "coverage": 0.0,
+        "covered_strata": 0,
+        "required_strata": 30,
+        "duplicate_count": 0,
+        "unknown_count": 0
+      },
+      "passed": false,
+      "required": {
+        "minimum_coverage": 1.0,
+        "matrix": "6 scenarios x 5 roles",
+        "unknown_count": 0
+      }
     },
     {
       "id": "ZERO_CRITICAL_ERRORS",
@@ -109,6 +126,7 @@
     "minimum_evidence_f1": 0.9,
     "minimum_faster_case_rate": 0.8,
     "minimum_paired_holdout_cases": 30,
+    "minimum_stratum_coverage": 1.0,
     "noninferiority_margin": 0.02,
     "required_boundary_recall": 1.0
   },

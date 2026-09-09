@@ -10,10 +10,11 @@ import {
   baselineBoundaryOptions,
   baselineClaimOptions,
   baselineCriticalErrorOptions,
+  buildEvidenceBaselineTasks,
   createAIHumanBaselineDraft,
+  evidenceBaselineScenarioLabels,
   exportAIHumanBaselineBundle,
   humanBaselineAvailableEvidenceIds,
-  humanBaselineTaskKey,
   parseAIHumanBaselineDrafts,
   serializeAIHumanBaselineDrafts,
   upsertAIHumanBaselineDraft,
@@ -74,29 +75,31 @@ export function AIHumanBaselineWorkbench({ report }: { report: RadarReport }) {
     return () => window.clearTimeout(restore);
   }, []);
 
-  const taskEntries = useMemo(() => report.entries.filter((entry) => entry.evidence_event_ids.length > 0), [report.entries]);
-  const nextEntry = taskEntries.find((entry) => !drafts.some((draft) => draft.task_key === humanBaselineTaskKey(report, entry)));
-  const currentEntry = active
-    ? taskEntries.find((entry) => humanBaselineTaskKey(report, entry) === activeTaskKey)
-    : nextEntry;
-  const completedForSnapshot = drafts.filter((draft) => draft.snapshot.cutoff === report.cutoff).length;
-  const canSave = Boolean(active && currentEntry && claimIds.length && evidenceIds.length && boundaryIds.length && storageAvailable);
+  const tasks = useMemo(() => buildEvidenceBaselineTasks(report), [report]);
+  const taskKeys = useMemo(() => new Set(tasks.map((task) => task.taskKey)), [tasks]);
+  const snapshotDrafts = drafts.filter((draft) => taskKeys.has(draft.task_key));
+  const nextTask = tasks.find((task) => !snapshotDrafts.some((draft) => draft.task_key === task.taskKey));
+  const currentTask = active ? tasks.find((task) => task.taskKey === activeTaskKey) : nextTask;
+  const currentEntry = currentTask?.entry;
+  const completedForSnapshot = snapshotDrafts.length;
+  const canSave = Boolean(active && currentTask && claimIds.length && evidenceIds.length && boundaryIds.length && storageAvailable);
 
   function begin() {
     setClaimIds([]);
     setEvidenceIds([]);
     setBoundaryIds([]);
     setCriticalErrorIds([]);
-    if (!currentEntry) return;
+    if (!currentTask) return;
     setAcceptedWithoutEdit(false);
-    setActiveTaskKey(humanBaselineTaskKey(report, currentEntry));
+    setActiveTaskKey(currentTask.taskKey);
     setMessage("");
     startedAt.current = new Date().getTime();
     setActive(true);
   }
 
   function save() {
-    if (!currentEntry || !canSave) return;
+    if (!currentTask || !canSave) return;
+    const currentEntry = currentTask.entry;
     try {
       const savedAt = new Date().toISOString();
       const draft = createAIHumanBaselineDraft({
@@ -110,6 +113,7 @@ export function AIHumanBaselineWorkbench({ report }: { report: RadarReport }) {
         criticalErrorIds,
         durationSeconds: (new Date().getTime() - startedAt.current) / 1000,
         acceptedWithoutEdit,
+        scenario: currentTask.scenario,
       });
       const next = upsertAIHumanBaselineDraft(drafts, draft);
       window.localStorage.setItem(AI_HUMAN_BASELINE_STORAGE_KEY, serializeAIHumanBaselineDrafts(next));
@@ -124,8 +128,8 @@ export function AIHumanBaselineWorkbench({ report }: { report: RadarReport }) {
   }
 
   function exportDrafts() {
-    if (!drafts.length) return;
-    download(exportAIHumanBaselineBundle(drafts, new Date().toISOString()), `pmi-human-baseline-${drafts.length}.json`);
+    if (!snapshotDrafts.length) return;
+    download(exportAIHumanBaselineBundle(snapshotDrafts, new Date().toISOString()), `pmi-human-baseline-${snapshotDrafts.length}.json`);
     setMessage("익명 기준선 묶음을 내보냈습니다. 아직 AI 평가 입력은 아닙니다.");
   }
 
@@ -145,11 +149,12 @@ export function AIHumanBaselineWorkbench({ report }: { report: RadarReport }) {
   return <section className="human-baseline" aria-labelledby="human-baseline-title">
     <header>
       <div><span>STEP 1 · HUMAN BASELINE</span><h3 id="human-baseline-title">AI와 비교할 사람 기준선부터 모으기</h3><p>정답과 AI 출력은 보여주지 않습니다. 같은 공개 근거를 보고 사람이 고른 주장·근거·한계와 실제 판단 시간만 기록합니다.</p></div>
-      <div className="human-baseline-progress"><strong>{drafts.length}<small>/30 초안</small></strong><span>현재 스냅샷 {completedForSnapshot}건</span></div>
+      <div className="human-baseline-progress"><strong>{completedForSnapshot}<small>/30 균형 과제</small></strong><span>6개 상황 × 5개 포지션</span></div>
     </header>
 
     {!ready ? <div className="human-baseline-empty">기기 로컬 기록을 확인하는 중입니다.</div> : !storageAvailable ? <div className="human-baseline-empty"><b>기기 저장소를 사용할 수 없습니다.</b><span>개인정보 보호 설정에서 로컬 저장을 허용해야 기준선 기록을 남길 수 있습니다.</span></div> : active && currentEntry ? <div className="human-baseline-task">
       <article className="human-task-brief">
+        <p><b>검증 상황 · {evidenceBaselineScenarioLabels[currentTask.scenario]}</b></p>
         <div className="human-task-champion"><img src={championImageUrl(currentEntry.champion_id)} alt="" /><div><span>숨김 비교 과제 · #{String(currentEntry.rank).padStart(2, "0")}</span><h4>{nameOf(currentEntry.champion_id)} · {roleLabels[currentEntry.role] ?? currentEntry.role}</h4><small>패치 {report.patch_id} · 공개 근거 {currentEntry.evidence_event_ids.length}건</small></div></div>
         <dl><div><dt>최근 픽 점유율</dt><dd>{percent(currentEntry.metrics.current_pick_presence)}</dd></div><div><dt>이전 대비</dt><dd>{percent(currentEntry.metrics.pick_presence_delta)}</dd></div><div><dt>관측 팀</dt><dd>{currentEntry.metrics.current_distinct_team_count}팀</dd></div><div><dt>지역 차이</dt><dd>{percent(currentEntry.metrics.regional_divergence)}</dd></div></dl>
         <p>활성 판단 시간은 시작 버튼을 누른 시점부터 저장할 때까지 자동 측정됩니다. 이름·계정·API 키는 기록하지 않습니다.</p>
@@ -165,9 +170,9 @@ export function AIHumanBaselineWorkbench({ report }: { report: RadarReport }) {
       </form>
     </div> : <div className="human-baseline-start">
       <div><b>{active ? "과제 도중 데이터 스냅샷이 갱신됐습니다." : currentEntry ? "다음 미완료 과제가 준비됐습니다." : "현재 스냅샷의 과제를 모두 기록했습니다."}</b><p>{active ? "이전 스냅샷과 새 근거를 섞지 않도록 진행 중 과제를 중단했습니다." : currentEntry ? "AI 답변 없이 먼저 판단해 실제 사람 정확도와 시간을 비교할 수 있게 만듭니다." : "새 공개 데이터 스냅샷이 발행되면 새로운 과제가 자동으로 생깁니다."}</p></div>
-      <button type="button" onClick={active ? () => { setActive(false); setActiveTaskKey(""); } : begin} disabled={!currentEntry && !active}>{active ? "새 과제 준비" : drafts.length ? "다음 사람 기준선 시작" : "첫 사람 기준선 시작"}</button>
+      <button type="button" onClick={active ? () => { setActive(false); setActiveTaskKey(""); } : begin} disabled={!currentEntry && !active}>{active ? "새 과제 준비" : completedForSnapshot ? "다음 사람 기준선 시작" : "첫 사람 기준선 시작"}</button>
     </div>}
 
-    <footer><div><b>아직 AI 평가에 포함되지 않음</b><p>30개 초안은 수집 목표일 뿐입니다. 전문가가 잠근 정답과 동일 과제의 AI 출력을 오프라인에서 결합하기 전에는 공개 0/30과 AI 잠금 상태가 바뀌지 않습니다.</p></div><span>{message}</span><nav><button type="button" onClick={exportDrafts} disabled={!drafts.length}>익명 JSON 내보내기</button><button type="button" onClick={clearDrafts} disabled={!drafts.length}>기기 기록 삭제</button></nav></footer>
+    <footer><div><b>아직 AI 평가에 포함되지 않음</b><p>30개 초안은 6개 상황 × 5개 포지션을 모두 채워야 합니다. 전문가가 잠근 정답과 동일 과제의 AI 출력을 오프라인에서 결합하기 전에는 공개 0/30과 AI 잠금 상태가 바뀌지 않습니다.</p></div><span>{message}</span><nav><button type="button" onClick={exportDrafts} disabled={!snapshotDrafts.length}>현재 균형 세트 내보내기</button><button type="button" onClick={clearDrafts} disabled={!drafts.length}>기기 기록 삭제</button></nav></footer>
   </section>;
 }

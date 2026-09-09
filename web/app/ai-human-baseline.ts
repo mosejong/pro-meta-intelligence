@@ -3,6 +3,31 @@ import type { RadarEntry, RadarReport } from "./radar-types";
 export const AI_HUMAN_BASELINE_STORAGE_KEY = "pmi:ai-human-baseline-drafts:v1";
 export const MAX_AI_HUMAN_BASELINE_DRAFTS = 60;
 
+export const EVIDENCE_BASELINE_SCENARIOS = [
+  "EMERGENCE",
+  "REGIONAL_DIVERGENCE",
+  "TEAM_CONCENTRATION",
+  "HIGH_ADOPTION",
+  "LOW_SAMPLE",
+  "STABLE_OR_DECLINING",
+] as const;
+export const EVIDENCE_BASELINE_ROLES = ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"] as const;
+export type EvidenceBaselineScenario = (typeof EVIDENCE_BASELINE_SCENARIOS)[number];
+export type EvidenceBaselineTask = {
+  scenario: EvidenceBaselineScenario;
+  entry: RadarEntry;
+  taskKey: string;
+};
+
+export const evidenceBaselineScenarioLabels: Record<EvidenceBaselineScenario, string> = {
+  EMERGENCE: "급부상 신호",
+  REGIONAL_DIVERGENCE: "지역별 편차",
+  TEAM_CONCENTRATION: "특정 팀 집중",
+  HIGH_ADOPTION: "높은 채택률",
+  LOW_SAMPLE: "저표본 경계",
+  STABLE_OR_DECLINING: "정체·하락 반례",
+};
+
 export const baselineClaimOptions = [
   { id: "CLAIM:OBSERVED_GROWTH", label: "최근 공개 경기에서 사용이 늘었다" },
   { id: "CLAIM:MULTI_TEAM_ADOPTION", label: "여러 팀이 채택한 신호다" },
@@ -42,6 +67,7 @@ export type AIHumanBaselineDraft = {
   };
   task: {
     task_type: "EVIDENCE_LOCKED_BRIEF";
+    scenario?: EvidenceBaselineScenario;
     metrics: RadarEntry["metrics"];
     quality_flags: string[];
     available_claim_ids: string[];
@@ -65,8 +91,45 @@ export type AIHumanBaselineDraft = {
   boundary: string;
 };
 
-export function humanBaselineTaskKey(report: RadarReport, entry: RadarEntry) {
-  return `${report.cutoff}::${entry.champion_id}::${entry.role}`;
+export function humanBaselineTaskKey(
+  report: RadarReport,
+  entry: RadarEntry,
+  scenario?: EvidenceBaselineScenario,
+) {
+  return `${report.cutoff}::${scenario ?? "LEGACY"}::${entry.champion_id}::${entry.role}`;
+}
+
+function scenarioScore(entry: RadarEntry, scenario: EvidenceBaselineScenario) {
+  switch (scenario) {
+    case "EMERGENCE": return entry.metrics.pick_presence_delta;
+    case "REGIONAL_DIVERGENCE": return entry.metrics.regional_divergence ?? -1;
+    case "TEAM_CONCENTRATION": return entry.metrics.team_concentration ?? -1;
+    case "HIGH_ADOPTION": return entry.metrics.current_pick_presence;
+    case "LOW_SAMPLE": return -entry.metrics.current_pick_count;
+    case "STABLE_OR_DECLINING": return -entry.metrics.pick_presence_delta;
+  }
+}
+
+/** Build the fixed 6-scenario x 5-role evaluation deck without reusing an entry. */
+export function buildEvidenceBaselineTasks(report: RadarReport): EvidenceBaselineTask[] {
+  const tasks: EvidenceBaselineTask[] = [];
+  const used = new Set<string>();
+  for (const scenario of EVIDENCE_BASELINE_SCENARIOS) {
+    for (const role of EVIDENCE_BASELINE_ROLES) {
+      const entry = report.entries
+        .filter((candidate) => candidate.role === role && candidate.evidence_event_ids.length > 0)
+        .filter((candidate) => !used.has(`${candidate.champion_id}::${candidate.role}`))
+        .sort((left, right) => (
+          scenarioScore(right, scenario) - scenarioScore(left, scenario)
+          || left.rank - right.rank
+          || left.champion_id.localeCompare(right.champion_id)
+        ))[0];
+      if (!entry) continue;
+      used.add(`${entry.champion_id}::${entry.role}`);
+      tasks.push({ scenario, entry, taskKey: humanBaselineTaskKey(report, entry, scenario) });
+    }
+  }
+  return tasks;
 }
 
 export function humanBaselineAvailableEvidenceIds(entry: RadarEntry) {
@@ -88,6 +151,7 @@ export function createAIHumanBaselineDraft({
   criticalErrorIds,
   durationSeconds,
   acceptedWithoutEdit,
+  scenario,
 }: {
   report: RadarReport;
   entry: RadarEntry;
@@ -99,6 +163,7 @@ export function createAIHumanBaselineDraft({
   criticalErrorIds: string[];
   durationSeconds: number;
   acceptedWithoutEdit: boolean;
+  scenario: EvidenceBaselineScenario;
 }): AIHumanBaselineDraft {
   const allowedClaims = new Set<string>(baselineClaimOptions.map((option) => option.id));
   const availableEvidence = humanBaselineAvailableEvidenceIds(entry);
@@ -119,7 +184,7 @@ export function createAIHumanBaselineDraft({
     schema_version: "1",
     artifact_type: "ai-human-baseline-draft",
     draft_id: draftId,
-    task_key: humanBaselineTaskKey(report, entry),
+    task_key: humanBaselineTaskKey(report, entry, scenario),
     saved_at: savedAt,
     status: "HUMAN_BASELINE_ONLY",
     snapshot: {
@@ -132,6 +197,7 @@ export function createAIHumanBaselineDraft({
     },
     task: {
       task_type: "EVIDENCE_LOCKED_BRIEF",
+      scenario,
       metrics: { ...entry.metrics },
       quality_flags: [...entry.quality_flags],
       available_claim_ids: baselineClaimOptions.map((option) => option.id),
@@ -185,6 +251,7 @@ function isDraft(value: unknown): value is AIHumanBaselineDraft {
     && typeof snapshot.radar_rank === "number" && Number.isFinite(snapshot.radar_rank)
     && isBoundedStringArray(snapshot.source_content_hashes)
     && task.task_type === "EVIDENCE_LOCKED_BRIEF"
+    && (task.scenario === undefined || EVIDENCE_BASELINE_SCENARIOS.includes(task.scenario as EvidenceBaselineScenario))
     && isRecord(task.metrics)
     && isBoundedStringArray(task.quality_flags)
     && isBoundedStringArray(task.available_claim_ids, 20)

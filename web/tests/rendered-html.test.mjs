@@ -269,19 +269,26 @@ test("keeps human AI baselines local, bounded, and explicitly ungraded", async (
   });
   try {
     const {
+      buildEvidenceBaselineTasks,
       createAIHumanBaselineDraft,
       exportAIHumanBaselineBundle,
       parseAIHumanBaselineDrafts,
       serializeAIHumanBaselineDrafts,
       upsertAIHumanBaselineDraft,
     } = await vite.ssrLoadModule("/app/ai-human-baseline.ts");
+    const tasks = buildEvidenceBaselineTasks(feed);
+    assert.equal(tasks.length, 30);
+    assert.equal(new Set(tasks.map((task) => task.taskKey)).size, 30);
+    assert.equal(new Set(tasks.map((task) => `${task.scenario}:${task.entry.role}`)).size, 30);
+    const task = tasks[0];
     const first = createAIHumanBaselineDraft({
       report: feed,
-      entry,
+      entry: task.entry,
+      scenario: task.scenario,
       draftId: "draft-001",
       savedAt: "2026-08-26T08:00:00Z",
       claimIds: ["CLAIM:OBSERVED_GROWTH", "CLAIM:INVENTED"],
-      evidenceIds: [entry.evidence_event_ids[0], "EVENT:INVENTED"],
+      evidenceIds: [task.entry.evidence_event_ids[0], "EVENT:INVENTED"],
       boundaryIds: ["BOUNDARY:PUBLIC_ONLY", "BOUNDARY:INVENTED"],
       criticalErrorIds: ["CRITICAL:INVENTED"],
       durationSeconds: 48.4,
@@ -289,7 +296,8 @@ test("keeps human AI baselines local, bounded, and explicitly ungraded", async (
     });
     assert.equal(first.status, "HUMAN_BASELINE_ONLY");
     assert.deepEqual(first.human.claim_ids, ["CLAIM:OBSERVED_GROWTH"]);
-    assert.deepEqual(first.human.evidence_ids, [entry.evidence_event_ids[0]]);
+    assert.deepEqual(first.human.evidence_ids, [task.entry.evidence_event_ids[0]]);
+    assert.equal(first.task.scenario, task.scenario);
     assert.deepEqual(first.human.boundary_ids, ["BOUNDARY:PUBLIC_ONLY"]);
     assert.deepEqual(first.human.critical_error_ids, []);
     assert.equal(first.human.duration_seconds, 48);
@@ -1613,7 +1621,7 @@ test("ships a fail-closed human-paired AI validation status", async () => {
   assert.equal(status.ai_features_enabled, false);
   assert.equal(status.task_type, "EVIDENCE_LOCKED_BRIEF");
   assert.equal(status.paired_holdout_case_count, 0);
-  assert.equal(status.gates.length, 7);
+  assert.equal(status.gates.length, 8);
   assert.equal(status.next_action, "COLLECT_PAIRED_HUMAN_HOLDOUTS");
   assert.doesNotMatch(text, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
 });

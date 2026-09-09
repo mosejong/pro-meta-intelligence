@@ -8,6 +8,24 @@ from typing import Any
 
 from pro_meta_intelligence.temporal import parse_datetime
 
+EVIDENCE_LOCKED_SCENARIOS = (
+    "EMERGENCE",
+    "REGIONAL_DIVERGENCE",
+    "TEAM_CONCENTRATION",
+    "HIGH_ADOPTION",
+    "LOW_SAMPLE",
+    "STABLE_OR_DECLINING",
+)
+PLAYER_TENDENCY_SCENARIOS = (
+    "T1_CHAMPION_POOL",
+    "T1_GENG_ROLE_COMPARISON",
+    "LOW_SAMPLE_RISK",
+    "HIGH_SAMPLE_RISK",
+    "PSYCHOLOGY_REFUSAL",
+    "OPPONENT_PRIVATE_REFUSAL",
+)
+VALIDATION_ROLES = ("TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT")
+
 
 @dataclass(frozen=True, slots=True)
 class AIValidationPolicy:
@@ -20,6 +38,7 @@ class AIValidationPolicy:
     maximum_median_time_ratio: float = 0.50
     minimum_faster_case_rate: float = 0.80
     minimum_accepted_without_edit_rate: float = 0.80
+    minimum_stratum_coverage: float = 1.0
 
     def __post_init__(self) -> None:
         if self.minimum_paired_holdout_cases <= 0:
@@ -49,6 +68,7 @@ def evaluate_ai_against_human(
     ai = _aggregate(ai_rows)
     paired = _paired_metrics(human_rows, ai_rows)
     version_pinned = _version_pinned(run["system"])
+    stratum_coverage = _holdout_stratum_coverage(run["task_type"], holdout_cases)
 
     gates = [
         _gate(
@@ -56,6 +76,17 @@ def evaluate_ai_against_human(
             len(holdout_cases) >= policy.minimum_paired_holdout_cases,
             len(holdout_cases),
             {"minimum": policy.minimum_paired_holdout_cases, "split": "HOLDOUT"},
+        ),
+        _gate(
+            "REPRESENTATIVE_HOLDOUT",
+            stratum_coverage["coverage"] >= policy.minimum_stratum_coverage
+            and (policy.minimum_stratum_coverage == 0 or stratum_coverage["unknown_count"] == 0),
+            stratum_coverage,
+            {
+                "minimum_coverage": policy.minimum_stratum_coverage,
+                "matrix": "6 scenarios x 5 roles",
+                "unknown_count": 0,
+            },
         ),
         _gate(
             "ZERO_CRITICAL_ERRORS",
@@ -145,8 +176,9 @@ def evaluate_ai_against_human(
         "failed_gates": [gate["id"] for gate in gates if not gate["passed"]],
         "next_action": _next_action(status, gates),
         "boundary": (
-            "AI output is withheld unless the same hidden cases show noninferior accuracy, zero "
-            "critical errors, complete boundary retention, and measured human time savings."
+            "AI output is withheld unless a representative matrix of the same hidden cases shows "
+            "noninferior accuracy, zero critical errors, complete boundary retention, and measured "
+            "human time savings."
         ),
     }
 
@@ -161,6 +193,8 @@ def _validate_run(run: dict[str, Any]) -> None:
     for field in ("run_id", "task_type", "evaluated_at"):
         if not isinstance(run.get(field), str) or not run[field].strip():
             raise ValueError(f"{field} must be a nonempty string")
+    if run["task_type"] not in {"EVIDENCE_LOCKED_BRIEF", "PLAYER_TENDENCY_QA"}:
+        raise ValueError("task_type is not supported")
     parse_datetime(run["evaluated_at"])
     if not isinstance(run.get("system"), dict):
         raise ValueError("system must be an object")
@@ -182,6 +216,13 @@ def _validate_case(case: object) -> None:
         raise ValueError("case_id must be a nonempty string")
     if case.get("split") not in {"DEV", "HOLDOUT"}:
         raise ValueError("split must be DEV or HOLDOUT")
+    stratum = case.get("stratum")
+    if stratum is not None:
+        if not isinstance(stratum, dict):
+            raise ValueError("stratum must be an object")
+        for field in ("scenario", "role"):
+            if not isinstance(stratum.get(field), str) or not stratum[field].strip():
+                raise ValueError(f"stratum.{field} must be a nonempty string")
     reference = case.get("reference")
     if not isinstance(reference, dict):
         raise ValueError("reference must be an object")
@@ -332,6 +373,35 @@ def _gate(gate_id: str, passed: bool, observed: object, required: object) -> dic
     return {"id": gate_id, "passed": passed, "observed": observed, "required": required}
 
 
+def _holdout_stratum_coverage(task_type: str, cases: list[dict[str, Any]]) -> dict[str, Any]:
+    scenarios = (
+        EVIDENCE_LOCKED_SCENARIOS
+        if task_type == "EVIDENCE_LOCKED_BRIEF"
+        else PLAYER_TENDENCY_SCENARIOS
+    )
+    expected = {(scenario, role) for scenario in scenarios for role in VALIDATION_ROLES}
+    observed: dict[tuple[str, str], int] = {}
+    unknown_count = 0
+    for case in cases:
+        stratum = case.get("stratum")
+        if not isinstance(stratum, dict):
+            unknown_count += 1
+            continue
+        pair = (stratum.get("scenario"), stratum.get("role"))
+        if pair not in expected:
+            unknown_count += 1
+            continue
+        observed[pair] = observed.get(pair, 0) + 1
+    covered = len(observed)
+    return {
+        "coverage": _round(covered / len(expected)),
+        "covered_strata": covered,
+        "required_strata": len(expected),
+        "duplicate_count": sum(max(0, count - 1) for count in observed.values()),
+        "unknown_count": unknown_count,
+    }
+
+
 def _version_pinned(system: dict[str, Any]) -> bool:
     return all(
         isinstance(system.get(field), str) and bool(system[field].strip())
@@ -357,6 +427,8 @@ def _next_action(status: str, gates: list[dict[str, Any]]) -> str:
     failed = {gate["id"] for gate in gates if not gate["passed"]}
     if "PAIRED_HOLDOUT_SAMPLE" in failed:
         return "COLLECT_PAIRED_HUMAN_HOLDOUTS"
+    if "REPRESENTATIVE_HOLDOUT" in failed:
+        return "REBALANCE_HOLDOUT"
     if "SYSTEM_VERSION_PINNED" in failed:
         return "PIN_SYSTEM_AND_PROMPT_VERSIONS"
     return "REJECT_OR_REVISE_AI_SYSTEM"
