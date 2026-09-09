@@ -14,6 +14,7 @@ export const COLLECTION_REASON_CODES = [
   "PROVIDER_QUOTA_OR_HTML_RESPONSE",
   "PROVIDER_SCHEMA_REJECTED",
   "PROVIDER_REQUEST_FAILED",
+  "POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR",
   "READINESS_GATE_REJECTED",
   "COLLECTOR_JOB_FAILED",
   "UNKNOWN_RESULT",
@@ -38,6 +39,7 @@ export type CollectionStatus = {
     source_id: string;
     acquisition_status: string;
     last_verified_at: string | null;
+    next_attempt_at?: string | null;
   };
   publication: {
     result_status: string;
@@ -77,6 +79,7 @@ export function isCollectionStatus(value: unknown): value is CollectionStatus {
     && typeof source.source_id === "string"
     && typeof source.acquisition_status === "string"
     && (source.last_verified_at === null || isTimestamp(source.last_verified_at))
+    && (source.next_attempt_at === undefined || source.next_attempt_at === null || isTimestamp(source.next_attempt_at))
     && isRecord(publication)
     && typeof publication.result_status === "string"
     && typeof publication.head_accepted === "boolean"

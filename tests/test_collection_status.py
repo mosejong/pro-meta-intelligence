@@ -27,6 +27,7 @@ def _audit(*, acquisition_status: str, error: str | None = None) -> dict[str, ob
                 "error": error,
                 "retrieved_at": "2026-08-31T23:12:19+00:00",
                 "content_hash": "sha256:private",
+                "next_attempt_at": None,
             },
             "history_status": {
                 "source_id": "oracles-elixir-match-data",
@@ -105,3 +106,18 @@ def test_collection_status_supplies_only_a_conservative_network_attempt_seed(tmp
     payload["last_attempt"]["network_request_performed"] = False
     path.write_text(json.dumps(payload), encoding="utf-8")
     assert read_collection_network_attempt(path, "oracles-elixir-match-data") is None
+
+
+def test_collection_status_preserves_failed_source_backoff_without_claiming_current() -> None:
+    audit = _audit(acquisition_status="REUSED_CACHE_DURING_SOURCE_BACKOFF")
+    audit["result"]["network_collection_performed"] = False  # type: ignore[index]
+    audit["result"]["source_acquisition"]["next_attempt_at"] = (  # type: ignore[index]
+        "2026-09-09T14:12:45+00:00"
+    )
+
+    status = build_collection_status(audit)
+
+    assert status["state"] == "SOURCE_DELAYED"
+    assert status["reason_code"] == "POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR"
+    assert status["last_attempt"]["network_request_performed"] is False
+    assert status["source"]["next_attempt_at"] == "2026-09-09T14:12:45+00:00"

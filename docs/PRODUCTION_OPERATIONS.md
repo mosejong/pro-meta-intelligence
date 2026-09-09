@@ -153,8 +153,11 @@ unchanged, and performs a normal fast-forward push. It never force-pushes and ne
 archive, local audit files, source CSV, Creator working files, or unrelated developer changes.
 The raw provider error and private paths remain in the local job audit. A separate bounded
 `collection-status.json` publishes only allowlisted state and reason codes, timestamps, and the
-automatic retry policy. The same source snapshot still produces byte-identical evidence heads;
-collection availability can change without implying a new analytical result.
+automatic retry policy. When a failed network attempt is still inside the provider interval, it
+stays `SOURCE_DELAYED` with `POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR` and exposes only the next
+allowed attempt timestamp; it must not be relabeled `CURRENT` merely because the cache was reused.
+The same source snapshot still produces byte-identical evidence heads; collection availability can
+change without implying a new analytical result.
 
 ## GitHub schedule watch
 
