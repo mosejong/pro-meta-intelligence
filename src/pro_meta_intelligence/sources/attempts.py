@@ -35,9 +35,7 @@ class SourceAttemptLedger:
         attempts = self._read(source_id)
         previous = attempts.get(operation)
         if previous is not None and attempted_at < previous:
-            raise SourceAttemptLedgerError(
-                "request-attempt timestamps must not move backwards"
-            )
+            raise SourceAttemptLedgerError("request-attempt timestamps must not move backwards")
         attempts[operation] = attempted_at
         source_dir = self._source_dir(source_id)
         source_dir.mkdir(parents=True, exist_ok=True)

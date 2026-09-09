@@ -945,9 +945,7 @@ def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, m
         ):
             nonlocal call_count
             if last_attempted_at is not None:
-                raise OracleElixirDownloadIntervalError(
-                    last_attempted_at + timedelta(days=1)
-                )
+                raise OracleElixirDownloadIntervalError(last_attempted_at + timedelta(days=1))
             call_count += 1
             assert on_request_started is not None
             on_request_started(attempted_at)
@@ -979,10 +977,13 @@ def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, m
     first = json.loads(output.read_text(encoding="utf-8"))
     assert first["result"]["source_acquisition"]["status"] == "SOURCE_ERROR_NO_CACHE"
     assert first["result"]["network_collection_performed"] is True
-    assert SourceAttemptLedger(archive_dir).latest_attempted_at(
-        FailingDownloadAdapter.source_id,
-        "FETCH_PUBLISHED_CSV",
-    ) == attempted_at
+    assert (
+        SourceAttemptLedger(archive_dir).latest_attempted_at(
+            FailingDownloadAdapter.source_id,
+            "FETCH_PUBLISHED_CSV",
+        )
+        == attempted_at
+    )
 
     assert main(command) == 4
     second = json.loads(output.read_text(encoding="utf-8"))
