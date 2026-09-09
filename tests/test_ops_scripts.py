@@ -121,8 +121,11 @@ def test_production_watchdog_checks_live_publication_and_reconciles_one_incident
 def test_hosted_oe_collector_restores_private_state_and_publishes_only_safe_heads() -> None:
     workflow = (ROOT / ".github" / "workflows" / "hosted-oe-sync.yml").read_text(encoding="utf-8")
 
-    assert 'cron: "13 7 * * *"' in workflow
-    assert 'cron: "13 7,19 * * *"' not in workflow
+    assert 'cron: "13 7,19 * * *"' in workflow
+    assert 'cron: "13 7 * * *"' not in workflow
+    assert "SourceAttemptLedger" in (ROOT / "src/pro_meta_intelligence/cli.py").read_text(
+        encoding="utf-8"
+    )
     assert "actions: write" in workflow
     assert "contents: write" in workflow
     assert "pages: write" in workflow

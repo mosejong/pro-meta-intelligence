@@ -4,10 +4,11 @@
 
 The hosted collector removes the developer workstation from the public feed's critical path while
 preserving the point-in-time raw history required for later walk-forward evaluation. It runs on
-GitHub Actions once daily. This scheduler-level budget ensures repeated provider failures cannot
-turn into twice-daily download attempts. The source adapter also enforces the exact 24-hour interval
-from the most recent network attempt, including an attempt that returned quota HTML or another
-rejected response.
+GitHub Actions at `07:13` and `19:13` UTC. These two policy-gate checks bound recovery delay after a
+provider outage without authorizing two provider requests per day. The source adapter enforces the
+exact 24-hour interval from the most recent persisted network attempt, including an attempt that
+returned quota HTML or another rejected response. An early scheduled run therefore restores state,
+reuses the verified cache, and performs no provider request.
 
 ## Private state model
 
@@ -53,7 +54,7 @@ are isolated under the `hosted-ops` extra and tested in CI.
 
 ## Hosted workflow
 
-`.github/workflows/hosted-oe-sync.yml` executes at `07:13` UTC. One run:
+`.github/workflows/hosted-oe-sync.yml` executes at `07:13` and `19:13` UTC. One run:
 
 1. requires the repository secret `OE_ARCHIVE_KEY`;
 2. restores and authenticates the newest `oe-private-history-state-*` artifact;
