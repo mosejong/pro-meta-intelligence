@@ -21,6 +21,7 @@ export default defineConfig({
         t1: resolve(staticRoot, "t1/index.html"),
         creator: resolve(staticRoot, "creator/index.html"),
         radar: resolve(staticRoot, "radar/index.html"),
+        draft: resolve(staticRoot, "draft/index.html"),
         proof: resolve(staticRoot, "proof/index.html"),
       },
     },

@@ -10,6 +10,10 @@ const intentTerms: Array<{ space: ProductSpace; terms: string[] }> = [
     terms: ["내 팀", "우리 팀", "소속팀", "상대 우선", "배틀카드", "team"],
   },
   {
+    space: "DRAFT",
+    terms: ["가상 밴픽", "밴픽 시뮬", "밴픽 연습", "드래프트", "draft"],
+  },
+  {
     space: "T1",
     terms: ["t1", "티원", "다음 상대", "다음 경기", "일정", "픽밴", "선수"],
   },

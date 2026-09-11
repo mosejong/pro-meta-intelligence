@@ -33,6 +33,7 @@ import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
 import { ProductHome } from "./product-home";
 import { SubmissionProof } from "./submission-proof";
+import { DraftLab } from "./draft-lab";
 import { PlayerPracticePanel } from "./player-practice-panel";
 import { productRootHref, productSpaceHref, type ProductSpace } from "./product-space";
 import { sampleReport } from "./sample-report";
@@ -907,6 +908,10 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
     />;
   }
 
+  if (initialSpace === "DRAFT") {
+    return <DraftLab currentSpace={initialSpace} report={report} feedLabel={feedState.label} />;
+  }
+
   const sectionCopy = {
     TEAM: { index: "01", eyebrow: "TEAM ROOM", title: "내 팀 기준으로 결정하세요.", detail: "오늘 검토 후보, 상대 우선순위와 드래프트 충돌을 한 작업실에서 봅니다.", action: "내 팀 선택", target: "#team-setup" },
     T1: { index: "02", eyebrow: "T1 DESK", title: "T1 준비 자료만 모았습니다.", detail: "공식 일정과 공개 픽·밴, 상대 확정 시 5라인 충돌까지 추정 없이 연결합니다.", action: "원페이지 열기", target: "#t1-brief" },
@@ -980,6 +985,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
           <a className={initialSpace === "T1" ? "active" : ""} href={productSpaceHref(initialSpace, "T1")}>T1 브리프</a>
           <a className={initialSpace === "CREATOR" ? "active" : ""} href={productSpaceHref(initialSpace, "CREATOR")}>콘텐츠</a>
           <a className={initialSpace === "RADAR" ? "active" : ""} href={productSpaceHref(initialSpace, "RADAR")}>메타 레이더</a>
+          <a href={productSpaceHref(initialSpace, "DRAFT")}>Draft Lab</a>
         </nav>
         <div className="topbar-actions">
           <span className={`snapshot-state ${feedState.kind} ${isHistoricalPublication ? "stale" : ""}`} title={feedState.detail} aria-live="polite"><i />{feedState.label}</span>
@@ -1440,6 +1446,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         <a className={initialSpace === "T1" ? "active" : ""} href={productSpaceHref(initialSpace, "T1")}><b>02</b><span>T1</span></a>
         <a className={initialSpace === "CREATOR" ? "active" : ""} href={productSpaceHref(initialSpace, "CREATOR")}><b>03</b><span>콘텐츠</span></a>
         <a className={initialSpace === "RADAR" ? "active" : ""} href={productSpaceHref(initialSpace, "RADAR")}><b>04</b><span>레이더</span></a>
+        <a href={productSpaceHref(initialSpace, "DRAFT")}><b>05</b><span>밴픽</span></a>
       </nav>
 
       {evidenceOpen && selected && (

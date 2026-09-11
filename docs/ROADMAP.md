@@ -223,6 +223,11 @@ and supplies a printable three-minute demonstration script. It deliberately call
 system a working real-data prototype until the Phase 3 benchmark matures. The remaining package is
 the measured case-study result and final resume-specific wording, not another disconnected mockup.
 
+Draft Lab now supplies the interactive submission demo: a T1-first standard 20-turn pick/ban board,
+human-confirmed champion locks, three evidence-bounded options per turn, replay controls, and
+snapshot-scoped JSON export. Fearless-series memory, composition/counter knowledge, and generative
+agent output remain separate validation gates rather than being implied by the interface.
+
 ## Submission Rule
 
 Do not submit because the UI looks finished.

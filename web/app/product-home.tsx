@@ -97,7 +97,7 @@ export function ProductHome({
   return <main className="product-home">
     <header className="home-topbar">
       <a className="brand" href={productSpaceHref(currentSpace, "ONBOARDING")} aria-label="Pro Meta Intelligence 홈"><span className="brand-mark">PM</span><span><strong>PRO META</strong><small>INTELLIGENCE</small></span></a>
-      <nav aria-label="분야별 분석"><a href={productSpaceHref(currentSpace, "T1")}>T1 오늘 준비</a><a href={productSpaceHref(currentSpace, "TEAM")}>내 팀 분석</a><a href={productSpaceHref(currentSpace, "CREATOR")}>영상 소재</a><a href={productSpaceHref(currentSpace, "RADAR")}>전체 데이터</a><a href={productSpaceHref(currentSpace, "PROOF")}>제출 증거</a></nav>
+      <nav aria-label="분야별 분석"><a href={productSpaceHref(currentSpace, "T1")}>T1 오늘 준비</a><a href={productSpaceHref(currentSpace, "TEAM")}>내 팀 분석</a><a href={productSpaceHref(currentSpace, "DRAFT")}>가상 밴픽</a><a href={productSpaceHref(currentSpace, "CREATOR")}>영상 소재</a><a href={productSpaceHref(currentSpace, "RADAR")}>전체 데이터</a><a href={productSpaceHref(currentSpace, "PROOF")}>제출 증거</a></nav>
       <span className={`home-feed-state ${dataIsStale ? "stale" : ""}`}><i />{dataIsStale ? "STALE · REVIEW ONLY" : feedLabel}</span>
     </header>
 
@@ -168,8 +168,9 @@ export function ProductHome({
       <div>
         <a className="t1" href={productSpaceHref(currentSpace, "T1")}><b>01</b><span>T1 TODAY</span><h3>T1 오늘 준비</h3><p>다음 경기, 반복 픽·밴, 상대 확정 여부와 준비 상태를 한 장으로 봅니다.</p><small>{fixtureTitle} →</small></a>
         <a className="team" href={productSpaceHref(currentSpace, "TEAM")}><b>02</b><span>MY TEAM</span><h3>내 팀 상대 분석</h3><p>소속 팀을 고르면 먼저 볼 상대와 드래프트 충돌 후보를 정리합니다.</p><small>팀 선택하기 →</small></a>
-        <a className="creator" href={productSpaceHref(currentSpace, "CREATOR")}><b>03</b><span>VIDEO IDEA</span><h3>영상 소재 만들기</h3><p>같은 근거를 제목, 장면 카드, 쇼츠용 이야기 순서로 바꿉니다.</p><small>영상 아이템 만들기 →</small></a>
-        <a className="radar" href={productSpaceHref(currentSpace, "RADAR")}><b>04</b><span>ALL DATA</span><h3>전체 메타 자세히 보기</h3><p>챔피언별 변화와 지역 차이, 표본 경고, 원본 경기 근거를 확인합니다.</p><small>전체 후보 열기 →</small></a>
+        <a className="draft" href={productSpaceHref(currentSpace, "DRAFT")}><b>03</b><span>DRAFT LAB</span><h3>실전 가상 밴픽</h3><p>블루·레드의 실제 순서대로 진행하며 매 턴 근거가 있는 대응 후보를 비교합니다.</p><small>밴픽 시작하기 →</small></a>
+        <a className="creator" href={productSpaceHref(currentSpace, "CREATOR")}><b>04</b><span>VIDEO IDEA</span><h3>영상 소재 만들기</h3><p>같은 근거를 제목, 장면 카드, 쇼츠용 이야기 순서로 바꿉니다.</p><small>영상 아이템 만들기 →</small></a>
+        <a className="radar" href={productSpaceHref(currentSpace, "RADAR")}><b>05</b><span>ALL DATA</span><h3>전체 메타 자세히 보기</h3><p>챔피언별 변화와 지역 차이, 원본 경기 근거를 확인합니다.</p><small>전체 후보 열기 →</small></a>
       </div>
     </section>
 
