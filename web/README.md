@@ -9,11 +9,12 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. The onboarding home separates the product into four focused workspaces:
+Open `http://localhost:3000`. The onboarding home separates the product into focused workspaces:
 
 - `/team/` — own-team selection, opponent priority, review candidates, and Draft Battlecard.
 - `/t1/` — official T1 fixture, one-page staff brief, target profile, and match-day control.
 - `/proof/` — submission narrative, live readiness gates, T1 case flow, and a printable three-minute demo script.
+- `/draft/` — T1-first, standard 20-turn pick/ban simulation with evidence-bounded agent options.
 - `/creator/` — evidence-locked YouTube, Shorts, and editor JSON exports.
 - `/radar/` — full regional signal, audit, history, and raw evidence exploration.
 
@@ -79,6 +80,11 @@ After selecting an own team, the Draft Battlecard compares that team's public pr
 selected opponent. It presents protect, exact pick-contest, deny-review, and exchange-scenario
 questions, then exports the same evidence-bounded artifact as JSON. It never treats the result as an
 automatic pick/ban instruction.
+
+Draft Lab is the interactive scenario layer above that battlecard. It uses the standard three-ban,
+first-pick, two-ban, final-pick phase order, prevents duplicate champion locks, and recalculates safe,
+pressure, and experiment options after every human-confirmed action. The optional clock is a rehearsal
+aid only. The exported JSON preserves the patch and cutoff for later comparison.
 
 The default reading flow is intentionally progressive: choose a workspace, then complete its primary
 task. Team Room moves from own-team selection to prioritized opponent and Draft Battlecard; the other

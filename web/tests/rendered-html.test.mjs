@@ -48,6 +48,7 @@ test("server-renders the onboarding home as a focused product entry", async () =
   assert.match(html, /href="\.\/t1\/"/);
   assert.match(html, /href="\.\/creator\/"/);
   assert.match(html, /href="\.\/radar\/"/);
+  assert.match(html, /href="\.\/draft\/"/);
   assert.match(html, /href="\.\/proof\/"/);
   assert.doesNotMatch(html, /chatgpt|openai|gpt login|sign in/i);
 });
@@ -244,6 +245,69 @@ test("server-renders a truthful submission proof and demo script", async () => {
   assert.match(html, /예측 효용은 아직 주장하지 않으며/);
   assert.match(html, /인쇄 \/ PDF/);
   assert.doesNotMatch(html, /chatgpt|openai|gpt login|sign in/i);
+});
+
+test("server-renders an actual-turn-order Draft Lab with a bounded agent", async () => {
+  const response = await render("/draft");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /DRAFT LAB · STANDARD 5 BAN \/ 5 PICK/);
+  assert.match(html, /가상 밴픽 에이전트/);
+  assert.match(html, /TURN 1 \/ 20/);
+  assert.match(html, /BLUE TEAM/);
+  assert.match(html, /RED TEAM/);
+  assert.match(html, /TURN-BY-TURN EVIDENCE AGENT/);
+  assert.match(html, /안전안/);
+  assert.match(html, /압박안/);
+  assert.match(html, /실험안/);
+  assert.match(html, /AI 자동판단 잠금/);
+  assert.match(html, /승률 예측이 아닌/);
+  assert.doesNotMatch(html, /chatgpt|openai|gpt login|sign in/i);
+});
+
+test("replays the standard 20-turn draft and rejects duplicate champions", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot),
+    configFile: false,
+    publicDir: false,
+    server: { middlewareMode: true },
+    appType: "custom",
+    logLevel: "silent",
+  });
+  try {
+    const {
+      STANDARD_DRAFT_SEQUENCE,
+      applyDraftSelection,
+      buildDraftAgentFrame,
+      nextDraftTurn,
+    } = await vite.ssrLoadModule("/app/draft-agent.ts");
+    assert.equal(STANDARD_DRAFT_SEQUENCE.length, 20);
+    assert.deepEqual(STANDARD_DRAFT_SEQUENCE.slice(0, 6).map((turn) => turn.kind), Array(6).fill("BAN"));
+    assert.deepEqual(STANDARD_DRAFT_SEQUENCE.slice(6, 12).map((turn) => turn.kind), Array(6).fill("PICK"));
+    assert.equal(STANDARD_DRAFT_SEQUENCE[12].side, "RED");
+    assert.equal(STANDARD_DRAFT_SEQUENCE[12].kind, "BAN");
+    assert.equal(STANDARD_DRAFT_SEQUENCE[16].side, "RED");
+    assert.equal(STANDARD_DRAFT_SEQUENCE[16].kind, "PICK");
+
+    const teams = feed.opponent_prep.teams;
+    const t1 = teams.find((team) => team.team_name === "T1");
+    const opponent = teams.find((team) => team.team_id !== t1.team_id);
+    const initialFrame = buildDraftAgentFrame(feed, t1, opponent, []);
+    assert.equal(initialFrame.status, "ACTIVE");
+    assert.equal(initialFrame.turn.side, "BLUE");
+    assert.equal(initialFrame.turn.kind, "BAN");
+    assert.ok(initialFrame.options.length >= 1);
+    assert.ok(initialFrame.options.every((option) => option.evidence_ids.length >= 1));
+
+    let selections = applyDraftSelection([], initialFrame.options[0].champion_id);
+    assert.equal(selections.length, 1);
+    selections = applyDraftSelection(selections, initialFrame.options[0].champion_id);
+    assert.equal(selections.length, 1);
+    assert.equal(nextDraftTurn(selections).side, "RED");
+  } finally {
+    await vite.close();
+  }
 });
 
 test("server-renders a five-scene creator workflow with human review", async () => {
@@ -1394,10 +1458,12 @@ test("maps direct paths and relative navigation across product spaces", async ()
     assert.equal(productSpaceFromPath("/pro-meta-intelligence/t1/index.html"), "T1");
     assert.equal(productSpaceFromPath("/creator/"), "CREATOR");
     assert.equal(productSpaceFromPath("/radar"), "RADAR");
+    assert.equal(productSpaceFromPath("/pro-meta-intelligence/draft/"), "DRAFT");
     assert.equal(productSpaceFromPath("/pro-meta-intelligence/proof/"), "PROOF");
     assert.equal(productSpaceHref("ONBOARDING", "TEAM"), "./team/");
     assert.equal(productSpaceHref("TEAM", "ONBOARDING"), "../");
     assert.equal(productSpaceHref("CREATOR", "T1"), "../t1/");
+    assert.equal(productSpaceHref("DRAFT", "T1"), "../t1/");
     assert.equal(productSpaceHref("PROOF", "ONBOARDING"), "../");
   } finally {
     await vite.close();
@@ -1420,6 +1486,7 @@ test("routes plain-language home questions without sending them to AI", async ()
     assert.equal(homeSpaceForQuestion("정글 조커픽과 챔피언 메타"), "RADAR");
     assert.equal(homeSpaceForQuestion("유튜브 영상 소재를 만들고 싶어"), "CREATOR");
     assert.equal(homeSpaceForQuestion("내 팀 상대 우선순위 분석"), "TEAM");
+    assert.equal(homeSpaceForQuestion("가상 밴픽 시뮬레이션"), "DRAFT");
     assert.equal(homeSpaceForQuestion(""), "T1");
   } finally {
     await vite.close();

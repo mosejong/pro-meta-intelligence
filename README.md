@@ -117,6 +117,9 @@ data path:
   recent-game timeline, patch comparison, and series diagnostics remain exact-T1-only.
 - an own-team-versus-opponent Draft Battlecard that turns public draft overlap into four bounded
   staff review lanes: protect, contest, deny review, and exchange scenario.
+- a T1-first Draft Lab that runs the standard 20-turn professional pick/ban sequence, locks duplicate
+  champions, recalculates three evidence-bounded options each turn, and exports the human-confirmed
+  scenario without presenting its sorting score as win probability.
 - a Creator Export Lab that converts the same claim-locked evidence into 16:9 YouTube cards, 9:16
   short-form cards, and editor-ready scene JSON without uploading the generated files.
 - a five-scene Creator Storyboard that turns the matching published Creator brief into a five-minute
@@ -178,6 +181,7 @@ See also:
 - [`docs/OPPONENT_PREP.md`](docs/OPPONENT_PREP.md)
 - [`docs/EMERGENCY_BRIEF.md`](docs/EMERGENCY_BRIEF.md)
 - [`docs/DRAFT_BATTLECARD.md`](docs/DRAFT_BATTLECARD.md)
+- [`docs/DRAFT_LAB.md`](docs/DRAFT_LAB.md)
 - [`docs/COMPETITIVE_POSITIONING.md`](docs/COMPETITIVE_POSITIONING.md)
 - [`web/README.md`](web/README.md)
 - [`docs/PRODUCT_MODES.md`](docs/PRODUCT_MODES.md)
