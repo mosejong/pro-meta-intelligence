@@ -254,6 +254,8 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   assert.match(html, /DRAFT LAB · STANDARD 5 BAN \/ 5 PICK/);
   assert.match(html, /가상 밴픽 에이전트/);
   assert.match(html, /TURN 1 \/ 20/);
+  assert.match(html, /챔피언 선택판/);
+  assert.match(html, /밴 확정/);
   assert.match(html, /BLUE TEAM/);
   assert.match(html, /RED TEAM/);
   assert.match(html, /TURN-BY-TURN EVIDENCE AGENT/);
@@ -308,6 +310,158 @@ test("replays the standard 20-turn draft and rejects duplicate champions", async
   } finally {
     await vite.close();
   }
+});
+
+test("stages deterministic opponent previews without committing or guessing intervening turns", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const vite = await createServer({ root: fileURLToPath(templateRoot), configFile: false, publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { previewOpponentPick, buildDraftAgentFrame, applyDraftSelection, STANDARD_DRAFT_SEQUENCE } = await vite.ssrLoadModule("/app/draft-agent.ts");
+    const [blue, red] = feed.opponent_prep.teams;
+    const before = JSON.stringify(feed);
+    const staged = red.priority_picks[0].champion_id;
+    const confirmed = [];
+    const preview = previewOpponentPick(feed, blue, red, confirmed, staged);
+    assert.equal(confirmed.length, 0);
+    assert.equal(preview.target_turn, 8);
+    assert.equal(preview.intervening_turns, 6);
+    assert.equal(preview.team_name, red.team_name);
+    assert.ok(preview.candidates.length > 0);
+    assert.ok(preview.candidates.every((candidate) => candidate.champion_id !== staged));
+    for (let repeat = 0; repeat < 10; repeat++) {
+      assert.deepEqual(previewOpponentPick(feed, blue, red, confirmed, staged), preview);
+    }
+    const reversed = structuredClone(feed);
+    reversed.entries.reverse();
+    reversed.opponent_prep.teams.forEach((team) => team.priority_picks.reverse());
+    assert.deepEqual(previewOpponentPick(reversed, reversed.opponent_prep.teams[0], reversed.opponent_prep.teams[1], [], staged), preview);
+    assert.deepEqual(buildDraftAgentFrame(reversed, reversed.opponent_prep.teams[0], reversed.opponent_prep.teams[1], []), buildDraftAgentFrame(feed, blue, red, []));
+    assert.equal(JSON.stringify(feed), before);
+    const excluded = preview.candidates[0].champion_id;
+    assert.ok(previewOpponentPick(feed, blue, red, [], staged, [excluded]).candidates.every((candidate) => candidate.champion_id !== excluded));
+    assert.equal(previewOpponentPick(feed, blue, red, [], staged, [staged]).status, "UNAVAILABLE");
+    assert.equal(previewOpponentPick(feed, blue, red, [], null).status, "UNAVAILABLE");
+    let sequence = [];
+    for (let index = 0; index < 20; index++) {
+      const result = previewOpponentPick(feed, blue, red, sequence, `TestChampion${index}`);
+      const target = STANDARD_DRAFT_SEQUENCE.findIndex((turn, position) => position > index && turn.side !== STANDARD_DRAFT_SEQUENCE[index].side && turn.kind === "PICK");
+      assert.equal(result.target_turn, target < 0 ? null : target + 1);
+      assert.equal(result.status, target < 0 ? "NO_FUTURE_PICK" : "READY");
+      sequence = applyDraftSelection(sequence, `TestChampion${index}`);
+    }
+  } finally { await vite.close(); }
+});
+
+test("carries only completed-game picks into fearless bans and exports reproducible inputs", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const vite = await createServer({ root: fileURLToPath(templateRoot), configFile: false, publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { applyDraftSelection, completeFearlessGame, fearlessLocks, isChampionLocked, buildDraftAgentFrame, serializeDraftScenario, DRAFT_MODEL_VERSION } = await vite.ssrLoadModule("/app/draft-agent.ts");
+    const [blue, red] = feed.opponent_prep.teams;
+    let selections = [];
+    for (let index = 0; index < 20; index++) selections = applyDraftSelection(selections, index === 6 ? "Wukong" : `TestChampion${index}`);
+    const empty = [];
+    const game = { blue_team_id: blue.team_id, red_team_id: red.team_id, selections };
+    assert.equal(completeFearlessGame(empty, { ...game, selections: selections.slice(0, -1) }), empty);
+    assert.equal(completeFearlessGame(empty, { ...game, selections: selections.map((pick, index) => index === 4 ? { ...pick, side: "RED" } : pick) }), empty);
+    const games = completeFearlessGame(empty, game);
+    const locks = fearlessLocks(games);
+    assert.equal(games.length, 1);
+    assert.equal(locks.length, 10);
+    assert.equal(isChampionLocked([], "MonkeyKing", locks), true);
+    assert.equal(applyDraftSelection(empty, "MonkeyKing", locks), empty);
+    assert.equal(isChampionLocked([], selections[0].champion_id, locks), false);
+    assert.equal(applyDraftSelection([], selections[0].champion_id, locks).length, 1);
+    assert.equal(completeFearlessGame(games, game), games);
+    let second = [];
+    for (let index = 0; index < 20; index++) second = applyDraftSelection(second, `SecondChampion${index}`, locks);
+    const twoGames = completeFearlessGame(games, { ...game, blue_team_id: red.team_id, red_team_id: blue.team_id, selections: second });
+    assert.equal(fearlessLocks(twoGames).length, 20);
+    const allCandidates = [...blue.priority_picks, ...red.priority_picks, ...feed.entries].map((pick) => pick.champion_id);
+    assert.equal(buildDraftAgentFrame(feed, blue, red, [], allCandidates).options.length, 0);
+    const snapshot = JSON.parse(serializeDraftScenario(feed, blue, red, [], twoGames));
+    assert.equal(snapshot.game_number, 3);
+    assert.equal(snapshot.model_version, DRAFT_MODEL_VERSION);
+    assert.equal(snapshot.format, "HARD_FEARLESS_5_BAN_5_PICK");
+    assert.deepEqual(snapshot.analysis_snapshot, feed);
+    assert.deepEqual(snapshot.fearless_locks, fearlessLocks(twoGames));
+    assert.deepEqual(snapshot.previous_games, twoGames);
+    assert.deepEqual(fearlessLocks(twoGames.slice(0, -1)), locks);
+  } finally { await vite.close(); }
+});
+
+test("separates target-team evidence from global evidence and deduplicates confidence", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const vite = await createServer({ root: fileURLToPath(templateRoot), configFile: false, publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { previewOpponentPick } = await vite.ssrLoadModule("/app/draft-agent.ts");
+    const [blue, red] = feed.opponent_prep.teams;
+    const entry = structuredClone(feed.entries[0]);
+    Object.assign(entry, { champion_id: "Ahri", rank: 1, eligible_for_review: true, role: "MID", evidence_event_ids: ["global-1", "global-2", "global-3"] });
+    feed.entries = [entry];
+    red.priority_picks = [];
+    const globalOnly = previewOpponentPick(feed, blue, red, [], "Zed").candidates[0];
+    assert.equal(globalOnly.confidence, "LOW");
+    assert.deepEqual(globalOnly.team_evidence_ids, []);
+    assert.deepEqual(globalOnly.global_evidence_ids, entry.evidence_event_ids);
+    assert.match(globalOnly.observation, /직접 픽 근거 없음/);
+    assert.doesNotMatch(globalOnly.observation, /공개 경기에서/);
+    red.game_count = 10;
+    red.priority_picks = [{ champion_id: "Ahri", role: "SUPPORT", game_count: 1, game_rate: .1, phase_1_count: 1, phase_2_count: 0, evidence_event_ids: ["team-1", "team-1", "team-1"] }];
+    const observed = previewOpponentPick(feed, blue, red, [], "Zed").candidates[0];
+    assert.equal(observed.confidence, "MEDIUM");
+    assert.equal(observed.role, "SUPPORT");
+    assert.deepEqual(observed.team_evidence_ids, ["team-1"]);
+    red.priority_picks.push({ ...red.priority_picks[0], evidence_event_ids: ["team-0"] });
+    const originalOrder = previewOpponentPick(feed, blue, red, [], "Zed");
+    red.priority_picks.reverse();
+    assert.deepEqual(previewOpponentPick(feed, blue, red, [], "Zed"), originalOrder);
+  } finally { await vite.close(); }
+});
+
+test("restores complete fearless inputs and rejects incompatible or illegal sessions", async () => {
+  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const vite = await createServer({ root: fileURLToPath(templateRoot), configFile: false, publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { serializeDraftScenario, applyDraftSelection, previewOpponentPick, fearlessLocks } = await vite.ssrLoadModule("/app/draft-agent.ts");
+    const { parseDraftSession } = await vite.ssrLoadModule("/app/draft-session.ts");
+    const [blue, red] = feed.opponent_prep.teams;
+    let picks = [];
+    for (let index = 0; index < 20; index++) picks = applyDraftSelection(picks, `Champion${index}`);
+    const games = [{ blue_team_id: blue.team_id, red_team_id: red.team_id, selections: picks }];
+    const selections = applyDraftSelection([], "Zed");
+    const exported = serializeDraftScenario(feed, red, blue, selections, games, "Ahri");
+    const parsed = parseDraftSession(exported);
+    assert.equal(parsed.ok, true, parsed.error);
+    const saved = parsed.session;
+    const restoredBlue = saved.report.opponent_prep.teams.find((team) => team.team_id === saved.blueTeamId);
+    const restoredRed = saved.report.opponent_prep.teams.find((team) => team.team_id === saved.redTeamId);
+    assert.deepEqual(previewOpponentPick(saved.report, restoredBlue, restoredRed, saved.selections, saved.stagedChampion, fearlessLocks(saved.games)), previewOpponentPick(feed, red, blue, selections, "Ahri", fearlessLocks(games)));
+    assert.equal(serializeDraftScenario(saved.report, restoredBlue, restoredRed, saved.selections, saved.games, saved.stagedChampion), exported);
+    const mutations = [
+      (value) => { value.model_version = "unknown-version"; },
+      (value) => { value.patch_id = "different"; },
+      (value) => { value.previous_games[0].selections.pop(); },
+      (value) => { value.previous_games[0].blue_team_id = "unknown-team"; },
+      (value) => { value.selections[0].side = "RED"; },
+      (value) => { value.selections[0].champion_id = "Champion6"; },
+      (value) => { value.staged_champion = "Zed"; },
+      (value) => { value.staged_champion = "../../external"; },
+      (value) => { value.game_number = 99; },
+      (value) => { value.analysis_snapshot.opponent_prep.teams[0].priority_picks[0].game_rate = -1; },
+    ];
+    for (const mutate of mutations) {
+      const bad = JSON.parse(exported);
+      mutate(bad);
+      assert.equal(parseDraftSession(JSON.stringify(bad)).ok, false);
+    }
+    const forgedLocks = JSON.parse(exported);
+    forgedLocks.fearless_locks = [];
+    assert.deepEqual(fearlessLocks(parseDraftSession(JSON.stringify(forgedLocks)).session.games), fearlessLocks(games));
+    assert.equal(parseDraftSession("{broken").ok, false);
+    assert.equal(parseDraftSession(" ".repeat(16 * 1024 * 1024 + 1)).ok, false);
+    assert.equal(parseDraftSession(serializeDraftScenario(feed, blue, red, [], [], "Ahri")).session.stagedChampion, "Ahri");
+  } finally { await vite.close(); }
 });
 
 test("server-renders a five-scene creator workflow with human review", async () => {
