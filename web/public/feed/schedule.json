@@ -1,77 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-11T19:09:04.566418+00:00",
+  "available_at": "2026-09-12T04:31:15.832207+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:d5d466c09b2b0bcfee0094c80fcb356fbb6e0076c0f772981af3405772840490",
+  "content_hash": "sha256:2a2b9ca134c4bcf23a856e5e989ffd79e975a886b98f24a7b93776752df11a01",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:c251d1d18f75308216d7",
-      "league": "LCK",
-      "participants": [
-        {
-          "code": "T1",
-          "name": "T1"
-        },
-        {
-          "code": "HLE",
-          "name": "Hanwha Life Esports"
-        }
-      ],
-      "start_at": "2026-09-12T05:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:3d9dd4376472279b7936",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "IG",
-          "name": "Invictus Gaming"
-        },
-        {
-          "code": "AL",
-          "name": "Anyone's Legend"
-        }
-      ],
-      "start_at": "2026-09-12T09:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:df7d7d0e7e2ec19e69b8",
-      "league": "LEC",
-      "participants": [
-        {
-          "code": "VIT",
-          "name": "Team Vitality"
-        },
-        {
-          "code": "MKOI",
-          "name": "Movistar KOI"
-        }
-      ],
-      "start_at": "2026-09-12T15:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:80b75d75c951a7f2db06",
-      "league": "LCS",
-      "participants": [
-        {
-          "code": "C9",
-          "name": "Cloud9 Kia"
-        },
-        {
-          "code": "SR",
-          "name": "Shopify Rebellion"
-        }
-      ],
-      "start_at": "2026-09-12T20:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Finals",
@@ -160,7 +92,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:d239e84127495e4d5ed1",
+      "event_id": "lolesports:f2d2dba911b1e3cfa31a",
       "league": "LEC",
       "participants": [
         {
@@ -168,8 +100,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "NAVI",
+          "name": "Natus Vincere"
         }
       ],
       "start_at": "2026-09-18T15:00:00+00:00"
@@ -372,10 +304,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 21,
-    "tbd_participant_count": 26
+    "event_count": 17,
+    "tbd_participant_count": 25
   },
-  "retrieved_at": "2026-09-11T19:09:04.566418+00:00",
+  "retrieved_at": "2026-09-12T04:31:15.832207+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
