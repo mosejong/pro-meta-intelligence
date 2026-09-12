@@ -236,8 +236,10 @@ output remain separate validation gates rather than being implied by the interfa
    action-relevant roles, deterministic duplicate-row tie breaks, and fixed analysis snapshots.
 2. **Reproducible sessions — implemented:** automatic local persistence, staged-choice restoration,
    validated file import, exact model-version checks, legal-turn replay and recalculated Fearless locks.
-3. **Release — in progress:** run frontend regression checks in CI as well as locally, publish the
-   combined staged-pick/Fearless/session change, and verify deployment completion.
+3. **Release — completed:** [PR #74](https://github.com/mosejong/pro-meta-intelligence/pull/74) merged;
+   frontend and Python CI passed on the merged revision. [Pages deployment](https://github.com/mosejong/pro-meta-intelligence/actions/runs/34680850766)
+   succeeded. The public `/draft/` page and its script returned HTTP 200, with the v2 model and session
+   storage code present. Frontend validation covered 35 tests plus 2 Pages tests and lint.
 4. **Prediction evaluation — next:** assemble historical draft states with strictly earlier source
    cutoffs, separate training/candidate data from outcomes, and measure top-3 recall against a simple
    team-frequency baseline. Do not score on the same recent games used to construct the snapshot.
