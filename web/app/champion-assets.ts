@@ -7,6 +7,7 @@ const championAssetOverrides: Record<string, string> = {
   LeBlanc: "Leblanc",
   Mundo: "DrMundo",
   "Renata Glasc": "Renata",
+  "Nunu & Willump": "Nunu",
   Wukong: "MonkeyKing",
 };
 

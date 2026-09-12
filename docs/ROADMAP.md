@@ -225,8 +225,29 @@ the measured case-study result and final resume-specific wording, not another di
 
 Draft Lab now supplies the interactive submission demo: a T1-first standard 20-turn pick/ban board,
 human-confirmed champion locks, three evidence-bounded options per turn, replay controls, and
-snapshot-scoped JSON export. Fearless-series memory, composition/counter knowledge, and generative
-agent output remain separate validation gates rather than being implied by the interface.
+snapshot-scoped JSON export. Hard Fearless series memory and staged opponent pick previews are now
+implemented. Team/global evidence is separated, and device-local save/restore plus validated JSON
+import preserves the fixed analysis inputs. Composition/counter knowledge and generative agent
+output remain separate validation gates rather than being implied by the interface.
+
+### Draft Lab execution priority (2026-09-12)
+
+1. **Evidence correctness — implemented:** unique target-team evidence, separate global evidence,
+   action-relevant roles, deterministic duplicate-row tie breaks, and fixed analysis snapshots.
+2. **Reproducible sessions — implemented:** automatic local persistence, staged-choice restoration,
+   validated file import, exact model-version checks, legal-turn replay and recalculated Fearless locks.
+3. **Release — in progress:** run frontend regression checks in CI as well as locally, publish the
+   combined staged-pick/Fearless/session change, and verify deployment completion.
+4. **Prediction evaluation — next:** assemble historical draft states with strictly earlier source
+   cutoffs, separate training/candidate data from outcomes, and measure top-3 recall against a simple
+   team-frequency baseline. Do not score on the same recent games used to construct the snapshot.
+5. **Role/composition knowledge — after evaluation:** add maintained champion-role evidence, explicit
+   flex-pick handling and validated counter data; compare measured benefit before expanding the model.
+
+Validation note: the current frontend build and test scripts are release checks. An additional
+whole-project TypeScript check found existing errors outside the Draft Lab files (decision outcomes,
+player practice/baseline, shared radar validation, match-day panel and Worker environment types).
+Track their repair separately; do not describe the entire repository as type-clean.
 
 ## Submission Rule
 
