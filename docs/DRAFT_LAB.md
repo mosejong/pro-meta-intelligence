@@ -94,6 +94,11 @@ result. It does not infer previous sets from the public feed or support tourname
 
 ## Next validation
 
+The [first historical opponent-preview pilot](DRAFT_PREDICTION_BENCHMARK.md) is complete:
+4 first-set matches / 28 immediate-response states, top-three recall 10.7%, equal to the
+team-frequency baseline. This does not validate prediction quality or later-set Fearless.
+Expand independent holdouts before evaluating changes to the model.
+
 The next Draft Lab gates are:
 
 1. add a format registry for tournament-specific exceptions to Hard Fearless;

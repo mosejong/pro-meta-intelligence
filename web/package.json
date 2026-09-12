@@ -10,7 +10,8 @@
     "build": "vinext build",
     "build:pages": "vite build --config vite.pages.config.ts",
     "start": "vinext start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs",
+    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/draft-benchmark.test.mjs",
+    "benchmark:draft": "node scripts/evaluate-draft.mjs",
     "test:pages": "npm run build:pages && node --test tests/pages-build.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern dist-pages --ignore-pattern .next"
   },
