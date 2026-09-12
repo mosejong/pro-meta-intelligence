@@ -6,6 +6,7 @@ import argparse
 import csv
 import json
 from collections import Counter, defaultdict
+from datetime import datetime
 from pathlib import Path
 
 from pro_meta_intelligence.ingestion.oracles_elixir import SOURCE_ID, OracleElixirCSVAdapter
@@ -60,7 +61,9 @@ def first_game_ids(path: Path) -> set[str]:
     return {key for key, values in numbers.items() if values == {"1"}}
 
 
-def prepare_dataset(archive_root: Path) -> dict:
+def prepare_dataset(archive_root: Path, *, observed_after: datetime | None = None) -> dict:
+    if observed_after is not None and observed_after.utcoffset() is None:
+        raise ValueError("observed_after must include a timezone")
     inspection = SnapshotArchive(archive_root).inspect(SOURCE_ID)
     if inspection.issues:
         raise ValueError("archive integrity check failed; repair the archive before evaluation")
@@ -91,6 +94,9 @@ def prepare_dataset(archive_root: Path) -> dict:
     matches = []
     regions = LeagueRegionMap.load_default()
     for match in sorted(outcome.matches, key=lambda item: (item.observed_at, item.match_id)):
+        if observed_after is not None and match.observed_at <= observed_after:
+            exclusions["BEFORE_OR_AT_HOLDOUT_BOUNDARY"] += 1
+            continue
         if match.match_id not in first_games:
             exclusions["NOT_CONFIRMED_FIRST_SET"] += 1
             continue
@@ -176,6 +182,7 @@ def prepare_dataset(archive_root: Path) -> dict:
         "matches": matches,
         "audit": {
             "verified_capture_count": len(captures),
+            "observed_after": observed_after.isoformat() if observed_after else None,
             "outcome_imported_matches": len(outcome.matches),
             "outcome_rejected_matches": outcome.report.rejected_game_count,
             "eligible_matches": len(matches),
@@ -192,8 +199,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--observed-after", type=datetime.fromisoformat)
     args = parser.parse_args()
-    dataset = prepare_dataset(args.archive)
+    dataset = prepare_dataset(args.archive, observed_after=args.observed_after)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(dataset, ensure_ascii=False, sort_keys=True), encoding="utf-8"

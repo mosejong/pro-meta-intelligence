@@ -315,6 +315,7 @@ export function previewOpponentPick(
   selections: DraftSelection[],
   stagedChampion: string | null,
   previousPicks: string[] = [],
+  candidateLimit = 3,
 ) {
   const current = nextDraftTurn(selections);
   const empty = { status: "UNAVAILABLE" as "UNAVAILABLE" | "READY" | "NO_FUTURE_PICK", team_name: "", target_turn: null as number | null, intervening_turns: 0, candidates: [] as DraftAgentOption[] };
@@ -348,7 +349,7 @@ export function previewOpponentPick(
         (own?.phase_1_count ?? 0) * 10 + (entry?.eligible_for_review ? Math.max(0, 35 - entry.rank) : 0) };
     })
     .sort((left, right) => right.score - left.score || compareText(keyOf(left.champion_id), keyOf(right.champion_id)))
-    .slice(0, 3);
+    .slice(0, Math.max(0, Math.min(200, Math.floor(candidateLimit))));
   return { status: "READY" as const, team_name: team.team_name, target_turn: targetIndex + 1,
     intervening_turns: targetIndex - hypothetical.length, candidates };
 }

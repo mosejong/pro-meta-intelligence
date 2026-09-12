@@ -1,6 +1,7 @@
 import { championAssetId } from "./champion-assets";
 import { applyDraftSelection, DRAFT_MODEL_VERSION, isChampionLocked, previewOpponentPick, STANDARD_DRAFT_SEQUENCE, type DraftSelection } from "./draft-agent";
 import { isRadarReport, type OpponentTeam, type RadarReport } from "./radar-types";
+import { previewRoleExperiment, ROLE_EXPERIMENT_VERSION } from "./draft-role-experiment";
 
 type Snapshot = { id: string; cutoff: string; source_hash: string; report: RadarReport };
 type Match = {
@@ -44,7 +45,7 @@ function summarize(metrics: Metrics) {
 }
 
 /** Scores the production preview itself, not a second approximation of its formula. */
-export function evaluateDraftBenchmark(value: unknown) {
+export function evaluateDraftBenchmark(value: unknown, options: { roleExperiment?: boolean } = {}) {
   requireCondition(record(value) && value.schema_version === "1" && value.artifact_type === "draft-historical-dataset" &&
     value.scope === "FIRST_SET_IMMEDIATE_OPPONENT_PICK" && typeof value.fixture_only === "boolean" &&
     Array.isArray(value.snapshots) && Array.isArray(value.matches), "Unsupported draft evaluation dataset");
@@ -62,6 +63,8 @@ export function evaluateDraftBenchmark(value: unknown) {
   }
   const model = freshMetrics();
   const control = freshMetrics();
+  const experiment = freshMetrics();
+  const experimentalGroups = new Map<string, { matches: number; model: Metrics; production: Metrics }>();
   const seen = new Set<string>();
   const leagues = new Map<string, { model: Metrics; baseline: Metrics; matches: number }>();
   const sourcePairs = new Set<string>();
@@ -79,6 +82,10 @@ export function evaluateDraftBenchmark(value: unknown) {
     requireCondition(/^sha256:[0-9a-f]{64}$/.test(match.outcome_source_hash) && snapshot.source_hash !== match.outcome_source_hash, "Outcome must use a distinct later source");
     const report = snapshot.report;
     const teams = report.opponent_prep!.teams;
+    if (options.roleExperiment) {
+      requireCondition(teams.every((team) => (team.recent_games ?? []).every((game) =>
+        game.match_id !== match.match_id && timestamp(game.observed_at) <= timestamp(snapshot.cutoff))), "Future role evidence");
+    }
     requireCondition(report.patch_id === match.patch_id && report.opponent_prep!.patch_id === match.patch_id, "Patch mismatch");
     requireCondition(![...report.evidence_index.prior_match_ids, ...report.evidence_index.recent_match_ids, ...teams.flatMap((team) => team.evidence.match_ids)].includes(match.match_id), "Target match present in candidate evidence");
     const blue = teams.find((team) => team.team_id === match.blue_team_id);
@@ -96,6 +103,10 @@ export function evaluateDraftBenchmark(value: unknown) {
     const group = leagues.get(match.league) ?? { model: freshMetrics(), baseline: freshMetrics(), matches: 0 };
     group.matches++;
     leagues.set(match.league, group);
+    const experimentKey = `${match.league}:${match.patch_id}`;
+    const experimentGroup = experimentalGroups.get(experimentKey) ?? { matches: 0, model: freshMetrics(), production: freshMetrics() };
+    experimentGroup.matches++;
+    experimentalGroups.set(experimentKey, experimentGroup);
     sourcePairs.add(`${snapshot.source_hash}:${match.outcome_source_hash}`);
     prefix = [];
     for (const [index, staged] of match.selections.entries()) {
@@ -111,6 +122,13 @@ export function evaluateDraftBenchmark(value: unknown) {
         add(control, simple, target.champion_id, hypothetical);
         add(group.model, predictions, target.champion_id, hypothetical);
         add(group.baseline, simple, target.champion_id, hypothetical);
+        if (options.roleExperiment) {
+          const rolePreview = previewRoleExperiment(report, blue, red, prefix, staged.champion_id);
+          const rolePredictions = rolePreview.candidates.map((candidate) => candidate.champion_id);
+          add(experiment, rolePredictions, target.champion_id, hypothetical);
+          add(experimentGroup.model, rolePredictions, target.champion_id, hypothetical);
+          add(experimentGroup.production, predictions, target.champion_id, hypothetical);
+        }
         cases.push({ match_id: match.match_id, target_turn: target.turn, actual: target.champion_id, model: predictions, baseline: simple, snapshot_id: snapshot.id });
       }
       prefix = applyDraftSelection(prefix, staged.champion_id);
@@ -127,5 +145,10 @@ export function evaluateDraftBenchmark(value: unknown) {
     by_league: [...leagues.entries()].sort(([a], [b]) => compare(a, b)).map(([league, group]) => ({ league, matches: group.matches, model: summarize(group.model), baseline: summarize(group.baseline) })),
     boundary: "Pilot only. First sets and immediate opposite-side pick responses only; all eligible states, including abstentions, are in the denominator. Cases within a match are correlated. No multi-set Fearless, counterfactual, calibrated probability, or superiority claim.",
     case_results: cases,
+    ...(options.roleExperiment ? { role_experiment: {
+      version: ROLE_EXPERIMENT_VERSION, deployed: false, metrics: summarize(experiment),
+      by_league_patch: [...experimentalGroups.entries()].sort(([a], [b]) => compare(a, b)).map(([league_patch, group]) => ({ league_patch, matches: group.matches, experiment: summarize(group.model), production: summarize(group.production) })),
+      boundary: "Observed same-snapshot role feasibility only. Unknown roles remain unrestricted; flex roles remain alternatives. No counter or synergy knowledge. No automatic promotion.",
+    } } : {}),
   };
 }

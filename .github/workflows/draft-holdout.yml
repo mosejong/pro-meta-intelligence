@@ -1,0 +1,88 @@
+name: Draft prediction holdout
+
+on:
+  workflow_dispatch:
+    inputs:
+      archive_artifact_id:
+        description: "Existing encrypted oe-private-history-state artifact ID"
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+# Serialize with collector retention so the pinned artifact is not removed during restore.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: python -m pip install -e ".[hosted-ops]"
+      - run: npm ci
+        working-directory: web
+      - name: Restore the pinned encrypted archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OE_ARCHIVE_KEY: ${{ secrets.OE_ARCHIVE_KEY }}
+          ARCHIVE_ARTIFACT_ID: ${{ inputs.archive_artifact_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$ARCHIVE_ARTIFACT_ID" =~ ^[0-9]+$ ]]
+          [[ -n "$OE_ARCHIVE_KEY" ]]
+          mkdir -p outputs/draft-holdout
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARCHIVE_ARTIFACT_ID" > outputs/draft-holdout/artifact.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          artifact = json.loads(Path("outputs/draft-holdout/artifact.json").read_text())
+          if artifact["expired"] or not artifact["name"].startswith("oe-private-history-state-"):
+              raise SystemExit("Expected a retained encrypted history artifact")
+          PY
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARCHIVE_ARTIFACT_ID/zip" > outputs/draft-holdout/state.zip
+          python - <<'PY'
+          import shutil
+          import zipfile
+          from pathlib import Path
+          root = Path("outputs/draft-holdout")
+          with zipfile.ZipFile(root / "state.zip") as archive:
+              member = archive.getinfo("oe-private-history-state.pmi")
+              if member.file_size > 1024 * 1024 * 1024:
+                  raise SystemExit("Encrypted state exceeds restore size limit")
+              with archive.open(member) as source, (root / "state.pmi").open("wb") as target:
+                  shutil.copyfileobj(source, target)
+          PY
+          python -m pro_meta_intelligence restore-private-oe-archive --input outputs/draft-holdout/state.pmi --archive-dir outputs/draft-holdout/raw --report outputs/draft-holdout/restore.json
+      - name: Prepare a holdout strictly after the previous pilot outcome capture
+        run: >-
+          python -m pro_meta_intelligence.backtest.draft_dataset
+          --archive outputs/draft-holdout/raw
+          --observed-after 2026-08-25T06:39:37.755251+00:00
+          --output outputs/draft-holdout/dataset.json
+      - name: Compare frozen production and role experiment
+        working-directory: web
+        run: >-
+          npm run benchmark:draft -- ../outputs/draft-holdout/dataset.json
+          ../outputs/draft-holdout/result.json --role-experiment
+      - name: Publish aggregate metrics only
+        uses: actions/upload-artifact@v7
+        with:
+          name: draft-holdout-summary-${{ github.run_id }}
+          path: outputs/draft-holdout/result.summary.json
+          if-no-files-found: error
+          retention-days: 90
