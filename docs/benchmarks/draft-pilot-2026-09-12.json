@@ -1,0 +1,139 @@
+{
+  "schema_version": "1",
+  "artifact_type": "draft-historical-benchmark",
+  "model_version": "fearless-preview-v2",
+  "status": "PILOT_COMPLETE",
+  "fixture_only": false,
+  "scope": "FIRST_SET_IMMEDIATE_OPPONENT_PICK",
+  "match_count": 4,
+  "case_count": 28,
+  "source_pair_count": 2,
+  "model": {
+    "cases": 28,
+    "covered": 28,
+    "top1_hits": 0,
+    "top3_hits": 3,
+    "reciprocal_rank_sum": 1.3333333333333333,
+    "illegal_candidates": 0,
+    "emitted_candidates": 84,
+    "coverage": 1,
+    "top1_accuracy": 0,
+    "top3_recall": 0.107143,
+    "mrr_at_3": 0.047619,
+    "illegal_candidate_rate": 0
+  },
+  "baseline": {
+    "cases": 28,
+    "covered": 25,
+    "top1_hits": 1,
+    "top3_hits": 3,
+    "reciprocal_rank_sum": 1.8333333333333333,
+    "illegal_candidates": 0,
+    "emitted_candidates": 69,
+    "coverage": 0.892857,
+    "top1_accuracy": 0.035714,
+    "top3_recall": 0.107143,
+    "mrr_at_3": 0.065476,
+    "illegal_candidate_rate": 0
+  },
+  "top3_recall_delta": 0,
+  "by_league": [
+    {
+      "league": "LCKC",
+      "matches": 1,
+      "model": {
+        "cases": 7,
+        "covered": 7,
+        "top1_hits": 0,
+        "top3_hits": 1,
+        "reciprocal_rank_sum": 0.5,
+        "illegal_candidates": 0,
+        "emitted_candidates": 21,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0.142857,
+        "mrr_at_3": 0.071429,
+        "illegal_candidate_rate": 0
+      },
+      "baseline": {
+        "cases": 7,
+        "covered": 7,
+        "top1_hits": 0,
+        "top3_hits": 1,
+        "reciprocal_rank_sum": 0.3333333333333333,
+        "illegal_candidates": 0,
+        "emitted_candidates": 21,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0.142857,
+        "mrr_at_3": 0.047619,
+        "illegal_candidate_rate": 0
+      }
+    },
+    {
+      "league": "LCS",
+      "matches": 1,
+      "model": {
+        "cases": 7,
+        "covered": 7,
+        "top1_hits": 0,
+        "top3_hits": 1,
+        "reciprocal_rank_sum": 0.3333333333333333,
+        "illegal_candidates": 0,
+        "emitted_candidates": 21,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0.142857,
+        "mrr_at_3": 0.047619,
+        "illegal_candidate_rate": 0
+      },
+      "baseline": {
+        "cases": 7,
+        "covered": 7,
+        "top1_hits": 0,
+        "top3_hits": 1,
+        "reciprocal_rank_sum": 0.5,
+        "illegal_candidates": 0,
+        "emitted_candidates": 21,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0.142857,
+        "mrr_at_3": 0.071429,
+        "illegal_candidate_rate": 0
+      }
+    },
+    {
+      "league": "LEC",
+      "matches": 2,
+      "model": {
+        "cases": 14,
+        "covered": 14,
+        "top1_hits": 0,
+        "top3_hits": 1,
+        "reciprocal_rank_sum": 0.5,
+        "illegal_candidates": 0,
+        "emitted_candidates": 42,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0.071429,
+        "mrr_at_3": 0.035714,
+        "illegal_candidate_rate": 0
+      },
+      "baseline": {
+        "cases": 14,
+        "covered": 11,
+        "top1_hits": 1,
+        "top3_hits": 1,
+        "reciprocal_rank_sum": 1,
+        "illegal_candidates": 0,
+        "emitted_candidates": 27,
+        "coverage": 0.785714,
+        "top1_accuracy": 0.071429,
+        "top3_recall": 0.071429,
+        "mrr_at_3": 0.071429,
+        "illegal_candidate_rate": 0
+      }
+    }
+  ],
+  "boundary": "Pilot only. First sets and immediate opposite-side pick responses only; all eligible states, including abstentions, are in the denominator. Cases within a match are correlated. No multi-set Fearless, counterfactual, calibrated probability, or superiority claim."
+}

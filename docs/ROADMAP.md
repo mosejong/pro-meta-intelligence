@@ -240,9 +240,11 @@ output remain separate validation gates rather than being implied by the interfa
    frontend and Python CI passed on the merged revision. [Pages deployment](https://github.com/mosejong/pro-meta-intelligence/actions/runs/34680850766)
    succeeded. The public `/draft/` page and its script returned HTTP 200, with the v2 model and session
    storage code present. Frontend validation covered 35 tests plus 2 Pages tests and lint.
-4. **Prediction evaluation — next:** assemble historical draft states with strictly earlier source
-   cutoffs, separate training/candidate data from outcomes, and measure top-3 recall against a simple
-   team-frequency baseline. Do not score on the same recent games used to construct the snapshot.
+4. **Prediction evaluation — pilot completed:** the production preview was evaluated against
+   strictly earlier archived sources on 4 real first-set drafts / 28 immediate opponent-pick states.
+   Top-3 recall was 10.7%, equal to the same-report team-frequency baseline; no superiority claim.
+   [Protocol, results and reproduction](DRAFT_PREDICTION_BENCHMARK.md). Expand independent held-out
+   matches before assessing improvements; multi-set Fearless remains unevaluated.
 5. **Role/composition knowledge — after evaluation:** add maintained champion-role evidence, explicit
    flex-pick handling and validated counter data; compare measured benefit before expanding the model.
 
