@@ -91,3 +91,15 @@ def test_corrupt_or_insufficient_archive_fails_closed(tmp_path):
     snapshot.data_path.write_bytes(b"corrupt")
     with pytest.raises(ValueError, match="integrity"):
         prepare_dataset(tmp_path)
+
+
+def test_new_holdout_excludes_all_matches_at_or_before_boundary(tmp_path):
+    build_archive(tmp_path)
+    boundary = datetime(2026, 8, 25, 10, tzinfo=UTC)
+    result = prepare_dataset(tmp_path, observed_after=boundary)
+    assert result["matches"] == []
+    assert result["audit"]["observed_after"] == boundary.isoformat()
+    assert result["audit"]["exclusions"] == {"BEFORE_OR_AT_HOLDOUT_BOUNDARY": 2}
+    assert len(prepare_dataset(tmp_path, observed_after=START)["matches"]) == 1
+    with pytest.raises(ValueError, match="timezone"):
+        prepare_dataset(tmp_path, observed_after=datetime(2026, 8, 25))

@@ -8,7 +8,8 @@ test("historical draft evaluation measures the production preview and rejects le
   const vite = await createServer({ root: fileURLToPath(new URL("../", import.meta.url)), configFile: false, publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
   try {
     const { evaluateDraftBenchmark } = await vite.ssrLoadModule("/app/draft-benchmark.ts");
-    const { applyDraftSelection, STANDARD_DRAFT_SEQUENCE } = await vite.ssrLoadModule("/app/draft-agent.ts");
+    const { applyDraftSelection, previewOpponentPick, STANDARD_DRAFT_SEQUENCE } = await vite.ssrLoadModule("/app/draft-agent.ts");
+    const { canAssignDistinctRoles, observedChampionRoles, previewRoleExperiment } = await vite.ssrLoadModule("/app/draft-role-experiment.ts");
     const report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
     report.fixture_only = true;
     report.opponent_prep.fixture_only = true;
@@ -32,6 +33,32 @@ test("historical draft evaluation measures the production preview and rejects le
         observed_at: new Date(Date.parse(report.cutoff) + 86400000).toISOString(), outcome_retrieved_at: new Date(Date.parse(report.cutoff) + 172800000).toISOString(),
         outcome_source_hash: `sha256:${"b".repeat(64)}`, blue_team_id: blue.team_id, red_team_id: red.team_id, selections }],
     };
+    await t.test("role matching preserves flex alternatives and unknown picks", () => {
+      const roles = new Map([["flex", new Set(["TOP", "MID"])], ["mid", new Set(["MID"])], ["top", new Set(["TOP"])]]);
+      assert.equal(canAssignDistinctRoles(["Flex", "Mid"], roles), true);
+      assert.equal(canAssignDistinctRoles(["Flex", "Mid", "Top"], roles), false);
+      assert.equal(canAssignDistinctRoles(["Flex", "Mid", "Unknown"], roles), true);
+      assert.equal(canAssignDistinctRoles(["A", "B", "C", "D", "E", "F"], roles), false);
+    });
+    await t.test("observed role feasibility reranks the full legal pool without changing production", () => {
+      const clone = structuredClone(report);
+      const [b, r] = clone.opponent_prep.teams;
+      b.recent_games = [];
+      r.recent_games = [];
+      const roleOrder = ["TOP", "JUNGLE", "MID", "MID", "BOTTOM"];
+      r.priority_picks.forEach((pick, index) => { pick.role = roleOrder[index]; });
+      r.priority_picks.push({ ...r.priority_picks[4], champion_id: "Red6", role: "SUPPORT", game_rate: 0.05 });
+      const before = JSON.stringify(clone);
+      assert.deepEqual(previewOpponentPick(clone, b, r, selections.slice(0, 15), selections[15].champion_id).candidates.map((item) => item.champion_id), ["Red4", "Red5", "Red6"]);
+      const result = previewRoleExperiment(clone, b, r, selections.slice(0, 15), selections[15].champion_id);
+      assert.deepEqual(result.candidates.map((item) => item.champion_id), ["Red5", "Red6", "Red4"]);
+      assert.equal(JSON.stringify(clone), before);
+      r.priority_picks.push({ ...r.priority_picks[3], role: "SUPPORT" });
+      assert.deepEqual([...observedChampionRoles(clone, r).get("red4")].sort(), ["MID", "SUPPORT"]);
+      assert.equal(previewRoleExperiment(clone, b, r, selections.slice(0, 15), selections[15].champion_id).candidates[0].champion_id, "Red4");
+      const withLock = previewRoleExperiment(clone, b, r, selections.slice(0, 15), selections[15].champion_id, ["Red4"]);
+      assert.equal(withLock.candidates.some((item) => item.champion_id === "Red4"), false);
+    });
     await t.test("known ranks, legal candidates, all seven immediate responses and deterministic output", () => {
       const before = JSON.stringify(dataset);
       const result = evaluateDraftBenchmark(dataset);
@@ -50,6 +77,23 @@ test("historical draft evaluation measures the production preview and rejects le
       const reordered = structuredClone(dataset);
       reordered.snapshots[0].report.opponent_prep.teams.forEach((team) => team.priority_picks.reverse());
       assert.deepEqual(evaluateDraftBenchmark(reordered), result);
+    });
+    await t.test("experimental evaluation is explicit, reproducible and never promoted", () => {
+      const result = evaluateDraftBenchmark(dataset, { roleExperiment: true });
+      assert.equal(result.role_experiment.version, "observed-role-feasibility-v1");
+      assert.equal(result.role_experiment.deployed, false);
+      assert.equal(result.role_experiment.metrics.cases, 7);
+      assert.equal(result.role_experiment.metrics.illegal_candidates, 0);
+      assert.equal(result.role_experiment.by_league_patch[0].matches, 1);
+      assert.deepEqual(evaluateDraftBenchmark(dataset, { roleExperiment: true }), result);
+      assert.equal(evaluateDraftBenchmark(dataset).role_experiment, undefined);
+      const invalid = structuredClone(dataset);
+      invalid.snapshots[0].report.opponent_prep.teams[0].recent_games = [{
+        match_id: "future-role-game", observed_at: dataset.matches[0].observed_at,
+        league: "TEST", tournament: "TEST", side: "BLUE", opponent_team_id: red.team_id,
+        opponent_team_name: red.team_name, result: "WIN", first_pick: true, picks: [],
+      }];
+      assert.throws(() => evaluateDraftBenchmark(invalid, { roleExperiment: true }), /Future role evidence/);
     });
     await t.test("rank two contributes half reciprocal rank, not a top-one hit", () => {
       const ranked = structuredClone(dataset);
