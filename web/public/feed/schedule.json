@@ -1,60 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-13T04:43:32.800443+00:00",
+  "available_at": "2026-09-13T13:17:40.072241+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:3b1bdb170db30c2279fa7f22475477e547dfa164738c467ab1d021bd4cc484fd",
+  "content_hash": "sha256:a8739c3d57ab767c320baa3cdf2060964f75a9f94ed873917425534138e67a60",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Finals",
-      "event_id": "lolesports:cae7b07b614a8e078271",
-      "league": "LCK",
-      "participants": [
-        {
-          "code": "HLE",
-          "name": "Hanwha Life Esports"
-        },
-        {
-          "code": "GEN",
-          "name": "Gen.G Esports"
-        }
-      ],
-      "start_at": "2026-09-13T05:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Finals",
-      "event_id": "lolesports:5f6067dfecdc059280b9",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "AL",
-          "name": "Anyone's Legend"
-        },
-        {
-          "code": "BLG",
-          "name": "BILIBILI GAMING"
-        }
-      ],
-      "start_at": "2026-09-13T09:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:0869c8433c310f2e4a01",
-      "league": "LCS",
-      "participants": [
-        {
-          "code": "SEN",
-          "name": "Sentinels"
-        },
-        {
-          "code": "FLY",
-          "name": "FlyQuest"
-        }
-      ],
-      "start_at": "2026-09-13T20:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Regional Qualifier",
@@ -92,12 +41,12 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:f2d2dba911b1e3cfa31a",
+      "event_id": "lolesports:6b949ca2f9f3019f0438",
       "league": "LEC",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "MKOI",
+          "name": "Movistar KOI"
         },
         {
           "code": "NAVI",
@@ -109,7 +58,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:7c531c77f147b952f70d",
+      "event_id": "lolesports:6f7ca06726da8c0f08ce",
       "league": "LCS",
       "participants": [
         {
@@ -117,8 +66,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "SR",
+          "name": "Shopify Rebellion"
         }
       ],
       "start_at": "2026-09-18T20:00:00+00:00"
@@ -160,12 +109,12 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:30dcfc0c2f3e8bac8d55",
+      "event_id": "lolesports:6ec12456ffd040e7f463",
       "league": "LCS",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "C9",
+          "name": "Cloud9 Kia"
         },
         {
           "code": "LYON",
@@ -304,10 +253,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 17,
-    "tbd_participant_count": 23
+    "event_count": 14,
+    "tbd_participant_count": 20
   },
-  "retrieved_at": "2026-09-13T04:43:32.800443+00:00",
+  "retrieved_at": "2026-09-13T13:17:40.072241+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
