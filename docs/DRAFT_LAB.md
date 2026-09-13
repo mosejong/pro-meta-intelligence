@@ -99,6 +99,11 @@ The [first historical opponent-preview pilot](DRAFT_PREDICTION_BENCHMARK.md) is 
 team-frequency baseline. This does not validate prediction quality or later-set Fearless.
 Expand independent holdouts before evaluating changes to the model.
 
+The [observed-role experiment](DRAFT_ROLE_EXPERIMENT.md) has now been compared on a separate
+28-match / 196-state holdout: top-three recall 15.31% versus production v2's 11.73%.
+This remains an offline experiment because the sample covers one patch and no LCK matches;
+the public preview and saved-session model version remain v2.
+
 The next Draft Lab gates are:
 
 1. add a format registry for tournament-specific exceptions to Hard Fearless;

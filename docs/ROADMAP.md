@@ -245,8 +245,15 @@ output remain separate validation gates rather than being implied by the interfa
    Top-3 recall was 10.7%, equal to the same-report team-frequency baseline; no superiority claim.
    [Protocol, results and reproduction](DRAFT_PREDICTION_BENCHMARK.md). Expand independent held-out
    matches before assessing improvements; multi-set Fearless remains unevaluated.
-5. **Role/composition knowledge — after evaluation:** add maintained champion-role evidence, explicit
-   flex-pick handling and validated counter data; compare measured benefit before expanding the model.
+5. **Observed role/flex experiment — evaluated offline:**
+   [PR #76](https://github.com/mosejong/pro-meta-intelligence/pull/76) adds role-assignment feasibility
+   while retaining flex alternatives and unknown roles. On a new, non-overlapping 28-match /
+   196-state holdout, top-three recall was 15.31% versus production's 11.73% and frequency's 9.18%.
+   [Full results](DRAFT_ROLE_EXPERIMENT.md). All matches are patch 16.16; none are LCK, LPL or LEC.
+   Keep production v2 as default until prospective, cross-patch and target-league evidence exists.
+6. **Next:** collect new unseen matches with LCK/T1 and additional-patch coverage, evaluate the
+   frozen role experiment, then decide whether to expose it in the public preview. Composition,
+   counters and later-set Fearless evaluation still require maintained supporting evidence.
 
 Validation note: the current frontend build and test scripts are release checks. An additional
 whole-project TypeScript check found existing errors outside the Draft Lab files (decision outcomes,
