@@ -51,6 +51,39 @@ LCK/T1 coverage alongside aggregate benchmark results. Source files and per-matc
 on the ephemeral runner. Collection gaps and later-set restrictions remain visible rather than
 being removed to manufacture a larger score.
 
+### Executed audit and expanded replay — September 14
+
+The [hosted run](https://github.com/mosejong/pro-meta-intelligence/actions/runs/34795406755)
+completed on the First Selection implementation in PR #78. The unchanged
+[comparison aggregate](benchmarks/draft-first-selection-2026-09-14.json) and
+[season coverage aggregate](benchmarks/draft-lck-t1-coverage-2026-09-14.json) preserve its results.
+Five verified captures span August 23–31; this is archived season evidence, not September or
+Worlds match coverage. The original holdout boundary remains August 25 at 06:39:37.755251 UTC.
+
+The expanded replay contains **39 first-set matches / 273 states** on patch 16.16. It includes
+the previously evaluated 28 Blue-first matches plus 11 newly supported Red-first matches.
+It is an overlapping coverage correction, not 39 new independent holdout matches. Ranking
+formulas were not retuned, and the previous aggregate remains unchanged.
+
+| Metric | Production v2 | Role experiment v1 | Team-frequency baseline |
+| --- | ---: | ---: | ---: |
+| Overall top-three hits | 34/273 (12.45%) | 42/273 (15.38%) | 28/273 (10.26%) |
+| Overall top-one hits | 8/273 (2.93%) | 13/273 (4.76%) | 11/273 (4.03%) |
+| Overall MRR at three | 0.066545 | 0.089744 | 0.065324 |
+| LCK top-three hits | 4/35 (11.43%) | 4/35 (11.43%) | 3/35 (8.57%) |
+
+All methods covered every state and emitted zero illegal candidates. The scored LCK subset
+contains five matches; only one scored match involves exact T1. Same-match states are correlated,
+and this small single-patch sample cannot establish target-team reliability. The experiment's
+overall gain does not carry over to LCK top-three recall: **keep production v2 as the default**.
+
+Removing the holdout date filter for the separate season eligibility audit yields seven eligible
+LCK matches from 469 imported, and two exact-T1 matches from 152 imported across competitions.
+These are coverage counts, not additional scored denominators. LCK exclusions are 290 matches
+without confirmed first-set labels and 172 without an earlier capture; T1 exclusions are 93 and
+57 respectively. Eligibility is limited by archived evidence and the first-set evaluation scope,
+not by waiting for another LCK fixture. Later-set Fearless remains unevaluated.
+
 Next priorities are to verify Worlds event rules and patch when available, maintain the confirmed
 participant snapshot, expand same-patch opponent role evidence, and evaluate the frozen role
 experiment on disjoint data. First Selection support does not establish every Worlds rule or

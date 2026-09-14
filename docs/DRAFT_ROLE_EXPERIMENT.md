@@ -52,6 +52,11 @@ performance claim. The original pilot remains unchanged in its committed aggrega
 
 ## Executed result — 2026-09-13 KST
 
+**Coverage correction, September 14:** the result below used Blue-first drafts only. The engine
+now supports Red-first under First Selection. The [expanded replay and LCK/T1 audit](WORLDS_PREPARATION.md#executed-audit-and-expanded-replay--september-14)
+contains these same 28 matches plus 11 newly supported matches; it is not a separate 39-match
+unseen test. LCK top-three recall ties production at 4/35. The experiment remains offline.
+
 The [hosted evaluation](https://github.com/mosejong/pro-meta-intelligence/actions/runs/34701262868)
 completed successfully on revision `2108d4ad01d5bf0f4523bdd073a450950ca5aeb3`, using encrypted
 archive artifact `10296214595`. The implementation was frozen in

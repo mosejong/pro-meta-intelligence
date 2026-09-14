@@ -251,9 +251,13 @@ output remain separate validation gates rather than being implied by the interfa
    196-state holdout, top-three recall was 15.31% versus production's 11.73% and frequency's 9.18%.
    [Full results](DRAFT_ROLE_EXPERIMENT.md). All matches are patch 16.16; none are LCK, LPL or LEC.
    Keep production v2 as default while expanding cross-patch and target-league validation.
-6. **Next — season-end correction (2026-09-14):** the user reports this year's LCK season is
-   finished. Do not make new LCK fixtures a prerequisite for progress. First audit existing
-   2026 LCK/T1 matches against the archived capture dates and explain why they were excluded.
+6. **Season-end audit — completed (2026-09-14):** the user reports this year's LCK season is
+   finished. Do not make new LCK fixtures a prerequisite for progress. Auditing existing
+   2026 LCK/T1 matches exposed the unsupported Red-first order. Corrected replay expands the
+   previous 28-match cohort to 39 matches / 273 states, including five LCK matches; it overlaps
+   the prior evaluation. LCK top-three hits tie at 4/35 for production and the role experiment.
+   The separate all-season eligibility audit finds seven LCK matches and two exact-T1 matches;
+   these are coverage counts, not the scored denominators. [Results](WORLDS_PREPARATION.md).
    Evaluate the frozen experiment on previously unscored matches only where genuinely earlier
    source captures exist. Then improve observed role/flex coverage and validate it on a separate
    historical partition. Matches without historical availability evidence can support role-data
