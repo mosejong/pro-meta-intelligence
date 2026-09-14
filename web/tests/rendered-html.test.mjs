@@ -251,6 +251,12 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   const response = await render("/draft");
   assert.equal(response.status, 200);
   const html = await response.text();
+  assert.match(html, /WORLDS 2026 · 준비실/);
+  assert.match(html, /대회 패치/);
+  assert.match(html, /레드 선픽/);
+  assert.match(html.replaceAll("<!-- -->", ""), /T1 vs BLG 연습/);
+  assert.match(html, /전체 출전 명단은 아직 미완성/);
+  assert.match(html, /진행 중인 밴픽은 유지됩니다/);
   assert.match(html, /DRAFT LAB · STANDARD 5 BAN \/ 5 PICK/);
   assert.match(html, /가상 밴픽 에이전트/);
   assert.match(html, /TURN 1 \/ 20/);

@@ -1,5 +1,5 @@
 import { championAssetId } from "./champion-assets";
-import { previewOpponentPick, STANDARD_DRAFT_SEQUENCE, type DraftSelection } from "./draft-agent";
+import { previewOpponentPick, draftSequence, type DraftSelection } from "./draft-agent";
 import type { OpponentTeam, RadarReport } from "./radar-types";
 
 // Frozen before examining the expanded holdout. This is not the deployed model.
@@ -35,7 +35,7 @@ export function canAssignDistinctRoles(champions: string[], roles: Map<string, S
 export function previewRoleExperiment(report: RadarReport, blue: OpponentTeam, red: OpponentTeam, selections: DraftSelection[], stagedChampion: string, previousPicks: string[] = []) {
   const preview = previewOpponentPick(report, blue, red, selections, stagedChampion, previousPicks, 200);
   if (preview.status !== "READY") return preview;
-  const targetSide = STANDARD_DRAFT_SEQUENCE[preview.target_turn! - 1].side;
+  const targetSide = draftSequence(selections[0]?.side ?? "BLUE")[preview.target_turn! - 1].side;
   const targetTeam = targetSide === "BLUE" ? blue : red;
   const roles = observedChampionRoles(report, targetTeam);
   const ownPicks = selections.filter((item) => item.kind === "PICK" && item.side === targetSide).map((item) => item.champion_id);

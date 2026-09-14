@@ -74,6 +74,17 @@ jobs:
           --archive outputs/draft-holdout/raw
           --observed-after 2026-08-25T06:39:37.755251+00:00
           --output outputs/draft-holdout/dataset.json
+      - name: Audit all archived LCK and T1 matches independently of the holdout boundary
+        run: |
+          python -m pro_meta_intelligence.backtest.draft_dataset --archive outputs/draft-holdout/raw --output outputs/draft-holdout/all-dataset.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("outputs/draft-holdout")
+          audit = json.loads((root / "all-dataset.json").read_text())["audit"]
+          audit["coverage"] = {key: value for key, value in audit["coverage"].items() if key in {"LEAGUE:LCK", "TEAM:T1"}}
+          (root / "lck-t1-coverage.json").write_text(json.dumps(audit, indent=2) + "\n")
+          PY
       - name: Compare frozen production and role experiment
         working-directory: web
         run: >-
@@ -83,6 +94,8 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: draft-holdout-summary-${{ github.run_id }}
-          path: outputs/draft-holdout/result.summary.json
+          path: |
+            outputs/draft-holdout/result.summary.json
+            outputs/draft-holdout/lck-t1-coverage.json
           if-no-files-found: error
           retention-days: 90

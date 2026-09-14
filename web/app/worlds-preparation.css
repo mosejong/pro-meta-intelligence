@@ -1,0 +1,24 @@
+.worlds-preparation { margin: 0 0 1.5rem; border: 1px solid var(--ink); background: #fff; color: var(--ink); }
+.draft-first-selection { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem; font-size: 1rem; }
+.draft-first-selection select { min-height: 44px; padding: .5rem; font-size: 1rem; background: white; color: var(--ink); border: 1px solid var(--ink); }
+.draft-first-selection span { font-size: .875rem; }
+.worlds-preparation summary { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; padding: 1rem; cursor: pointer; background: #f0ff9a; }
+.worlds-preparation summary strong { font-size: 1.125rem; }
+.worlds-preparation summary span { font-size: .875rem; }
+.worlds-preparation-content { padding: 1rem; }
+.worlds-preparation-content > p { margin: 0 0 1rem; font-size: 1rem; line-height: 1.6; }
+.worlds-preparation-status { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.worlds-preparation-status span { padding-left: .75rem; border-left: 3px solid var(--violet); font-size: .875rem; line-height: 1.5; overflow-wrap: anywhere; }
+.worlds-preparation-status b { display: block; margin-bottom: .25rem; }
+.worlds-opponents { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+.worlds-opponents article { display: flex; flex-direction: column; gap: .5rem; padding: 1rem; border: 1px solid #d8d8d3; min-width: 0; }
+.worlds-opponents header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+.worlds-opponents strong { font-size: 1.25rem; }
+.worlds-opponents p, .worlds-opponents header span { margin: 0; font-size: .875rem; line-height: 1.5; overflow-wrap: anywhere; }
+.worlds-opponents button { margin-top: auto; min-height: 44px; padding: .6rem; border: 1px solid var(--ink); background: var(--ink); color: #fff; font-size: .875rem; cursor: pointer; }
+.worlds-opponents button:disabled { background: #e3e3df; color: #65655e; cursor: default; }
+.worlds-opponents button:focus-visible, .worlds-preparation summary:focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
+.worlds-preparation-content .worlds-preparation-sources { margin-bottom: 0; font-size: .875rem; }
+.worlds-preparation-sources a { text-decoration: underline; margin-left: .25rem; }
+@media (max-width: 900px) { .worlds-opponents { grid-template-columns: repeat(2, minmax(0, 1fr)); } .worlds-preparation-status { grid-template-columns: 1fr; } }
+@media (max-width: 540px) { .worlds-opponents { grid-template-columns: 1fr; } }

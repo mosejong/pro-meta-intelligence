@@ -24,13 +24,22 @@ def ordered_draft(events: list[PickBanEvent]) -> list[dict] | None:
     """OE sequences picks and bans separately; never interpret role order as pick order."""
     if len(events) != 20:
         return None
+    first_picks = [
+        event for event in events if event.action is DraftAction.PICK and event.sequence == 1
+    ]
+    if len(first_picks) != 1:
+        return None
+    first_side = first_picks[0].side.value
     ordered = {}
     for event in events:
         mapping = PICK_TURNS if event.action is DraftAction.PICK else BAN_TURNS
         turn = mapping.get(event.sequence)
         if turn is None or turn in ordered:
             return None
-        if event.side.value != ("BLUE" if turn in BLUE_TURNS else "RED"):
+        expected_side = (
+            first_side if turn in BLUE_TURNS else ("RED" if first_side == "BLUE" else "BLUE")
+        )
+        if event.side.value != expected_side:
             return None
         ordered[turn] = event
     counters: Counter = Counter()
@@ -90,15 +99,40 @@ def prepare_dataset(archive_root: Path, *, observed_after: datetime | None = Non
     for event in outcome.draft_events:
         by_match[event.match_id].append(event)
     exclusions: Counter = Counter()
+    coverage = {}
+
+    def exclude(reason, groups):
+        exclusions[reason] += 1
+        for group in groups:
+            group["exclusions"][reason] += 1
+
     snapshots = {}
     matches = []
     regions = LeagueRegionMap.load_default()
     for match in sorted(outcome.matches, key=lambda item: (item.observed_at, item.match_id)):
+        labels = [f"LEAGUE:{match.league}"]
+        if "T1" in {match.blue_team_name, match.red_team_name}:
+            labels.append("TEAM:T1")
+        groups = []
+        for label in labels:
+            group = coverage.setdefault(
+                label,
+                {
+                    "imported_matches": 0,
+                    "eligible_matches": 0,
+                    "exclusions": Counter(),
+                    "first_observed_at": match.observed_at.isoformat(),
+                    "last_observed_at": match.observed_at.isoformat(),
+                },
+            )
+            group["imported_matches"] += 1
+            group["last_observed_at"] = match.observed_at.isoformat()
+            groups.append(group)
         if observed_after is not None and match.observed_at <= observed_after:
-            exclusions["BEFORE_OR_AT_HOLDOUT_BOUNDARY"] += 1
+            exclude("BEFORE_OR_AT_HOLDOUT_BOUNDARY", groups)
             continue
         if match.match_id not in first_games:
-            exclusions["NOT_CONFIRMED_FIRST_SET"] += 1
+            exclude("NOT_CONFIRMED_FIRST_SET", groups)
             continue
         prior = [
             index
@@ -106,18 +140,18 @@ def prepare_dataset(archive_root: Path, *, observed_after: datetime | None = Non
             if item.retrieved_at < match.observed_at
         ]
         if not prior:
-            exclusions["NO_EARLIER_CAPTURE"] += 1
+            exclude("NO_EARLIER_CAPTURE", groups)
             continue
         index = prior[-1]
         capture, imported = captures[index], imports[index]
         if capture.content_hash == outcome_capture.content_hash:
-            exclusions["NO_DISTINCT_OUTCOME_SOURCE"] += 1
+            exclude("NO_DISTINCT_OUTCOME_SOURCE", groups)
             continue
         if any(item.match_id == match.match_id for item in imported.matches):
             raise ValueError("target match is already present in the candidate source")
         selections = ordered_draft(by_match[match.match_id])
         if selections is None:
-            exclusions["INCOMPLETE_OR_NONSTANDARD_DRAFT"] += 1
+            exclude("INCOMPLETE_OR_NONSTANDARD_DRAFT", groups)
             continue
         snapshot_id = f"{capture.content_hash}:{match.patch_id}"
         if snapshot_id not in snapshots:
@@ -144,7 +178,7 @@ def prepare_dataset(archive_root: Path, *, observed_after: datetime | None = Non
             except ValueError as error:
                 if "patch" not in str(error) or "no matches" not in str(error):
                     raise
-                exclusions["NO_SAME_PATCH_TRAINING"] += 1
+                exclude("NO_SAME_PATCH_TRAINING", groups)
                 continue
             snapshots[snapshot_id] = {
                 "id": snapshot_id,
@@ -156,13 +190,16 @@ def prepare_dataset(archive_root: Path, *, observed_after: datetime | None = Non
             team["team_id"] for team in snapshots[snapshot_id]["report"]["opponent_prep"]["teams"]
         }
         if not {match.blue_team_id, match.red_team_id} <= teams:
-            exclusions["TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE"] += 1
+            exclude("TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE", groups)
             continue
+        for group in groups:
+            group["eligible_matches"] += 1
         matches.append(
             {
                 "snapshot_id": snapshot_id,
                 "match_id": match.match_id,
                 "game_number": 1,
+                "first_pick_side": selections[0]["side"],
                 "league": match.league,
                 "patch_id": match.patch_id,
                 "observed_at": match.observed_at.isoformat(),
@@ -187,6 +224,10 @@ def prepare_dataset(archive_root: Path, *, observed_after: datetime | None = Non
             "outcome_rejected_matches": outcome.report.rejected_game_count,
             "eligible_matches": len(matches),
             "exclusions": dict(sorted(exclusions.items())),
+            "coverage": {
+                label: {**group, "exclusions": dict(sorted(group["exclusions"].items()))}
+                for label, group in sorted(coverage.items())
+            },
             "first_capture_at": captures[0].retrieved_at.isoformat(),
             "last_capture_at": outcome_capture.retrieved_at.isoformat(),
         },

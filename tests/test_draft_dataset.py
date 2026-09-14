@@ -10,6 +10,7 @@ from pro_meta_intelligence.backtest.draft_dataset import (
     prepare_dataset,
 )
 from pro_meta_intelligence.ingestion.oracles_elixir import OracleElixirCSVAdapter
+from pro_meta_intelligence.models import Side
 from pro_meta_intelligence.sources import RawSourceArtifact, SnapshotArchive, SourceRegistry
 
 FIXTURE = Path(__file__).parent / "fixtures" / "oracles_elixir_game.csv"
@@ -33,6 +34,16 @@ def test_draft_order_uses_pick_and_ban_sequences_separately():
     assert ordered_draft(events[:-1]) is None
     assert ordered_draft([events[0], *events[:-1]]) is None
     assert ordered_draft([replace(events[0], sequence=99), *events[1:]]) is None
+    red_first = ordered_draft(
+        [
+            replace(event, side=Side.RED if event.side is Side.BLUE else Side.BLUE)
+            for event in events
+        ]
+    )
+    assert red_first is not None
+    assert red_first[0]["side"] == "RED"
+    assert red_first[6]["side"] == "RED"
+    assert red_first[16]["side"] == "BLUE"
 
 
 def test_first_set_requires_consistent_provider_rows(tmp_path):
@@ -80,6 +91,11 @@ def test_holdout_uses_actual_earlier_capture_and_excludes_training_matches(tmp_p
         for team in snapshot["report"]["opponent_prep"]["teams"]
     )
     assert result["audit"]["exclusions"] == {"NO_EARLIER_CAPTURE": 1}
+    league = result["audit"]["coverage"]["LEAGUE:LCK"]
+    assert league["imported_matches"] == 2
+    assert league["eligible_matches"] == 1
+    assert league["exclusions"] == {"NO_EARLIER_CAPTURE": 1}
+    assert "TEAM:T1" not in result["audit"]["coverage"]
     assert prepare_dataset(tmp_path) == result
 
 
@@ -100,6 +116,7 @@ def test_new_holdout_excludes_all_matches_at_or_before_boundary(tmp_path):
     assert result["matches"] == []
     assert result["audit"]["observed_after"] == boundary.isoformat()
     assert result["audit"]["exclusions"] == {"BEFORE_OR_AT_HOLDOUT_BOUNDARY": 2}
+    assert result["audit"]["coverage"]["LEAGUE:LCK"]["eligible_matches"] == 0
     assert len(prepare_dataset(tmp_path, observed_after=START)["matches"]) == 1
     with pytest.raises(ValueError, match="timezone"):
         prepare_dataset(tmp_path, observed_after=datetime(2026, 8, 25))
