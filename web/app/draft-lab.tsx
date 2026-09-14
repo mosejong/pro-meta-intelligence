@@ -15,6 +15,7 @@ import {
   isChampionLocked,
   nextDraftTurn,
   serializeDraftScenario,
+  draftSequence,
   STANDARD_DRAFT_SEQUENCE,
   type DraftActionKind,
   type DraftAgentOption,
@@ -25,6 +26,7 @@ import {
 import { productSpaceHref, type ProductSpace } from "./product-space";
 import { MAX_DRAFT_FILE_BYTES, parseDraftSession, readLocalDraft, writeLocalDraft, type DraftSession } from "./draft-session";
 import type { OpponentTeam, RadarReport } from "./radar-types";
+import { WorldsPreparationPanel } from "./worlds-preparation-panel";
 
 type DraftLabProps = {
   currentSpace: ProductSpace;
@@ -114,6 +116,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [blueTeamId, setBlueTeamId] = useState(t1?.team_id ?? teams[0]?.team_id ?? "");
   const [redTeamId, setRedTeamId] = useState(defaultOpponent?.team_id ?? teams[1]?.team_id ?? "");
   const [selections, setSelections] = useState<DraftSelection[]>([]);
+  const [firstPickSide, setFirstPickSide] = useState<DraftSide>("BLUE");
   const [query, setQuery] = useState("");
   const [pendingChampion, setPendingChampion] = useState<string | null>(null);
   const [timer, setTimer] = useState(30);
@@ -124,13 +127,13 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [importMessage, setImportMessage] = useState("");
   const blueTeam = teams.find((team) => team.team_id === blueTeamId) ?? null;
   const redTeam = teams.find((team) => team.team_id === redTeamId) ?? null;
-  const turn = nextDraftTurn(selections);
+  const turn = nextDraftTurn(selections, firstPickSide);
   const frame = useMemo(
-    () => buildDraftAgentFrame(report, blueTeam, redTeam, selections, previousPicks),
-    [blueTeam, redTeam, report, selections, previousPicks],
+    () => buildDraftAgentFrame(report, blueTeam, redTeam, selections, previousPicks, firstPickSide),
+    [blueTeam, redTeam, report, selections, previousPicks, firstPickSide],
   );
-  const preview = useMemo(() => previewOpponentPick(report, blueTeam, redTeam, selections, pendingChampion, previousPicks),
-    [report, blueTeam, redTeam, selections, pendingChampion, previousPicks]);
+  const preview = useMemo(() => previewOpponentPick(report, blueTeam, redTeam, selections, pendingChampion, previousPicks, 3, firstPickSide),
+    [report, blueTeam, redTeam, selections, pendingChampion, previousPicks, firstPickSide]);
   const canSelect = sessionReady && !importing && Boolean(blueTeam && redTeam) && (Boolean(seriesReport) || feedLabel !== "FEED CONNECTING");
 
   const restoreSession = useCallback((session: DraftSession) => {
@@ -139,6 +142,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     setRedTeamId(session.redTeamId);
     setGames(session.games);
     setSelections(session.selections);
+    setFirstPickSide(session.firstPickSide);
     setPendingChampion(session.stagedChampion);
     setQuery("");
     setTimer(30);
@@ -167,12 +171,12 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     let active = true;
     const timeout = window.setTimeout(() => {
       setStorageMessage("기기에 저장 중…");
-      writeLocalDraft(serializeDraftScenario(seriesReport, blueTeam, redTeam, selections, games, pendingChampion))
+      writeLocalDraft(serializeDraftScenario(seriesReport, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide))
         .then(() => { if (active) setStorageMessage("이 기기에 저장됨 · 새로고침 후 이어서 분석할 수 있습니다."); })
         .catch(() => { if (active) setStorageMessage("기기 저장에 실패했습니다. JSON으로 저장하세요."); });
     }, 300);
     return () => { active = false; window.clearTimeout(timeout); };
-  }, [sessionReady, seriesReport, blueTeam, redTeam, selections, games, pendingChampion, importing]);
+  }, [sessionReady, seriesReport, blueTeam, redTeam, selections, games, pendingChampion, importing, firstPickSide]);
 
   useEffect(() => {
     if (!timerRunning || !turn || timer <= 0) return;
@@ -228,7 +232,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
   function confirmChampion() {
     if (!canSelect || !turn || !pendingChampion || !blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) return;
-    setSelections((current) => applyDraftSelection(current, pendingChampion, previousPicks));
+    setSelections((current) => applyDraftSelection(current, pendingChampion, previousPicks, firstPickSide));
     setPendingChampion(null);
     setTimer(30);
     setQuery("");
@@ -243,6 +247,14 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       setRedTeamId(teamId);
       if (teamId === blueTeamId) setBlueTeamId(teams.find((team) => team.team_id !== teamId)?.team_id ?? "");
     }
+    resetDraft();
+  }
+
+  function chooseWorldsOpponent(teamId: string) {
+    if (!canSelect || !t1 || games.length || selections.length || pendingChampion) return;
+    if (!teams.some((team) => team.team_id === teamId) || teamId === t1.team_id) return;
+    setBlueTeamId(t1.team_id);
+    setRedTeamId(teamId);
     resetDraft();
   }
 
@@ -274,6 +286,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     setRedTeamId(last.red_team_id);
     resetDraft();
     setSelections(last.selections);
+    setFirstPickSide(last.selections[0].side);
   }
 
   function resetSeries() {
@@ -284,7 +297,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
   function downloadScenario() {
     if (!blueTeam || !redTeam) return;
-    const blob = new Blob([serializeDraftScenario(report, blueTeam, redTeam, selections, games, pendingChampion)], { type: "application/json" });
+    const blob = new Blob([serializeDraftScenario(report, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -324,6 +337,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <aside><b>규칙 기반 V1</b><span>AI 자동판단 잠금</span><small>승률 예측이 아닌 코칭스태프 검토용 시나리오</small></aside>
     </section>
 
+    <WorldsPreparationPanel report={report} nameOf={nameOf} onChooseOpponent={chooseWorldsOpponent}
+      canChangeMatchup={canSelect && games.length === 0 && selections.length === 0 && !pendingChampion} />
+
     <section className="draft-match-setup" aria-label="밴픽 팀 설정" inert={!canSelect}>
       <label><span>BLUE TEAM</span><select disabled={games.length > 0} value={blueTeamId} onChange={(event) => changeTeam("BLUE", event.target.value)}>{teams.map((team) => <option value={team.team_id} key={team.team_id}>{team.team_name} · {team.leagues.join("/")}</option>)}</select></label>
       <button type="button" onClick={swapSides} aria-label="블루와 레드 팀 교체">⇄<small>진영 교체</small></button>
@@ -331,6 +347,13 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     </section>
 
     <section className="draft-series" aria-label="피어리스 시리즈">
+      <label className="draft-first-selection">선픽 진영
+        <select value={firstPickSide} disabled={!canSelect || selections.length > 0 || Boolean(pendingChampion)} onChange={(event) => {
+          const side = event.target.value;
+          if (side === "BLUE" || side === "RED") { setFirstPickSide(side); if (!seriesReport) setSeriesReport(structuredClone(report)); }
+        }}><option value="BLUE">블루 선픽</option><option value="RED">레드 선픽</option></select>
+        <span>진영과 선픽은 별도 선택 · 각 세트 시작 전에 설정</span>
+      </label>
       <header><h2>피어리스 · {games.length + 1}세트</h2><span>이전 세트 양 팀 픽 {previousPicks.length}개 자동 잠금 · 일반 밴은 세트마다 초기화</span></header>
       <p>분석 데이터 {seriesReport ? "고정됨" : "첫 선택 시 고정"} · 패치 {report.patch_id} · 기준 {report.cutoff} · {DRAFT_MODEL_VERSION}</p>
       <div className="draft-session-controls"><label>시나리오 불러오기<input type="file" accept=".json,application/json" disabled={!sessionReady || importing} onChange={(event) => void importScenario(event.currentTarget)} /></label><button type="button" onClick={downloadScenario} disabled={!canSelect}>시리즈 JSON 저장</button></div>
@@ -370,7 +393,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
           </div>
         </section>
         <div className="draft-actions"><button type="button" onClick={undo} disabled={!selections.length}>한 수 되돌리기</button><button type="button" onClick={resetDraft} disabled={!selections.length && !pendingChampion}>현재 세트 초기화</button><button type="button" onClick={downloadScenario} disabled={!selections.length && !games.length}>시나리오 JSON</button></div>
-        <ol className="draft-sequence-mini" aria-label="전체 밴픽 순서">{STANDARD_DRAFT_SEQUENCE.map((item, index) => <li className={index < selections.length ? "done" : index === selections.length ? "current" : ""} key={index}><span>{index + 1}</span><b>{item.side === "BLUE" ? "B" : "R"}{item.kind === "BAN" ? "B" : "P"}{item.slot}</b></li>)}</ol>
+        <ol className="draft-sequence-mini" aria-label="전체 밴픽 순서">{draftSequence(firstPickSide).map((item, index) => <li className={index < selections.length ? "done" : index === selections.length ? "current" : ""} key={index}><span>{index + 1}</span><b>{item.side === "BLUE" ? "B" : "R"}{item.kind === "BAN" ? "B" : "P"}{item.slot}</b></li>)}</ol>
       </section>
       <TeamDraftColumn side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} />
     </section>

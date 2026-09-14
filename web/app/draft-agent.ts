@@ -55,10 +55,10 @@ export function completeFearlessGame(games: DraftGame[], game: DraftGame) {
   const locks = fearlessLocks(games);
   let replay: DraftSelection[] = [];
   for (const selection of game.selections) {
-    const expected = nextDraftTurn(replay);
+    const expected = nextDraftTurn(replay, game.selections[0].side);
     if (!expected || selection.turn !== replay.length + 1 || selection.side !== expected.side ||
       selection.kind !== expected.kind || selection.slot !== expected.slot || selection.phase !== expected.phase) return games;
-    const next = applyDraftSelection(replay, selection.champion_id, locks);
+    const next = applyDraftSelection(replay, selection.champion_id, locks, game.selections[0].side);
     if (next === replay) return games;
     replay = next;
   }
@@ -226,8 +226,12 @@ function pickFirstDistinct(
   return candidateOption(lane, candidate, context);
 }
 
-export function nextDraftTurn(selections: DraftSelection[]) {
-  return STANDARD_DRAFT_SEQUENCE[selections.length] ?? null;
+export function draftSequence(firstPickSide: DraftSide = "BLUE"): readonly DraftTurn[] {
+  return firstPickSide === "BLUE" ? STANDARD_DRAFT_SEQUENCE : STANDARD_DRAFT_SEQUENCE.map((turn) => ({ ...turn, side: turn.side === "BLUE" ? "RED" : "BLUE" }));
+}
+
+export function nextDraftTurn(selections: DraftSelection[], firstPickSide: DraftSide = "BLUE") {
+  return draftSequence(selections[0]?.side ?? firstPickSide)[selections.length] ?? null;
 }
 
 export function isChampionLocked(selections: DraftSelection[], championId: string, previousPicks: string[] = []) {
@@ -235,8 +239,8 @@ export function isChampionLocked(selections: DraftSelection[], championId: strin
   return previousPicks.some((id) => keyOf(id) === key) || selections.some((selection) => keyOf(selection.champion_id) === key);
 }
 
-export function applyDraftSelection(selections: DraftSelection[], championId: string, previousPicks: string[] = []) {
-  const turn = nextDraftTurn(selections);
+export function applyDraftSelection(selections: DraftSelection[], championId: string, previousPicks: string[] = [], firstPickSide: DraftSide = "BLUE") {
+  const turn = nextDraftTurn(selections, firstPickSide);
   if (!turn || !championId.trim() || isChampionLocked(selections, championId, previousPicks)) return selections;
   return [...selections, { ...turn, turn: selections.length + 1, champion_id: championId }];
 }
@@ -247,8 +251,9 @@ export function buildDraftAgentFrame(
   redTeam: OpponentTeam | null,
   selections: DraftSelection[],
   previousPicks: string[] = [],
+  firstPickSide: DraftSide = "BLUE",
 ): DraftAgentFrame {
-  const turn = nextDraftTurn(selections);
+  const turn = nextDraftTurn(selections, firstPickSide);
   if (!blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) {
     return {
       status: "UNAVAILABLE",
@@ -316,21 +321,23 @@ export function previewOpponentPick(
   stagedChampion: string | null,
   previousPicks: string[] = [],
   candidateLimit = 3,
+  firstPickSide: DraftSide = "BLUE",
 ) {
-  const current = nextDraftTurn(selections);
+  const current = nextDraftTurn(selections, firstPickSide);
   const empty = { status: "UNAVAILABLE" as "UNAVAILABLE" | "READY" | "NO_FUTURE_PICK", team_name: "", target_turn: null as number | null, intervening_turns: 0, candidates: [] as DraftAgentOption[] };
   if (!current || !stagedChampion || !blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) return empty;
-  const hypothetical = applyDraftSelection(selections, stagedChampion, previousPicks);
+  const hypothetical = applyDraftSelection(selections, stagedChampion, previousPicks, firstPickSide);
   if (hypothetical === selections) return empty;
   const opposite: DraftSide = current.side === "BLUE" ? "RED" : "BLUE";
   const team = opposite === "BLUE" ? blueTeam : redTeam;
   const other = opposite === "BLUE" ? redTeam : blueTeam;
-  const targetIndex = STANDARD_DRAFT_SEQUENCE.findIndex((item, index) => index >= hypothetical.length && item.side === opposite && item.kind === "PICK");
+  const sequence = draftSequence(hypothetical[0].side);
+  const targetIndex = sequence.findIndex((item, index) => index >= hypothetical.length && item.side === opposite && item.kind === "PICK");
   if (targetIndex === -1) return { ...empty, status: "NO_FUTURE_PICK" as const, team_name: team.team_name };
   const ownPicks = tendencyMap(team.priority_picks);
   const opponentPicks = tendencyMap(other.priority_picks);
   const radar = radarByChampion(report);
-  const context = { turn: STANDARD_DRAFT_SEQUENCE[targetIndex], acting: team, opposing: other, actingPicks: ownPicks, opposingPicks: opponentPicks, radar };
+  const context = { turn: sequence[targetIndex], acting: team, opposing: other, actingPicks: ownPicks, opposingPicks: opponentPicks, radar };
   const pool = new Map<string, OpponentChampionTendency | RadarEntry>();
   for (const candidate of [...team.priority_picks].sort(compareTendency)) {
     if (!pool.has(keyOf(candidate.champion_id))) pool.set(keyOf(candidate.champion_id), candidate);
@@ -361,9 +368,11 @@ export function serializeDraftScenario(
   selections: DraftSelection[],
   games: DraftGame[] = [],
   stagedChampion: string | null = null,
+  firstPickSide: DraftSide = "BLUE",
 ) {
   return JSON.stringify({
-    schema_version: "2",
+    schema_version: "3",
+    first_pick_side: selections[0]?.side ?? firstPickSide,
     model_version: DRAFT_MODEL_VERSION,
     artifact_type: "public-draft-scenario",
     patch_id: report.patch_id,

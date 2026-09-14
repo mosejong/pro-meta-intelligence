@@ -1,5 +1,5 @@
 import { championAssetId } from "./champion-assets";
-import { applyDraftSelection, DRAFT_MODEL_VERSION, isChampionLocked, previewOpponentPick, STANDARD_DRAFT_SEQUENCE, type DraftSelection } from "./draft-agent";
+import { applyDraftSelection, DRAFT_MODEL_VERSION, isChampionLocked, previewOpponentPick, draftSequence, type DraftSelection, type DraftSide } from "./draft-agent";
 import { isRadarReport, type OpponentTeam, type RadarReport } from "./radar-types";
 import { previewRoleExperiment, ROLE_EXPERIMENT_VERSION } from "./draft-role-experiment";
 
@@ -8,6 +8,7 @@ type Match = {
   snapshot_id: string; match_id: string; game_number: number; league: string; patch_id: string;
   observed_at: string; outcome_retrieved_at: string; outcome_source_hash: string;
   blue_team_id: string; red_team_id: string; selections: DraftSelection[];
+  first_pick_side?: DraftSide;
 };
 type Metrics = { cases: number; covered: number; top1_hits: number; top3_hits: number; reciprocal_rank_sum: number; illegal_candidates: number; emitted_candidates: number };
 const key = (id: string) => championAssetId(id).toLowerCase();
@@ -73,6 +74,8 @@ export function evaluateDraftBenchmark(value: unknown, options: { roleExperiment
   for (const raw of orderedMatches) {
     requireCondition(record(raw) && ["snapshot_id", "match_id", "league", "patch_id", "blue_team_id", "red_team_id", "outcome_source_hash"].every((field) => typeof raw[field] === "string") && raw.game_number === 1 && Array.isArray(raw.selections) && raw.selections.length === 20, "Invalid first-set outcome");
     const match = raw as unknown as Match;
+    const firstSide = match.first_pick_side ?? "BLUE";
+    requireCondition(firstSide === "BLUE" || firstSide === "RED", "Invalid first-pick side");
     requireCondition(!seen.has(match.match_id), "Duplicate outcome match");
     seen.add(match.match_id);
     const snapshot = snapshots.get(match.snapshot_id);
@@ -93,10 +96,10 @@ export function evaluateDraftBenchmark(value: unknown, options: { roleExperiment
     requireCondition(blue && red && blue.team_id !== red.team_id, "Missing prior team evidence");
     let prefix: DraftSelection[] = [];
     for (const [index, selection] of match.selections.entries()) {
-      const expected = STANDARD_DRAFT_SEQUENCE[index];
+      const expected = draftSequence(firstSide)[index];
       requireCondition(record(selection) && typeof selection.champion_id === "string" && selection.turn === index + 1 &&
         selection.side === expected.side && selection.kind === expected.kind && selection.slot === expected.slot && selection.phase === expected.phase, "Invalid standard draft order");
-      const next = applyDraftSelection(prefix, selection.champion_id);
+      const next = applyDraftSelection(prefix, selection.champion_id, [], firstSide);
       requireCondition(next.length === prefix.length + 1, "Duplicate or empty champion in outcome");
       prefix = next;
     }
@@ -112,9 +115,9 @@ export function evaluateDraftBenchmark(value: unknown, options: { roleExperiment
     for (const [index, staged] of match.selections.entries()) {
       const target = match.selections[index + 1];
       if (target?.kind === "PICK" && target.side !== staged.side) {
-        const preview = previewOpponentPick(report, blue, red, prefix, staged.champion_id);
+        const preview = previewOpponentPick(report, blue, red, prefix, staged.champion_id, [], 3, firstSide);
         requireCondition(preview.status === "READY" && preview.target_turn === target.turn && preview.intervening_turns === 0, "Production preview did not match evaluation turn");
-        const hypothetical = applyDraftSelection(prefix, staged.champion_id);
+        const hypothetical = applyDraftSelection(prefix, staged.champion_id, [], firstSide);
         const predictions = preview.candidates.map((candidate) => candidate.champion_id);
         const expectedTeam = target.side === "BLUE" ? blue : red;
         const simple = baseline(expectedTeam, hypothetical);
@@ -131,7 +134,7 @@ export function evaluateDraftBenchmark(value: unknown, options: { roleExperiment
         }
         cases.push({ match_id: match.match_id, target_turn: target.turn, actual: target.champion_id, model: predictions, baseline: simple, snapshot_id: snapshot.id });
       }
-      prefix = applyDraftSelection(prefix, staged.champion_id);
+      prefix = applyDraftSelection(prefix, staged.champion_id, [], firstSide);
     }
   }
   const modelSummary = summarize(model);

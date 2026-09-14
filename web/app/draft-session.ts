@@ -1,5 +1,5 @@
 import { championAssetId } from "./champion-assets";
-import { applyDraftSelection, completeFearlessGame, DRAFT_MODEL_VERSION, fearlessLocks, isChampionLocked, nextDraftTurn, type DraftGame, type DraftSelection } from "./draft-agent";
+import { applyDraftSelection, completeFearlessGame, DRAFT_MODEL_VERSION, fearlessLocks, isChampionLocked, nextDraftTurn, type DraftGame, type DraftSelection, type DraftSide } from "./draft-agent";
 import { isRadarReport, type RadarReport } from "./radar-types";
 
 export const MAX_DRAFT_FILE_BYTES = 16 * 1024 * 1024;
@@ -10,6 +10,7 @@ export type DraftSession = {
   games: DraftGame[];
   selections: DraftSelection[];
   stagedChampion: string | null;
+  firstPickSide: DraftSide;
 };
 export type DraftSessionResult = { ok: true; session: DraftSession } | { ok: false; error: string };
 
@@ -21,14 +22,14 @@ function validChampion(value: unknown): value is string {
   return typeof value === "string" && value.length <= 80 && /^[A-Za-z][A-Za-z0-9]*$/.test(championAssetId(value));
 }
 
-function replaySelections(value: unknown, locks: string[]): DraftSelection[] | null {
+function replaySelections(value: unknown, locks: string[], firstPickSide: DraftSide = "BLUE"): DraftSelection[] | null {
   if (!Array.isArray(value) || value.length > 20) return null;
   let selections: DraftSelection[] = [];
   for (const item of value) {
-    const expected = nextDraftTurn(selections);
+    const expected = nextDraftTurn(selections, firstPickSide);
     if (!record(item) || !expected || !validChampion(item.champion_id) || item.turn !== selections.length + 1 ||
       item.side !== expected.side || item.kind !== expected.kind || item.slot !== expected.slot || item.phase !== expected.phase) return null;
-    const next = applyDraftSelection(selections, item.champion_id, locks);
+    const next = applyDraftSelection(selections, item.champion_id, locks, firstPickSide);
     if (next === selections) return null;
     selections = next;
   }
@@ -41,7 +42,9 @@ export function parseDraftSession(text: string): DraftSessionResult {
   if (new TextEncoder().encode(text).byteLength > MAX_DRAFT_FILE_BYTES) return fail("시나리오 파일은 16MB 이하여야 합니다.");
   let value: unknown;
   try { value = JSON.parse(text); } catch { return fail("JSON 파일을 읽을 수 없습니다. 저장한 시나리오 파일을 선택하세요."); }
-  if (!record(value) || value.artifact_type !== "public-draft-scenario" || value.schema_version !== "2" || value.format !== "HARD_FEARLESS_5_BAN_5_PICK") return fail("지원하는 피어리스 시나리오 파일이 아닙니다.");
+  if (!record(value) || value.artifact_type !== "public-draft-scenario" || !["2", "3"].includes(String(value.schema_version)) || value.format !== "HARD_FEARLESS_5_BAN_5_PICK") return fail("지원하는 피어리스 시나리오 파일이 아닙니다.");
+  const firstPickSide = value.schema_version === "2" ? "BLUE" : value.first_pick_side;
+  if (firstPickSide !== "BLUE" && firstPickSide !== "RED") return fail("선픽 진영이 올바르지 않습니다.");
   if (value.model_version !== DRAFT_MODEL_VERSION) return fail("분석 버전이 다릅니다. 같은 결과를 보장할 수 없어 불러오지 않았습니다.");
   if (!isRadarReport(value.analysis_snapshot) || !value.analysis_snapshot.opponent_prep) return fail("분석 데이터가 없거나 손상되었습니다.");
   const report = value.analysis_snapshot;
@@ -61,18 +64,20 @@ export function parseDraftSession(text: string): DraftSessionResult {
   for (const game of value.previous_games) {
     if (!record(game) || ![blue.team_id, red.team_id].includes(String(game.blue_team_id)) ||
       ![blue.team_id, red.team_id].includes(String(game.red_team_id))) return fail("이전 세트의 대진이 현재 대진과 다릅니다.");
-    const selections = replaySelections(game.selections, fearlessLocks(games));
+    const gameFirstSide = value.schema_version === "3" && Array.isArray(game.selections) && record(game.selections[0]) ? game.selections[0].side : "BLUE";
+    if (gameFirstSide !== "BLUE" && gameFirstSide !== "RED") return fail("이전 세트의 선픽 진영이 올바르지 않습니다.");
+    const selections = replaySelections(game.selections, fearlessLocks(games), gameFirstSide);
     if (!selections) return fail("이전 세트에 중복 선택 또는 잘못된 밴픽 순서가 있습니다.");
     const next = completeFearlessGame(games, { blue_team_id: String(game.blue_team_id), red_team_id: String(game.red_team_id), selections });
     if (next === games) return fail("완료되지 않았거나 피어리스 규칙에 어긋난 이전 세트입니다.");
     games = next;
   }
   const locks = fearlessLocks(games);
-  const selections = replaySelections(value.selections, locks);
+  const selections = replaySelections(value.selections, locks, firstPickSide);
   if (!selections || value.game_number !== games.length + 1 || value.complete !== (selections.length === 20)) return fail("현재 세트 기록 또는 세트 번호가 올바르지 않습니다.");
   const stagedChampion = value.staged_champion ?? null;
   if (stagedChampion !== null && (!validChampion(stagedChampion) || !nextDraftTurn(selections) || isChampionLocked(selections, stagedChampion, locks))) return fail("올려놓은 챔피언이 이미 잠겼거나 선택할 수 없습니다.");
-  return { ok: true, session: { report, blueTeamId: blue.team_id, redTeamId: red.team_id, games, selections, stagedChampion } };
+  return { ok: true, session: { report, blueTeamId: blue.team_id, redTeamId: red.team_id, games, selections, stagedChampion, firstPickSide } };
 }
 
 // IndexedDB accommodates the complete public snapshot without localStorage's small quota.

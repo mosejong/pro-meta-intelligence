@@ -65,7 +65,7 @@ not invent counter relations. Ties use canonical champion IDs, with no random or
 The first staged choice captures the report for the entire series. Undo, current-game reset, side
 swap, and series reset retain that report. A page reload restores the captured report from local
 IndexedDB after a successful save, and pauses the timer. When storage is unavailable, the UI reports
-that explicitly and JSON export/import remains available. Schema-v2 exports
+that explicitly and JSON export/import remains available. Schema-v3 exports
 include the full public analysis snapshot, model version, previous games, and computed locks so that
 the same model and inputs can reproduce the result independently of later feed updates. The staged,
 unconfirmed choice is included. Import is local-only, bounded to 16MB, and validates the report,
@@ -93,6 +93,10 @@ is saved again. This is a draft rehearsal: advancing records a completed draft, 
 result. It does not infer previous sets from the public feed or support tournament-specific exceptions.
 
 ## Next validation
+
+[Worlds preparation and First Selection](WORLDS_PREPARATION.md) now add a dated confirmed-participant
+practice panel and independent first-pick side selection. Schema-3 sessions preserve Red-first
+drafts and empty-set first-pick settings; schema-2 sessions retain Blue-first replay compatibility.
 
 The [first historical opponent-preview pilot](DRAFT_PREDICTION_BENCHMARK.md) is complete:
 4 first-set matches / 28 immediate-response states, top-three recall 10.7%, equal to the

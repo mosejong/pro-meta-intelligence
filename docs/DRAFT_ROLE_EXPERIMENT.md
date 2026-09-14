@@ -52,6 +52,11 @@ performance claim. The original pilot remains unchanged in its committed aggrega
 
 ## Executed result — 2026-09-13 KST
 
+**Coverage correction, September 14:** the result below used Blue-first drafts only. The engine
+now supports Red-first under First Selection. The [expanded replay and LCK/T1 audit](WORLDS_PREPARATION.md#executed-audit-and-expanded-replay--september-14)
+contains these same 28 matches plus 11 newly supported matches; it is not a separate 39-match
+unseen test. LCK top-three recall ties production at 4/35. The experiment remains offline.
+
 The [hosted evaluation](https://github.com/mosejong/pro-meta-intelligence/actions/runs/34701262868)
 completed successfully on revision `2108d4ad01d5bf0f4523bdd073a450950ca5aeb3`, using encrypted
 archive artifact `10296214595`. The implementation was frozen in
@@ -102,8 +107,13 @@ excluded 7,449 at/before the holdout boundary, 154 without consistent game-one l
 27 incomplete/nonstandard drafts, 1 without same-patch training and 18 without both teams'
 prior evidence. The remaining 28 were all scored, including empty predictions if any.
 
-Decision: retain production v2 as the default. Keep this role experiment fixed for a new
-prospective evaluation and prioritize additional patches plus LCK/T1 coverage. New results
-must exclude matches already measured here. A trusted series identifier and earlier-set
+Decision: retain production v2 as the default. Following the user's season-end correction
+on 2026-09-14, prioritize an eligibility audit of existing 2026 LCK/T1 matches, then evaluate
+previously unscored matches with genuinely earlier archived sources. Do not wait for new LCK
+fixtures. Keep the experiment fixed and report role-data coverage separately from prediction
+performance. If only a later revised season file exists, any reconstruction must be labelled
+retrospective and cannot inherit the archived point-in-time claim. Additional patches and
+prospective evaluation remain useful follow-ups. New results must exclude matches already
+measured here. A trusted series identifier and earlier-set
 drafts remain prerequisites for evaluating multi-set Fearless. Do not retune this rule on
 these 28 outcomes and label the same matches an unseen test.

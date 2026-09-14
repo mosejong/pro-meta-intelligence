@@ -250,10 +250,28 @@ output remain separate validation gates rather than being implied by the interfa
    while retaining flex alternatives and unknown roles. On a new, non-overlapping 28-match /
    196-state holdout, top-three recall was 15.31% versus production's 11.73% and frequency's 9.18%.
    [Full results](DRAFT_ROLE_EXPERIMENT.md). All matches are patch 16.16; none are LCK, LPL or LEC.
-   Keep production v2 as default until prospective, cross-patch and target-league evidence exists.
-6. **Next:** collect new unseen matches with LCK/T1 and additional-patch coverage, evaluate the
-   frozen role experiment, then decide whether to expose it in the public preview. Composition,
-   counters and later-set Fearless evaluation still require maintained supporting evidence.
+   Keep production v2 as default while expanding cross-patch and target-league validation.
+6. **Season-end audit — completed (2026-09-14):** the user reports this year's LCK season is
+   finished. Do not make new LCK fixtures a prerequisite for progress. Auditing existing
+   2026 LCK/T1 matches exposed the unsupported Red-first order. Corrected replay expands the
+   previous 28-match cohort to 39 matches / 273 states, including five LCK matches; it overlaps
+   the prior evaluation. LCK top-three hits tie at 4/35 for production and the role experiment.
+   The separate all-season eligibility audit finds seven LCK matches and two exact-T1 matches;
+   these are coverage counts, not the scored denominators. [Results](WORLDS_PREPARATION.md).
+   Evaluate the frozen experiment on previously unscored matches only where genuinely earlier
+   source captures exist. Then improve observed role/flex coverage and validate it on a separate
+   historical partition. Matches without historical availability evidence can support role-data
+   checks or an explicitly reconstructed retrospective study, not the existing point-in-time
+   performance claim. Additional patches and future available competitions are supplementary;
+   do not wait for another LCK season. Composition, counters and later-set Fearless evaluation
+   still require maintained supporting evidence.
+7. **Worlds preparation — implemented:** a dated official participant panel links confirmed
+   opponents to T1 practice drafts while disclosing the source patch and unverified Worlds patch.
+   The LCK eligibility audit exposed the old Blue-first restriction. First Selection now supports
+   Red-first order throughout replay, previews, sessions and historical evaluation. Original pilot
+   aggregates remain preserved; expanded results must disclose the changed order coverage.
+   [Preparation scope and sources](WORLDS_PREPARATION.md). Next, verify event-specific rules and
+   patch, refresh confirmed qualifiers, and improve opponent evidence on the confirmed patch.
 
 Validation note: the current frontend build and test scripts are release checks. An additional
 whole-project TypeScript check found existing errors outside the Draft Lab files (decision outcomes,

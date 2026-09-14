@@ -8,10 +8,27 @@ test("historical draft evaluation measures the production preview and rejects le
   const vite = await createServer({ root: fileURLToPath(new URL("../", import.meta.url)), configFile: false, publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
   try {
     const { evaluateDraftBenchmark } = await vite.ssrLoadModule("/app/draft-benchmark.ts");
-    const { applyDraftSelection, previewOpponentPick, STANDARD_DRAFT_SEQUENCE } = await vite.ssrLoadModule("/app/draft-agent.ts");
+    const { applyDraftSelection, previewOpponentPick, STANDARD_DRAFT_SEQUENCE, draftSequence, completeFearlessGame, fearlessLocks, serializeDraftScenario } = await vite.ssrLoadModule("/app/draft-agent.ts");
+    const { parseDraftSession } = await vite.ssrLoadModule("/app/draft-session.ts");
     const { canAssignDistinctRoles, observedChampionRoles, previewRoleExperiment } = await vite.ssrLoadModule("/app/draft-role-experiment.ts");
+    const { buildWorldsPreparation, WORLDS_2026 } = await vite.ssrLoadModule("/app/worlds-preparation.ts");
     const report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
     report.fixture_only = true;
+    await t.test("Worlds preparation requires exact main-team identity and does not invent a patch", () => {
+      const before = JSON.stringify(report);
+      const entries = buildWorldsPreparation(report);
+      assert.equal(entries.length, 7);
+      assert.equal(WORLDS_2026.patch, null);
+      assert.equal(entries.find((entry) => entry.code === "T1").team.team_name, "T1");
+      assert.equal(entries.some((entry) => entry.team?.team_name.includes("Academy")), false);
+      assert.equal(JSON.stringify(report), before);
+      const missing = structuredClone(report);
+      missing.opponent_prep.teams = missing.opponent_prep.teams.filter((team) => team.team_name !== "T1");
+      assert.equal(buildWorldsPreparation(missing).find((entry) => entry.code === "T1").team, null);
+      const duplicate = structuredClone(report);
+      duplicate.opponent_prep.teams.push(structuredClone(entries.find((entry) => entry.code === "T1").team));
+      assert.equal(buildWorldsPreparation(duplicate).find((entry) => entry.code === "T1").team, null);
+    });
     report.opponent_prep.fixture_only = true;
     report.entries = [];
     report.opponent_prep.teams = report.opponent_prep.teams.slice(0, 2);
@@ -33,6 +50,38 @@ test("historical draft evaluation measures the production preview and rejects le
         observed_at: new Date(Date.parse(report.cutoff) + 86400000).toISOString(), outcome_retrieved_at: new Date(Date.parse(report.cutoff) + 172800000).toISOString(),
         outcome_source_hash: `sha256:${"b".repeat(64)}`, blue_team_id: blue.team_id, red_team_id: red.team_id, selections }],
     };
+    await t.test("red first pick replays, previews, persists and carries Fearless locks", () => {
+      let redSelections = [];
+      for (let index = 0; index < 20; index++) redSelections = applyDraftSelection(redSelections, `RedFirst${index}`, [], "RED");
+      assert.deepEqual(redSelections.map((item) => item.side), draftSequence("RED").map((item) => item.side));
+      assert.equal(redSelections[6].side, "RED");
+      const preview = previewOpponentPick(report, blue, red, redSelections.slice(0, 5), redSelections[5].champion_id);
+      assert.equal(preview.team_name, red.team_name);
+      assert.equal(preview.target_turn, 7);
+      const games = completeFearlessGame([], { blue_team_id: blue.team_id, red_team_id: red.team_id, selections: redSelections });
+      assert.equal(games.length, 1);
+      assert.equal(fearlessLocks(games).length, 10);
+      const exported = serializeDraftScenario(report, blue, red, [], games, "NewStaged", "RED");
+      const restored = parseDraftSession(exported);
+      assert.equal(restored.ok, true);
+      assert.equal(restored.session.firstPickSide, "RED");
+      assert.equal(restored.session.stagedChampion, "NewStaged");
+      assert.deepEqual(restored.session.games[0].selections, redSelections);
+      const legacy = JSON.parse(serializeDraftScenario(report, blue, red, []));
+      legacy.schema_version = "2";
+      delete legacy.first_pick_side;
+      assert.equal(parseDraftSession(JSON.stringify(legacy)).session.firstPickSide, "BLUE");
+      const invalid = JSON.parse(exported);
+      invalid.first_pick_side = "PURPLE";
+      assert.equal(parseDraftSession(JSON.stringify(invalid)).ok, false);
+      const redDataset = structuredClone(dataset);
+      redDataset.matches[0].first_pick_side = "RED";
+      redDataset.matches[0].selections = redSelections;
+      const result = evaluateDraftBenchmark(redDataset, { roleExperiment: true });
+      assert.equal(result.case_count, 7);
+      assert.equal(result.model.illegal_candidates, 0);
+      assert.equal(result.role_experiment.metrics.illegal_candidates, 0);
+    });
     await t.test("role matching preserves flex alternatives and unknown picks", () => {
       const roles = new Map([["flex", new Set(["TOP", "MID"])], ["mid", new Set(["MID"])], ["top", new Set(["TOP"])]]);
       assert.equal(canAssignDistinctRoles(["Flex", "Mid"], roles), true);
