@@ -2027,6 +2027,7 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
 .draft-pick-stack article > b { padding-left: 9px; color: #59677a; font: 900 8px var(--font-geist-mono); }
 .draft-pick-stack article img { width: 56px; height: 58px; object-fit: cover; }
 .draft-pick-stack article div { min-width: 0; padding: 9px; }
+.draft-pick-stack article > b + div { grid-column: 2 / -1; }
 .draft-pick-stack strong, .draft-pick-stack span { display: block; }
 .draft-pick-stack strong { overflow: hidden; color: #a8b2be; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .draft-pick-stack span { margin-top: 3px; color: #556274; font-size: 7px; }
