@@ -19,11 +19,13 @@ export function WorldsPreparationPanel({ report, canChangeMatchup, onChooseOppon
         <span><b>현재 분석</b>{report.fixture_only ? "예제" : "공개 경기"} · {report.patch_id} · {report.cutoff.slice(0, 10)} 기준</span>
         <span><b>밴픽 형식</b>선픽·진영 분리 확인 · 피어리스 세부 규정 확인 중</span>
       </div>
+      <p><strong>대회 제한 챔피언: 공개 목록 미확인</strong> · {WORLDS_2026.checked_on} 확인 기준. 연습실에 대회 전용 제한 목록은 적용되지 않았습니다.</p>
       <p>시즌 기록으로 상대 성향을 먼저 비교하세요. 현재 분석 패치를 월즈 패치로 간주하지 않습니다.</p>
       <details className="worlds-rules-notes"><summary>공식 선픽 규칙과 연습 범위</summary>
         <p>선택권을 가진 팀이 선후픽 또는 진영을 정하고, 상대가 나머지를 정합니다. 2세트부터는 직전 세트 패배 팀이 선택권을 갖습니다.</p>
         <p>플레이인 최종전 1세트는 승자조 진출 팀이 선후픽과 진영을 모두 고릅니다. 연습실은 선택 결과를 직접 입력하며, 선택권이나 승패를 자동 판정하지 않습니다.</p>
-        <p>하드 피어리스는 현재 연습 모드입니다. 공통 국제대회 규정과 대회 제한 챔피언 목록은 추가 확인이 필요하며, 운영진이 패치를 변경할 수 있습니다.</p>
+        <p>하드 피어리스는 현재 연습 모드입니다. 이전 세트에서 양 팀이 픽한 챔피언은 이후 세트에서 잠기며, 일반 밴은 다음 세트에 풀립니다. 공통 국제대회 규정의 세부 조항은 검증 대기입니다.</p>
+        <p>월즈 규정집 5.1은 제한 목록을 대회 전에 참가 팀에 전달한다고 명시합니다. 공개된 챔피언별 목록은 확인하지 못했으며, 운영진은 대회 중에도 제한이나 패치를 변경할 수 있습니다.</p>
       </details>
       <div className="worlds-opponents">
         {entries.filter((entry) => entry.code !== "T1").map((entry) => <article key={entry.code}>

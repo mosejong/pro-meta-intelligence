@@ -266,14 +266,19 @@ output remain separate validation gates rather than being implied by the interfa
    do not wait for another LCK season. Composition, counters and later-set Fearless evaluation
    still require maintained supporting evidence.
 7. **Worlds preparation — implemented:** a dated official participant panel links confirmed
-   opponents to T1 practice drafts while disclosing the source patch and unverified Worlds patch.
+   opponents to T1 practice drafts while disclosing the source patch separately from the Worlds patch.
    The LCK eligibility audit exposed the old Blue-first restriction. First Selection now supports
    Red-first order throughout replay, previews, sessions and historical evaluation. Original pilot
    aggregates remain preserved; expanded results must disclose the changed order coverage.
    [Preparation scope and sources](WORLDS_PREPARATION.md). September 15 review confirms patch
    26.20 and First Selection from event ruleset v1.01. Opponent cards now distinguish role-specific
    observed champion coverage from top-five priorities without changing prediction scores.
-   Next, verify common Fearless rules and event restrictions, refresh confirmed qualifiers, and
+   September 15 restriction audit: event rules promise a team-distributed restriction list, but
+   no public champion list was verified. The panel explicitly identifies the unapplied list;
+   common-rule verification remains pending because the official library returned 404.
+   Synthetic five-set replay covers 100 actions, changing first pick/map side, cumulative locks,
+   ordinary-ban reuse and staged restoration; this is behavior validation, not accuracy evidence.
+   Next, recheck common Fearless rules and event restrictions when accessible, refresh confirmed qualifiers, and
    improve opponent evidence on the confirmed patch when available.
 
 Validation note: the current frontend build and test scripts are release checks. An additional
