@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { createServer } from "vite";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 test("historical draft evaluation measures the production preview and rejects leakage", async (t) => {
   const vite = await createServer({ root: fileURLToPath(new URL("../", import.meta.url)), configFile: false, publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
@@ -44,8 +46,38 @@ test("historical draft evaluation measures the production preview and rejects le
         { champion_id: "Other", role: "TOP", evidence_event_id: "d" }, { champion_id: "Unknown", role: "UNKNOWN", evidence_event_id: "e" }] }];
       const before = JSON.stringify(team);
       assert.deepEqual(worldsRoleCoverage(team).map((item) => item.champion_count), [2, 0, 1, 0, 0]);
+      assert.deepEqual(worldsRoleCoverage(team)[0].champions[0], {
+        champion_id: "Flex", evidence_count: 1, sources: ["선수별 기록", "최근 경기", "팀 주요 픽"].sort(),
+      });
       assert.equal(JSON.stringify(team), before);
       assert.deepEqual(worldsRoleCoverage(null).map((item) => item.champion_count), [0, 0, 0, 0, 0]);
+    });
+    await t.test("Worlds champion detail merges aliases and preserves evidence and locks across input order", async () => {
+      const detailReport = structuredClone(report);
+      const team = buildWorldsPreparation(detailReport).find((entry) => entry.code === "GEN").team;
+      team.player_profiles = [];
+      team.recent_games = [];
+      team.priority_picks = [
+        { champion_id: "Wukong", role: "TOP", game_count: 1, evidence_event_ids: ["a", "a"] },
+        { champion_id: "MonkeyKing", role: "TOP", game_count: 1, evidence_event_ids: ["a", "b"] },
+        { champion_id: "Ahri", role: "MID", game_count: 1, evidence_event_ids: ["c"] },
+        { champion_id: "NoEvidence", role: "MID", game_count: 1, evidence_event_ids: [" "] },
+      ];
+      const coverage = worldsRoleCoverage(team);
+      assert.deepEqual(coverage[0].champions, [{ champion_id: "MonkeyKing", evidence_count: 2, sources: ["팀 주요 픽"] }]);
+      team.priority_picks.reverse();
+      assert.deepEqual(worldsRoleCoverage(team), coverage);
+      const { WorldsPreparationPanel } = await vite.ssrLoadModule("/app/worlds-preparation-panel.tsx");
+      const renderPanel = (previousPicks) => renderToStaticMarkup(createElement(WorldsPreparationPanel, {
+        report: detailReport, nameOf: (id) => id === "MonkeyKing" ? "오공" : id,
+        canChangeMatchup: false, onChooseOpponent: () => {}, previousPicks,
+      }));
+      const locked = renderPanel(["Wukong"]);
+      assert.match(locked, /오공/);
+      assert.match(locked, /피어리스 잠금/);
+      assert.match(locked, /이전 픽 제외 0개/);
+      assert.match(locked, /팀 주요 픽 · 근거 2건/);
+      assert.doesNotMatch(renderPanel([]), /피어리스 잠금|이전 픽 제외/);
     });
     report.opponent_prep.fixture_only = true;
     report.entries = [];

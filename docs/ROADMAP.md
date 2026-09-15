@@ -278,6 +278,10 @@ output remain separate validation gates rather than being implied by the interfa
    common-rule verification remains pending because the official library returned 404.
    Synthetic five-set replay covers 100 actions, changing first pick/map side, cumulative locks,
    ordinary-ban reuse and staged restoration; this is behavior validation, not accuracy evidence.
+   Role details now show observed champions, deduplicated evidence counts and source sections,
+   with prior-set Fearless locks and remaining observed counts. Alias merging and input-order
+   stability are verified; prediction ranking is unchanged. Qualifiers remain seven named teams;
+   source backoff currently prevents new-patch evidence, so existing observations stay labeled.
    Next, recheck common Fearless rules and event restrictions when accessible, refresh confirmed qualifiers, and
    improve opponent evidence on the confirmed patch when available.
 

@@ -1,4 +1,5 @@
 import type { OpponentTeam, RadarReport } from "./radar-types";
+import { championAssetId } from "./champion-assets";
 
 // Human-reviewed official snapshot, not inferred from power rankings or regional standings.
 export const WORLDS_2026 = {
@@ -30,23 +31,36 @@ const roles = [
 // Descriptive team evidence only: never changes the frozen prediction experiment.
 export function worldsRoleCoverage(team: OpponentTeam | null) {
   return roles.map(([role, label]) => {
-    const champions = new Set<string>();
-    const add = (id: string, games: number, evidence: string[]) => {
-      if (games > 0 && evidence.length > 0 && id.trim()) champions.add(id.trim().toLowerCase());
+    const champions = new Map<string, { champion_id: string; evidence: Set<string>; sources: Set<string> }>();
+    const add = (id: string, games: number, evidence: string[], source: string) => {
+      const cited = evidence.filter((event) => event.trim());
+      if (!(games > 0) || !cited.length || !id.trim()) return;
+      const canonical = championAssetId(id.trim());
+      const key = canonical.toLowerCase();
+      const champion = champions.get(key) ?? { champion_id: canonical, evidence: new Set<string>(), sources: new Set<string>() };
+      // Preserve one stable display ID even when input rows have mixed casing.
+      if (canonical < champion.champion_id) champion.champion_id = canonical;
+      cited.forEach((event) => champion.evidence.add(event.trim()));
+      champion.sources.add(source);
+      champions.set(key, champion);
     };
     for (const profile of team?.player_profiles ?? []) {
       if (profile.role !== role) continue;
-      for (const pick of profile.champions) add(pick.champion_id, pick.game_count, pick.evidence_event_ids);
+      for (const pick of profile.champions) add(pick.champion_id, pick.game_count, pick.evidence_event_ids, "선수별 기록");
     }
     for (const pick of team?.priority_picks ?? []) {
-      if (pick.role === role) add(pick.champion_id, pick.game_count, pick.evidence_event_ids);
+      if (pick.role === role) add(pick.champion_id, pick.game_count, pick.evidence_event_ids, "팀 주요 픽");
     }
     for (const game of team?.recent_games ?? []) {
       for (const pick of game.picks) {
-        if (pick.role === role && pick.evidence_event_id) add(pick.champion_id, 1, [pick.evidence_event_id]);
+        if (pick.role === role && pick.evidence_event_id) add(pick.champion_id, 1, [pick.evidence_event_id], "최근 경기");
       }
     }
-    return { role, label, champion_count: champions.size };
+    return { role, label, champion_count: champions.size,
+      champions: [...champions.entries()].sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0)
+        .map(([, champion]) => ({ champion_id: champion.champion_id,
+          evidence_count: champion.evidence.size, sources: [...champion.sources].sort() })),
+    };
   });
 }
 

@@ -337,7 +337,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <aside><b>규칙 기반 V1</b><span>AI 자동판단 잠금</span><small>승률 예측이 아닌 코칭스태프 검토용 시나리오</small></aside>
     </section>
 
-    <WorldsPreparationPanel report={report} nameOf={nameOf} onChooseOpponent={chooseWorldsOpponent}
+    <WorldsPreparationPanel report={report} nameOf={nameOf} onChooseOpponent={chooseWorldsOpponent} previousPicks={previousPicks}
       canChangeMatchup={canSelect && games.length === 0 && selections.length === 0 && !pendingChampion} />
 
     <section className="draft-match-setup" aria-label="밴픽 팀 설정" inert={!canSelect}>

@@ -1,12 +1,14 @@
 import type { RadarReport } from "./radar-types";
+import { isChampionLocked } from "./draft-agent";
 import { buildWorldsPreparation, WORLDS_2026 } from "./worlds-preparation";
 import "./worlds-preparation.css";
 
-export function WorldsPreparationPanel({ report, canChangeMatchup, onChooseOpponent, nameOf }: {
+export function WorldsPreparationPanel({ report, canChangeMatchup, onChooseOpponent, nameOf, previousPicks = [] }: {
   report: RadarReport;
   canChangeMatchup: boolean;
   onChooseOpponent: (teamId: string) => void;
   nameOf: (championId: string) => string;
+  previousPicks?: string[];
 }) {
   const entries = buildWorldsPreparation(report);
   const ownTeam = entries.find((entry) => entry.code === "T1")?.team;
@@ -33,7 +35,20 @@ export function WorldsPreparationPanel({ report, canChangeMatchup, onChooseOppon
           <p>{entry.team?.team_name ?? entry.names[0]} · {entry.sample ? `${entry.sample}경기 표본` : "현재 분석 표본 없음"}</p>
           <p>{entry.first_picks.length ? entry.first_picks.map(nameOf).join(" · ") : "패치별 픽 근거 보강 필요"}</p>
           <details className="worlds-role-coverage"><summary>역할별 관측 챔피언</summary>
-            <ul>{entry.role_coverage.map((item) => <li key={item.role}><span>{item.label}</span><b>{item.champion_count ? `${item.champion_count}개` : "근거 없음"}</b></li>)}</ul>
+            <ul className="worlds-role-list">{entry.role_coverage.map((item) => {
+              const remaining = item.champions.filter((champion) => !isChampionLocked([], champion.champion_id, previousPicks)).length;
+              return <li key={item.role}>{item.champion_count ? <details>
+                <summary><span>{item.label}</span><b>{item.champion_count}개{previousPicks.length > 0 ? ` · 이전 픽 제외 ${remaining}개` : ""}</b></summary>
+                <ul className="worlds-champion-evidence">{item.champions.map((champion) => {
+                  const locked = isChampionLocked([], champion.champion_id, previousPicks);
+                  return <li key={champion.champion_id}>
+                    <span>{nameOf(champion.champion_id)}{locked && <em>피어리스 잠금</em>}</span>
+                    <small>{champion.sources.join(" · ")} · 근거 {champion.evidence_count}건</small>
+                  </li>;
+                })}</ul>
+              </details> : <p>{item.label} · 근거 없음</p>}</li>;
+            })}</ul>
+            {previousPicks.length > 0 && <p>남은 수는 이전 세트 픽만 제외한 값입니다. 현재 세트의 밴픽은 포함하지 않습니다.</p>}
             <p>공개 보고서에 수록된 챔피언만 집계합니다. 역할별 중복은 허용하며 전체 챔피언 폭·숙련도·현재 선수단의 확정값은 아닙니다.</p>
           </details>
           <button type="button" disabled={!canChangeMatchup || !ownTeam || !entry.team || entry.sample === 0}
