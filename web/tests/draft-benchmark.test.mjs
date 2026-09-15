@@ -11,14 +11,16 @@ test("historical draft evaluation measures the production preview and rejects le
     const { applyDraftSelection, previewOpponentPick, STANDARD_DRAFT_SEQUENCE, draftSequence, completeFearlessGame, fearlessLocks, serializeDraftScenario } = await vite.ssrLoadModule("/app/draft-agent.ts");
     const { parseDraftSession } = await vite.ssrLoadModule("/app/draft-session.ts");
     const { canAssignDistinctRoles, observedChampionRoles, previewRoleExperiment } = await vite.ssrLoadModule("/app/draft-role-experiment.ts");
-    const { buildWorldsPreparation, WORLDS_2026 } = await vite.ssrLoadModule("/app/worlds-preparation.ts");
+    const { buildWorldsPreparation, worldsRoleCoverage, WORLDS_2026 } = await vite.ssrLoadModule("/app/worlds-preparation.ts");
     const report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
     report.fixture_only = true;
-    await t.test("Worlds preparation requires exact main-team identity and does not invent a patch", () => {
+    await t.test("Worlds preparation requires exact main-team identity and separates official patch from evidence", () => {
       const before = JSON.stringify(report);
       const entries = buildWorldsPreparation(report);
       assert.equal(entries.length, 7);
-      assert.equal(WORLDS_2026.patch, null);
+      assert.equal(WORLDS_2026.patch, "26.20");
+      assert.equal(WORLDS_2026.draft_rules, "FIRST_SELECTION_VERIFIED_FEARLESS_PENDING");
+      assert.match(WORLDS_2026.rules_source, /^https:\/\/cdn\.sanity\.io\/.*\.pdf$/);
       assert.equal(entries.find((entry) => entry.code === "T1").team.team_name, "T1");
       assert.equal(entries.some((entry) => entry.team?.team_name.includes("Academy")), false);
       assert.equal(JSON.stringify(report), before);
@@ -28,6 +30,22 @@ test("historical draft evaluation measures the production preview and rejects le
       const duplicate = structuredClone(report);
       duplicate.opponent_prep.teams.push(structuredClone(entries.find((entry) => entry.code === "T1").team));
       assert.equal(buildWorldsPreparation(duplicate).find((entry) => entry.code === "T1").team, null);
+    });
+    await t.test("Worlds role coverage deduplicates observed champions and never borrows other teams or global roles", () => {
+      const team = structuredClone(report.opponent_prep.teams[0]);
+      team.priority_picks = [
+        { champion_id: "Flex", role: "TOP", game_count: 2, evidence_event_ids: ["a"] },
+        { champion_id: "NoEvidence", role: "MID", game_count: 1, evidence_event_ids: [] },
+        { champion_id: "NoGames", role: "MID", game_count: 0, evidence_event_ids: ["b"] },
+      ];
+      team.player_profiles = [{ role: "TOP", champions: [{ champion_id: " flex ", game_count: 2, evidence_event_ids: ["a"] }] },
+        { role: "MID", champions: [{ champion_id: "Flex", game_count: 1, evidence_event_ids: ["c"] }] }];
+      team.recent_games = [{ picks: [{ champion_id: "Flex", role: "TOP", evidence_event_id: "a" },
+        { champion_id: "Other", role: "TOP", evidence_event_id: "d" }, { champion_id: "Unknown", role: "UNKNOWN", evidence_event_id: "e" }] }];
+      const before = JSON.stringify(team);
+      assert.deepEqual(worldsRoleCoverage(team).map((item) => item.champion_count), [2, 0, 1, 0, 0]);
+      assert.equal(JSON.stringify(team), before);
+      assert.deepEqual(worldsRoleCoverage(null).map((item) => item.champion_count), [0, 0, 0, 0, 0]);
     });
     report.opponent_prep.fixture_only = true;
     report.entries = [];
