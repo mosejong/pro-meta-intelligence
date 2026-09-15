@@ -25,6 +25,9 @@ test("builds direct-loadable onboarding and field pages", async () => {
 });
 
 test("copies the same-origin feed and social card", async () => {
+  const brief = await readFile(new URL("briefs/worlds-strategy-brief.pdf", root));
+  assert.equal(brief.subarray(0, 5).toString(), "%PDF-");
+  assert.deepEqual(brief, await readFile(new URL("../public/briefs/worlds-strategy-brief.pdf", import.meta.url)));
   const feedText = await readFile(new URL("feed/current.json", root), "utf8");
   const feed = JSON.parse(feedText);
   const collectionStatusText = await readFile(new URL("feed/collection-status.json", root), "utf8");

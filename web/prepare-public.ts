@@ -8,6 +8,7 @@ const targetRoot = resolve(webRoot, ".site-public");
 const publishedFiles = [
   "meta-radar-hero-v2.png",
   "og.png",
+  "briefs/worlds-strategy-brief.pdf",
   "feed/current.json",
   "feed/collection-status.json",
   "feed/history-status.json",
