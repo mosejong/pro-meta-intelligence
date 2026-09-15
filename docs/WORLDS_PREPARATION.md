@@ -85,6 +85,21 @@ detail that other participants do not currently receive. The August 31 report ha
 GEN, 4 for HLE, 10 each for CFO/MVK/TSW and 2 for BLG. BLG's two-game sample remains the
 smallest opponent sample; no new matches or new-patch evidence were manufactured by this view.
 
+### Role detail and Fearless preparation
+
+Each role now expands into its observed champions, contributing report sections and distinct
+cited event counts. Champion asset aliases are merged, overlapping citations are deduplicated,
+and ordering is stable when source rows are reordered. Evidence counts are not game counts or
+proficiency scores. Historical player profiles are not presented as confirmed Worlds rosters.
+The active series supplies its prior picks to mark Fearless locks, including champion aliases.
+Remaining counts subtract only previous-set picks, not current-set selections or event-specific
+restrictions. No candidate ranking or frozen prediction experiment is changed.
+
+The September 15 follow-up still finds seven named qualifiers in the official overview. The
+public collection status reports source backoff, last verified August 31, and a next eligible
+attempt at September 15 13:59 UTC. Collection policy is preserved; no new observation is claimed
+and the existing season snapshot remains the preparation input.
+
 ## LCK/T1 evidence audit
 
 The preparer now emits aggregate imported/eligible counts, observation ranges and sequential

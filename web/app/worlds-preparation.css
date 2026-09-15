@@ -27,5 +27,13 @@
 .worlds-rules-notes summary, .worlds-role-coverage summary { cursor: pointer; font-size: .875rem; line-height: 1.6; }
 .worlds-rules-notes p { font-size: 1rem; line-height: 1.6; margin: .75rem 0 0; }
 .worlds-role-coverage ul { list-style: none; margin: .5rem 0; padding: 0; font-size: .875rem; }
-.worlds-role-coverage li { display: flex; justify-content: space-between; gap: .5rem; padding: .25rem 0; }
+.worlds-role-list > li { padding: .35rem 0; border-top: 1px solid #e3e3df; }
+.worlds-role-list > li > details > summary { display: flex; justify-content: space-between; gap: .5rem; }
+.worlds-role-list > li > details > summary span::before { content: "+ "; }
+.worlds-role-list > li > details[open] > summary span::before { content: "− "; }
+.worlds-role-list b { text-align: right; font-weight: 500; }
+.worlds-champion-evidence li { display: flex; flex-direction: column; gap: .25rem; padding: .5rem; background: #f6f6f2; margin-bottom: .35rem; overflow-wrap: anywhere; }
+.worlds-champion-evidence li > span { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .35rem; }
+.worlds-champion-evidence em { font-style: normal; font-size: .75rem; background: #e3def9; color: #382263; padding: .15rem .3rem; }
+.worlds-champion-evidence small { font-size: .75rem; line-height: 1.5; color: #56564d; }
 .worlds-rules-notes summary:focus-visible, .worlds-role-coverage summary:focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
