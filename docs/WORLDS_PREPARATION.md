@@ -17,6 +17,29 @@ event restriction list still need verification before certifying the full Fearle
 Do not equate feed patch 16.16 with the Worlds patch; the engine does not relabel old evidence.
 The official participant overview still displays the same seven named teams and unresolved slots.
 
+### Restriction verification boundary — September 15
+
+Event ruleset section 5.1 says restricted champions, items, runes and exploits will be communicated
+to teams before the event, and permits restrictions during the event. The document itself does
+not enumerate restricted champions. No public named list was verified in this review; this is
+**unknown, not a verified empty list**. The preparation panel now prominently states that the
+practice engine has no event-specific restriction list applied.
+
+The [Competitive Operations library](https://competitiveops.riotgames.com/en-US/library)
+search index lists the 2026 International Events Competition Ruleset v1.1 dated July 27, but
+direct access returned HTTP 404 during this review. Its existence is not evidence of the text of
+its Fearless clauses. Keep the common-rule verification pending; regional rules or prior-year
+international rules cannot substitute for it. Recheck when the official document is accessible.
+
+### Five-set rehearsal validation
+
+A synthetic five-set regression exercises all 100 draft actions with map-side swaps and changing
+first-pick sides. It checks 0/10/20/30/40 prior-pick locks, reuse of ordinary bans, both teams'
+locked picks, deterministic legal previews, and staged JSON restoration at every action. Forged
+serialized lock lists cannot remove the locks reconstructed from completed games. This verifies
+the practice implementation only; it adds no historical prediction-accuracy evidence and does
+not certify the still-unverified event rules.
+
 ## First Selection correction
 
 Riot's [2026 season announcement](https://lolesports.com/en-AU/news/season-start-2026-lol-esports)

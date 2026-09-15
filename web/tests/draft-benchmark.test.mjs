@@ -100,6 +100,60 @@ test("historical draft evaluation measures the production preview and rejects le
       assert.equal(result.model.illegal_candidates, 0);
       assert.equal(result.role_experiment.metrics.illegal_candidates, 0);
     });
+    await t.test("five-set rehearsal preserves legal deterministic previews through swaps and staged restoration", () => {
+      const seriesReport = structuredClone(report);
+      for (const team of seriesReport.opponent_prep.teams) {
+        team.priority_picks = Array.from({ length: 60 }, (_, index) => ({
+          ...team.priority_picks[0], champion_id: `Pool${index}`, game_count: 1,
+          game_rate: 0.1, phase_1_count: 1, phase_2_count: 0,
+        }));
+      }
+      let games = [];
+      let checkedActions = 0;
+      for (let gameIndex = 0; gameIndex < 5; gameIndex++) {
+        const [currentBlue, currentRed] = gameIndex % 2
+          ? [...seriesReport.opponent_prep.teams].reverse() : seriesReport.opponent_prep.teams;
+        const firstSide = ["RED", "BLUE", "BLUE", "RED", "RED"][gameIndex];
+        const locks = fearlessLocks(games);
+        assert.equal(locks.length, gameIndex * 10);
+        let current = [];
+        let pickIndex = 0;
+        for (const turn of draftSequence(firstSide)) {
+          // Ordinary bans deliberately repeat across sets; picks must never repeat.
+          const staged = turn.kind === "BAN" ? `Ban${current.length}` : `Pool${gameIndex * 10 + pickIndex++}`;
+          const preview = previewOpponentPick(seriesReport, currentBlue, currentRed, current, staged, locks, 3, firstSide);
+          const exported = JSON.parse(serializeDraftScenario(seriesReport, currentBlue, currentRed, current, games, staged, firstSide));
+          exported.fearless_locks = []; // Serialized locks are untrusted; prior games are authoritative.
+          const restored = parseDraftSession(JSON.stringify(exported));
+          assert.equal(restored.ok, true);
+          const session = restored.session;
+          assert.deepEqual(fearlessLocks(session.games), locks);
+          assert.equal(session.stagedChampion, staged);
+          assert.deepEqual(session.selections, current);
+          assert.deepEqual(previewOpponentPick(session.report, currentBlue, currentRed, session.selections,
+            session.stagedChampion, fearlessLocks(session.games), 3, session.firstPickSide), preview);
+          const unavailable = new Set([...locks, ...current.map((item) => item.champion_id), staged]);
+          for (const candidate of preview.candidates) assert.equal(unavailable.has(candidate.champion_id), false);
+          if (preview.status === "READY") assert.equal(preview.candidates.length, 3);
+          if (locks.length) {
+            exported.staged_champion = locks[0];
+            assert.equal(parseDraftSession(JSON.stringify(exported)).ok, false);
+            assert.equal(applyDraftSelection(current, locks[0], locks, firstSide), current);
+          }
+          const next = applyDraftSelection(current, staged, locks, firstSide);
+          assert.equal(next.length, current.length + 1);
+          current = next;
+          checkedActions++;
+        }
+        const nextGames = completeFearlessGame(games, {
+          blue_team_id: currentBlue.team_id, red_team_id: currentRed.team_id, selections: current,
+        });
+        assert.equal(nextGames.length, gameIndex + 1);
+        games = nextGames;
+      }
+      assert.equal(checkedActions, 100);
+      assert.equal(fearlessLocks(games).length, 50);
+    });
     await t.test("role matching preserves flex alternatives and unknown picks", () => {
       const roles = new Map([["flex", new Set(["TOP", "MID"])], ["mid", new Set(["MID"])], ["top", new Set(["TOP"])]]);
       assert.equal(canAssignDistinctRoles(["Flex", "Mid"], roles), true);
