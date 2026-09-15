@@ -13,8 +13,8 @@ unmet research gates. No new LCK fixtures are a prerequisite.
 | P0 | Strict draft file versions | Only string schema versions `2` and `3` are accepted. Numeric/array versions cannot enter inconsistent replay branches. Legacy Blue-first files remain supported. |
 | P1 | Consolidate implemented vs planned scope | README now identifies working features and labels future scope. This ledger is linked from README/ROADMAP. |
 | P1 | Package measured case study | [Submission package](SUBMISSION_PACKAGE.md) records first-pick coverage correction, benchmark limits and the decision to retain production v2. |
-| P1 | Staff brief and demo handoff | Dated three-page PDF, 3-minute draft demo script and evidence-bounded resume wording. No staff-time or accuracy improvement claim. |
-| P1 | Regression and release | Python 205 tests, frontend 57 tests, lint and whole-project type checking pass locally; CI and production deployment are required before closure. |
+| P1 | Staff brief and demo handoff | Dated three-page PDF, 3-minute draft demo script and evidence-bounded resume wording. Explicit public-asset allowlist and byte-equality checks ensure both Worker and Pages ship the reviewed PDF. No staff-time or accuracy improvement claim. |
+| P1 | Regression and release | Python 205 tests, frontend 58 tests, Pages 2 tests, lint and whole-project type checking are release checks. CI and production deployment are required before closure. |
 
 ## Previously completed foundations
 

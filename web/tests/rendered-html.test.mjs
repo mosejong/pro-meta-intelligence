@@ -9,6 +9,12 @@ import { createServer } from "vite";
 
 const templateRoot = new URL("../", import.meta.url);
 
+test("publishes the reviewed submission brief in the Worker asset output", async () => {
+  const brief = await readFile(new URL("../dist/client/briefs/worlds-strategy-brief.pdf", import.meta.url));
+  assert.equal(brief.subarray(0, 5).toString(), "%PDF-");
+  assert.deepEqual(brief, await readFile(new URL("../public/briefs/worlds-strategy-brief.pdf", import.meta.url)));
+});
+
 async function render(path = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
