@@ -1,5 +1,8 @@
 # Roadmap
 
+Current consolidated task status: [Release backlog](RELEASE_BACKLOG.md). This roadmap includes
+long-term research scope; the backlog separates completed work from missing external evidence.
+
 ## Phase 0 — Evidence Feasibility
 
 Goal: prove what data can be obtained legally, reproducibly, and with enough historical depth.
@@ -285,10 +288,9 @@ output remain separate validation gates rather than being implied by the interfa
    Next, recheck common Fearless rules and event restrictions when accessible, refresh confirmed qualifiers, and
    improve opponent evidence on the confirmed patch when available.
 
-Validation note: the current frontend build and test scripts are release checks. An additional
-whole-project TypeScript check found existing errors outside the Draft Lab files (decision outcomes,
-player practice/baseline, shared radar validation, match-day panel and Worker environment types).
-Track their repair separately; do not describe the entire repository as type-clean.
+Validation note: full frontend type checking is now a release check alongside lint, application
+tests and Pages tests. Runtime guards remain in place; no error suppression or broad type casts
+were added to clear the previously deferred errors.
 
 ## Submission Rule
 

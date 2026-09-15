@@ -10,6 +10,7 @@ venv/
 dist/
 build/
 outputs/
+output/
 .env
 .env.*
 !.env.example

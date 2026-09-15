@@ -635,8 +635,10 @@ function isOpponentTeam(team: unknown) {
     typeof team.evidence.first_observed_at === "string" &&
     typeof team.evidence.last_observed_at === "string"
   )) return false;
+  const sideStats = team.side_stats;
+  if (!isRecord(sideStats)) return false;
   return ["BLUE", "RED"].every((side) => {
-    const stat = team.side_stats[side];
+    const stat = sideStats[side];
     return Boolean(
       isRecord(stat) &&
       typeof stat.game_count === "number" &&

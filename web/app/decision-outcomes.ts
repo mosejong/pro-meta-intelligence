@@ -94,14 +94,15 @@ function isAdoption(value: unknown): value is DecisionOutcomeAdoption {
 }
 
 function isSelected(value: unknown): value is SelectedDecisionOutcome {
-  return isAdoption(value) &&
+  return isRecord(value) &&
     (value.outcome === "HIT" || value.outcome === "FALSE_ALERT") &&
     isNullableNumber(value.radar_rank) &&
     isStringArray(value.candidate_evidence_event_ids) &&
     isRecord(value.pre_cutoff) &&
     isNullableNumber(value.pre_cutoff.pick_presence) &&
     isNullableNumber(value.pre_cutoff.pick_presence_delta) &&
-    isNullableNumber(value.pre_cutoff.demand_velocity);
+    isNullableNumber(value.pre_cutoff.demand_velocity) &&
+    isAdoption(value);
 }
 
 function isEvaluation(value: unknown): value is DecisionOutcomeEvaluation {

@@ -161,7 +161,7 @@ def assess_publication_watchdog(
         "phase": "BENCHMARK_READY" if benchmark_ready else "COLLECTING_HISTORY",
         "checks": checks,
         "failed_checks": failed,
-        "next_action": _public_watchdog_next_action(failed),
+        "next_action": _public_watchdog_next_action(failed, collection_status, now),
         "summary": {
             "patch_id": current_feed.get("patch_id") if isinstance(current_feed, dict) else None,
             "radar_cutoff": current_feed.get("cutoff") if isinstance(current_feed, dict) else None,
@@ -925,7 +925,9 @@ def _next_action(failed: list[str], history_status: dict[str, Any] | None) -> st
     return "KEEP_DAILY_COLLECTION"
 
 
-def _public_watchdog_next_action(failed: list[str]) -> str:
+def _public_watchdog_next_action(
+    failed: list[str], collection_status: dict[str, Any] | None, now: datetime
+) -> str:
     if "PUBLIC_BOUNDARY_SAFE" in failed:
         return "HALT_PUBLICATION"
     if "COLLECTION_STATUS_VALID" in failed:
@@ -945,6 +947,19 @@ def _public_watchdog_next_action(failed: list[str]) -> str:
     if "AI_VALIDATION_STATUS_VALID" in failed:
         return "RESTORE_FAIL_CLOSED_AI_STATUS"
     if "RADAR_PUBLICATION_FRESHNESS" in failed:
+        source = collection_status.get("source", {}) if collection_status else {}
+        next_attempt = source.get("next_attempt_at")
+        if (
+            collection_status
+            and collection_status.get("state") == "SOURCE_DELAYED"
+            and collection_status.get("reason_code") == "POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR"
+            and _is_timestamp(next_attempt)
+            and parse_datetime(next_attempt) > now
+        ):
+            # Stale evidence still fails health; only the safe operational action changes.
+            if "SCHEDULE_PUBLICATION_FRESHNESS" in failed:
+                return "RUN_SCHEDULE_REFRESH_NOW"
+            return "WAIT_FOR_SOURCE_RETRY_WINDOW"
         return "RUN_OE_SYNC_NOW"
     if "SCHEDULE_PUBLICATION_FRESHNESS" in failed:
         return "RUN_SCHEDULE_REFRESH_NOW"

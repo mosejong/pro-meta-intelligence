@@ -205,6 +205,12 @@ gate. See the official [Git worktree documentation](https://git-scm.com/docs/git
 
 ## Incident order
 
+The public watchdog distinguishes stale evidence from the permitted recovery action. During
+`POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR`, a future verified `next_attempt_at` yields
+`WAIT_FOR_SOURCE_RETRY_WINDOW`; health remains `UNHEALTHY`. At the retry boundary it yields
+`RUN_OE_SYNC_NOW`. A separately stale schedule can be refreshed while OE is waiting. Malformed
+collection status and unsafe publication retain higher repair priority.
+
 Use `health.json` and its `next_action` field before reading large audits:
 
 - `INSPECT_LAST_JOB`: inspect `outputs/oe-feed-jobs/latest.json` and its named immutable run record;

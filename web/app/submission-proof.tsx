@@ -109,6 +109,6 @@ export function SubmissionProof({
       <ol><li><time>00:00</time><div><b>문제</b><p>“팀이 검토할 후보를 놓치지 않으면서 연습 시간을 어떻게 아낄까?”</p></div></li><li><time>00:25</time><div><b>T1 오늘 준비</b><p>공식 일정, 공개 선수 선택, 상대 우선순위를 한 화면에서 확인합니다.</p></div></li><li><time>01:05</time><div><b>근거 추적</b><p>후보 카드에서 지역·팀·경기 이벤트로 내려가 산식과 원자료 연결을 보여줍니다.</p></div></li><li><time>01:50</time><div><b>의사결정 출력</b><p>반대 근거, 연습 질문, 중단 조건과 한 장 PDF를 확인합니다.</p></div></li><li><time>02:30</time><div><b>신뢰 경계</b><p>백테스트와 AI가 준비되지 않았을 때 자동으로 잠기는 이유를 설명합니다.</p></div></li></ol>
     </section>
 
-    <footer className="submission-footer"><div><b>지금 제출할 수 있는 것</b><p>배포 서비스 · 재현 가능한 T1 시연 · 공개 근거 계약 · 테스트된 코드</p></div><div><b>제출 전 계속 채울 것</b><p>14일 연속 관측 · 실제 백테스트 · 사례 연구 결과 · 사람 대비 AI 30건</p></div><a href={productSpaceHref(currentSpace, "ONBOARDING")}>제품 홈으로 돌아가기 →</a></footer>
+    <footer className="submission-footer"><div><b>지금 제출할 수 있는 것</b><p>배포 서비스 · 재현 가능한 T1 시연 · 공개 근거 계약 · 테스트된 코드</p><a href={productSpaceHref(currentSpace, "ONBOARDING") + "briefs/worlds-strategy-brief.pdf"} download>월즈 전략 브리프·검증 사례 PDF · 2026-09-15</a></div><div><b>제출 전 계속 채울 것</b><p>연속 관측 성숙 · 독립 표본 검증 · 실제 사용자 효과 측정 · 사람 대비 AI 30건</p></div><a href={productSpaceHref(currentSpace, "ONBOARDING")}>제품 홈으로 돌아가기 →</a></footer>
   </main>;
 }
