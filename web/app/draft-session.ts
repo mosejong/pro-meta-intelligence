@@ -42,7 +42,7 @@ export function parseDraftSession(text: string): DraftSessionResult {
   if (new TextEncoder().encode(text).byteLength > MAX_DRAFT_FILE_BYTES) return fail("시나리오 파일은 16MB 이하여야 합니다.");
   let value: unknown;
   try { value = JSON.parse(text); } catch { return fail("JSON 파일을 읽을 수 없습니다. 저장한 시나리오 파일을 선택하세요."); }
-  if (!record(value) || value.artifact_type !== "public-draft-scenario" || !["2", "3"].includes(String(value.schema_version)) || value.format !== "HARD_FEARLESS_5_BAN_5_PICK") return fail("지원하는 피어리스 시나리오 파일이 아닙니다.");
+  if (!record(value) || value.artifact_type !== "public-draft-scenario" || (value.schema_version !== "2" && value.schema_version !== "3") || value.format !== "HARD_FEARLESS_5_BAN_5_PICK") return fail("지원하는 피어리스 시나리오 파일이 아닙니다.");
   const firstPickSide = value.schema_version === "2" ? "BLUE" : value.first_pick_side;
   if (firstPickSide !== "BLUE" && firstPickSide !== "RED") return fail("선픽 진영이 올바르지 않습니다.");
   if (value.model_version !== DRAFT_MODEL_VERSION) return fail("분석 버전이 다릅니다. 같은 결과를 보장할 수 없어 불러오지 않았습니다.");

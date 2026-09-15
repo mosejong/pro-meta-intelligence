@@ -15,7 +15,25 @@ Professional teams operate under limited practice time. A useful system should t
 
 The system ranks candidates for review, not as automatic truths.
 
-## Main Capabilities
+## Implemented Today
+
+- Public patch Radar with source evidence, sample guards and a fixed analysis cutoff.
+- T1/opponent briefs, role-level observed champions and official schedule monitoring.
+- Human-confirmed draft rehearsal with staged opponent previews, separate map side / first pick,
+  Hard Fearless prior-pick locks, deterministic replay and device-local save/import/export.
+- Historical draft evaluation with preserved aggregates; production v2 remains the default.
+- Rule-based staff/creator briefs, printable demonstration flow and local human-review journals.
+- Device-local own-team practice input, isolated from public evidence and opponent answers.
+
+The public source snapshot is currently dated August 31, 2026 (patch 16.16); source backoff and
+incomplete history remain visible. This is a working evidence-review prototype, not validated
+Worlds meta or a proven improvement in staff decision time. [Current work and gates](docs/RELEASE_BACKLOG.md).
+
+## Product Scope and Planned Capabilities
+
+The following describes the wider roadmap. Expert-source ingestion, familiarity estimation,
+provider-backed strategy generation and multi-agent comparisons are research/release gates,
+not deployed capabilities. See the implemented list above and the status ledger.
 
 - **Global Meta Radar** — patch-level analysis across regions, teams, roles, and draft positions.
 - **Blind Spot / Joker Detector** — finds picks that are underrepresented globally but show meaningful regional, team, high-Elo, or OTP signals.

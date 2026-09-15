@@ -121,6 +121,10 @@ test("historical draft evaluation measures the production preview and rejects le
       legacy.schema_version = "2";
       delete legacy.first_pick_side;
       assert.equal(parseDraftSession(JSON.stringify(legacy)).session.firstPickSide, "BLUE");
+      for (const version of [2, 3, ["3"], null]) {
+        const malformed = { ...JSON.parse(exported), schema_version: version };
+        assert.equal(parseDraftSession(JSON.stringify(malformed)).ok, false);
+      }
       const invalid = JSON.parse(exported);
       invalid.first_pick_side = "PURPLE";
       assert.equal(parseDraftSession(JSON.stringify(invalid)).ok, false);

@@ -90,6 +90,8 @@ function integer(value: unknown, label: string, minimum: number, maximum: number
   return Number(value);
 }
 
+function isoDate(value: unknown, label: string, nullable?: false): string;
+function isoDate(value: unknown, label: string, nullable: true): string | null;
 function isoDate(value: unknown, label: string, nullable = false) {
   if (nullable && (value === undefined || value === null || value === "")) return null;
   const cleaned = cleanText(value, label, 40);

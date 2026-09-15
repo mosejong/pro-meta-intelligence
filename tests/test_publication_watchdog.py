@@ -214,6 +214,42 @@ def test_publication_watchdog_distinguishes_radar_and_schedule_staleness() -> No
     assert report["next_action"] == "RUN_OE_SYNC_NOW"
 
 
+@pytest.mark.parametrize(
+    ("retry_at", "schedule_stale", "expected"),
+    [
+        ("2026-08-25T13:00:00+00:00", False, "WAIT_FOR_SOURCE_RETRY_WINDOW"),
+        ("2026-08-25T12:00:00+00:00", False, "RUN_OE_SYNC_NOW"),
+        ("2026-08-25T11:00:00+00:00", False, "RUN_OE_SYNC_NOW"),
+        (None, False, "RUN_OE_SYNC_NOW"),
+        ("2026-08-25T13:00:00+00:00", True, "RUN_SCHEDULE_REFRESH_NOW"),
+        ("invalid", False, "RESTORE_COLLECTION_STATUS"),
+    ],
+)
+def test_watchdog_respects_source_backoff_without_hiding_stale_evidence(
+    retry_at: str | None, schedule_stale: bool, expected: str
+) -> None:
+    old = "2026-08-20T00:00:00+00:00"
+    creator = _creator()
+    creator["source_snapshot"]["cutoff"] = old
+    collection = _collection_status(
+        state="SOURCE_DELAYED", reason_code="POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR"
+    )
+    collection["source"]["next_attempt_at"] = retry_at
+    report = assess_publication_watchdog(
+        _radar(cutoff=old),
+        creator,
+        _history(as_of=old),
+        _outcomes(as_of=old),
+        _schedule(retrieved_at=old) if schedule_stale else _schedule(),
+        _ai_validation(),
+        collection,
+        checked_at=NOW,
+    )
+    assert report["healthy"] is False
+    assert "RADAR_PUBLICATION_FRESHNESS" in report["failed_checks"]
+    assert report["next_action"] == expected
+
+
 def test_publication_watchdog_rejects_missing_or_unsafe_public_artifacts() -> None:
     missing = assess_publication_watchdog(None, None, None, None, None, None, None, checked_at=NOW)
     assert missing["healthy"] is False

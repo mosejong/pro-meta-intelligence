@@ -354,6 +354,10 @@ function isDraft(value: unknown): value is PlayerTendencyBaselineDraft {
   const snapshot = value.snapshot;
   const human = value.human;
   const privacy = value.privacy;
+  const { available_claim_ids: claims, available_evidence_ids: evidence,
+    available_boundary_ids: boundaries, available_critical_error_ids: criticalErrors } = task;
+  if (!isStringArray(claims, 30) || !isStringArray(evidence) ||
+    !isStringArray(boundaries, 30) || !isStringArray(criticalErrors, 30)) return false;
   return value.schema_version === "1"
     && value.artifact_type === "ai-human-baseline-draft"
     && value.status === "HUMAN_BASELINE_ONLY"
@@ -383,13 +387,13 @@ function isDraft(value: unknown): value is PlayerTendencyBaselineDraft {
     && isStringArray(task.available_critical_error_ids, 30)
     && task.available_critical_error_ids.every((id) => allowedCriticalErrorIds.has(id))
     && isStringArray(human.claim_ids, 30)
-    && human.claim_ids.every((id) => task.available_claim_ids.includes(id))
+    && human.claim_ids.every((id) => claims.includes(id))
     && isStringArray(human.evidence_ids)
-    && human.evidence_ids.every((id) => task.available_evidence_ids.includes(id))
+    && human.evidence_ids.every((id) => evidence.includes(id))
     && isStringArray(human.boundary_ids, 30)
-    && human.boundary_ids.every((id) => task.available_boundary_ids.includes(id))
+    && human.boundary_ids.every((id) => boundaries.includes(id))
     && isStringArray(human.critical_error_ids, 30)
-    && human.critical_error_ids.every((id) => task.available_critical_error_ids.includes(id))
+    && human.critical_error_ids.every((id) => criticalErrors.includes(id))
     && typeof human.duration_seconds === "number" && Number.isFinite(human.duration_seconds) && human.duration_seconds > 0
     && typeof human.accepted_without_edit === "boolean"
     && privacy.analyst_identity_collected === false
