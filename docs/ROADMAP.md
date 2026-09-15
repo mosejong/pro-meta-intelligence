@@ -270,8 +270,11 @@ output remain separate validation gates rather than being implied by the interfa
    The LCK eligibility audit exposed the old Blue-first restriction. First Selection now supports
    Red-first order throughout replay, previews, sessions and historical evaluation. Original pilot
    aggregates remain preserved; expanded results must disclose the changed order coverage.
-   [Preparation scope and sources](WORLDS_PREPARATION.md). Next, verify event-specific rules and
-   patch, refresh confirmed qualifiers, and improve opponent evidence on the confirmed patch.
+   [Preparation scope and sources](WORLDS_PREPARATION.md). September 15 review confirms patch
+   26.20 and First Selection from event ruleset v1.01. Opponent cards now distinguish role-specific
+   observed champion coverage from top-five priorities without changing prediction scores.
+   Next, verify common Fearless rules and event restrictions, refresh confirmed qualifiers, and
+   improve opponent evidence on the confirmed patch when available.
 
 Validation note: the current frontend build and test scripts are release checks. An additional
 whole-project TypeScript check found existing errors outside the Draft Lab files (decision outcomes,

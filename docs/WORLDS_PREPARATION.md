@@ -1,6 +1,6 @@
 # Worlds 2026 preparation
 
-## Official snapshot reviewed September 14
+## Official snapshot reviewed September 15
 
 The [official season schedule](https://lolesports.com/en-GB) lists Worlds for October 15–November 14.
 These are the dates displayed by the source, not inferred match start times in Korea.
@@ -8,8 +8,14 @@ The [official tournament overview](https://lolesports.com/ko-KR/tournament/11566
 lists T1, GEN, HLE, CFO, MVK, TSW and BLG as qualified at review time; other slots remain TBD.
 The preparation panel deliberately presents a dated partial qualification snapshot. It does not
 infer seeds, fixtures, opponents or qualification from a power ranking or a team's feed presence.
-The competition patch and event-specific draft rules remain unverified in the reviewed sources.
-Do not equate feed patch 16.16 with the Worlds patch.
+The [event ruleset v1.01](https://cdn.sanity.io/files/dsfx7636/news_live/faa5ce974e58615911fbee931c6123e2785a8b46.pdf)
+section 5.1 specifies **26.20**, subject to organizer changes. Section 4.1.4 confirms separate
+map-side and pick-order choices; the previous game's loser receives first selection in subsequent
+games. Play-In Round 4 gives the upper-bracket team both choices for Game 1. Practice remains
+manual and does not award selection rights or infer results. The common international rules and
+event restriction list still need verification before certifying the full Fearless ruleset.
+Do not equate feed patch 16.16 with the Worlds patch; the engine does not relabel old evidence.
+The official participant overview still displays the same seven named teams and unresolved slots.
 
 ## First Selection correction
 
@@ -41,6 +47,20 @@ and cannot erase ongoing work. They prepare a rehearsal, not an official fixture
 
 Pick priorities remain from the captured public season report. The panel discloses its patch and
 cutoff, so season history is not presented as Worlds meta. The role experiment stays offline.
+
+Each opponent card now exposes role-specific distinct observed champion counts. Counts combine
+that exact team's public player profiles, priority picks and available recent-game picks, requiring
+positive game evidence and a cited event. The same champion is deduplicated within a role and can
+appear in multiple roles. Missing roles remain empty; global radar entries and another team's
+profiles are never substituted. These are bounded report observations, not a complete champion
+pool, player proficiency estimate, or confirmed Worlds roster. In particular, absent recent-game
+detail does not imply absent role evidence: the feed contains player profiles beyond its top-five
+priority list. This display does not change the frozen role experiment or its published scores.
+The report truncates per-player champion lists; these counts are lower bounds on the source
+sample, not comparable estimates of complete team pool size. T1 has additional recent-game
+detail that other participants do not currently receive. The August 31 report has 6 games for
+GEN, 4 for HLE, 10 each for CFO/MVK/TSW and 2 for BLG. BLG's two-game sample remains the
+smallest opponent sample; no new matches or new-patch evidence were manufactured by this view.
 
 ## LCK/T1 evidence audit
 
@@ -84,7 +104,7 @@ without confirmed first-set labels and 172 without an earlier capture; T1 exclus
 57 respectively. Eligibility is limited by archived evidence and the first-set evaluation scope,
 not by waiting for another LCK fixture. Later-set Fearless remains unevaluated.
 
-Next priorities are to verify Worlds event rules and patch when available, maintain the confirmed
-participant snapshot, expand same-patch opponent role evidence, and evaluate the frozen role
+Next priorities are to verify the remaining common Fearless rules and event restrictions, maintain
+the confirmed participant snapshot, expand evidence on patch 26.20 when available, and evaluate the frozen role
 experiment on disjoint data. First Selection support does not establish every Worlds rule or
 turn rehearsal into a validated counter-pick recommendation.
