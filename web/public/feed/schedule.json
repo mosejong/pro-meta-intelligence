@@ -1,26 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-16T19:32:46.032541+00:00",
+  "available_at": "2026-09-17T04:49:25.822408+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:ed0813cb2c3039a22d36d0ba6e12d12fd99c4ea49996e22ea7a48563254aedd0",
+  "content_hash": "sha256:c6aab8287ec5e3d8237806ee55ad35d79123c92d0fee030d98bdbbf9d4a943e6",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Regional Qualifier",
-      "event_id": "lolesports:33d101844a6705f6ee6c",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "TES",
-          "name": "TOP ESPORTS"
-        },
-        {
-          "code": "IG",
-          "name": "Invictus Gaming"
-        }
-      ],
-      "start_at": "2026-09-17T09:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Regional Qualifier",
@@ -253,10 +236,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 14,
+    "event_count": 13,
     "tbd_participant_count": 14
   },
-  "retrieved_at": "2026-09-16T19:32:46.032541+00:00",
+  "retrieved_at": "2026-09-17T04:49:25.822408+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
