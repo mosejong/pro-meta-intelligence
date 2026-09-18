@@ -1,18 +1,18 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-18T12:56:53.608832+00:00",
+  "available_at": "2026-09-18T19:01:22.701963+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:e6c3a69c8ac2998ee21399fc2948cd6423ee9b820269c678a466d9426e1d1a06",
+  "content_hash": "sha256:2fbb453f27f8bdd6785806cff8acd1fb5b93b9e4fcf16a85473557203ac963fa",
   "events": [
     {
       "best_of": 5,
       "block": "Regional Qualifier",
-      "event_id": "lolesports:422d0c5daf9558bfcd19",
+      "event_id": "lolesports:4fab1207f91e273029a0",
       "league": "LPL",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "JDG",
+          "name": "Beijing JDG Esports"
         },
         {
           "code": "IG",
@@ -24,12 +24,12 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:67ca81f5bc640d023247",
+      "event_id": "lolesports:d83235dbd31e2a883f41",
       "league": "LEC",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "MKOI",
+          "name": "Movistar KOI"
         },
         {
           "code": "KC",
@@ -186,9 +186,9 @@
   "locale": "en-US",
   "quality": {
     "event_count": 10,
-    "tbd_participant_count": 13
+    "tbd_participant_count": 11
   },
-  "retrieved_at": "2026-09-18T12:56:53.608832+00:00",
+  "retrieved_at": "2026-09-18T19:01:22.701963+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
