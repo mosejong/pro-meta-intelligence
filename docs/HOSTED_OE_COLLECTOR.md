@@ -69,6 +69,12 @@ are isolated under the `hosted-ops` extra and tested in CI.
 10. performs a normal non-force push and deploys the already validated Pages artifact; and
 11. when source freshness fails, deploys the bounded status but still fails the workflow.
 
+A readiness-rejected or unavailable acquisition keeps all four accepted analysis heads
+(`current.json`, `current-creator.json`, `history-status.json`, `decision-outcomes.json`)
+unchanged. Candidate history and outcome diagnostics remain in the job audit; only the bounded
+collection status advances. This lets the Pages consistency checks continue to validate the
+last accepted publication while exposing the actual collection rejection.
+
 No hosted run can silently reset history. If no prior artifact exists, `workflow_dispatch` must name
 an encrypted `bootstrap_asset_id` or explicitly set `allow_fresh_start=true`. Scheduled runs always
 fail closed in that state.

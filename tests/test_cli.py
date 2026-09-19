@@ -3,6 +3,8 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from pro_meta_intelligence.cli import main
 from pro_meta_intelligence.ingestion import (
     OracleElixirDownloadError,
@@ -847,8 +849,9 @@ def test_sync_oe_feed_publishes_with_audited_known_exclusions(tmp_path, monkeypa
     assert current["input"]["import_report"]["rejected_game_count"] == 1
 
 
+@pytest.mark.parametrize("has_previous_publication", [False, True])
 def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, has_previous_publication
 ) -> None:
     retrieved_at = datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
     source_body = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
@@ -889,6 +892,21 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
     output = tmp_path / "sync.json"
     feed = tmp_path / "feed"
 
+    published_paths = [
+        feed / name
+        for name in (
+            "current.json",
+            "current-creator.json",
+            "history-status.json",
+            "decision-outcomes.json",
+        )
+    ]
+    previous = b'{"previous_publication": true}\n'
+    if has_previous_publication:
+        feed.mkdir()
+        for path in published_paths:
+            path.write_bytes(previous)
+
     assert (
         main(
             [
@@ -919,7 +937,12 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
         "PATCH_DISTINCT_TEAM_COUNT_BELOW_MINIMUM",
         "PATCH_REGION_COUNT_BELOW_MINIMUM",
     ]
-    assert not (feed / "current.json").exists()
+    for path in published_paths:
+        if has_previous_publication:
+            assert path.read_bytes() == previous
+        else:
+            assert not path.exists()
+    assert audit["result"]["history_status"]["artifact_type"] == "oe-history-status"
     collection_status = json.loads((feed / "collection-status.json").read_text(encoding="utf-8"))
     assert collection_status["state"] == "PUBLICATION_REJECTED"
     assert collection_status["reason_code"] == "READINESS_GATE_REJECTED"

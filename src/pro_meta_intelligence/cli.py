@@ -820,9 +820,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             league_regions=_load_league_regions(args.region_map),
         ).to_dict()
         history_status = build_history_status(history_benchmark)
-        publish_history_status(args.feed_dir, history_status)
         decision_outcomes = build_decision_outcomes(history_benchmark)
-        publish_decision_outcomes(args.feed_dir, decision_outcomes)
 
         if latest is None:
             payload = {
@@ -887,6 +885,11 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 history_status=history_status,
             )
             payload["readiness_audit"] = coverage.to_dict()
+            if exit_code == 0:
+                # These heads describe the accepted Radar, not a rejected acquisition.
+                # Keep candidate diagnostics in the job audit until publication succeeds.
+                publish_history_status(args.feed_dir, history_status)
+                publish_decision_outcomes(args.feed_dir, decision_outcomes)
         payload["network_collection_performed"] = network_attempted
         payload["source_acquisition"] = {
             "status": acquisition_status,
