@@ -1,60 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-19T04:34:26.664312+00:00",
+  "available_at": "2026-09-19T12:28:42.098725+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:dcb6044fe0f585b7627c62a5519b233adb3061a6320a7c9563d9d65308a5247f",
+  "content_hash": "sha256:e1002a47d54c1ca6ba94d3315d08152d1dae691f75a353f0a13001a6b525234c",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Regional Qualifier",
-      "event_id": "lolesports:4fab1207f91e273029a0",
-      "league": "LPL",
-      "participants": [
-        {
-          "code": "JDG",
-          "name": "Beijing JDG Esports"
-        },
-        {
-          "code": "IG",
-          "name": "Invictus Gaming"
-        }
-      ],
-      "start_at": "2026-09-19T09:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:d83235dbd31e2a883f41",
-      "league": "LEC",
-      "participants": [
-        {
-          "code": "MKOI",
-          "name": "Movistar KOI"
-        },
-        {
-          "code": "KC",
-          "name": "Karmine Corp"
-        }
-      ],
-      "start_at": "2026-09-19T15:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:6ec12456ffd040e7f463",
-      "league": "LCS",
-      "participants": [
-        {
-          "code": "C9",
-          "name": "Cloud9 Kia"
-        },
-        {
-          "code": "LYON",
-          "name": "LYON"
-        }
-      ],
-      "start_at": "2026-09-19T20:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Finals",
@@ -92,7 +41,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:d3be09874194ead7963b",
+      "event_id": "lolesports:24db89acf69c63082c0c",
       "league": "LCS",
       "participants": [
         {
@@ -100,8 +49,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "SR",
+          "name": "Shopify Rebellion"
         }
       ],
       "start_at": "2026-09-25T20:00:00+00:00"
@@ -185,10 +134,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 10,
-    "tbd_participant_count": 11
+    "event_count": 7,
+    "tbd_participant_count": 10
   },
-  "retrieved_at": "2026-09-19T04:34:26.664312+00:00",
+  "retrieved_at": "2026-09-19T12:28:42.098725+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
