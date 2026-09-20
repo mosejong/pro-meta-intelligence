@@ -62,6 +62,26 @@ def test_oe_coverage_reports_explicit_patch_measurements() -> None:
     assert audit["selected_patch"]["regions"] == ["KOREA"]
 
 
+def test_reviewed_league_regions_preserve_unknown_league_gate(tmp_path) -> None:
+    games = []
+    for league in ("HC", "LAS", "LJL", "VCS"):
+        rows = _game_rows(game_id=league, patch="16.17")
+        for row in rows:
+            row["league"] = league
+        games.append(rows)
+    regions = LeagueRegionMap.load_default()
+    criteria = OECoverageCriteria(minimum_matches=4, minimum_distinct_teams=2, minimum_regions=3)
+    audit = audit_oe_coverage(_import_games(tmp_path, games), regions, criteria).to_dict()
+    assert audit["ready_for_radar"] is True
+    assert audit["selected_patch"]["regions"] == ["EMEA", "KOREA", "PACIFIC"]
+    assert regions.region_for("LAS") == "KOREA"
+    for row in games[-1]:
+        row["league"] = "UNREVIEWED"
+    rejected = audit_oe_coverage(_import_games(tmp_path, games), regions, criteria).to_dict()
+    assert rejected["ready_for_radar"] is False
+    assert "PATCH_HAS_UNKNOWN_LEAGUES" in rejected["blocking_reasons"]
+
+
 def test_oe_coverage_exposes_every_failed_gate_without_a_score() -> None:
     audit = audit_oe_coverage(
         _import_fixture(),

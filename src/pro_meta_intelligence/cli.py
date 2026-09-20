@@ -5,6 +5,7 @@ import json
 import platform
 from collections import Counter
 from collections.abc import Sequence
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
@@ -285,7 +286,12 @@ def build_parser() -> argparse.ArgumentParser:
     oe_sync.add_argument("--archive-dir", type=Path, default=Path("outputs/oracles-elixir/raw"))
     oe_sync.add_argument("--feed-dir", type=Path, default=Path("web/public/feed"))
     oe_sync.add_argument("--run-dir", type=Path, default=Path("outputs/oe-feed-jobs"))
-    oe_sync.add_argument("--patch", help="patch ID; latest available match patch if omitted")
+    patch_selection = oe_sync.add_mutually_exclusive_group()
+    patch_selection.add_argument("--patch", help="patch ID; latest match patch if omitted")
+    patch_selection.add_argument(
+        "--patch-selection-league",
+        help="select the latest available patch played by this exact league; retain all regions",
+    )
     oe_sync.add_argument("--cutoff", help="analysis cutoff; defaults to source retrieval time")
     oe_sync.add_argument("--recent-days", type=int, default=7)
     oe_sync.add_argument("--prior-days", type=int, default=7)
@@ -862,18 +868,36 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             input_authenticity="REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD",
         )
         imported = _load_oe_import(refresh_args)
+        if args.patch_selection_league is not None:
+            refresh_args.patch = _latest_league_patch(
+                imported,
+                args.patch_selection_league,
+                parse_datetime(args.cutoff) if args.cutoff else latest.retrieved_at,
+            )
         coverage = audit_oe_coverage(
             imported,
             _load_league_regions(args.region_map),
-            _readiness_criteria(args),
+            replace(_readiness_criteria(args), patch_id=refresh_args.patch),
         )
+        readiness = coverage.to_dict()
+        readiness["patch_selection"] = {
+            "mode": (
+                "LATEST_AVAILABLE_LEAGUE_PATCH"
+                if args.patch_selection_league is not None
+                else "EXPLICIT_PATCH"
+                if args.patch
+                else "LATEST_MATCH_PATCH"
+            ),
+            "league": args.patch_selection_league,
+            "comparison_scope": "ALL_MAPPED_LEAGUES_ON_SELECTED_PATCH",
+        }
         if not coverage.ready_for_radar:
             exit_code = 2
             payload = {
                 "schema_version": "1",
                 "status": "REJECTED_READINESS",
                 "published": False,
-                "readiness_audit": coverage.to_dict(),
+                "readiness_audit": readiness,
                 "history_status": history_status,
                 "decision_outcomes": _decision_outcomes_summary(decision_outcomes),
             }
@@ -881,10 +905,10 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             exit_code, payload = _refresh_feed_payload(
                 refresh_args,
                 imported=imported,
-                publication_readiness=coverage.to_dict(),
+                publication_readiness=readiness,
                 history_status=history_status,
             )
-            payload["readiness_audit"] = coverage.to_dict()
+            payload["readiness_audit"] = readiness
             if exit_code == 0:
                 # These heads describe the accepted Radar, not a rejected acquisition.
                 # Keep candidate diagnostics in the job audit until publication succeeds.
@@ -1392,6 +1416,17 @@ def _readiness_criteria(args: argparse.Namespace) -> OECoverageCriteria:
         minimum_regions=args.readiness_minimum_regions,
         patch_id=args.patch,
     )
+
+
+def _latest_league_patch(imported: OracleElixirImport, league: str, cutoff: datetime) -> str:
+    matches = tuple(
+        match
+        for match in imported.matches
+        if match.league == league and match.available_at <= cutoff and match.observed_at <= cutoff
+    )
+    if not matches:
+        raise ValueError(f"league {league!r} has no matches available at the analysis cutoff")
+    return max(matches, key=lambda match: (match.observed_at, match.match_id)).patch_id
 
 
 def _load_oe_import(

@@ -1,18 +1,60 @@
 import json
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from pro_meta_intelligence.cli import main
+from pro_meta_intelligence.cli import _latest_league_patch, build_parser, main
 from pro_meta_intelligence.ingestion import (
     OracleElixirDownloadError,
     OracleElixirDownloadIntervalError,
 )
-from pro_meta_intelligence.sources import RawSourceArtifact, SnapshotArchive, SourceAttemptLedger
+from pro_meta_intelligence.ingestion.oracles_elixir import OracleElixirCSVAdapter
+from pro_meta_intelligence.sources import (
+    RawSourceArtifact,
+    SnapshotArchive,
+    SourceAttemptLedger,
+    SourceRegistry,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+
+def test_league_patch_selection_respects_exact_identity_and_availability() -> None:
+    cutoff = datetime(2026, 8, 22, 3, tzinfo=UTC)
+    imported = OracleElixirCSVAdapter(SourceRegistry.load_default()).import_file(
+        FIXTURES / "oracles_elixir_game.csv", retrieved_at=cutoff, source_timezone="UTC"
+    )
+    match = imported.matches[0]
+    later = cutoff + timedelta(days=1)
+    variants = (
+        replace(match, match_id="academy", league="LCKC", patch_id="16.16"),
+        replace(match, match_id="late", patch_id="16.17", available_at=later),
+        replace(match, match_id="future", patch_id="16.18", observed_at=later, available_at=later),
+        match,
+    )
+    for ordered in (variants, tuple(reversed(variants))):
+        assert _latest_league_patch(replace(imported, matches=ordered), "LCK", cutoff) == "16.15"
+    for league, boundary in (("LCKX", cutoff), ("LCK", cutoff - timedelta(seconds=1))):
+        with pytest.raises(ValueError, match="no matches available"):
+            _latest_league_patch(imported, league, boundary)
+
+
+def test_sync_rejects_conflicting_patch_selection_options() -> None:
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(
+            [
+                "sync-oe-feed",
+                "--source-timezone",
+                "UTC",
+                "--patch",
+                "16.15",
+                "--patch-selection-league",
+                "LCK",
+            ]
+        )
 
 
 def test_cli_writes_machine_readable_json(tmp_path) -> None:
@@ -645,11 +687,16 @@ def test_check_oe_feed_health_cli_returns_scheduler_friendly_exit_codes(tmp_path
     assert main(command) == 2
 
 
+@pytest.mark.parametrize("selection_league,expected_patch", [(None, "16.16"), ("LCK", "16.15")])
 def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, selection_league, expected_patch
 ) -> None:
     retrieved_at = datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
     source_body = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
+    later_academy = b"".join(source_body.splitlines(keepends=True)[1:])
+    later_academy = later_academy.replace(b"GAME001", b"GAME002").replace(b",LCK,", b",LAS,")
+    later_academy = later_academy.replace(b"16.15", b"16.16").replace(b"2026-08-20", b"2026-08-21")
+    source_body += later_academy
 
     class FakeDownloadAdapter:
         source_id = "oracles-elixir-match-data"
@@ -720,6 +767,8 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
         str(output),
     ]
 
+    if selection_league:
+        command.extend(["--patch-selection-league", selection_league])
     assert main(command) == 0
 
     audit = json.loads(output.read_text(encoding="utf-8"))
@@ -730,6 +779,9 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
     assert audit["result"]["network_collection_performed"] is True
     assert audit["result"]["readiness_audit"]["ready_for_radar"] is True
     assert current["fixture_only"] is False
+    assert current["patch_id"] == expected_patch
+    assert current["publication_readiness"]["selected_patch_id"] == expected_patch
+    assert current["publication_readiness"]["patch_selection"]["league"] == selection_league
     assert current["input"]["authenticity"] == "REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD"
     assert "network_collection_performed" not in current["input"]
     assert current["history_status"]["artifact_type"] == "oe-history-status"

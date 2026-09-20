@@ -10,6 +10,31 @@ exact 24-hour interval from the most recent persisted network attempt, including
 returned quota HTML or another rejected response. An early scheduled run therefore restores state,
 reuses the verified cache, and performs no provider request.
 
+## Analysis patch selection
+
+The hosted workflow uses `--patch-selection-league LCK`: the patch of the latest exact `LCK`
+match known at the analysis cutoff. `LAS` and `LCKC` do not select the first-team patch.
+This preserves the club preparation cohort after the LCK season ends while other leagues
+continue on newer patches. The selected patch still includes all mapped leagues for comparisons;
+it does not relabel old games as the Worlds patch. Acquisition continues on its existing schedule.
+The selected patch must pass the unchanged readiness gates, and the selection mode/league are
+recorded in public `publication_readiness.patch_selection` and the job audit.
+
+The option is mutually exclusive with `--patch`. An absent league or no available league match
+fails the job and preserves accepted analysis heads. Omitting both options retains the generic
+CLI's latest-match behavior. Analysis cutoff, source freshness and match dates remain independent;
+selecting the last LCK patch does not make a stale source current. Historical walk-forward audits
+retain their existing per-cutoff patch-selection policy and are not an evaluation of this cohort.
+
+Reviewed region additions (2026-09-20): `HC` → EMEA ([Hitpoint organizer](https://hitpoint.cz/kdo-se-predstavi-v-hitpoint-challengers/));
+`LAS` → KOREA, LCK Academy Series ([KeSPA](https://school.e-sports.or.kr/notice/view/1116),
+[abbreviation crosswalk](https://lol.fandom.com/wiki/LCK_Academy_Series/2026_Season));
+`LJL` → PACIFIC ([Riot](https://lolesports.com/ja-JP/news/ljl2026-Summer-Championship));
+`VCS` → PACIFIC ([Riot](https://lolesports.com/vi-VN/news/gioi-thieu-vcs-2026)).
+These are geographic analysis buckets, not aliases of first-tier leagues. Unknown codes continue
+to block publication on the selected patch. Regression imports cover all four mappings and an
+unreviewed code.
+
 ## Private state model
 
 Provider CSV rows are never committed, deployed to Pages, attached to a release in plaintext, or

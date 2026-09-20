@@ -5,9 +5,11 @@
     "CBLOL": "BRAZIL",
     "CD": "BRAZIL",
     "EBL": "EMEA",
+    "HC": "EMEA",
     "HLL": "EMEA",
     "HM": "EMEA",
     "KeSPA Cup": "KOREA",
+    "LAS": "KOREA",
     "LCK": "KOREA",
     "LCKC": "KOREA",
     "LCP": "PACIFIC",
@@ -16,6 +18,7 @@
     "LES": "EMEA",
     "LFL": "EMEA",
     "LIT": "EMEA",
+    "LJL": "PACIFIC",
     "LPL": "CHINA",
     "LPLOL": "EMEA",
     "LRN": "LATIN_AMERICA",
@@ -27,6 +30,7 @@
     "PRM": "EMEA",
     "RL": "EMEA",
     "ROL": "EMEA",
-    "TCL": "EMEA"
+    "TCL": "EMEA",
+    "VCS": "PACIFIC"
   }
 }
