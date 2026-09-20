@@ -1975,6 +1975,55 @@ test("national hypotheses freeze criteria and retain unverified timing after out
   } finally { await vite.close(); }
 });
 
+test("national journal restores backups without changing criteria or losing completed verdicts", async () => {
+  const vite = await createServer({ root: fileURLToPath(templateRoot), configFile: false, publicDir: false,
+    server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { createNationalCheck, resolveNationalCheck, mergeNationalChecks, parseNationalChecks, serializeNationalChecks } = await vite.ssrLoadModule("/app/national-team-analysis.ts");
+    const check = createNationalCheck({ id: "case-1", subject: "Keria", target: "Future series game 1",
+      hypothesis: "Roams before eight minutes", criterion: "Mid combat before 08:00; missing video is insufficient",
+      created_at: "2026-09-20T08:00:00Z", baseline: { patch: "16.16", cutoff: "2026-09-15T22:11:48Z" } });
+    const completed = resolveNationalCheck(check, { recorded_at: "2026-09-20T10:00:00Z", verdict: "INSUFFICIENT",
+      observation: "No complete video", source_url: "https://example.org/match" });
+    const before = JSON.stringify(check);
+    const reordered = Object.fromEntries(Object.entries(completed).reverse());
+    assert.deepEqual(mergeNationalChecks([check], [reordered]), [completed]);
+    assert.deepEqual(mergeNationalChecks([completed], [check]), [completed]);
+    assert.deepEqual(mergeNationalChecks([completed], [reordered]), [completed]);
+    assert.equal(JSON.stringify(check), before);
+    assert.equal(mergeNationalChecks([], parseNationalChecks(serializeNationalChecks([completed])))[0].timing, "UNVERIFIED_DEVICE_TIME");
+    const second = { ...check, id: "case-2" };
+    assert.deepEqual(mergeNationalChecks([second], [check]), [check, second]);
+    assert.throws(() => mergeNationalChecks([check], [second, { ...check, criterion: "Changed threshold" }]), /같은 기록/);
+    assert.throws(() => mergeNationalChecks([completed], [{ ...completed, outcome: { ...completed.outcome, verdict: "SUPPORTED" } }]), /같은 기록/);
+    const full = Array.from({ length: 30 }, (_, i) => ({ ...check, id: `full-${i}` }));
+    assert.throws(() => mergeNationalChecks(full, [check]), /30건/);
+    const forged = serializeNationalChecks([check]).replace('"UNVERIFIED_DEVICE_TIME"', '"VERIFIED"');
+    assert.throws(() => parseNationalChecks(forged));
+    assert.throws(() => parseNationalChecks(JSON.stringify({ schema_version: "1", artifact_type: "national-team-observation-checks", checks: [], extra: "가".repeat(70_000) })), /너무 큽니다/);
+  } finally { await vite.close(); }
+});
+
+test("national journal refuses stale-tab writes and preserves storage after failed imports", async () => {
+  const vite = await createServer({ root: fileURLToPath(templateRoot), configFile: false, publicDir: false,
+    server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { createNationalCheck, saveNationalChecks, serializeNationalChecks, mergeNationalChecks } = await vite.ssrLoadModule("/app/national-team-analysis.ts");
+    const check = createNationalCheck({ id: "case-1", subject: "Keria", target: "Future game",
+      hypothesis: "Early roam", criterion: "Combat before 08:00", created_at: "2026-09-20T08:00:00Z",
+      baseline: { patch: "16.16", cutoff: "2026-09-15T22:11:48Z" } });
+    let stored = null; let writes = 0;
+    const storage = { getItem: () => stored, setItem: (_key, value) => { writes += 1; stored = value; } };
+    const saved = saveNationalChecks(storage, null, [check]);
+    assert.equal(saved, serializeNationalChecks([check]));
+    assert.throws(() => saveNationalChecks(storage, null, []), /다른 탭/);
+    assert.equal(stored, saved);
+    assert.throws(() => saveNationalChecks(storage, saved, mergeNationalChecks([check], [{ ...check, target: "Changed game" }])));
+    assert.equal(writes, 1);
+    assert.throws(() => saveNationalChecks({ getItem: () => saved, setItem: () => { throw new Error("QuotaExceeded"); } }, saved, []), /QuotaExceeded/);
+  } finally { await vite.close(); }
+});
+
 test("national review renders sourced observations and manual verification without accuracy claims", async () => {
   const response = await render("/draft");
   const html = await response.text();
@@ -1983,6 +2032,8 @@ test("national review renders sourced observations and manual verification witho
   assert.match(html, /대표팀 표본과 합산하지 않습니다/);
   assert.match(html, /기기 시각은 사전 예측을 인증하지 않습니다/);
   assert.match(html, /예상·기준 고정/);
+  assert.match(html, /검증 기록 JSON 가져오기/);
+  assert.match(html, /완료된 판정이 충돌하면 파일 전체를 취소/);
   assert.match(html, /관찰 경기/);
   assert.match(html, /대한민국 vs 베트남/);
   assert.match(html, /사후 관찰/);

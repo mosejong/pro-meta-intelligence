@@ -78,6 +78,7 @@ export function nationalClubBaseline(report: RadarReport, playerName: string) {
 }
 
 export const NATIONAL_JOURNAL_KEY = "pmi:national-observation-checks:v1";
+export const MAX_NATIONAL_FILE_BYTES = 200_000;
 export type NationalCheck = {
   id: string;
   created_at: string;
@@ -124,12 +125,47 @@ export function resolveNationalCheck(check: NationalCheck, outcome: NonNullable<
 
 export function parseNationalChecks(raw: string | null): NationalCheck[] {
   if (raw === null) return [];
-  if (raw.length > 200_000) throw new Error("검증 기록 파일이 너무 큽니다.");
+  if (new TextEncoder().encode(raw).byteLength > MAX_NATIONAL_FILE_BYTES) throw new Error("검증 기록 파일이 너무 큽니다.");
   const payload: unknown = JSON.parse(raw);
   if (!record(payload) || payload.schema_version !== "1" || payload.artifact_type !== "national-team-observation-checks" ||
     !Array.isArray(payload.checks) || payload.checks.length > 30 || !payload.checks.every(validCheck) ||
     new Set(payload.checks.map((check) => check.id)).size !== payload.checks.length) throw new Error("검증 기록 형식이 올바르지 않습니다.");
-  return payload.checks;
+  return payload.checks.map(copyNationalCheck);
+}
+
+// Keep a canonical, bounded shape when comparing files from different serializers.
+function copyNationalCheck(check: NationalCheck): NationalCheck {
+  return { id: check.id, created_at: check.created_at, subject: check.subject, target: check.target,
+    hypothesis: check.hypothesis, criterion: check.criterion,
+    baseline: { patch: check.baseline.patch, cutoff: check.baseline.cutoff }, timing: check.timing,
+    outcome: check.outcome ? { recorded_at: check.outcome.recorded_at, verdict: check.outcome.verdict,
+      observation: check.outcome.observation, source_url: check.outcome.source_url } : null };
+}
+
+export function mergeNationalChecks(existing: NationalCheck[], incoming: NationalCheck[]): NationalCheck[] {
+  const merged = new Map(parseNationalChecks(serializeNationalChecks(existing)).map((check) => [check.id, check]));
+  for (const check of parseNationalChecks(serializeNationalChecks(incoming))) {
+    const previous = merged.get(check.id);
+    if (!previous) { merged.set(check.id, check); continue; }
+    const sameCriteria = JSON.stringify({ ...previous, outcome: null }) === JSON.stringify({ ...check, outcome: null });
+    const outcomesConflict = previous.outcome && check.outcome && JSON.stringify(previous.outcome) !== JSON.stringify(check.outcome);
+    if (!sameCriteria || outcomesConflict) throw new Error("같은 기록의 예상·판정이 다릅니다. 파일 전체를 가져오지 않았습니다. 기존 기록과 원본 파일을 비교하세요.");
+    if (!previous.outcome && check.outcome) merged.set(check.id, check);
+  }
+  if (merged.size > 30) throw new Error("가져온 기록을 합치면 30건을 넘습니다. 기존 기록은 변경하지 않았습니다.");
+  return [...merged.values()].sort((left, right) => Date.parse(left.created_at) - Date.parse(right.created_at)
+    || (left.id < right.id ? -1 : left.id > right.id ? 1 : 0));
+}
+
+export function saveNationalChecks(
+  storage: Pick<Storage, "getItem" | "setItem">, expected: string | null, checks: NationalCheck[],
+): string {
+  const raw = serializeNationalChecks(checks);
+  if (storage.getItem(NATIONAL_JOURNAL_KEY) !== expected) {
+    throw new Error("다른 탭에서 기록이 변경됐습니다. 입력 중인 내용을 복사한 뒤 새로고침하세요. 저장하지 않았습니다.");
+  }
+  storage.setItem(NATIONAL_JOURNAL_KEY, raw);
+  return raw;
 }
 
 export function serializeNationalChecks(checks: NationalCheck[]) {

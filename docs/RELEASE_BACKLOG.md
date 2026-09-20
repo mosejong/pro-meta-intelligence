@@ -8,6 +8,7 @@ unmet research gates. No new LCK fixtures are a prerequisite.
 
 | Priority | Work | Result / evidence |
 | --- | --- | --- |
+| P1 | Restore national review journals | Bounded JSON import merges duplicate records, retains completed verdicts, and rejects conflicts atomically before storage writes. Changed-tab storage guard; existing exports remain compatible and unverified. |
 | P0 | Preserve LCK preparation after season end | Hosted selection follows the latest available exact LCK patch, with explicit selection provenance and unchanged readiness gates. Reviewed HC/LAS/LJL/VCS regions; academy leagues cannot select the LCK patch. |
 | P0 | Repair deferred TypeScript errors | 17 errors fixed without suppression; `npm run typecheck` passes and is required in CI. Runtime validation remains intact. |
 | P0 | Correct stale-source recovery guidance | Watchdog keeps `UNHEALTHY` but returns `WAIT_FOR_SOURCE_RETRY_WINDOW` during a verified source backoff; due retries and separate stale schedules get actionable instructions. Six regression cases. |
@@ -17,7 +18,7 @@ unmet research gates. No new LCK fixtures are a prerequisite.
 | P1 | Consolidate implemented vs planned scope | README now identifies working features and labels future scope. This ledger is linked from README/ROADMAP. |
 | P1 | Package measured case study | [Submission package](SUBMISSION_PACKAGE.md) records first-pick coverage correction, benchmark limits and the decision to retain production v2. |
 | P1 | Staff brief and demo handoff | Dated three-page PDF, 3-minute draft demo script and evidence-bounded resume wording. Explicit public-asset allowlist and byte-equality checks ensure both Worker and Pages ship the reviewed PDF. No staff-time or accuracy improvement claim. |
-| P1 | Regression and release | Python 210 tests, frontend 61 tests, Pages 2 tests, lint and whole-project type checking are release checks. CI and production deployment are required before closure. |
+| P1 | Regression and release | Python 210 tests, frontend 63 tests, Pages 2 tests, lint and whole-project type checking are release checks. CI and production deployment are required before closure. |
 
 ## Previously completed foundations
 
@@ -35,7 +36,7 @@ unmet research gates. No new LCK fixtures are a prerequisite.
 
 | Priority | Item | Current evidence / exit condition |
 | --- | --- | --- |
-| P0 | Source freshness incident #58 | September 15 22:11 UTC acquisition recovered (records through September 15; candidate patch 16.17, 539 imported games), but `PATCH_HAS_UNKNOWN_LEAGUES` rejects HC/LAS/LJL/VCS. Accepted analysis remains August 31 / 16.16. Review league identities and analytical region mappings before republishing; do not disable the gate. Source recovery alone does not close the publication incident. |
+| P0 | Source freshness incident #58 | Publication recovered September 20 after reviewed mappings and LCK patch selection: accepted cutoff September 15 22:11 UTC / 16.16, with all ten LCK teams and six national-player club baselines. Source still delayed; next permitted attempt September 21 08:37 UTC. The September 20 hosted run published successfully and retained failed health because the source is stale. Keep #58 open until freshness recovers; do not bypass the interval. |
 | P1 | Worlds common Fearless clauses | Official library access returned 404. Need accessible current international rulebook text; regional/prior-year rules cannot substitute. |
 | P1 | Worlds champion restrictions | Event rules §5.1 promise a list to teams; no public named list verified. No event-specific restrictions are applied. Need authoritative named list before enabling. |
 | P1 | Remaining qualifiers / actual matchup | Official overview still names seven teams. Need explicit official qualifiers/seeds/fixtures; do not infer from rankings. |
