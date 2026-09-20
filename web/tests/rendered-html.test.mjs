@@ -1912,6 +1912,76 @@ test("maps official champion names and searches in Korean or English", async () 
   }
 });
 
+test("national review keeps club identity and incomplete event observations separate", async () => {
+  const vite = await createServer({ root: fileURLToPath(templateRoot), configFile: false, publicDir: false,
+    server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { nationalClubBaseline, nationalObservations, NATIONAL_REVIEW } = await vite.ssrLoadModule("/app/national-team-analysis.ts");
+    const player = { player_id: "player:keria", player_name: "Keria", role: "SUPPORT", game_count: 2,
+      evidence_match_ids: ["club-game-1", "club-game-2"], champions: [
+        { champion_id: "Bard", game_count: 1, evidence_event_ids: ["club-pick-1"] },
+        { champion_id: "Thresh", game_count: 1, evidence_event_ids: [] },
+      ] };
+    const team = { team_name: "T1", leagues: ["LCK"], player_profiles: [player] };
+    const feed = { fixture_only: false, patch_id: "16.16", cutoff: "2026-08-31T23:12:19Z", opponent_prep: { teams: [team] } };
+    const before = JSON.stringify(feed);
+    const baseline = nationalClubBaseline(feed, "Keria");
+    assert.equal(baseline.team_name, "T1");
+    assert.equal(baseline.game_count, 2);
+    assert.deepEqual(baseline.champions.map((pick) => pick.champion_id), ["Bard"]);
+    assert.equal(JSON.stringify(feed), before);
+    assert.equal(nationalClubBaseline({ ...feed, fixture_only: true }, "Keria"), null);
+    assert.equal(nationalClubBaseline({ ...feed, opponent_prep: { teams: [team, team] } }, "Keria"), null);
+    assert.equal(nationalClubBaseline({ ...feed, opponent_prep: { teams: [{ ...team, leagues: ["LCKC"] }] } }, "Keria"), null);
+    assert.equal(nationalClubBaseline({ ...feed, opponent_prep: { teams: [{ ...team, player_profiles: [{ ...player, role: "BOTTOM" }] }] } }, "Keria"), null);
+    assert.equal(nationalClubBaseline(feed, "대한민국 대표팀"), null);
+    assert.equal(NATIONAL_REVIEW.complete_drafts, 0);
+    assert.equal(NATIONAL_REVIEW.patch, null);
+    assert.equal(NATIONAL_REVIEW.draft_rules, "UNVERIFIED");
+    assert.equal(nationalObservations.length, 7);
+    assert.equal(nationalObservations.filter((item) => item.player === "Faker").length, 0);
+  } finally { await vite.close(); }
+});
+
+test("national hypotheses freeze criteria and retain unverified timing after outcome and restore", async () => {
+  const vite = await createServer({ root: fileURLToPath(templateRoot), configFile: false, publicDir: false,
+    server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { createNationalCheck, resolveNationalCheck, parseNationalChecks, serializeNationalChecks } = await vite.ssrLoadModule("/app/national-team-analysis.ts");
+    const input = { id: "case-1", subject: "Keria", target: "Korea vs Vietnam game 1", hypothesis: "Roams mid before 8 minutes",
+      criterion: "Champion combat in mid before 08:00; missing video remains insufficient", created_at: "2026-09-20T08:00:00Z",
+      baseline: { patch: "16.16", cutoff: "2026-08-31T23:12:19Z" } };
+    const check = createNationalCheck(input);
+    const outcome = { recorded_at: "2026-09-20T10:00:00Z", verdict: "INSUFFICIENT", observation: "Full video unavailable", source_url: "https://example.org/match" };
+    const resolved = resolveNationalCheck(check, outcome);
+    assert.equal(check.outcome, null);
+    assert.equal(resolved.criterion, check.criterion);
+    assert.equal(resolved.created_at, check.created_at);
+    assert.equal(resolved.timing, "UNVERIFIED_DEVICE_TIME");
+    assert.deepEqual(parseNationalChecks(serializeNationalChecks([resolved])), [resolved]);
+    assert.throws(() => resolveNationalCheck(resolved, outcome));
+    assert.throws(() => resolveNationalCheck(check, { ...outcome, recorded_at: "2026-09-19T00:00:00Z" }));
+    assert.throws(() => resolveNationalCheck(check, { ...outcome, source_url: "javascript:alert(1)" }));
+    assert.throws(() => resolveNationalCheck(check, { ...outcome, source_url: "https://user:pass@example.org" }));
+    assert.throws(() => createNationalCheck({ ...input, criterion: " " }));
+    assert.throws(() => createNationalCheck({ ...input, created_at: input.baseline.cutoff }));
+    assert.throws(() => serializeNationalChecks([check, check]));
+    assert.throws(() => parseNationalChecks(serializeNationalChecks([check]).replace('"schema_version": "1"', '"schema_version": 1')));
+    assert.deepEqual(parseNationalChecks(null), []);
+  } finally { await vite.close(); }
+});
+
+test("national review renders sourced observations and manual verification without accuracy claims", async () => {
+  const response = await render("/draft");
+  const html = await response.text();
+  assert.match(html, /국가대표 · 성향 관찰실/);
+  assert.match(html, /소속팀에서 관찰된 선택/);
+  assert.match(html, /대표팀 표본과 합산하지 않습니다/);
+  assert.match(html, /기기 시각은 사전 예측을 인증하지 않습니다/);
+  assert.match(html, /예상·기준 고정/);
+  assert.match(html, /news=321196/);
+});
+
 test("starter preview files are removed", async () => {
   await assert.rejects(access(new URL("../app/_sites-preview", templateRoot)));
 });

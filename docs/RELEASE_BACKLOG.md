@@ -1,4 +1,4 @@
-# Consolidated release backlog - 2026-09-16
+# Consolidated release backlog - 2026-09-20
 
 This ledger consolidates ROADMAP phases 0-9, open GitHub issues #2/#58, draft validation,
 Worlds preparation and the submission package. Completed product behavior is distinct from
@@ -12,10 +12,11 @@ unmet research gates. No new LCK fixtures are a prerequisite.
 | P0 | Correct stale-source recovery guidance | Watchdog keeps `UNHEALTHY` but returns `WAIT_FOR_SOURCE_RETRY_WINDOW` during a verified source backoff; due retries and separate stale schedules get actionable instructions. Six regression cases. |
 | P0 | Strict draft file versions | Only string schema versions `2` and `3` are accepted. Numeric/array versions cannot enter inconsistent replay branches. Legacy Blue-first files remain supported. |
 | P0 | Preserve the accepted publication on source rejection | Candidate history/outcomes no longer overwrite public heads before the Radar readiness gate passes. Regression covers both an existing publication and an empty feed; rejected acquisition diagnostics remain available. |
+| P1 | National-team observation review | [Analysis protocol](NATIONAL_TEAM_ANALYSIS.md): separate exact-player club baselines, seven sourced partial USA-series observations, team hypotheses and local criteria/outcome journal. No inferred full drafts, national-team accuracy or certified pre-registration. |
 | P1 | Consolidate implemented vs planned scope | README now identifies working features and labels future scope. This ledger is linked from README/ROADMAP. |
 | P1 | Package measured case study | [Submission package](SUBMISSION_PACKAGE.md) records first-pick coverage correction, benchmark limits and the decision to retain production v2. |
 | P1 | Staff brief and demo handoff | Dated three-page PDF, 3-minute draft demo script and evidence-bounded resume wording. Explicit public-asset allowlist and byte-equality checks ensure both Worker and Pages ship the reviewed PDF. No staff-time or accuracy improvement claim. |
-| P1 | Regression and release | Python 205 tests, frontend 58 tests, Pages 2 tests, lint and whole-project type checking are release checks. CI and production deployment are required before closure. |
+| P1 | Regression and release | Python 206 tests, frontend 61 tests, Pages 2 tests, lint and whole-project type checking are release checks. CI and production deployment are required before closure. |
 
 ## Previously completed foundations
 
