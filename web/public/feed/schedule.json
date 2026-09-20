@@ -1,43 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-20T04:51:08.228926+00:00",
+  "available_at": "2026-09-20T13:02:15.181613+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:196523b7d55ffbf52fe96172985620d7361d3df3c6ab1210cc8a77e9905f9a3d",
+  "content_hash": "sha256:873b335f355bc34f9a92fdc15a7dc464d9b73fc021fa00f67116b4b96597a21e",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Finals",
-      "event_id": "lolesports:dba2a7d2bbfc8b2ff96d",
-      "league": "LEC",
-      "participants": [
-        {
-          "code": "MKOI",
-          "name": "Movistar KOI"
-        },
-        {
-          "code": "G2",
-          "name": "G2 Esports"
-        }
-      ],
-      "start_at": "2026-09-20T15:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:5e615ec3d4040bb54e92",
-      "league": "LCS",
-      "participants": [
-        {
-          "code": "FLY",
-          "name": "FlyQuest"
-        },
-        {
-          "code": "TLAW",
-          "name": "Team Liquid Alienware"
-        }
-      ],
-      "start_at": "2026-09-20T20:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Playoffs",
@@ -75,7 +41,7 @@
     {
       "best_of": 5,
       "block": "Playoffs",
-      "event_id": "lolesports:f919a7721e6a53661a28",
+      "event_id": "lolesports:e97e8f9edb80ca686232",
       "league": "LCS",
       "participants": [
         {
@@ -83,8 +49,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "C9",
+          "name": "Cloud9 Kia"
         }
       ],
       "start_at": "2026-09-27T20:00:00+00:00"
@@ -134,10 +100,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 7,
-    "tbd_participant_count": 9
+    "event_count": 5,
+    "tbd_participant_count": 8
   },
-  "retrieved_at": "2026-09-20T04:51:08.228926+00:00",
+  "retrieved_at": "2026-09-20T13:02:15.181613+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
