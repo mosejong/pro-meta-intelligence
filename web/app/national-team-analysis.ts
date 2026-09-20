@@ -2,6 +2,7 @@ import type { RadarReport } from "./radar-types";
 
 // Manually reviewed facts; partial news coverage is never a complete draft dataset.
 export const NATIONAL_REVIEW = {
+  id: "usa-20260919",
   checked_on: "2026-09-20",
   event: "2026 국가대표 평가전",
   schedule_source: "https://brena.or.kr/brena/notice.do?articleNo=2999&mode=view&srCategoryId=",
@@ -12,7 +13,18 @@ export const NATIONAL_REVIEW = {
   patch: null,
   draft_rules: "UNVERIFIED",
   complete_drafts: 0,
+  team_note: "미국전 보도에서는 1세트 상체 개입, 2세트 바텀 개입과 서포터 이동, 3세트 탑·미드 합류가 나타납니다. 다음 상대에게도 반복되는지 확인할 가설이며, 대표팀의 고정 성향으로 확정하지 않습니다.",
 } as const;
+
+export const NATIONAL_REVIEWS = [NATIONAL_REVIEW, {
+  ...NATIONAL_REVIEW,
+  id: "vietnam-20260920",
+  match_source: "https://www.inven.co.kr/webzine/news/?news=321214",
+  lineup_source: "https://www.inven.co.kr/webzine/news/?news=321214",
+  match: "9월 20일 대한민국 vs 베트남",
+  result: "대한민국 3–1 · 보도 기준",
+  team_note: "베트남전은 앞선 상황의 교전 손실과 불리한 상황의 역전 장면이 모두 보도됐습니다. 다음 경기에서는 고립된 선수 발생 후 교전 중단 여부와 오브젝트 전후 합류를 나누어 확인하세요. 이 결과만으로 고정 성향이나 밴픽 효과를 확정하지 않습니다.",
+}] as const;
 
 export const nationalSubjects = [
   { name: "Zeus", role: "TOP", label: "탑" },
@@ -23,7 +35,7 @@ export const nationalSubjects = [
   { name: "Keria", role: "SUPPORT", label: "서포터" },
 ] as const;
 
-export const nationalObservations = [
+const usaObservations = [
   { player: "Canyon", game: 1, champion: "Qiyana", fact: "탑 개입 이후 미드 추가 개입 보도", question: "다른 상대에게도 초반 상체 개입을 반복하는가?" },
   { player: "Zeka", game: 1, champion: "Ryze", fact: "미드 솔로 킬과 정글 연계 보도", question: "라인 주도권을 다른 라인 지원으로 연결하는가?" },
   { player: "Canyon", game: 2, champion: "Pantheon", fact: "초반 바텀 개입 후 재차 방문 보도", question: "바텀 우선 개입이 조합과 상대에 따라 달라지는가?" },
@@ -32,6 +44,23 @@ export const nationalObservations = [
   { player: "Zeka", game: 3, champion: "TwistedFate", fact: "바텀 쪽 합류 지원 보도", question: "미드 합류 선택이 다음 세트에도 이어지는가?" },
   { player: "Zeus", game: 3, champion: "Shen", fact: "바텀 쪽 합류 지원 보도", question: "탑의 합류 역할이 다른 조합에서도 유지되는가?" },
 ] as const;
+
+export const nationalObservations = [
+  ...usaObservations.map((item) => ({ ...item, match_id: NATIONAL_REVIEW.id })),
+  ...[
+    { player: "Zeus", game: 1, champion: "Gragas", fact: "고립된 뒤 팀의 후속 교전 손실 보도", question: "선수 고립 이후 팀이 교전을 중단하는 조건은 무엇인가?" },
+    { player: "Zeus", game: 3, champion: "Camille", fact: "탑 성장과 후반 아리 대상 진입 보도", question: "사이드 성장 이득을 본대 교전에 연결하는 시점은 언제인가?" },
+    { player: "Keria", game: 3, champion: "Poppy", fact: "후반 교전에서 이즈리얼을 밀어내 딜 공백을 만든 장면 보도", question: "서포터의 진입 차단·딜러 분리가 어떤 교전 조건에서 나오는가?" },
+    { player: "Canyon", game: 3, champion: "Nocturne", fact: "후반 바론 스틸 보도", question: "오브젝트 시도 전 시야와 진입 조건을 어떻게 확보하는가?" },
+    { player: "Faker", game: 4, champion: "Anivia", fact: "상대 초반 개입에 대응한 장면 보도", question: "압박을 받는 상황에서 라인 유지와 합류 중 무엇을 선택하는가?" },
+    { player: "Gumayusi", game: 4, champion: "Caitlyn", fact: "더블 킬과 마지막 한타 기여 보도", question: "불리한 교전 직후 딜러의 위치와 보호 자원은 어떻게 바뀌는가?" },
+  ].map((item) => ({ ...item, match_id: "vietnam-20260920" })),
+];
+
+export function nationalMatchObservations(matchId: string, subject: string) {
+  return nationalObservations.filter((item) => item.match_id === matchId
+    && (subject === "대한민국 대표팀" || item.player === subject));
+}
 
 export function nationalClubBaseline(report: RadarReport, playerName: string) {
   const subject = nationalSubjects.find((player) => player.name === playerName);
