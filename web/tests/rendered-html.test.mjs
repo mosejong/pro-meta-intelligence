@@ -1916,7 +1916,7 @@ test("national review keeps club identity and incomplete event observations sepa
   const vite = await createServer({ root: fileURLToPath(templateRoot), configFile: false, publicDir: false,
     server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
   try {
-    const { nationalClubBaseline, nationalObservations, NATIONAL_REVIEW } = await vite.ssrLoadModule("/app/national-team-analysis.ts");
+    const { nationalClubBaseline, nationalObservations, nationalMatchObservations, NATIONAL_REVIEW } = await vite.ssrLoadModule("/app/national-team-analysis.ts");
     const player = { player_id: "player:keria", player_name: "Keria", role: "SUPPORT", game_count: 2,
       evidence_match_ids: ["club-game-1", "club-game-2"], champions: [
         { champion_id: "Bard", game_count: 1, evidence_event_ids: ["club-pick-1"] },
@@ -1938,8 +1938,12 @@ test("national review keeps club identity and incomplete event observations sepa
     assert.equal(NATIONAL_REVIEW.complete_drafts, 0);
     assert.equal(NATIONAL_REVIEW.patch, null);
     assert.equal(NATIONAL_REVIEW.draft_rules, "UNVERIFIED");
-    assert.equal(nationalObservations.length, 7);
-    assert.equal(nationalObservations.filter((item) => item.player === "Faker").length, 0);
+    assert.equal(nationalObservations.length, 13);
+    assert.equal(nationalMatchObservations("usa-20260919", "Faker").length, 0);
+    assert.deepEqual(nationalMatchObservations("usa-20260919", "Keria").map((item) => item.champion), ["Bard"]);
+    assert.deepEqual(nationalMatchObservations("vietnam-20260920", "Keria").map((item) => item.champion), ["Poppy"]);
+    assert.deepEqual(nationalMatchObservations("vietnam-20260920", "Faker").map((item) => item.champion), ["Anivia"]);
+    assert.equal(nationalMatchObservations("unknown", "Keria").length, 0);
   } finally { await vite.close(); }
 });
 
@@ -1979,7 +1983,10 @@ test("national review renders sourced observations and manual verification witho
   assert.match(html, /대표팀 표본과 합산하지 않습니다/);
   assert.match(html, /기기 시각은 사전 예측을 인증하지 않습니다/);
   assert.match(html, /예상·기준 고정/);
-  assert.match(html, /news=321196/);
+  assert.match(html, /관찰 경기/);
+  assert.match(html, /대한민국 vs 베트남/);
+  assert.match(html, /사후 관찰/);
+  assert.match(html, /news=321214/);
 });
 
 test("starter preview files are removed", async () => {

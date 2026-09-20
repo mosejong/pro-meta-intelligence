@@ -7,6 +7,10 @@ rules are unchanged; they are not presented as validated rules for this exhibiti
 
 ## Reviewed evidence
 
+The selector keeps each series and its sources separate. Vietnam is the default latest review;
+switching to USA restores its observations and lineup note. Missing news observations never
+establish absence, non-use or the reason for selection.
+
 - [Busan Esports Arena notice](https://brena.or.kr/brena/notice.do?articleNo=2999&mode=view&srCategoryId=):
   September 19 Korea–USA and September 20 Korea–Vietnam evaluation matches.
 - [Inven match report, September 19](https://www.inven.co.kr/webzine/news/?news=321196):
@@ -15,6 +19,12 @@ rules are unchanged; they are not presented as validated rules for this exhibiti
   game 3 Zeka/Twisted Fate and Zeus/Shen. These are partial news observations, not full drafts.
 - [OSEN interview, September 19](https://www.osen.co.kr/article/G1112878541): Faker did not play
   in the USA series. This is not evidence about skill or the reason for selection.
+- [Inven match report, September 20, 21:53 KST](https://www.inven.co.kr/webzine/news/?news=321214):
+  Korea won the Vietnam series 3–1. Six selected partial observations cover Zeus/Gragas (game 1),
+  Zeus/Camille, Keria/Poppy and Canyon/Nocturne (game 3), Faker/Anivia and Gumayusi/Caitlyn
+  (game 4). The source describes both lost and recovered fights; these are retrospective examples,
+  not scored predictions or an exhaustive champion list. The team prompt separates responses
+  to isolation from objective preparation instead of inferring one stable tendency from victory.
 
 The [OSEN game-two report](https://www.osen.co.kr/article/G1112878440) and Inven differ in
 the opposing jungler's champion, and some names in OSEN are not verified canonical IDs.
@@ -49,6 +59,6 @@ Club observations, national-team observations and Worlds evidence remain separat
    abstentions, report top-1/top-3 and legality with both match and state denominators, and keep
    exhibitions separate from club leagues and from tuning samples.
 
-No full broadcast or automated live national-team feed has been connected. The seven partial
+No full broadcast or automated live national-team feed has been connected. The thirteen partial
 observations support retrospective review only. The journal records human hypotheses, not
 automatic model predictions, and does not measure analyst utility.

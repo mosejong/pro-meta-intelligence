@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import type { RadarReport } from "./radar-types";
-import { NATIONAL_REVIEW, NATIONAL_JOURNAL_KEY, nationalSubjects, nationalObservations, nationalClubBaseline,
+import { NATIONAL_REVIEWS, NATIONAL_JOURNAL_KEY, nationalSubjects, nationalMatchObservations, nationalClubBaseline,
   createNationalCheck, resolveNationalCheck, parseNationalChecks, serializeNationalChecks, type NationalCheck } from "./national-team-analysis";
 import "./national-team.css";
 
@@ -30,6 +30,7 @@ function OutcomeForm({ check, onResolve }: { check: NationalCheck; onResolve: (c
 
 export function NationalTeamPanel({ report, nameOf }: { report: RadarReport; nameOf: (id: string) => string }) {
   const [subject, setSubject] = useState("Keria");
+  const [matchId, setMatchId] = useState("vietnam-20260920");
   const [target, setTarget] = useState("");
   const [hypothesis, setHypothesis] = useState("");
   const [criterion, setCriterion] = useState("");
@@ -46,7 +47,8 @@ export function NationalTeamPanel({ report, nameOf }: { report: RadarReport; nam
     return () => window.clearTimeout(timer);
   }, []);
   const baseline = nationalClubBaseline(report, subject);
-  const observations = nationalObservations.filter((item) => subject === "대한민국 대표팀" || item.player === subject);
+  const review = NATIONAL_REVIEWS.find((item) => item.id === matchId) ?? NATIONAL_REVIEWS[1];
+  const observations = nationalMatchObservations(review.id, subject);
   function persist(next: NationalCheck[]) {
     if (storageBlocked) throw new Error("기존 기록 보호를 위해 저장이 중단돼 있습니다.");
     const raw = serializeNationalChecks(next);
@@ -70,7 +72,10 @@ export function NationalTeamPanel({ report, nameOf }: { report: RadarReport; nam
   return <details className="national-team" open>
     <summary><strong>국가대표 · 성향 관찰실</strong><span>선수 기록 → 대표팀 관찰 → 다음 경기 확인</span></summary>
     <div className="national-content">
-      <p><b>{NATIONAL_REVIEW.match}</b> · {NATIONAL_REVIEW.result} · {NATIONAL_REVIEW.checked_on} 자료 확인</p>
+      <label className="national-subject">관찰 경기<select value={review.id} onChange={(event) => setMatchId(event.target.value)}>
+        {NATIONAL_REVIEWS.map((item) => <option key={item.id} value={item.id}>{item.match}</option>)}
+      </select></label>
+      <p><b>{review.match}</b> · {review.result} · {review.checked_on} 자료 확인 · 사후 관찰</p>
       <p>기사에서 확인한 일부 선택과 운영 장면입니다. 경기 패치·피어리스 규칙·전체 밴픽 순서는 미확인이라 자동 밴이나 예상 적중률에 반영하지 않습니다.</p>
       <label className="national-subject">비교 대상<select value={subject} onChange={(event) => setSubject(event.target.value)}>
         <option>대한민국 대표팀</option>{nationalSubjects.map((player) => <option key={player.name} value={player.name}>{player.name} · {player.label}</option>)}
@@ -88,19 +93,21 @@ export function NationalTeamPanel({ report, nameOf }: { report: RadarReport; nam
         <section aria-label="국가대표 관찰"><h3>대표팀에서 확인할 변화</h3>
           {observations.length ? <ul className="national-observations">{observations.map((item) => <li key={`${item.player}-${item.game}`}>
             <b>{item.player} · {item.game}세트 · {nameOf(item.champion)}</b><p>{item.fact}</p><p>다음 관찰: {item.question}</p>
-          </li>)}</ul> : <p>Faker는 미국전 미출전 보도가 있습니다. 대표팀 선택이 없다는 사실을 기량이나 기용 이유로 해석하지 않습니다.</p>}
+          </li>)}</ul> : <p>{review.id === "usa-20260919" && subject === "Faker"
+            ? "Faker는 미국전 미출전 보도가 있습니다. 대표팀 선택이 없다는 사실을 기량이나 기용 이유로 해석하지 않습니다."
+            : "이 경기 보도에서 확인한 해당 선수의 선택 기록이 없습니다. 기록 누락은 미출전이나 미사용의 근거가 아닙니다."}</p>}
           <p>기사에서 찾은 선택만 표시한 부분 기록입니다. 선택률·전체 챔피언 폭은 계산하지 않습니다.</p>
         </section>
       </div>
       <section className="national-team-notes" aria-label="팀 운영 가설"><h3>팀 운영 가설</h3>
-        <p>미국전 보도에서는 1세트 상체 개입, 2세트 바텀 개입과 서포터 이동, 3세트 탑·미드 합류가 나타납니다. 다음 상대에게도 반복되는지 확인할 가설이며, 대표팀의 고정 성향으로 확정하지 않습니다.</p>
+        <p>{review.team_note}</p>
         <p>상대·선발·패치·진영·선픽·세트 번호를 함께 기록하세요. 상대 밴을 특정 선수 견제로 분류하려면 별도 근거가 필요합니다.</p>
       </section>
       <details className="national-journal"><summary>다음 경기 예상 기록과 사후 확인 · {checks.length}/30건</summary>
         <p>사람이 작성하는 관찰 가설입니다. 결과를 보기 전에 대상 세트와 판정 기준을 적으세요. 이 브라우저에만 저장되며, 기기 시각은 사전 예측을 인증하지 않습니다. 공식 적중률에 합산하지 않습니다.</p>
         <form onSubmit={freeze} className="national-check-form">
           <p>기록 대상: <b>{subject}</b></p>
-          <label>대상 경기·세트<input required maxLength={160} value={target} placeholder="대한민국 vs 베트남 · 1세트" onChange={(event) => setTarget(event.target.value)} /></label>
+          <label>대상 경기·세트<input required maxLength={160} value={target} placeholder="아직 결과를 보지 않은 경기 · 상대 · 세트" onChange={(event) => setTarget(event.target.value)} /></label>
           <label>예상<textarea required maxLength={500} value={hypothesis} placeholder="예: 서포터가 8분 전에 미드 교전에 합류한다." onChange={(event) => setHypothesis(event.target.value)} /></label>
           <label>판정 기준<textarea required maxLength={500} value={criterion} placeholder="예: 경기 시각 08:00 이전 미드에서 상대 챔피언과 교전. 단순 이동은 제외. 영상 누락이면 보류." onChange={(event) => setCriterion(event.target.value)} /></label>
           <button type="submit" disabled={!ready || storageBlocked || report.fixture_only || checks.length >= 30}>예상·기준 고정</button>
@@ -112,7 +119,7 @@ export function NationalTeamPanel({ report, nameOf }: { report: RadarReport; nam
           {check.outcome ? <><b>{verdictLabels[check.outcome.verdict]}</b><p>{check.outcome.observation}</p><a href={check.outcome.source_url} target="_blank" rel="noreferrer">판정 근거</a></> : <OutcomeForm check={check} onResolve={(resolved) => { persist(checks.map((item) => item.id === resolved.id ? resolved : item)); setMessage("판정을 기록했습니다. 이는 수동 검토 결과입니다."); }} />}
         </article>)}
       </details>
-      <p className="national-sources"><a href={NATIONAL_REVIEW.schedule_source} target="_blank" rel="noreferrer">부산 공식 일정</a> · <a href={NATIONAL_REVIEW.match_source} target="_blank" rel="noreferrer">인벤 미국전 보도</a> · <a href={NATIONAL_REVIEW.lineup_source} target="_blank" rel="noreferrer">OSEN 출전 관련 보도</a></p>
+      <p className="national-sources"><a href={review.schedule_source} target="_blank" rel="noreferrer">부산 공식 일정</a> · <a href={review.match_source} target="_blank" rel="noreferrer">선택 경기 보도</a>{review.lineup_source !== review.match_source && <> · <a href={review.lineup_source} target="_blank" rel="noreferrer">출전 관련 보도</a></>}</p>
     </div>
   </details>;
 }
