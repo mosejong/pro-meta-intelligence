@@ -1,18 +1,18 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-19T18:35:32.357363+00:00",
+  "available_at": "2026-09-20T04:51:08.228926+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:c838d5889393f1f7d163457af3884f2a948836fd2638d01a728bf1f332d97ed1",
+  "content_hash": "sha256:196523b7d55ffbf52fe96172985620d7361d3df3c6ab1210cc8a77e9905f9a3d",
   "events": [
     {
       "best_of": 5,
       "block": "Finals",
-      "event_id": "lolesports:cf20093a4dbd9adad3b9",
+      "event_id": "lolesports:dba2a7d2bbfc8b2ff96d",
       "league": "LEC",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "MKOI",
+          "name": "Movistar KOI"
         },
         {
           "code": "G2",
@@ -135,9 +135,9 @@
   "locale": "en-US",
   "quality": {
     "event_count": 7,
-    "tbd_participant_count": 10
+    "tbd_participant_count": 9
   },
-  "retrieved_at": "2026-09-19T18:35:32.357363+00:00",
+  "retrieved_at": "2026-09-20T04:51:08.228926+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
