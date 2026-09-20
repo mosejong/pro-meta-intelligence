@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import type { RadarReport } from "./radar-types";
 import { NATIONAL_REVIEWS, NATIONAL_JOURNAL_KEY, nationalSubjects, nationalMatchObservations, nationalClubBaseline,
-  createNationalCheck, resolveNationalCheck, parseNationalChecks, serializeNationalChecks, type NationalCheck } from "./national-team-analysis";
+  createNationalCheck, resolveNationalCheck, parseNationalChecks, serializeNationalChecks, mergeNationalChecks,
+  saveNationalChecks, MAX_NATIONAL_FILE_BYTES, type NationalCheck } from "./national-team-analysis";
 import "./national-team.css";
 
 const verdictLabels = { SUPPORTED: "관찰과 일치", CONTRADICTED: "관찰과 불일치", INSUFFICIENT: "판정 보류" } as const;
@@ -38,9 +39,16 @@ export function NationalTeamPanel({ report, nameOf }: { report: RadarReport; nam
   const [ready, setReady] = useState(false);
   const [message, setMessage] = useState("");
   const [storageBlocked, setStorageBlocked] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const savedRaw = useRef<string | null>(null);
+  const currentChecks = useRef<NationalCheck[]>([]);
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      try { setChecks(parseNationalChecks(window.localStorage.getItem(NATIONAL_JOURNAL_KEY))); }
+      try {
+        const raw = window.localStorage.getItem(NATIONAL_JOURNAL_KEY);
+        const restored = parseNationalChecks(raw);
+        savedRaw.current = raw; currentChecks.current = restored; setChecks(restored);
+      }
       catch { setStorageBlocked(true); setMessage("기존 기록을 읽을 수 없어 덮어쓰기를 중단했습니다."); }
       setReady(true);
     }, 0);
@@ -51,9 +59,24 @@ export function NationalTeamPanel({ report, nameOf }: { report: RadarReport; nam
   const observations = nationalMatchObservations(review.id, subject);
   function persist(next: NationalCheck[]) {
     if (storageBlocked) throw new Error("기존 기록 보호를 위해 저장이 중단돼 있습니다.");
-    const raw = serializeNationalChecks(next);
-    window.localStorage.setItem(NATIONAL_JOURNAL_KEY, raw);
+    const raw = saveNationalChecks(window.localStorage, savedRaw.current, next);
+    savedRaw.current = raw; currentChecks.current = next;
     setChecks(next);
+  }
+  async function importChecks(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      if (!ready || storageBlocked) throw new Error("기존 기록을 읽을 수 없어 가져오기를 중단했습니다.");
+      if (file.size > MAX_NATIONAL_FILE_BYTES) throw new Error("검증 기록은 200KB 이하 JSON 파일만 가져올 수 있습니다.");
+      const incoming = parseNationalChecks(await file.text());
+      const merged = mergeNationalChecks(currentChecks.current, incoming);
+      persist(merged);
+      setMessage(`가져오기를 완료했습니다. 중복을 제외한 전체 ${merged.length}건입니다. 기기 시각은 미인증으로 유지됩니다.`);
+    } catch (failure) { setMessage(failure instanceof Error ? failure.message : "파일을 가져올 수 없습니다."); }
+    finally { input.value = ""; setImporting(false); }
   }
   function freeze(event: FormEvent) {
     event.preventDefault();
@@ -105,6 +128,11 @@ export function NationalTeamPanel({ report, nameOf }: { report: RadarReport; nam
       </section>
       <details className="national-journal"><summary>다음 경기 예상 기록과 사후 확인 · {checks.length}/30건</summary>
         <p>사람이 작성하는 관찰 가설입니다. 결과를 보기 전에 대상 세트와 판정 기준을 적으세요. 이 브라우저에만 저장되며, 기기 시각은 사전 예측을 인증하지 않습니다. 공식 적중률에 합산하지 않습니다.</p>
+        <div className="national-backup">
+          <label>검증 기록 JSON 가져오기<input type="file" accept=".json,application/json" disabled={!ready || storageBlocked || importing} onChange={importChecks} /></label>
+          <p>기존 기록에 합칩니다. 같은 기록의 예상·기준이 같으면 중복을 생략하고, 추가된 판정은 복원합니다. 예상이나 완료된 판정이 충돌하면 파일 전체를 취소합니다. 최대 30건 · 200KB.</p>
+          {checks.length > 0 && <button type="button" onClick={exportChecks}>검증 기록 JSON 내보내기</button>}
+        </div>
         <form onSubmit={freeze} className="national-check-form">
           <p>기록 대상: <b>{subject}</b></p>
           <label>대상 경기·세트<input required maxLength={160} value={target} placeholder="아직 결과를 보지 않은 경기 · 상대 · 세트" onChange={(event) => setTarget(event.target.value)} /></label>
@@ -112,7 +140,6 @@ export function NationalTeamPanel({ report, nameOf }: { report: RadarReport; nam
           <label>판정 기준<textarea required maxLength={500} value={criterion} placeholder="예: 경기 시각 08:00 이전 미드에서 상대 챔피언과 교전. 단순 이동은 제외. 영상 누락이면 보류." onChange={(event) => setCriterion(event.target.value)} /></label>
           <button type="submit" disabled={!ready || storageBlocked || report.fixture_only || checks.length >= 30}>예상·기준 고정</button>
         </form><p role="status">{message}</p>
-        {checks.length > 0 && <button type="button" onClick={exportChecks}>검증 기록 JSON 내보내기</button>}
         {checks.map((check) => <article key={check.id} className="national-check">
           <h4>{check.subject} · {check.target}</h4><p>{check.hypothesis}</p><p>판정 기준: {check.criterion}</p>
           <p>기록 {check.created_at} · 당시 분석 {check.baseline.patch} / {check.baseline.cutoff.slice(0, 10)} · 기기 시각 미인증</p>

@@ -52,7 +52,13 @@ Club observations, national-team observations and Worlds evidence remain separat
 3. After the target game, attach the observed action, video time and HTTPS source. Select
    supported, contradicted or insufficient. Saved criteria and completed verdicts cannot be
    edited through the UI. Do not turn missing footage into a miss or success.
-4. Export the local JSON for review. Device timestamps are unverified; this journal is not
+4. Export the local JSON for review or import it on another browser. Imports merge by record ID:
+   identical criteria deduplicate, a completed verdict can complete a pending record, and a pending
+   backup never removes a completed verdict. Conflicting criteria or completed verdicts reject the
+   entire file before storage changes. The merged total is capped at 30 records and files at 200KB
+   of UTF-8 data. Existing schema-1 exports remain supported. Writes detect changes made in another
+   tab since this tab loaded/saved and require a reload; this is not a cross-tab transaction lock.
+   Invalid existing storage is never automatically replaced. Device timestamps are unverified; this journal is not
    tamper-proof preregistration and contributes no official prediction-accuracy metric.
 5. For formal evaluation, obtain complete timestamped draft/lineup/rule evidence and a trusted
    prediction registration before the next choice. Freeze model and evidence version, retain
