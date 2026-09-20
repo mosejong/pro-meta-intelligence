@@ -1,30 +1,30 @@
 {
   "artifact_type": "oe-collection-status",
   "automation": {
-    "operator_action_required": false,
+    "operator_action_required": true,
     "retry_mode": "AUTOMATIC_POLICY_GATED"
   },
   "boundary": "Collection availability only; excludes raw rows, local paths, provider URLs, and predictive-quality claims.",
   "last_attempt": {
-    "exit_code": 0,
-    "finished_at": "2026-09-15T12:39:03.219785+00:00",
-    "job_status": "SUCCEEDED",
-    "network_request_performed": false,
-    "started_at": "2026-09-15T12:38:39.717683+00:00"
+    "exit_code": 2,
+    "finished_at": "2026-09-20T08:38:15.884160+00:00",
+    "job_status": "REJECTED",
+    "network_request_performed": true,
+    "started_at": "2026-09-20T08:37:36.994774+00:00"
   },
   "publication": {
-    "head_accepted": true,
+    "head_accepted": false,
     "history_status": "HISTORY_NOT_READY",
-    "result_status": "PUBLISHED"
+    "result_status": "REJECTED_READINESS"
   },
-  "reason_code": "POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR",
+  "reason_code": "READINESS_GATE_REJECTED",
   "schema_version": "1",
   "source": {
-    "acquisition_status": "REUSED_CACHE_DURING_SOURCE_BACKOFF",
-    "last_verified_at": "2026-08-31T23:12:19.903174+00:00",
-    "next_attempt_at": "2026-09-15T13:59:04.985660+00:00",
+    "acquisition_status": "REUSED_CACHE_AFTER_SOURCE_ERROR",
+    "last_verified_at": "2026-09-15T22:11:48.707723+00:00",
+    "next_attempt_at": null,
     "source_id": "oracles-elixir-match-data"
   },
-  "state": "SOURCE_DELAYED",
-  "updated_at": "2026-09-15T12:39:03.219785+00:00"
+  "state": "PUBLICATION_REJECTED",
+  "updated_at": "2026-09-20T08:38:15.884160+00:00"
 }
