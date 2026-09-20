@@ -26,15 +26,15 @@
   "publication_ready": false,
   "schema_version": "1",
   "source_snapshot": {
-    "cutoff": "2026-08-31T23:12:19.903174+00:00",
+    "cutoff": "2026-09-15T22:11:48.707723+00:00",
     "fixture_only": false,
     "patch_id": "16.16",
     "radar_schema_version": "1",
     "source_versions": [
       {
-        "content_hash": "sha256:ac095cb85b3381c1a1093188b2be9f24aca606260e574decd6d0fa8649b5c289",
+        "content_hash": "sha256:d3226e03601c63b6392576ecbaa681ddafc356a6b34dcc354456c5cb881ce2ef",
         "source_id": "oracles-elixir-match-data",
-        "source_version": "sha256:ac095cb85b3381c1a1093188b2be9f24aca606260e574decd6d0fa8649b5c289"
+        "source_version": "sha256:d3226e03601c63b6392576ecbaa681ddafc356a6b34dcc354456c5cb881ce2ef"
       }
     ]
   },
@@ -43,447 +43,22 @@
     {
       "approved_claims": [
         {
-          "claim_id": "Lulu:SUPPORT:pick-presence",
-          "metric": "pick_presence_delta",
-          "text": "최근 7일 Lulu SUPPORT 픽 점유율은 21.3%이며 이전 구간 대비 +7.5pp 변했다.",
-          "value": 0.075272
-        },
-        {
-          "claim_id": "Lulu:SUPPORT:team-demand",
-          "metric": "demand_velocity",
-          "text": "최근 채택 팀은 36개이며 팀 수요는 이전 구간 대비 +15.0pp 변했다.",
-          "value": 0.150362
-        },
-        {
-          "claim_id": "Lulu:SUPPORT:regional-divergence",
-          "metric": "most_divergent_region_delta",
-          "text": "CHINA의 최근 픽 점유율은 글로벌 점유율과 +12.0pp 차이가 난다.",
-          "value": 0.11985
-        }
-      ],
-      "candidate_id": "Lulu:SUPPORT",
-      "champion_id": "Lulu",
-      "chapter_outline": [
-        {
-          "chapter": "HOOK",
-          "uses": [
-            "Lulu:SUPPORT:pick-presence"
-          ]
-        },
-        {
-          "chapter": "WHAT CHANGED",
-          "uses": [
-            "Lulu:SUPPORT:pick-presence",
-            "Lulu:SUPPORT:team-demand",
-            "Lulu:SUPPORT:regional-divergence"
-          ]
-        },
-        {
-          "chapter": "WHY IT MAY MATTER",
-          "uses": [
-            "Lulu:SUPPORT:team-demand"
-          ]
-        },
-        {
-          "chapter": "COUNTERPOINT",
-          "uses": []
-        },
-        {
-          "chapter": "TAKEAWAY AND NEXT CHECK",
-          "uses": []
-        }
-      ],
-      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
-      "data_cards": [
-        {
-          "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.213483,
-          "prior": 0.138211
-        },
-        {
-          "card": "TEAM_DEMAND_COMPARISON",
-          "current": 0.375,
-          "prior": 0.224638
-        },
-        {
-          "card": "REGIONAL_PRESENCE",
-          "values": [
-            {
-              "delta_from_global": 0.072231,
-              "match_count": 7,
-              "pick_count": 2,
-              "pick_presence": 0.285714,
-              "region": "BRAZIL",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": 0.11985,
-              "match_count": 6,
-              "pick_count": 2,
-              "pick_presence": 0.333333,
-              "region": "CHINA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": -0.01156,
-              "match_count": 104,
-              "pick_count": 21,
-              "pick_presence": 0.201923,
-              "region": "EMEA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": -0.007601,
-              "match_count": 34,
-              "pick_count": 7,
-              "pick_presence": 0.205882,
-              "region": "KOREA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": -0.070626,
-              "match_count": 7,
-              "pick_count": 1,
-              "pick_presence": 0.142857,
-              "region": "LATIN_AMERICA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": 0.017286,
-              "match_count": 13,
-              "pick_count": 3,
-              "pick_presence": 0.230769,
-              "region": "NORTH_AMERICA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": 0.072231,
-              "match_count": 7,
-              "pick_count": 2,
-              "pick_presence": 0.285714,
-              "region": "PACIFIC",
-              "sample_eligible": true
-            }
-          ]
-        }
-      ],
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_217509:pick:5",
-        "oe:AL:LOLTMNT05_220240:pick:9",
-        "oe:CBLOL:LOLTMNT02_457661:pick:1",
-        "oe:CD:LOLTMNT02_451623:pick:5",
-        "oe:CD:LOLTMNT02_459224:pick:3",
-        "oe:CD:LOLTMNT02_459500:pick:3",
-        "oe:CD:LOLTMNT02_459736:pick:2",
-        "oe:EBL:LOLTMNT05_217503:pick:7",
-        "oe:HLL:LOLTMNT02_458353:pick:9",
-        "oe:HM:LOLTMNT02_453314:pick:5",
-        "oe:HM:LOLTMNT02_458403:pick:9",
-        "oe:HM:LOLTMNT02_458698:pick:5",
-        "oe:HM:LOLTMNT02_458934:pick:3",
-        "oe:HM:LOLTMNT02_459667:pick:6",
-        "oe:HM:LOLTMNT02_459912:pick:10",
-        "oe:LCK:LOLTMNT02_452633:pick:9",
-        "oe:LCK:LOLTMNT02_454038:pick:5",
-        "oe:LCK:LOLTMNT02_454084:pick:10",
-        "oe:LCK:LOLTMNT02_456427:pick:5",
-        "oe:LCK:LOLTMNT02_456759:pick:2",
-        "oe:LCK:LOLTMNT02_457144:pick:3",
-        "oe:LCK:LOLTMNT02_457183:pick:3",
-        "oe:LCK:LOLTMNT02_457811:pick:3",
-        "oe:LCK:LOLTMNT02_458797:pick:3",
-        "oe:LCK:LOLTMNT02_459565:pick:3",
-        "oe:LCK:LOLTMNT02_461110:pick:2",
-        "oe:LCK:LOLTMNT02_461258:pick:5",
-        "oe:LCK:LOLTMNT02_461430:pick:2",
-        "oe:LCKC:LOLTMNT02_451359:pick:10",
-        "oe:LCKC:LOLTMNT02_451719:pick:7",
-        "oe:LCKC:LOLTMNT02_452972:pick:7",
-        "oe:LCKC:LOLTMNT02_457064:pick:3",
-        "oe:LCKC:LOLTMNT02_459013:pick:7",
-        "oe:LCKC:LOLTMNT02_460541:pick:5",
-        "oe:LCKC:LOLTMNT02_461581:pick:5",
-        "oe:LCP:LOLTMNT02_453185:pick:8",
-        "oe:LCP:LOLTMNT02_460274:pick:3",
-        "oe:LCP:LOLTMNT02_460401:pick:4",
-        "oe:LCS:LOLTMNT02_457969:pick:3",
-        "oe:LEC:LOLTMNT05_219167:pick:5",
-        "oe:LFL:LOLTMNT05_217330:pick:8",
-        "oe:LFL:LOLTMNT05_219303:pick:3",
-        "oe:LIT:LOLTMNT02_458701:pick:2",
-        "oe:LPL:13426-13426_game_3:pick:5",
-        "oe:LPL:13427-13427_game_1:pick:7",
-        "oe:LPL:13428-13428_game_1:pick:9",
-        "oe:LPL:13430-13430_game_2:pick:7",
-        "oe:LPL:13492-13492_game_2:pick:3",
-        "oe:LPL:13493-13493_game_1:pick:2",
-        "oe:LRN:LOLTMNT02_459255:pick:5",
-        "oe:LRS:LOLTMNT02_453033:pick:3",
-        "oe:NACL:LOLTMNT02_459742:pick:5",
-        "oe:NACL:LOLTMNT02_461195:pick:9",
-        "oe:NACL:LOLTMNT02_461209:pick:9",
-        "oe:NL:LOLTMNT05_219521:pick:10",
-        "oe:NLC:LOLTMNT02_458723:pick:9",
-        "oe:PRM:LOLTMNT05_217453:pick:9",
-        "oe:PRM:LOLTMNT05_217516:pick:5",
-        "oe:PRM:LOLTMNT05_219220:pick:2",
-        "oe:PRM:LOLTMNT05_219380:pick:5",
-        "oe:RL:LOLTMNT02_451550:pick:6",
-        "oe:RL:LOLTMNT02_451979:pick:3",
-        "oe:RL:LOLTMNT02_458418:pick:4",
-        "oe:RL:LOLTMNT02_458938:pick:9",
-        "oe:RL:LOLTMNT02_459701:pick:4",
-        "oe:RL:LOLTMNT02_459947:pick:3",
-        "oe:ROL:LOLTMNT05_218545:pick:5",
-        "oe:ROL:LOLTMNT05_219230:pick:10",
-        "oe:ROL:LOLTMNT05_219379:pick:3",
-        "oe:TCL:LOLTMNT05_218475:pick:3",
-        "oe:TCL:LOLTMNT05_219204:pick:5",
-        "oe:TCL:LOLTMNT05_219354:pick:3"
-      ],
-      "falsifiers": [
-        {
-          "condition": "next comparable snapshot is less than or equal to zero",
-          "metric": "demand_velocity"
-        },
-        {
-          "condition": "adoption does not expand beyond the currently observed teams",
-          "metric": "current_distinct_team_count"
-        }
-      ],
-      "hook": "Lulu SUPPORT의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
-      "quality_flags": [],
-      "radar_rank": 1,
-      "review_state": "HUMAN_REVIEW_REQUIRED",
-      "role": "SUPPORT",
-      "short_summary": "Lulu SUPPORT의 최근 픽 점유율은 21.3%로, 이전 구간 대비 +7.5pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
-      "thumbnail_copy": [
-        "Lulu SUPPORT",
-        "+7.5pp"
-      ],
-      "title_candidates": [
-        "왜 지금 Lulu SUPPORT인가: +7.5pp 변화의 근거",
-        "CHINA에서 먼저 보인 Lulu SUPPORT, 글로벌과 +12.0pp 차이",
-        "Lulu SUPPORT은 진짜 신호일까? 데이터와 반론"
-      ]
-    },
-    {
-      "approved_claims": [
-        {
-          "claim_id": "Ashe:BOTTOM:pick-presence",
-          "metric": "pick_presence_delta",
-          "text": "최근 7일 Ashe BOTTOM 픽 점유율은 14.0%이며 이전 구간 대비 +6.7pp 변했다.",
-          "value": 0.067279
-        },
-        {
-          "claim_id": "Ashe:BOTTOM:team-demand",
-          "metric": "demand_velocity",
-          "text": "최근 채택 팀은 22개이며 팀 수요는 이전 구간 대비 +11.3pp 변했다.",
-          "value": 0.113225
-        },
-        {
-          "claim_id": "Ashe:BOTTOM:regional-divergence",
-          "metric": "most_divergent_region_delta",
-          "text": "CHINA의 최근 픽 점유율은 글로벌 점유율과 +19.3pp 차이가 난다.",
-          "value": 0.192884
-        }
-      ],
-      "candidate_id": "Ashe:BOTTOM",
-      "champion_id": "Ashe",
-      "chapter_outline": [
-        {
-          "chapter": "HOOK",
-          "uses": [
-            "Ashe:BOTTOM:pick-presence"
-          ]
-        },
-        {
-          "chapter": "WHAT CHANGED",
-          "uses": [
-            "Ashe:BOTTOM:pick-presence",
-            "Ashe:BOTTOM:team-demand",
-            "Ashe:BOTTOM:regional-divergence"
-          ]
-        },
-        {
-          "chapter": "WHY IT MAY MATTER",
-          "uses": [
-            "Ashe:BOTTOM:team-demand"
-          ]
-        },
-        {
-          "chapter": "COUNTERPOINT",
-          "uses": []
-        },
-        {
-          "chapter": "TAKEAWAY AND NEXT CHECK",
-          "uses": []
-        }
-      ],
-      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
-      "data_cards": [
-        {
-          "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.140449,
-          "prior": 0.073171
-        },
-        {
-          "card": "TEAM_DEMAND_COMPARISON",
-          "current": 0.229167,
-          "prior": 0.115942
-        },
-        {
-          "card": "REGIONAL_PRESENCE",
-          "values": [
-            {
-              "delta_from_global": 0.002408,
-              "match_count": 7,
-              "pick_count": 1,
-              "pick_presence": 0.142857,
-              "region": "BRAZIL",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": 0.192884,
-              "match_count": 6,
-              "pick_count": 2,
-              "pick_presence": 0.333333,
-              "region": "CHINA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": 0.003781,
-              "match_count": 104,
-              "pick_count": 15,
-              "pick_presence": 0.144231,
-              "region": "EMEA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": -0.022802,
-              "match_count": 34,
-              "pick_count": 4,
-              "pick_presence": 0.117647,
-              "region": "KOREA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": 0.002408,
-              "match_count": 7,
-              "pick_count": 1,
-              "pick_presence": 0.142857,
-              "region": "LATIN_AMERICA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": -0.063526,
-              "match_count": 13,
-              "pick_count": 1,
-              "pick_presence": 0.076923,
-              "region": "NORTH_AMERICA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": 0.002408,
-              "match_count": 7,
-              "pick_count": 1,
-              "pick_presence": 0.142857,
-              "region": "PACIFIC",
-              "sample_eligible": true
-            }
-          ]
-        }
-      ],
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_218542:pick:10",
-        "oe:CBLOL:LOLTMNT02_456624:pick:8",
-        "oe:CBLOL:LOLTMNT02_457619:pick:4",
-        "oe:CD:LOLTMNT02_459491:pick:8",
-        "oe:HLL:LOLTMNT02_458392:pick:4",
-        "oe:HLL:LOLTMNT02_458416:pick:1",
-        "oe:LCK:LOLTMNT02_454063:pick:10",
-        "oe:LCK:LOLTMNT02_457144:pick:4",
-        "oe:LCK:LOLTMNT02_458575:pick:2",
-        "oe:LCK:LOLTMNT02_458808:pick:6",
-        "oe:LCK:LOLTMNT02_461430:pick:4",
-        "oe:LCKC:LOLTMNT02_452374:pick:4",
-        "oe:LCKC:LOLTMNT02_460541:pick:10",
-        "oe:LCP:LOLTMNT02_454077:pick:4",
-        "oe:LCP:LOLTMNT02_460274:pick:8",
-        "oe:LCP:LOLTMNT05_220071:pick:2",
-        "oe:LEC:LOLTMNT05_219026:pick:8",
-        "oe:LEC:LOLTMNT05_219177:pick:4",
-        "oe:LEC:LOLTMNT05_220042:pick:2",
-        "oe:LEC:LOLTMNT05_220100:pick:4",
-        "oe:LFL:LOLTMNT05_219303:pick:4",
-        "oe:LFL:LOLTMNT05_219360:pick:10",
-        "oe:LPL:13428-13428_game_3:pick:5",
-        "oe:LPL:13492-13492_game_1:pick:4",
-        "oe:LPL:13493-13493_game_2:pick:2",
-        "oe:LRN:LOLTMNT02_459255:pick:3",
-        "oe:NACL:LOLTMNT02_461204:pick:2",
-        "oe:NL:LOLTMNT05_219504:pick:2",
-        "oe:NL:LOLTMNT05_219524:pick:4",
-        "oe:PRM:LOLTMNT05_217516:pick:2",
-        "oe:PRM:LOLTMNT05_219332:pick:4",
-        "oe:RL:LOLTMNT02_458457:pick:4",
-        "oe:RL:LOLTMNT02_458713:pick:4",
-        "oe:RL:LOLTMNT02_458938:pick:7",
-        "oe:RL:LOLTMNT02_459419:pick:4",
-        "oe:RL:LOLTMNT02_459947:pick:4",
-        "oe:ROL:LOLTMNT05_218548:pick:8",
-        "oe:ROL:LOLTMNT05_219379:pick:4",
-        "oe:TCL:LOLTMNT05_217340:pick:4",
-        "oe:TCL:LOLTMNT05_217512:pick:8",
-        "oe:TCL:LOLTMNT05_218458:pick:2",
-        "oe:TCL:LOLTMNT05_219217:pick:2",
-        "oe:TCL:LOLTMNT05_219296:pick:4"
-      ],
-      "falsifiers": [
-        {
-          "condition": "next comparable snapshot is less than or equal to zero",
-          "metric": "demand_velocity"
-        },
-        {
-          "condition": "adoption does not expand beyond the currently observed teams",
-          "metric": "current_distinct_team_count"
-        }
-      ],
-      "hook": "Ashe BOTTOM의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
-      "quality_flags": [],
-      "radar_rank": 2,
-      "review_state": "HUMAN_REVIEW_REQUIRED",
-      "role": "BOTTOM",
-      "short_summary": "Ashe BOTTOM의 최근 픽 점유율은 14.0%로, 이전 구간 대비 +6.7pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
-      "thumbnail_copy": [
-        "Ashe BOTTOM",
-        "+6.7pp"
-      ],
-      "title_candidates": [
-        "왜 지금 Ashe BOTTOM인가: +6.7pp 변화의 근거",
-        "CHINA에서 먼저 보인 Ashe BOTTOM, 글로벌과 +19.3pp 차이",
-        "Ashe BOTTOM은 진짜 신호일까? 데이터와 반론"
-      ]
-    },
-    {
-      "approved_claims": [
-        {
           "claim_id": "Syndra:MID:pick-presence",
           "metric": "pick_presence_delta",
-          "text": "최근 7일 Syndra MID 픽 점유율은 20.2%이며 이전 구간 대비 +4.0pp 변했다.",
-          "value": 0.039646
+          "text": "최근 7일 Syndra MID 픽 점유율은 20.7%이며 이전 구간 대비 +10.3pp 변했다.",
+          "value": 0.103448
         },
         {
           "claim_id": "Syndra:MID:team-demand",
           "metric": "demand_velocity",
-          "text": "최근 채택 팀은 35개이며 팀 수요는 이전 구간 대비 +10.4pp 변했다.",
-          "value": 0.103714
+          "text": "최근 채택 팀은 6개이며 팀 수요는 이전 구간 대비 +47.7pp 변했다.",
+          "value": 0.477273
         },
         {
           "claim_id": "Syndra:MID:regional-divergence",
           "metric": "most_divergent_region_delta",
-          "text": "CHINA의 최근 픽 점유율은 글로벌 점유율과 -20.2pp 차이가 난다.",
-          "value": -0.202247
+          "text": "KOREA의 최근 픽 점유율은 글로벌 점유율과 +0.0pp 차이가 난다.",
+          "value": 0.0
         }
       ],
       "candidate_id": "Syndra:MID",
@@ -522,153 +97,41 @@
       "data_cards": [
         {
           "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.202247,
-          "prior": 0.162602
+          "current": 0.206897,
+          "prior": 0.103448
         },
         {
           "card": "TEAM_DEMAND_COMPARISON",
-          "current": 0.364583,
-          "prior": 0.26087
+          "current": 0.75,
+          "prior": 0.272727
         },
         {
           "card": "REGIONAL_PRESENCE",
           "values": [
             {
-              "delta_from_global": 0.083467,
-              "match_count": 7,
-              "pick_count": 2,
-              "pick_presence": 0.285714,
-              "region": "BRAZIL",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": -0.202247,
-              "match_count": 6,
-              "pick_count": 0,
-              "pick_presence": 0.0,
-              "region": "CHINA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": 0.038137,
-              "match_count": 104,
-              "pick_count": 25,
-              "pick_presence": 0.240385,
-              "region": "EMEA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": -0.055188,
-              "match_count": 34,
-              "pick_count": 5,
-              "pick_presence": 0.147059,
+              "delta_from_global": 0.0,
+              "match_count": 29,
+              "pick_count": 6,
+              "pick_presence": 0.206897,
               "region": "KOREA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": 0.083467,
-              "match_count": 7,
-              "pick_count": 2,
-              "pick_presence": 0.285714,
-              "region": "LATIN_AMERICA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": -0.048401,
-              "match_count": 13,
-              "pick_count": 2,
-              "pick_presence": 0.153846,
-              "region": "NORTH_AMERICA",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": -0.202247,
-              "match_count": 7,
-              "pick_count": 0,
-              "pick_presence": 0.0,
-              "region": "PACIFIC",
               "sample_eligible": true
             }
           ]
         }
       ],
       "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_220240:pick:5",
-        "oe:AL:LOLTMNT05_220314:pick:1",
-        "oe:CBLOL:LOLTMNT02_456885:pick:3",
-        "oe:CD:LOLTMNT02_452520:pick:8",
-        "oe:CD:LOLTMNT02_458476:pick:3",
-        "oe:CD:LOLTMNT02_459241:pick:2",
-        "oe:CD:LOLTMNT02_459736:pick:5",
-        "oe:EBL:LOLTMNT05_217497:pick:3",
-        "oe:EBL:LOLTMNT05_218456:pick:1",
-        "oe:EBL:LOLTMNT05_219225:pick:1",
-        "oe:EBL:LOLTMNT05_219348:pick:8",
-        "oe:EBL:LOLTMNT05_220300:pick:2",
-        "oe:HLL:LOLTMNT02_458406:pick:1",
-        "oe:HM:LOLTMNT02_451915:pick:1",
-        "oe:HM:LOLTMNT02_453274:pick:5",
-        "oe:HM:LOLTMNT02_459682:pick:9",
-        "oe:HM:LOLTMNT02_459912:pick:6",
-        "oe:KeSPA Cup:LOLTMNT02_452325:pick:3",
-        "oe:LCK:LOLTMNT02_451793:pick:10",
-        "oe:LCK:LOLTMNT02_451854:pick:7",
-        "oe:LCK:LOLTMNT02_456460:pick:1",
-        "oe:LCK:LOLTMNT02_456759:pick:6",
-        "oe:LCK:LOLTMNT02_456807:pick:4",
-        "oe:LCK:LOLTMNT02_457197:pick:10",
-        "oe:LCK:LOLTMNT02_457558:pick:6",
-        "oe:LCK:LOLTMNT02_458808:pick:1",
-        "oe:LCK:LOLTMNT02_459565:pick:10",
-        "oe:LCK:LOLTMNT02_461046:pick:2",
-        "oe:LCK:LOLTMNT02_461410:pick:7",
-        "oe:LCKC:LOLTMNT02_451359:pick:1",
-        "oe:LCKC:LOLTMNT02_452349:pick:1",
-        "oe:LCKC:LOLTMNT02_454003:pick:4",
-        "oe:LCKC:LOLTMNT02_456039:pick:8",
-        "oe:LCKC:LOLTMNT02_460563:pick:1",
-        "oe:LCP:LOLTMNT02_457142:pick:2",
-        "oe:LCP:LOLTMNT05_220113:pick:6",
-        "oe:LCS:LOLTMNT02_456676:pick:3",
-        "oe:LEC:LOLTMNT05_219021:pick:4",
-        "oe:LEC:LOLTMNT05_220100:pick:1",
-        "oe:LFL:LOLTMNT05_217457:pick:1",
-        "oe:LFL:LOLTMNT05_218380:pick:1",
-        "oe:LFL:LOLTMNT05_218455:pick:2",
-        "oe:LFL:LOLTMNT05_218547:pick:2",
-        "oe:LFL:LOLTMNT05_219303:pick:1",
-        "oe:LFL:LOLTMNT05_220357:pick:2",
-        "oe:LIT:LOLTMNT02_458701:pick:7",
-        "oe:LIT:LOLTMNT05_218530:pick:8",
-        "oe:LIT:LOLTMNT05_220359:pick:2",
-        "oe:LPL:13425-13425_game_1:pick:9",
-        "oe:LPL:13427-13427_game_1:pick:2",
-        "oe:LPL:13428-13428_game_3:pick:9",
-        "oe:LRN:LOLTMNT02_459249:pick:1",
-        "oe:LRS:LOLTMNT02_459498:pick:4",
-        "oe:NACL:LOLTMNT02_454293:pick:5",
-        "oe:NACL:LOLTMNT02_457348:pick:1",
-        "oe:NACL:LOLTMNT02_457363:pick:2",
-        "oe:NACL:LOLTMNT02_459738:pick:2",
-        "oe:NACL:LOLTMNT02_461209:pick:4",
-        "oe:NL:LOLTMNT05_219523:pick:1",
-        "oe:NL:LOLTMNT05_220112:pick:1",
-        "oe:NLC:LOLTMNT05_219291:pick:1",
-        "oe:PRM:LOLTMNT05_217453:pick:1",
-        "oe:PRM:LOLTMNT05_219358:pick:2",
-        "oe:PRM:LOLTMNT05_220230:pick:6",
-        "oe:PRM:LOLTMNT05_220282:pick:1",
-        "oe:RL:LOLTMNT02_458395:pick:4",
-        "oe:RL:LOLTMNT02_459488:pick:9",
-        "oe:RL:LOLTMNT02_459681:pick:1",
-        "oe:RL:LOLTMNT02_459973:pick:5",
-        "oe:ROL:LOLTMNT05_217506:pick:1",
-        "oe:ROL:LOLTMNT05_219377:pick:6",
-        "oe:ROL:LOLTMNT05_220237:pick:3",
-        "oe:TCL:LOLTMNT05_218354:pick:2",
-        "oe:TCL:LOLTMNT05_218529:pick:2",
-        "oe:TCL:LOLTMNT05_219204:pick:8",
-        "oe:TCL:LOLTMNT05_219260:pick:4"
+        "oe:LCK:LOLTMNT02_460749:pick:4",
+        "oe:LCK:LOLTMNT02_460928:pick:1",
+        "oe:LCK:LOLTMNT02_462142:pick:7",
+        "oe:LCK:LOLTMNT02_462565:pick:7",
+        "oe:LCK:LOLTMNT02_463340:pick:6",
+        "oe:LCKC:LOLTMNT02_462428:pick:3",
+        "oe:LCKC:LOLTMNT02_462500:pick:3",
+        "oe:LCKC:LOLTMNT02_462585:pick:6",
+        "oe:LCKC:LOLTMNT02_463188:pick:1",
+        "oe:LES:LOLTMNT02_463052:pick:6",
+        "oe:LFL:LOLTMNT05_220554:pick:1",
+        "oe:LPLOL:LOLTMNT02_460841:pick:1"
       ],
       "falsifiers": [
         {
@@ -682,18 +145,251 @@
       ],
       "hook": "Syndra MID의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
       "quality_flags": [],
-      "radar_rank": 3,
+      "radar_rank": 1,
       "review_state": "HUMAN_REVIEW_REQUIRED",
       "role": "MID",
-      "short_summary": "Syndra MID의 최근 픽 점유율은 20.2%로, 이전 구간 대비 +4.0pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "short_summary": "Syndra MID의 최근 픽 점유율은 20.7%로, 이전 구간 대비 +10.3pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
       "thumbnail_copy": [
         "Syndra MID",
-        "+4.0pp"
+        "+10.3pp"
       ],
       "title_candidates": [
-        "왜 지금 Syndra MID인가: +4.0pp 변화의 근거",
-        "CHINA에서 먼저 보인 Syndra MID, 글로벌과 -20.2pp 차이",
+        "왜 지금 Syndra MID인가: +10.3pp 변화의 근거",
+        "KOREA에서 먼저 보인 Syndra MID, 글로벌과 +0.0pp 차이",
         "Syndra MID은 진짜 신호일까? 데이터와 반론"
+      ]
+    },
+    {
+      "approved_claims": [
+        {
+          "claim_id": "Corki:BOTTOM:pick-presence",
+          "metric": "pick_presence_delta",
+          "text": "최근 7일 Corki BOTTOM 픽 점유율은 17.2%이며 이전 구간 대비 +13.8pp 변했다.",
+          "value": 0.137931
+        },
+        {
+          "claim_id": "Corki:BOTTOM:team-demand",
+          "metric": "demand_velocity",
+          "text": "최근 채택 팀은 4개이며 팀 수요는 이전 구간 대비 +40.9pp 변했다.",
+          "value": 0.409091
+        },
+        {
+          "claim_id": "Corki:BOTTOM:regional-divergence",
+          "metric": "most_divergent_region_delta",
+          "text": "KOREA의 최근 픽 점유율은 글로벌 점유율과 +0.0pp 차이가 난다.",
+          "value": 0.0
+        }
+      ],
+      "candidate_id": "Corki:BOTTOM",
+      "champion_id": "Corki",
+      "chapter_outline": [
+        {
+          "chapter": "HOOK",
+          "uses": [
+            "Corki:BOTTOM:pick-presence"
+          ]
+        },
+        {
+          "chapter": "WHAT CHANGED",
+          "uses": [
+            "Corki:BOTTOM:pick-presence",
+            "Corki:BOTTOM:team-demand",
+            "Corki:BOTTOM:regional-divergence"
+          ]
+        },
+        {
+          "chapter": "WHY IT MAY MATTER",
+          "uses": [
+            "Corki:BOTTOM:team-demand"
+          ]
+        },
+        {
+          "chapter": "COUNTERPOINT",
+          "uses": []
+        },
+        {
+          "chapter": "TAKEAWAY AND NEXT CHECK",
+          "uses": []
+        }
+      ],
+      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "data_cards": [
+        {
+          "card": "PICK_PRESENCE_COMPARISON",
+          "current": 0.172414,
+          "prior": 0.034483
+        },
+        {
+          "card": "TEAM_DEMAND_COMPARISON",
+          "current": 0.5,
+          "prior": 0.090909
+        },
+        {
+          "card": "REGIONAL_PRESENCE",
+          "values": [
+            {
+              "delta_from_global": 0.0,
+              "match_count": 29,
+              "pick_count": 5,
+              "pick_presence": 0.172414,
+              "region": "KOREA",
+              "sample_eligible": true
+            }
+          ]
+        }
+      ],
+      "evidence_event_ids": [
+        "oe:LCK:LOLTMNT02_463374:pick:5",
+        "oe:LCKC:LOLTMNT02_462428:pick:7",
+        "oe:LCKC:LOLTMNT02_462587:pick:10",
+        "oe:LCKC:LOLTMNT02_462651:pick:4",
+        "oe:LCKC:LOLTMNT02_463133:pick:7",
+        "oe:LCKC:LOLTMNT02_463300:pick:8",
+        "oe:NL:LOLTMNT05_220605:pick:5"
+      ],
+      "falsifiers": [
+        {
+          "condition": "next comparable snapshot is less than or equal to zero",
+          "metric": "demand_velocity"
+        },
+        {
+          "condition": "adoption does not expand beyond the currently observed teams",
+          "metric": "current_distinct_team_count"
+        }
+      ],
+      "hook": "Corki BOTTOM의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "quality_flags": [],
+      "radar_rank": 2,
+      "review_state": "HUMAN_REVIEW_REQUIRED",
+      "role": "BOTTOM",
+      "short_summary": "Corki BOTTOM의 최근 픽 점유율은 17.2%로, 이전 구간 대비 +13.8pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "thumbnail_copy": [
+        "Corki BOTTOM",
+        "+13.8pp"
+      ],
+      "title_candidates": [
+        "왜 지금 Corki BOTTOM인가: +13.8pp 변화의 근거",
+        "KOREA에서 먼저 보인 Corki BOTTOM, 글로벌과 +0.0pp 차이",
+        "Corki BOTTOM은 진짜 신호일까? 데이터와 반론"
+      ]
+    },
+    {
+      "approved_claims": [
+        {
+          "claim_id": "Caitlyn:BOTTOM:pick-presence",
+          "metric": "pick_presence_delta",
+          "text": "최근 7일 Caitlyn BOTTOM 픽 점유율은 20.7%이며 이전 구간 대비 +10.3pp 변했다.",
+          "value": 0.103448
+        },
+        {
+          "claim_id": "Caitlyn:BOTTOM:team-demand",
+          "metric": "demand_velocity",
+          "text": "최근 채택 팀은 5개이며 팀 수요는 이전 구간 대비 +39.8pp 변했다.",
+          "value": 0.397727
+        },
+        {
+          "claim_id": "Caitlyn:BOTTOM:regional-divergence",
+          "metric": "most_divergent_region_delta",
+          "text": "KOREA의 최근 픽 점유율은 글로벌 점유율과 +0.0pp 차이가 난다.",
+          "value": 0.0
+        }
+      ],
+      "candidate_id": "Caitlyn:BOTTOM",
+      "champion_id": "Caitlyn",
+      "chapter_outline": [
+        {
+          "chapter": "HOOK",
+          "uses": [
+            "Caitlyn:BOTTOM:pick-presence"
+          ]
+        },
+        {
+          "chapter": "WHAT CHANGED",
+          "uses": [
+            "Caitlyn:BOTTOM:pick-presence",
+            "Caitlyn:BOTTOM:team-demand",
+            "Caitlyn:BOTTOM:regional-divergence"
+          ]
+        },
+        {
+          "chapter": "WHY IT MAY MATTER",
+          "uses": [
+            "Caitlyn:BOTTOM:team-demand"
+          ]
+        },
+        {
+          "chapter": "COUNTERPOINT",
+          "uses": []
+        },
+        {
+          "chapter": "TAKEAWAY AND NEXT CHECK",
+          "uses": []
+        }
+      ],
+      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "data_cards": [
+        {
+          "card": "PICK_PRESENCE_COMPARISON",
+          "current": 0.206897,
+          "prior": 0.103448
+        },
+        {
+          "card": "TEAM_DEMAND_COMPARISON",
+          "current": 0.625,
+          "prior": 0.227273
+        },
+        {
+          "card": "REGIONAL_PRESENCE",
+          "values": [
+            {
+              "delta_from_global": 0.0,
+              "match_count": 29,
+              "pick_count": 6,
+              "pick_presence": 0.206897,
+              "region": "KOREA",
+              "sample_eligible": true
+            }
+          ]
+        }
+      ],
+      "evidence_event_ids": [
+        "oe:LCK:LOLTMNT02_460694:pick:1",
+        "oe:LCK:LOLTMNT02_460761:pick:6",
+        "oe:LCK:LOLTMNT02_462142:pick:2",
+        "oe:LCK:LOLTMNT02_463340:pick:4",
+        "oe:LCK:LOLTMNT02_463372:pick:2",
+        "oe:LCKC:LOLTMNT02_462348:pick:2",
+        "oe:LCKC:LOLTMNT02_462415:pick:9",
+        "oe:LCKC:LOLTMNT02_462588:pick:2",
+        "oe:LCKC:LOLTMNT02_462648:pick:8",
+        "oe:LCKC:LOLTMNT02_463132:pick:4",
+        "oe:LES:LOLTMNT02_462232:pick:8",
+        "oe:LFL:LOLTMNT05_220547:pick:3"
+      ],
+      "falsifiers": [
+        {
+          "condition": "next comparable snapshot is less than or equal to zero",
+          "metric": "demand_velocity"
+        },
+        {
+          "condition": "adoption does not expand beyond the currently observed teams",
+          "metric": "current_distinct_team_count"
+        }
+      ],
+      "hook": "Caitlyn BOTTOM의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "quality_flags": [],
+      "radar_rank": 3,
+      "review_state": "HUMAN_REVIEW_REQUIRED",
+      "role": "BOTTOM",
+      "short_summary": "Caitlyn BOTTOM의 최근 픽 점유율은 20.7%로, 이전 구간 대비 +10.3pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "thumbnail_copy": [
+        "Caitlyn BOTTOM",
+        "+10.3pp"
+      ],
+      "title_candidates": [
+        "왜 지금 Caitlyn BOTTOM인가: +10.3pp 변화의 근거",
+        "KOREA에서 먼저 보인 Caitlyn BOTTOM, 글로벌과 +0.0pp 차이",
+        "Caitlyn BOTTOM은 진짜 신호일까? 데이터와 반론"
       ]
     }
   ],

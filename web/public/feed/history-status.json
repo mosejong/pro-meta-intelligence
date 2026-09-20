@@ -1,16 +1,16 @@
 {
   "aggregate": null,
   "archive": {
-    "active_cohort": 3,
-    "cohort_count": 3,
-    "collection_span_days": 8.816,
-    "last_retrieved_at": "2026-08-31T23:12:19.903174+00:00",
-    "matured_cutoff_count": 2,
-    "retrieval_count": 5,
-    "unique_normalized_state_count": 5
+    "active_cohort": 4,
+    "cohort_count": 4,
+    "collection_span_days": 23.774,
+    "last_retrieved_at": "2026-09-15T22:11:48.707723+00:00",
+    "matured_cutoff_count": 5,
+    "retrieval_count": 6,
+    "unique_normalized_state_count": 6
   },
   "artifact_type": "oe-history-status",
-  "as_of": "2026-08-31T23:12:19.903174+00:00",
+  "as_of": "2026-09-15T22:11:48.707723+00:00",
   "benchmark_ready": false,
   "blocking_reasons": [
     "RETRIEVAL_COUNT_BELOW_MINIMUM",
@@ -21,24 +21,24 @@
   "boundary": "Operational collection readiness only; not evidence that the Radar predicts adoption.",
   "collection": {
     "collection_span_days": 0.0,
-    "first_retrieved_at": "2026-08-31T23:12:19.903174+00:00",
-    "last_retrieved_at": "2026-08-31T23:12:19.903174+00:00",
+    "first_retrieved_at": "2026-09-15T22:11:48.707723+00:00",
+    "last_retrieved_at": "2026-09-15T22:11:48.707723+00:00",
     "matured_cutoff_count": 0,
     "retrieval_count": 1,
     "unique_normalized_state_count": 1
   },
   "continuity": {
-    "continuity_deadline_at": "2026-09-02T23:12:19.903174+00:00",
+    "continuity_deadline_at": "2026-09-17T22:11:48.707723+00:00",
     "maximum_gap_hours": 48,
-    "next_collection_due_at": "2026-09-01T23:12:19.903174+00:00",
+    "next_collection_due_at": "2026-09-16T22:11:48.707723+00:00",
     "status": "ON_TRACK"
   },
   "forecast": {
     "assumption": "UNINTERRUPTED_DAILY_COLLECTION_WITH_REQUIRED_DISTINCT_STATES",
-    "continuity_deadline_at": "2026-09-02T23:12:19.903174+00:00",
-    "earliest_possible_ready_at": "2026-09-14T23:12:19.903174+00:00",
+    "continuity_deadline_at": "2026-09-17T22:11:48.707723+00:00",
+    "earliest_possible_ready_at": "2026-09-29T22:11:48.707723+00:00",
     "guaranteed": false,
-    "next_collection_due_at": "2026-09-01T23:12:19.903174+00:00",
+    "next_collection_due_at": "2026-09-16T22:11:48.707723+00:00",
     "remaining": {
       "collection_span_days": 14.0,
       "matured_cutoffs": 2,
@@ -84,6 +84,8 @@
   "status": "HISTORY_NOT_READY",
   "warnings": [
     "KNOWN_IMPORT_EXCLUSIONS_PRESENT",
-    "HISTORICAL_GAPS_EXCLUDED_FROM_ACTIVE_COHORT"
+    "HISTORICAL_GAPS_EXCLUDED_FROM_ACTIVE_COHORT",
+    "HISTORICAL_MATCH_REMOVALS_OBSERVED",
+    "HISTORICAL_MATCH_REVISIONS_OBSERVED"
   ]
 }
