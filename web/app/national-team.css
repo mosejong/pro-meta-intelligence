@@ -1,0 +1,27 @@
+.national-team { margin: 0 0 1.5rem; border: 1px solid var(--ink); background: white; color: var(--ink); }
+.national-team > summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding: 1rem; background: #e8e2ff; cursor: pointer; }
+.national-team > summary strong { font-size: 1.125rem; }
+.national-team > summary span { font-size: .875rem; }
+.national-content { padding: 1rem; }
+.national-content p, .national-content li { font-size: 1rem; line-height: 1.6; overflow-wrap: anywhere; }
+.national-content p { margin: .5rem 0 1rem; }
+.national-content h3 { font-size: 1.125rem; margin: 0 0 .75rem; }
+.national-content h4 { font-size: 1rem; margin: 0 0 .5rem; }
+.national-content label { display: flex; flex-direction: column; gap: .4rem; font-size: 1rem; }
+.national-content select, .national-content input, .national-content textarea { width: 100%; min-height: 44px; border: 1px solid #777; border-radius: 0; padding: .65rem; font: inherit; background: white; color: var(--ink); }
+.national-content textarea { min-height: 90px; resize: vertical; }
+.national-subject { max-width: 24rem; margin: 1rem 0; }
+.national-comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.national-comparison > section { min-width: 0; border: 1px solid #d8d8df; padding: 1rem; }
+.national-observations { padding: 0; list-style: none; }
+.national-observations > li + li { border-top: 1px solid #d8d8df; padding-top: 1rem; }
+.national-team-notes, .national-journal { padding: 1rem; margin-top: 1rem; border: 1px solid #d8d8df; }
+.national-content summary { cursor: pointer; font-size: 1rem; line-height: 1.5; }
+.national-check-form { display: grid; gap: .75rem; margin-top: 1rem; }
+.national-content button { min-height: 44px; padding: .65rem 1rem; border: 1px solid var(--ink); background: var(--ink); color: white; cursor: pointer; font-size: 1rem; }
+.national-content button:disabled { cursor: default; background: #ddd; color: #555; }
+.national-check { margin-top: 1rem; padding: 1rem; background: #f6f5fa; border-left: 3px solid var(--violet); }
+.national-content a { text-decoration: underline; }
+.national-content .national-sources { margin: 1rem 0 0; font-size: .875rem; }
+.national-team :is(button, select, input, textarea, summary):focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
+@media (max-width: 700px) { .national-comparison { grid-template-columns: 1fr; } }

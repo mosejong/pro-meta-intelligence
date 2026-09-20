@@ -27,6 +27,7 @@ import { productSpaceHref, type ProductSpace } from "./product-space";
 import { MAX_DRAFT_FILE_BYTES, parseDraftSession, readLocalDraft, writeLocalDraft, type DraftSession } from "./draft-session";
 import type { OpponentTeam, RadarReport } from "./radar-types";
 import { WorldsPreparationPanel } from "./worlds-preparation-panel";
+import { NationalTeamPanel } from "./national-team-panel";
 
 type DraftLabProps = {
   currentSpace: ProductSpace;
@@ -337,6 +338,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <aside><b>규칙 기반 V1</b><span>AI 자동판단 잠금</span><small>승률 예측이 아닌 코칭스태프 검토용 시나리오</small></aside>
     </section>
 
+    <NationalTeamPanel report={liveReport} nameOf={nameOf} />
     <WorldsPreparationPanel report={report} nameOf={nameOf} onChooseOpponent={chooseWorldsOpponent} previousPicks={previousPicks}
       canChangeMatchup={canSelect && games.length === 0 && selections.length === 0 && !pendingChampion} />
 
