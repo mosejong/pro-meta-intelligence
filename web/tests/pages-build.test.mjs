@@ -49,7 +49,9 @@ test("copies the same-origin feed and social card", async () => {
 
   assert.equal(feed.schema_version, "1");
   assert.equal(feed.fixture_only, false);
-  assert.equal(feed.patch_id, "16.16");
+  const sourceFeed = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
+  assert.deepEqual(feed, sourceFeed);
+  assert.equal(feed.patch_id, feed.publication_readiness.selected_patch_id);
   assert.equal(feed.publication_readiness.ready_for_radar, true);
   assert.ok(Number.isInteger(
     feed.publication_readiness.selected_patch_import_quality.known_exclusion_game_count,
