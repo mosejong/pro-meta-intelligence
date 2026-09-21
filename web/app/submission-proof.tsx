@@ -104,6 +104,19 @@ export function SubmissionProof({
       <aside><b>현재 제출 문구</b><p>{evidenceReady ? "실데이터 백테스트까지 확인 가능한 분석 제품입니다." : "작동하는 실데이터 분석 프로토타입입니다. 예측 효용은 아직 주장하지 않으며, 연속 스냅샷이 성숙한 뒤 Recall@K와 오탐률을 공개합니다."}</p><small>마지막 검증 소스 · {formatDate(collectionStatus?.source.last_verified_at)} KST</small></aside>
     </section>
 
+    <section className="submission-draft-benchmark" aria-labelledby="submission-draft-benchmark-title">
+      <header><span>DRAFT · SEPTEMBER REPLAY</span><h2 id="submission-draft-benchmark-title">상대 다음 픽 예측, 실제로 얼마나 맞았나</h2><p>2026-09-21 검증 · 이전 평가와 경기 기간이 겹치지 않는 9월 첫 세트 · 경기 전에 확보된 데이터만 사용</p></header>
+      <div className="submission-benchmark-scroll"><table>
+        <caption>상위 3개 후보에 실제 다음 픽이 포함된 비율</caption>
+        <thead><tr><th scope="col">평가 범위</th><th scope="col">현재 모델</th><th scope="col">팀 픽 빈도 기준</th><th scope="col">역할 실험 · 미적용</th></tr></thead>
+        <tbody><tr><th scope="row">전체 · 32경기 / 224상황</th><td>26/224 · 11.61%</td><td>24/224 · 10.71%</td><td>31/224 · 13.84%</td></tr><tr><th scope="row">LCK · 8경기 / 56상황</th><td>11/56 · 19.64%</td><td>9/56 · 16.07%</td><td>13/56 · 23.21%</td></tr></tbody>
+      </table></div>
+      <p>현재 모델의 첫 번째 후보 적중은 전체 5/224(2.23%), LCK 3/56(5.36%)입니다. 팀 픽 빈도 기준은 전체 7/224(3.13%)로 첫 후보 적중이 더 높았습니다. 기준 모델이 후보를 내지 못한 5상황도 분모에 포함했습니다. 세 방법 모두 불법 후보는 0건이었습니다.</p>
+      <p>경기당 7상황은 서로 연관되므로 224개의 독립 경기로 볼 수 없습니다. 사후 재생 평가이며, 작은 표본에서의 차이가 우월성을 입증하지는 않습니다. 역할 실험은 계속 미적용 상태로 두고 현재 모델을 유지합니다. 국가대표전·2세트 이후 피어리스·월즈 패치의 정확도는 아직 검증하지 않았습니다.</p>
+      <p>결과 확인용 원자료 수집 시각: 2026-09-15 22:11 UTC. 현재 피드의 최신성이나 레이더 백테스트 준비도와는 별도인 고정 검증 결과입니다.</p>
+      <footer><a href="https://github.com/mosejong/pro-meta-intelligence/actions/runs/35601430445">검증 실행 기록 →</a><a href="https://github.com/mosejong/pro-meta-intelligence/blob/main/docs/benchmarks/draft-september-disjoint-2026-09-21.json">전체 지표·제외 사유 →</a></footer>
+    </section>
+
     <section className="submission-demo" aria-labelledby="submission-demo-title">
       <header><span>04 · 3 MINUTE DEMO</span><h2 id="submission-demo-title">설명 순서까지 준비된 제출 시나리오</h2></header>
       <ol><li><time>00:00</time><div><b>문제</b><p>“팀이 검토할 후보를 놓치지 않으면서 연습 시간을 어떻게 아낄까?”</p></div></li><li><time>00:25</time><div><b>T1 오늘 준비</b><p>공식 일정, 공개 선수 선택, 상대 우선순위를 한 화면에서 확인합니다.</p></div></li><li><time>01:05</time><div><b>근거 추적</b><p>후보 카드에서 지역·팀·경기 이벤트로 내려가 산식과 원자료 연결을 보여줍니다.</p></div></li><li><time>01:50</time><div><b>의사결정 출력</b><p>반대 근거, 연습 질문, 중단 조건과 한 장 PDF를 확인합니다.</p></div></li><li><time>02:30</time><div><b>신뢰 경계</b><p>백테스트와 AI가 준비되지 않았을 때 자동으로 잠기는 이유를 설명합니다.</p></div></li></ol>

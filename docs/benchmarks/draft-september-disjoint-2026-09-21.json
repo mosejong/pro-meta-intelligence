@@ -1,0 +1,1008 @@
+{
+  "schema_version": "1",
+  "artifact_type": "draft-historical-benchmark",
+  "model_version": "fearless-preview-v2",
+  "status": "PILOT_COMPLETE",
+  "fixture_only": false,
+  "scope": "FIRST_SET_IMMEDIATE_OPPONENT_PICK",
+  "match_count": 32,
+  "case_count": 224,
+  "source_pair_count": 1,
+  "model": {
+    "cases": 224,
+    "covered": 224,
+    "top1_hits": 5,
+    "top3_hits": 26,
+    "reciprocal_rank_sum": 14.333333333333336,
+    "illegal_candidates": 0,
+    "emitted_candidates": 652,
+    "coverage": 1,
+    "top1_accuracy": 0.022321,
+    "top3_recall": 0.116071,
+    "mrr_at_3": 0.063988,
+    "illegal_candidate_rate": 0
+  },
+  "baseline": {
+    "cases": 224,
+    "covered": 219,
+    "top1_hits": 7,
+    "top3_hits": 24,
+    "reciprocal_rank_sum": 14.166666666666668,
+    "illegal_candidates": 0,
+    "emitted_candidates": 605,
+    "coverage": 0.977679,
+    "top1_accuracy": 0.03125,
+    "top3_recall": 0.107143,
+    "mrr_at_3": 0.063244,
+    "illegal_candidate_rate": 0
+  },
+  "top3_recall_delta": 0.008928,
+  "by_league": [
+    {
+      "league": "CBLOL",
+      "matches": 4,
+      "model": {
+        "cases": 28,
+        "covered": 28,
+        "top1_hits": 1,
+        "top3_hits": 5,
+        "reciprocal_rank_sum": 2.6666666666666665,
+        "illegal_candidates": 0,
+        "emitted_candidates": 75,
+        "coverage": 1,
+        "top1_accuracy": 0.035714,
+        "top3_recall": 0.178571,
+        "mrr_at_3": 0.095238,
+        "illegal_candidate_rate": 0
+      },
+      "baseline": {
+        "cases": 28,
+        "covered": 28,
+        "top1_hits": 1,
+        "top3_hits": 5,
+        "reciprocal_rank_sum": 2.6666666666666665,
+        "illegal_candidates": 0,
+        "emitted_candidates": 75,
+        "coverage": 1,
+        "top1_accuracy": 0.035714,
+        "top3_recall": 0.178571,
+        "mrr_at_3": 0.095238,
+        "illegal_candidate_rate": 0
+      }
+    },
+    {
+      "league": "HLL",
+      "matches": 4,
+      "model": {
+        "cases": 28,
+        "covered": 28,
+        "top1_hits": 0,
+        "top3_hits": 0,
+        "reciprocal_rank_sum": 0,
+        "illegal_candidates": 0,
+        "emitted_candidates": 82,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0,
+        "mrr_at_3": 0,
+        "illegal_candidate_rate": 0
+      },
+      "baseline": {
+        "cases": 28,
+        "covered": 28,
+        "top1_hits": 0,
+        "top3_hits": 0,
+        "reciprocal_rank_sum": 0,
+        "illegal_candidates": 0,
+        "emitted_candidates": 82,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0,
+        "mrr_at_3": 0,
+        "illegal_candidate_rate": 0
+      }
+    },
+    {
+      "league": "LCK",
+      "matches": 8,
+      "model": {
+        "cases": 56,
+        "covered": 56,
+        "top1_hits": 3,
+        "top3_hits": 11,
+        "reciprocal_rank_sum": 6.5,
+        "illegal_candidates": 0,
+        "emitted_candidates": 168,
+        "coverage": 1,
+        "top1_accuracy": 0.053571,
+        "top3_recall": 0.196429,
+        "mrr_at_3": 0.116071,
+        "illegal_candidate_rate": 0
+      },
+      "baseline": {
+        "cases": 56,
+        "covered": 51,
+        "top1_hits": 2,
+        "top3_hits": 9,
+        "reciprocal_rank_sum": 5.166666666666666,
+        "illegal_candidates": 0,
+        "emitted_candidates": 135,
+        "coverage": 0.910714,
+        "top1_accuracy": 0.035714,
+        "top3_recall": 0.160714,
+        "mrr_at_3": 0.092262,
+        "illegal_candidate_rate": 0
+      }
+    },
+    {
+      "league": "LCKC",
+      "matches": 8,
+      "model": {
+        "cases": 56,
+        "covered": 56,
+        "top1_hits": 1,
+        "top3_hits": 5,
+        "reciprocal_rank_sum": 3,
+        "illegal_candidates": 0,
+        "emitted_candidates": 168,
+        "coverage": 1,
+        "top1_accuracy": 0.017857,
+        "top3_recall": 0.089286,
+        "mrr_at_3": 0.053571,
+        "illegal_candidate_rate": 0
+      },
+      "baseline": {
+        "cases": 56,
+        "covered": 56,
+        "top1_hits": 2,
+        "top3_hits": 6,
+        "reciprocal_rank_sum": 3.5,
+        "illegal_candidates": 0,
+        "emitted_candidates": 154,
+        "coverage": 1,
+        "top1_accuracy": 0.035714,
+        "top3_recall": 0.107143,
+        "mrr_at_3": 0.0625,
+        "illegal_candidate_rate": 0
+      }
+    },
+    {
+      "league": "LCS",
+      "matches": 1,
+      "model": {
+        "cases": 7,
+        "covered": 7,
+        "top1_hits": 0,
+        "top3_hits": 0,
+        "reciprocal_rank_sum": 0,
+        "illegal_candidates": 0,
+        "emitted_candidates": 19,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0,
+        "mrr_at_3": 0,
+        "illegal_candidate_rate": 0
+      },
+      "baseline": {
+        "cases": 7,
+        "covered": 7,
+        "top1_hits": 0,
+        "top3_hits": 0,
+        "reciprocal_rank_sum": 0,
+        "illegal_candidates": 0,
+        "emitted_candidates": 19,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0,
+        "mrr_at_3": 0,
+        "illegal_candidate_rate": 0
+      }
+    },
+    {
+      "league": "LEC",
+      "matches": 3,
+      "model": {
+        "cases": 21,
+        "covered": 21,
+        "top1_hits": 0,
+        "top3_hits": 2,
+        "reciprocal_rank_sum": 0.8333333333333333,
+        "illegal_candidates": 0,
+        "emitted_candidates": 56,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0.095238,
+        "mrr_at_3": 0.039683,
+        "illegal_candidate_rate": 0
+      },
+      "baseline": {
+        "cases": 21,
+        "covered": 21,
+        "top1_hits": 0,
+        "top3_hits": 2,
+        "reciprocal_rank_sum": 0.8333333333333333,
+        "illegal_candidates": 0,
+        "emitted_candidates": 56,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0.095238,
+        "mrr_at_3": 0.039683,
+        "illegal_candidate_rate": 0
+      }
+    },
+    {
+      "league": "LFL",
+      "matches": 2,
+      "model": {
+        "cases": 14,
+        "covered": 14,
+        "top1_hits": 0,
+        "top3_hits": 2,
+        "reciprocal_rank_sum": 0.8333333333333333,
+        "illegal_candidates": 0,
+        "emitted_candidates": 42,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0.142857,
+        "mrr_at_3": 0.059524,
+        "illegal_candidate_rate": 0
+      },
+      "baseline": {
+        "cases": 14,
+        "covered": 14,
+        "top1_hits": 1,
+        "top3_hits": 1,
+        "reciprocal_rank_sum": 1,
+        "illegal_candidates": 0,
+        "emitted_candidates": 42,
+        "coverage": 1,
+        "top1_accuracy": 0.071429,
+        "top3_recall": 0.071429,
+        "mrr_at_3": 0.071429,
+        "illegal_candidate_rate": 0
+      }
+    },
+    {
+      "league": "NL",
+      "matches": 2,
+      "model": {
+        "cases": 14,
+        "covered": 14,
+        "top1_hits": 0,
+        "top3_hits": 1,
+        "reciprocal_rank_sum": 0.5,
+        "illegal_candidates": 0,
+        "emitted_candidates": 42,
+        "coverage": 1,
+        "top1_accuracy": 0,
+        "top3_recall": 0.071429,
+        "mrr_at_3": 0.035714,
+        "illegal_candidate_rate": 0
+      },
+      "baseline": {
+        "cases": 14,
+        "covered": 14,
+        "top1_hits": 1,
+        "top3_hits": 1,
+        "reciprocal_rank_sum": 1,
+        "illegal_candidates": 0,
+        "emitted_candidates": 42,
+        "coverage": 1,
+        "top1_accuracy": 0.071429,
+        "top3_recall": 0.071429,
+        "mrr_at_3": 0.071429,
+        "illegal_candidate_rate": 0
+      }
+    }
+  ],
+  "boundary": "Pilot only. First sets and immediate opposite-side pick responses only; all eligible states, including abstentions, are in the denominator. Cases within a match are correlated. No multi-set Fearless, counterfactual, calibrated probability, or superiority claim.",
+  "role_experiment": {
+    "version": "observed-role-feasibility-v1",
+    "deployed": false,
+    "metrics": {
+      "cases": 224,
+      "covered": 224,
+      "top1_hits": 10,
+      "top3_hits": 31,
+      "reciprocal_rank_sum": 19.333333333333332,
+      "illegal_candidates": 0,
+      "emitted_candidates": 652,
+      "coverage": 1,
+      "top1_accuracy": 0.044643,
+      "top3_recall": 0.138393,
+      "mrr_at_3": 0.08631,
+      "illegal_candidate_rate": 0
+    },
+    "by_league_patch": [
+      {
+        "league_patch": "CBLOL:16.17",
+        "matches": 4,
+        "experiment": {
+          "cases": 28,
+          "covered": 28,
+          "top1_hits": 1,
+          "top3_hits": 5,
+          "reciprocal_rank_sum": 2.6666666666666665,
+          "illegal_candidates": 0,
+          "emitted_candidates": 75,
+          "coverage": 1,
+          "top1_accuracy": 0.035714,
+          "top3_recall": 0.178571,
+          "mrr_at_3": 0.095238,
+          "illegal_candidate_rate": 0
+        },
+        "production": {
+          "cases": 28,
+          "covered": 28,
+          "top1_hits": 1,
+          "top3_hits": 5,
+          "reciprocal_rank_sum": 2.6666666666666665,
+          "illegal_candidates": 0,
+          "emitted_candidates": 75,
+          "coverage": 1,
+          "top1_accuracy": 0.035714,
+          "top3_recall": 0.178571,
+          "mrr_at_3": 0.095238,
+          "illegal_candidate_rate": 0
+        }
+      },
+      {
+        "league_patch": "HLL:16.17",
+        "matches": 4,
+        "experiment": {
+          "cases": 28,
+          "covered": 28,
+          "top1_hits": 0,
+          "top3_hits": 0,
+          "reciprocal_rank_sum": 0,
+          "illegal_candidates": 0,
+          "emitted_candidates": 82,
+          "coverage": 1,
+          "top1_accuracy": 0,
+          "top3_recall": 0,
+          "mrr_at_3": 0,
+          "illegal_candidate_rate": 0
+        },
+        "production": {
+          "cases": 28,
+          "covered": 28,
+          "top1_hits": 0,
+          "top3_hits": 0,
+          "reciprocal_rank_sum": 0,
+          "illegal_candidates": 0,
+          "emitted_candidates": 82,
+          "coverage": 1,
+          "top1_accuracy": 0,
+          "top3_recall": 0,
+          "mrr_at_3": 0,
+          "illegal_candidate_rate": 0
+        }
+      },
+      {
+        "league_patch": "LCK:16.16",
+        "matches": 8,
+        "experiment": {
+          "cases": 56,
+          "covered": 56,
+          "top1_hits": 4,
+          "top3_hits": 13,
+          "reciprocal_rank_sum": 8.333333333333334,
+          "illegal_candidates": 0,
+          "emitted_candidates": 168,
+          "coverage": 1,
+          "top1_accuracy": 0.071429,
+          "top3_recall": 0.232143,
+          "mrr_at_3": 0.14881,
+          "illegal_candidate_rate": 0
+        },
+        "production": {
+          "cases": 56,
+          "covered": 56,
+          "top1_hits": 3,
+          "top3_hits": 11,
+          "reciprocal_rank_sum": 6.5,
+          "illegal_candidates": 0,
+          "emitted_candidates": 168,
+          "coverage": 1,
+          "top1_accuracy": 0.053571,
+          "top3_recall": 0.196429,
+          "mrr_at_3": 0.116071,
+          "illegal_candidate_rate": 0
+        }
+      },
+      {
+        "league_patch": "LCKC:16.16",
+        "matches": 8,
+        "experiment": {
+          "cases": 56,
+          "covered": 56,
+          "top1_hits": 3,
+          "top3_hits": 8,
+          "reciprocal_rank_sum": 5.166666666666666,
+          "illegal_candidates": 0,
+          "emitted_candidates": 168,
+          "coverage": 1,
+          "top1_accuracy": 0.053571,
+          "top3_recall": 0.142857,
+          "mrr_at_3": 0.092262,
+          "illegal_candidate_rate": 0
+        },
+        "production": {
+          "cases": 56,
+          "covered": 56,
+          "top1_hits": 1,
+          "top3_hits": 5,
+          "reciprocal_rank_sum": 3,
+          "illegal_candidates": 0,
+          "emitted_candidates": 168,
+          "coverage": 1,
+          "top1_accuracy": 0.017857,
+          "top3_recall": 0.089286,
+          "mrr_at_3": 0.053571,
+          "illegal_candidate_rate": 0
+        }
+      },
+      {
+        "league_patch": "LCS:16.17",
+        "matches": 1,
+        "experiment": {
+          "cases": 7,
+          "covered": 7,
+          "top1_hits": 0,
+          "top3_hits": 0,
+          "reciprocal_rank_sum": 0,
+          "illegal_candidates": 0,
+          "emitted_candidates": 19,
+          "coverage": 1,
+          "top1_accuracy": 0,
+          "top3_recall": 0,
+          "mrr_at_3": 0,
+          "illegal_candidate_rate": 0
+        },
+        "production": {
+          "cases": 7,
+          "covered": 7,
+          "top1_hits": 0,
+          "top3_hits": 0,
+          "reciprocal_rank_sum": 0,
+          "illegal_candidates": 0,
+          "emitted_candidates": 19,
+          "coverage": 1,
+          "top1_accuracy": 0,
+          "top3_recall": 0,
+          "mrr_at_3": 0,
+          "illegal_candidate_rate": 0
+        }
+      },
+      {
+        "league_patch": "LEC:16.17",
+        "matches": 3,
+        "experiment": {
+          "cases": 21,
+          "covered": 21,
+          "top1_hits": 0,
+          "top3_hits": 2,
+          "reciprocal_rank_sum": 0.8333333333333333,
+          "illegal_candidates": 0,
+          "emitted_candidates": 56,
+          "coverage": 1,
+          "top1_accuracy": 0,
+          "top3_recall": 0.095238,
+          "mrr_at_3": 0.039683,
+          "illegal_candidate_rate": 0
+        },
+        "production": {
+          "cases": 21,
+          "covered": 21,
+          "top1_hits": 0,
+          "top3_hits": 2,
+          "reciprocal_rank_sum": 0.8333333333333333,
+          "illegal_candidates": 0,
+          "emitted_candidates": 56,
+          "coverage": 1,
+          "top1_accuracy": 0,
+          "top3_recall": 0.095238,
+          "mrr_at_3": 0.039683,
+          "illegal_candidate_rate": 0
+        }
+      },
+      {
+        "league_patch": "LFL:16.16",
+        "matches": 2,
+        "experiment": {
+          "cases": 14,
+          "covered": 14,
+          "top1_hits": 1,
+          "top3_hits": 2,
+          "reciprocal_rank_sum": 1.3333333333333333,
+          "illegal_candidates": 0,
+          "emitted_candidates": 42,
+          "coverage": 1,
+          "top1_accuracy": 0.071429,
+          "top3_recall": 0.142857,
+          "mrr_at_3": 0.095238,
+          "illegal_candidate_rate": 0
+        },
+        "production": {
+          "cases": 14,
+          "covered": 14,
+          "top1_hits": 0,
+          "top3_hits": 2,
+          "reciprocal_rank_sum": 0.8333333333333333,
+          "illegal_candidates": 0,
+          "emitted_candidates": 42,
+          "coverage": 1,
+          "top1_accuracy": 0,
+          "top3_recall": 0.142857,
+          "mrr_at_3": 0.059524,
+          "illegal_candidate_rate": 0
+        }
+      },
+      {
+        "league_patch": "NL:16.16",
+        "matches": 2,
+        "experiment": {
+          "cases": 14,
+          "covered": 14,
+          "top1_hits": 1,
+          "top3_hits": 1,
+          "reciprocal_rank_sum": 1,
+          "illegal_candidates": 0,
+          "emitted_candidates": 42,
+          "coverage": 1,
+          "top1_accuracy": 0.071429,
+          "top3_recall": 0.071429,
+          "mrr_at_3": 0.071429,
+          "illegal_candidate_rate": 0
+        },
+        "production": {
+          "cases": 14,
+          "covered": 14,
+          "top1_hits": 0,
+          "top3_hits": 1,
+          "reciprocal_rank_sum": 0.5,
+          "illegal_candidates": 0,
+          "emitted_candidates": 42,
+          "coverage": 1,
+          "top1_accuracy": 0,
+          "top3_recall": 0.071429,
+          "mrr_at_3": 0.035714,
+          "illegal_candidate_rate": 0
+        }
+      }
+    ],
+    "boundary": "Observed same-snapshot role feasibility only. Unknown roles remain unrestricted; flex roles remain alternatives. No counter or synergy knowledge. No automatic promotion."
+  },
+  "dataset_audit": {
+    "coverage": {
+      "LEAGUE:AC": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 19
+        },
+        "first_observed_at": "2026-03-04T21:12:25+00:00",
+        "imported_matches": 19,
+        "last_observed_at": "2026-03-08T20:51:01+00:00"
+      },
+      "LEAGUE:AL": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 320,
+          "NOT_CONFIRMED_FIRST_SET": 10,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 4
+        },
+        "first_observed_at": "2026-01-13T16:07:20+00:00",
+        "imported_matches": 334,
+        "last_observed_at": "2026-09-15T18:50:16+00:00"
+      },
+      "LEAGUE:Asia Master": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 63
+        },
+        "first_observed_at": "2026-06-05T04:13:49+00:00",
+        "imported_matches": 63,
+        "last_observed_at": "2026-06-21T11:38:09+00:00"
+      },
+      "LEAGUE:CBLOL": {
+        "eligible_matches": 4,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 235,
+          "NOT_CONFIRMED_FIRST_SET": 11
+        },
+        "first_observed_at": "2026-01-17T16:19:20+00:00",
+        "imported_matches": 250,
+        "last_observed_at": "2026-09-13T18:46:05+00:00"
+      },
+      "LEAGUE:CCWS": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 40
+        },
+        "first_observed_at": "2026-01-20T16:07:53+00:00",
+        "imported_matches": 40,
+        "last_observed_at": "2026-02-05T20:20:41+00:00"
+      },
+      "LEAGUE:CD": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 180,
+          "NOT_CONFIRMED_FIRST_SET": 12,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 5
+        },
+        "first_observed_at": "2026-03-30T20:13:25+00:00",
+        "imported_matches": 197,
+        "last_observed_at": "2026-09-14T21:53:27+00:00"
+      },
+      "LEAGUE:EBL": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 167,
+          "NOT_CONFIRMED_FIRST_SET": 17,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 5
+        },
+        "first_observed_at": "2026-01-28T18:13:32+00:00",
+        "imported_matches": 189,
+        "last_observed_at": "2026-09-10T19:21:16+00:00"
+      },
+      "LEAGUE:EM": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 284
+        },
+        "first_observed_at": "2026-03-09T16:04:43+00:00",
+        "imported_matches": 284,
+        "last_observed_at": "2026-06-15T16:40:42+00:00"
+      },
+      "LEAGUE:EWC": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 232
+        },
+        "first_observed_at": "2026-04-14T18:07:58+00:00",
+        "imported_matches": 232,
+        "last_observed_at": "2026-07-19T15:15:31+00:00"
+      },
+      "LEAGUE:FST": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 45
+        },
+        "first_observed_at": "2026-03-16T13:10:29+00:00",
+        "imported_matches": 45,
+        "last_observed_at": "2026-03-22T16:04:39+00:00"
+      },
+      "LEAGUE:HC": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 97,
+          "NOT_CONFIRMED_FIRST_SET": 22,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 15
+        },
+        "first_observed_at": "2026-04-22T17:17:02+00:00",
+        "imported_matches": 134,
+        "last_observed_at": "2026-09-13T18:05:52+00:00"
+      },
+      "LEAGUE:HLL": {
+        "eligible_matches": 4,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 212,
+          "NOT_CONFIRMED_FIRST_SET": 11
+        },
+        "first_observed_at": "2026-01-14T16:19:48+00:00",
+        "imported_matches": 227,
+        "last_observed_at": "2026-09-12T19:07:32+00:00"
+      },
+      "LEAGUE:HM": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 126,
+          "NOT_CONFIRMED_FIRST_SET": 23,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 13
+        },
+        "first_observed_at": "2026-04-16T14:12:29+00:00",
+        "imported_matches": 162,
+        "last_observed_at": "2026-09-15T16:35:06+00:00"
+      },
+      "LEAGUE:HW": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 101
+        },
+        "first_observed_at": "2026-01-22T16:11:44+00:00",
+        "imported_matches": 101,
+        "last_observed_at": "2026-03-07T17:12:29+00:00"
+      },
+      "LEAGUE:KeSPA Cup": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 61
+        },
+        "first_observed_at": "2026-07-20T06:16:43+00:00",
+        "imported_matches": 61,
+        "last_observed_at": "2026-08-18T11:06:51+00:00"
+      },
+      "LEAGUE:LAS": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 229,
+          "NOT_CONFIRMED_FIRST_SET": 20,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 16
+        },
+        "first_observed_at": "2026-03-21T05:05:02+00:00",
+        "imported_matches": 265,
+        "last_observed_at": "2026-09-13T08:37:52+00:00"
+      },
+      "LEAGUE:LCK": {
+        "eligible_matches": 8,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 469,
+          "NOT_CONFIRMED_FIRST_SET": 25
+        },
+        "first_observed_at": "2026-01-14T08:13:43+00:00",
+        "imported_matches": 502,
+        "last_observed_at": "2026-09-13T08:19:05+00:00"
+      },
+      "LEAGUE:LCKC": {
+        "eligible_matches": 8,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 459,
+          "NOT_CONFIRMED_FIRST_SET": 24
+        },
+        "first_observed_at": "2026-01-12T05:10:10+00:00",
+        "imported_matches": 491,
+        "last_observed_at": "2026-09-15T09:47:51+00:00"
+      },
+      "LEAGUE:LCP": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 283
+        },
+        "first_observed_at": "2026-01-16T06:23:26+00:00",
+        "imported_matches": 283,
+        "last_observed_at": "2026-08-30T10:26:53+00:00"
+      },
+      "LEAGUE:LCS": {
+        "eligible_matches": 1,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 213,
+          "NOT_CONFIRMED_FIRST_SET": 8,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 5
+        },
+        "first_observed_at": "2026-01-24T21:24:34+00:00",
+        "imported_matches": 227,
+        "last_observed_at": "2026-09-13T21:59:56+00:00"
+      },
+      "LEAGUE:LEC": {
+        "eligible_matches": 3,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 352,
+          "NOT_CONFIRMED_FIRST_SET": 16,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 2
+        },
+        "first_observed_at": "2026-01-17T16:08:02+00:00",
+        "imported_matches": 373,
+        "last_observed_at": "2026-09-12T18:48:25+00:00"
+      },
+      "LEAGUE:LES": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 180,
+          "NOT_CONFIRMED_FIRST_SET": 9,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 3
+        },
+        "first_observed_at": "2026-02-13T11:23:25+00:00",
+        "imported_matches": 192,
+        "last_observed_at": "2026-09-06T13:45:27+00:00"
+      },
+      "LEAGUE:LFL": {
+        "eligible_matches": 2,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 252,
+          "NOT_CONFIRMED_FIRST_SET": 15,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 3
+        },
+        "first_observed_at": "2026-01-21T17:06:38+00:00",
+        "imported_matches": 272,
+        "last_observed_at": "2026-09-15T17:46:32+00:00"
+      },
+      "LEAGUE:LIT": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 175,
+          "NOT_CONFIRMED_FIRST_SET": 7,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 3
+        },
+        "first_observed_at": "2026-01-08T17:08:27+00:00",
+        "imported_matches": 185,
+        "last_observed_at": "2026-09-09T18:52:52+00:00"
+      },
+      "LEAGUE:LJL": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 303,
+          "NOT_CONFIRMED_FIRST_SET": 6,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 2
+        },
+        "first_observed_at": "2026-01-31T01:38:58+00:00",
+        "imported_matches": 311,
+        "last_observed_at": "2026-09-06T09:52:19+00:00"
+      },
+      "LEAGUE:LPL": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 511,
+          "NOT_CONFIRMED_FIRST_SET": 28,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 9
+        },
+        "first_observed_at": "2026-01-15T08:14:04+00:00",
+        "imported_matches": 548,
+        "last_observed_at": "2026-09-13T12:03:56+00:00"
+      },
+      "LEAGUE:LPLOL": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 27,
+          "NOT_CONFIRMED_FIRST_SET": 14,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 5
+        },
+        "first_observed_at": "2026-03-02T19:08:53+00:00",
+        "imported_matches": 46,
+        "last_observed_at": "2026-09-13T20:32:52+00:00"
+      },
+      "LEAGUE:LRN": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 171,
+          "NOT_CONFIRMED_FIRST_SET": 4,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 1
+        },
+        "first_observed_at": "2026-03-02T23:15:17+00:00",
+        "imported_matches": 176,
+        "last_observed_at": "2026-09-08T01:06:37+00:00"
+      },
+      "LEAGUE:LRS": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 180,
+          "NOT_CONFIRMED_FIRST_SET": 5,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 2
+        },
+        "first_observed_at": "2026-03-03T20:05:00+00:00",
+        "imported_matches": 187,
+        "last_observed_at": "2026-09-08T22:39:29+00:00"
+      },
+      "LEAGUE:MSI": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 71
+        },
+        "first_observed_at": "2026-06-28T03:10:49+00:00",
+        "imported_matches": 71,
+        "last_observed_at": "2026-07-12T11:11:20+00:00"
+      },
+      "LEAGUE:NACL": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 247,
+          "NOT_CONFIRMED_FIRST_SET": 16,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 5
+        },
+        "first_observed_at": "2026-03-26T20:07:48+00:00",
+        "imported_matches": 268,
+        "last_observed_at": "2026-09-11T23:00:40+00:00"
+      },
+      "LEAGUE:NL": {
+        "eligible_matches": 2,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 129,
+          "NOT_CONFIRMED_FIRST_SET": 6
+        },
+        "first_observed_at": "2026-04-11T10:06:16+00:00",
+        "imported_matches": 137,
+        "last_observed_at": "2026-09-06T12:50:23+00:00"
+      },
+      "LEAGUE:NLC": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 191,
+          "NOT_CONFIRMED_FIRST_SET": 10,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 5
+        },
+        "first_observed_at": "2026-01-15T17:23:54+00:00",
+        "imported_matches": 206,
+        "last_observed_at": "2026-09-14T17:45:08+00:00"
+      },
+      "LEAGUE:PCS": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 63,
+          "NOT_CONFIRMED_FIRST_SET": 11,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 2
+        },
+        "first_observed_at": "2026-04-27T09:05:56+00:00",
+        "imported_matches": 76,
+        "last_observed_at": "2026-09-06T12:11:55+00:00"
+      },
+      "LEAGUE:PRM": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 287,
+          "NOT_CONFIRMED_FIRST_SET": 23,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 7
+        },
+        "first_observed_at": "2026-02-11T17:07:36+00:00",
+        "imported_matches": 317,
+        "last_observed_at": "2026-09-15T18:46:37+00:00"
+      },
+      "LEAGUE:RL": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 147,
+          "NOT_CONFIRMED_FIRST_SET": 18,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 10
+        },
+        "first_observed_at": "2026-02-14T10:10:00+00:00",
+        "imported_matches": 175,
+        "last_observed_at": "2026-09-10T19:08:46+00:00"
+      },
+      "LEAGUE:ROL": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 234,
+          "INCOMPLETE_OR_NONSTANDARD_DRAFT": 1,
+          "NOT_CONFIRMED_FIRST_SET": 13,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 6
+        },
+        "first_observed_at": "2026-01-13T18:05:21+00:00",
+        "imported_matches": 254,
+        "last_observed_at": "2026-09-15T18:03:28+00:00"
+      },
+      "LEAGUE:TCL": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 192,
+          "NOT_CONFIRMED_FIRST_SET": 11,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 4
+        },
+        "first_observed_at": "2026-01-20T14:32:48+00:00",
+        "imported_matches": 207,
+        "last_observed_at": "2026-09-11T16:46:13+00:00"
+      },
+      "LEAGUE:VCS": {
+        "eligible_matches": 0,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 113,
+          "NOT_CONFIRMED_FIRST_SET": 7,
+          "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 6
+        },
+        "first_observed_at": "2026-02-28T10:24:30+00:00",
+        "imported_matches": 126,
+        "last_observed_at": "2026-09-13T11:57:51+00:00"
+      },
+      "TEAM:T1": {
+        "eligible_matches": 3,
+        "exclusions": {
+          "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 152,
+          "NOT_CONFIRMED_FIRST_SET": 10
+        },
+        "first_observed_at": "2026-01-16T10:08:16+00:00",
+        "imported_matches": 165,
+        "last_observed_at": "2026-09-12T08:21:21+00:00"
+      }
+    },
+    "eligible_matches": 32,
+    "exclusions": {
+      "BEFORE_OR_AT_HOLDOUT_BOUNDARY": 7660,
+      "INCOMPLETE_OR_NONSTANDARD_DRAFT": 1,
+      "NOT_CONFIRMED_FIRST_SET": 402,
+      "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 138
+    },
+    "first_capture_at": "2026-08-23T03:37:47.491921+00:00",
+    "last_capture_at": "2026-09-15T22:11:48.707723+00:00",
+    "observed_after": "2026-09-01T00:00:00+00:00",
+    "outcome_imported_matches": 8233,
+    "outcome_rejected_matches": 516,
+    "verified_capture_count": 6
+  }
+}

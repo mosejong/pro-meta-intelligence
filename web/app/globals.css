@@ -1952,6 +1952,12 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
 .submission-case-grid li span { display: block; margin-top: 5px; color: #6d7176; font-size: 9px; line-height: 1.45; }
 .submission-case > footer { display: flex; gap: 8px; margin-top: 12px; }
 .submission-case > footer a, .submission-footer > a { padding: 10px 12px; border: 1px solid var(--ink); color: var(--ink); font-size: 9px; font-weight: 850; }
+.submission-benchmark-scroll { overflow-x: auto; margin: 24px 0 16px; }
+.submission-draft-benchmark table { width: 100%; border-collapse: collapse; background: #fffdf8; font-size: 13px; }
+.submission-draft-benchmark caption { text-align: left; margin-bottom: 12px; font-weight: 700; }
+.submission-draft-benchmark th, .submission-draft-benchmark td { padding: 14px; border: 1px solid #a8a69f; text-align: left; }
+.submission-draft-benchmark > p { max-width: 1000px; font-size: 13px; line-height: 1.7; color: #53575c; }
+.submission-draft-benchmark footer { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px; font-size: 13px; }
 .submission-evidence > div { display: grid; grid-template-columns: repeat(5, 1fr); margin-top: 24px; border: 1px solid var(--ink); background: #fffdf8; }
 .submission-evidence article { display: grid; grid-template-columns: 28px 1fr; gap: 8px; min-width: 0; padding: 14px; border-right: 1px solid var(--ink); }
 .submission-evidence article:last-child { border-right: 0; }
