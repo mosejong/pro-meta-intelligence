@@ -35,7 +35,7 @@ for reproducing the previous experiment; this evaluation supplies the September 
   encrypted archive artifact `10638637239` from collector run `35601091585`.
 - Public result artifact: `draft-holdout-summary-35601430445`. The
   [benchmark aggregate](draft-september-disjoint-2026-09-21.json) and
-  [unfiltered season coverage](draft-season-coverage-2026-09-21.json) are byte-preserved copies.
+  [unfiltered season coverage](draft-season-coverage-2026-09-21.json) preserve the downloaded JSON results.
 - Six verified captures, August 23 through September 15; one distinct source pair supports
   32 eligible matches and 224 correlated states. Exact T1 appears in three eligible matches;
   no separate T1 accuracy metric was computed.
