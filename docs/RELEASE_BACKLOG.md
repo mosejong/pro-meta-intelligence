@@ -1,4 +1,4 @@
-# Consolidated release backlog - 2026-09-20
+# Consolidated release backlog - 2026-09-21
 
 This ledger consolidates ROADMAP phases 0-9, open GitHub issues #2/#58, draft validation,
 Worlds preparation and the submission package. Completed product behavior is distinct from
@@ -8,6 +8,8 @@ unmet research gates. No new LCK fixtures are a prerequisite.
 
 | Priority | Work | Result / evidence |
 | --- | --- | --- |
+| P0 | Renew expired source review | September 21 official OE download guidance, dictionary and Riot static-data policies rechecked. OE/Data Dragon keep the same allowed operations, hosts and rate limits; only review timestamps renewed. Schedule review remains due September 23. |
+| P1 | Refresh confirmed Worlds participants | September 21 official English overview names 13 teams. Add DK/TES/AL/G2/KC/MKOI with exact first-team matches; separate qualification and rules review dates. |
 | P1 | Restore national review journals | Bounded JSON import merges duplicate records, retains completed verdicts, and rejects conflicts atomically before storage writes. Changed-tab storage guard; existing exports remain compatible and unverified. |
 | P0 | Preserve LCK preparation after season end | Hosted selection follows the latest available exact LCK patch, with explicit selection provenance and unchanged readiness gates. Reviewed HC/LAS/LJL/VCS regions; academy leagues cannot select the LCK patch. |
 | P0 | Repair deferred TypeScript errors | 17 errors fixed without suppression; `npm run typecheck` passes and is required in CI. Runtime validation remains intact. |
@@ -39,7 +41,7 @@ unmet research gates. No new LCK fixtures are a prerequisite.
 | P0 | Source freshness incident #58 | Publication recovered September 20 after reviewed mappings and LCK patch selection: accepted cutoff September 15 22:11 UTC / 16.16, with all ten LCK teams and six national-player club baselines. Source still delayed; next permitted attempt September 21 08:37 UTC. The September 20 hosted run published successfully and retained failed health because the source is stale. Keep #58 open until freshness recovers; do not bypass the interval. |
 | P1 | Worlds common Fearless clauses | Official library access returned 404. Need accessible current international rulebook text; regional/prior-year rules cannot substitute. |
 | P1 | Worlds champion restrictions | Event rules §5.1 promise a list to teams; no public named list verified. No event-specific restrictions are applied. Need authoritative named list before enabling. |
-| P1 | Remaining qualifiers / actual matchup | Official overview still names seven teams. Need explicit official qualifiers/seeds/fixtures; do not infer from rankings. |
+| P1 | Remaining qualifiers / actual matchup | Official English overview names 13 teams as of September 21; six slots remain unnamed on that page. Need explicit official qualifiers/seeds/fixtures; do not infer absence of qualification or seed order. |
 | P1 | Worlds patch evidence | Event rulebook specifies 26.20; stored analysis is 16.16. Need actual 26.20 observations, not renamed season data. |
 | P1 | Disjoint target-league draft evaluation | Earlier archived captures and verified match labels are required. Existing expanded cohort overlaps its predecessor; LCK role/production top-three both 4/35. |
 | P1 | Later-set historical accuracy | Need verified series identity, complete preceding drafts and earlier source availability. Synthetic five-set tests prove behavior only. |

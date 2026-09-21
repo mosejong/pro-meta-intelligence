@@ -4,10 +4,11 @@ import { championAssetId } from "./champion-assets";
 // Human-reviewed official snapshot, not inferred from power rankings or regional standings.
 export const WORLDS_2026 = {
   checked_on: "2026-09-15",
+  qualification_checked_on: "2026-09-21",
   start_date: "2026-10-15",
   end_date: "2026-11-14",
   schedule_source: "https://lolesports.com/en-GB",
-  qualification_source: "https://lolesports.com/ko-KR/tournament/115660540725177488/overview",
+  qualification_source: "https://lolesports.com/en-US/tournament/115660540725177488/overview",
   first_selection_source: "https://lolesports.com/en-AU/news/season-start-2026-lol-esports",
   rules_source: "https://cdn.sanity.io/files/dsfx7636/news_live/faa5ce974e58615911fbee931c6123e2785a8b46.pdf",
   rules_version: "1.01",
@@ -17,10 +18,16 @@ export const WORLDS_2026 = {
     { code: "T1", league: "LCK", names: ["T1"] },
     { code: "GEN", league: "LCK", names: ["Gen.G", "GEN"] },
     { code: "HLE", league: "LCK", names: ["Hanwha Life Esports", "HLE"] },
+    { code: "DK", league: "LCK", names: ["Dplus Kia", "DK"] },
     { code: "CFO", league: "LCP", names: ["CTBC Flying Oyster", "CFO"] },
     { code: "MVK", league: "LCP", names: ["MVK Esports", "MVK"] },
     { code: "TSW", league: "LCP", names: ["Team Secret Whales", "TSW"] },
     { code: "BLG", league: "LPL", names: ["Bilibili Gaming", "BLG"] },
+    { code: "TES", league: "LPL", names: ["Top Esports", "TES"] },
+    { code: "AL", league: "LPL", names: ["Anyone's Legend", "AL"] },
+    { code: "G2", league: "LEC", names: ["G2 Esports", "G2"] },
+    { code: "KC", league: "LEC", names: ["Karmine Corp", "KC"] },
+    { code: "MKOI", league: "LEC", names: ["Movistar KOI", "MKOI"] },
   ],
 } as const;
 
