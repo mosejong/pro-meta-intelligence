@@ -7,6 +7,11 @@ on:
         description: "Existing encrypted oe-private-history-state artifact ID"
         required: true
         type: string
+      observed_after:
+        description: "Exclusive ISO-8601 match boundary; September evaluation uses 2026-09-01T00:00:00+00:00"
+        required: true
+        default: "2026-08-25T06:39:37.755251+00:00"
+        type: string
 
 permissions:
   actions: read
@@ -68,11 +73,13 @@ jobs:
                   shutil.copyfileobj(source, target)
           PY
           python -m pro_meta_intelligence restore-private-oe-archive --input outputs/draft-holdout/state.pmi --archive-dir outputs/draft-holdout/raw --report outputs/draft-holdout/restore.json
-      - name: Prepare a holdout strictly after the previous pilot outcome capture
+      - name: Prepare a holdout strictly after the declared match boundary
+        env:
+          OBSERVED_AFTER: ${{ inputs.observed_after }}
         run: >-
           python -m pro_meta_intelligence.backtest.draft_dataset
           --archive outputs/draft-holdout/raw
-          --observed-after 2026-08-25T06:39:37.755251+00:00
+          --observed-after "$OBSERVED_AFTER"
           --output outputs/draft-holdout/dataset.json
       - name: Audit all archived LCK and T1 matches independently of the holdout boundary
         run: |
