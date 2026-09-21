@@ -1,5 +1,25 @@
 # Worlds 2026 preparation
 
+## Disjoint September draft replay — September 21
+
+The frozen [protocol and run provenance](benchmarks/SEPTEMBER_DRAFT_PROTOCOL.md) and
+[aggregate](benchmarks/draft-september-disjoint-2026-09-21.json) record a separate calendar
+cohort after September 1, without changing either prediction formula. There are 32 first-set
+matches / 224 correlated states, including eight LCK matches / 56 states and three matches
+involving exact T1. This is retrospective replay, not prospective or analyst-blinded validation.
+
+| Top-three hits | Production v2 | Role experiment v1 | Team-frequency baseline |
+| --- | ---: | ---: | ---: |
+| Overall | 26/224 (11.61%) | 31/224 (13.84%) | 24/224 (10.71%) |
+| LCK | 11/56 (19.64%) | 13/56 (23.21%) | 9/56 (16.07%) |
+
+Production top-one accuracy is 5/224 (2.23%), below baseline 7/224 (3.13%). All methods emitted
+zero illegal candidates. Baseline abstained on five LCK states, which remain in all denominators.
+One source pair and small correlated samples do not establish superiority. Keep production v2
+and the role experiment offline. This does not validate later-set Fearless, national-team games
+or Worlds patch 26.20. Earlier dated results below remain preserved and must not be pooled with
+this result to manufacture a new independent test. Current proof page exposes the new metrics.
+
 ## Qualification snapshot reviewed September 21
 
 The [official English tournament overview](https://lolesports.com/en-US/tournament/115660540725177488/overview)

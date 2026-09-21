@@ -1,0 +1,38 @@
+{
+  "coverage": {
+    "LEAGUE:LCK": {
+      "eligible_matches": 15,
+      "exclusions": {
+        "NOT_CONFIRMED_FIRST_SET": 315,
+        "NO_EARLIER_CAPTURE": 172
+      },
+      "first_observed_at": "2026-01-14T08:13:43+00:00",
+      "imported_matches": 502,
+      "last_observed_at": "2026-09-13T08:19:05+00:00"
+    },
+    "TEAM:T1": {
+      "eligible_matches": 5,
+      "exclusions": {
+        "NOT_CONFIRMED_FIRST_SET": 103,
+        "NO_EARLIER_CAPTURE": 57
+      },
+      "first_observed_at": "2026-01-16T10:08:16+00:00",
+      "imported_matches": 165,
+      "last_observed_at": "2026-09-12T08:21:21+00:00"
+    }
+  },
+  "eligible_matches": 86,
+  "exclusions": {
+    "INCOMPLETE_OR_NONSTANDARD_DRAFT": 3,
+    "NOT_CONFIRMED_FIRST_SET": 4478,
+    "NO_EARLIER_CAPTURE": 3486,
+    "NO_SAME_PATCH_TRAINING": 1,
+    "TEAM_WITHOUT_PRIOR_SAME_PATCH_EVIDENCE": 179
+  },
+  "first_capture_at": "2026-08-23T03:37:47.491921+00:00",
+  "last_capture_at": "2026-09-15T22:11:48.707723+00:00",
+  "observed_after": null,
+  "outcome_imported_matches": 8233,
+  "outcome_rejected_matches": 516,
+  "verified_capture_count": 6
+}
