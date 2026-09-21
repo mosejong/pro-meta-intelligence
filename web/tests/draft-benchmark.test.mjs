@@ -19,7 +19,16 @@ test("historical draft evaluation measures the production preview and rejects le
     await t.test("Worlds preparation requires exact main-team identity and separates official patch from evidence", () => {
       const before = JSON.stringify(report);
       const entries = buildWorldsPreparation(report);
-      assert.equal(entries.length, 7);
+      assert.equal(entries.length, 13);
+      assert.equal(WORLDS_2026.qualification_checked_on, "2026-09-21");
+      assert.equal(WORLDS_2026.checked_on, "2026-09-15");
+      const additions = { DK: "Dplus Kia", TES: "Top Esports", AL: "Anyone's Legend", G2: "G2 Esports", KC: "Karmine Corp", MKOI: "Movistar KOI" };
+      for (const [code, name] of Object.entries(additions)) {
+        assert.equal(entries.find((entry) => entry.code === code).team.team_name, name);
+      }
+      const academyOnly = structuredClone(report);
+      academyOnly.opponent_prep.teams = academyOnly.opponent_prep.teams.filter((team) => !Object.values(additions).includes(team.team_name));
+      assert.ok(buildWorldsPreparation(academyOnly).filter((entry) => entry.code in additions).every((entry) => entry.team === null));
       assert.equal(WORLDS_2026.patch, "26.20");
       assert.equal(WORLDS_2026.draft_rules, "FIRST_SELECTION_VERIFIED_FEARLESS_PENDING");
       assert.match(WORLDS_2026.rules_source, /^https:\/\/cdn\.sanity\.io\/.*\.pdf$/);

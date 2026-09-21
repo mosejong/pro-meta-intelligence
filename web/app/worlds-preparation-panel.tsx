@@ -16,6 +16,7 @@ export function WorldsPreparationPanel({ report, canChangeMatchup, onChooseOppon
     <summary><strong>WORLDS 2026 · 준비실</strong><span>10.15–11.14 · 공식 일정 기준</span></summary>
     <div className="worlds-preparation-content">
       <p>T1 진출 확인 · 아래 팀은 출전 명단에서 확인한 연습 대상입니다. 실제 대진은 아직 지정하지 않았습니다.</p>
+      <p>{WORLDS_2026.qualification_checked_on} 공식 페이지 확인 · 진출 팀 {entries.length}개 · 명단 순서는 시드나 전력 순위가 아닙니다.</p>
       <div className="worlds-preparation-status">
         <span><b>대회 패치</b>{WORLDS_2026.patch} · 규정집 {WORLDS_2026.rules_version} 확인</span>
         <span><b>현재 분석</b>{report.fixture_only ? "예제" : "공개 경기"} · {report.patch_id} · {report.cutoff.slice(0, 10)} 기준</span>
@@ -56,7 +57,7 @@ export function WorldsPreparationPanel({ report, canChangeMatchup, onChooseOppon
         </article>)}
       </div>
       {!canChangeMatchup && <p>진행 중인 밴픽은 유지됩니다. 상대 변경은 빈 시리즈에서 할 수 있습니다.</p>}
-      <p className="worlds-preparation-sources">{WORLDS_2026.checked_on} 확인 · 전체 출전 명단은 아직 미완성 ·
+      <p className="worlds-preparation-sources">명단 {WORLDS_2026.qualification_checked_on} 확인 · 규정 {WORLDS_2026.checked_on} 확인 · 전체 출전 명단은 아직 미완성 ·
         <a href={WORLDS_2026.qualification_source} target="_blank" rel="noreferrer">공식 진출 명단</a> ·
         <a href={WORLDS_2026.schedule_source} target="_blank" rel="noreferrer">공식 일정</a> ·
         <a href={WORLDS_2026.rules_source} target="_blank" rel="noreferrer">월즈 규정집</a> ·

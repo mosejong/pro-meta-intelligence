@@ -11,6 +11,24 @@ crawler.
 
 ## Current official-policy review
 
+### September 21 renewal: OE and Data Dragon
+
+Rechecked the existing scopes at 01:35 UTC. The live OE download page is a JavaScript application;
+its directly linked public bundle `https://master.d36liwrx5rvjnc.amplifyapp.com/static/js/main.d7f4bb57.js`
+still identifies free use for analysts/commentators/fans and a once-daily update cadence. The provider
+dictionary continues to warn of schema changes and league-local game IDs. Riot's developer docs,
+general policies and API terms were also reviewed; Data Dragon's documented static routes remain
+available. This renews only the OE and Data Dragon registry timestamps for the same operations.
+No host, file ID, collection frequency, raw redistribution scope or public API permission is expanded.
+The existing 24-hour attempt ledger and 30-day review expiry remain enforced. This maintenance review
+does not establish Riot product registration/approval or source freshness.
+
+The schedule robots endpoint was reachable and returned only a wildcard user-agent declaration.
+Its broader source review remains dated August 24 (due September 23); it is not renewed by this
+OE/static-data review. The credentialed Riot web API remains `REVIEW_REQUIRED` with no operations.
+
+### Original adapter review
+
 Reviewed on 2026-08-24:
 
 - Riot's [League of Legends developer documentation](https://developer.riotgames.com/docs/lol)

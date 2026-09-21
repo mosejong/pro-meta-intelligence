@@ -1,11 +1,27 @@
 # Worlds 2026 preparation
 
-## Official snapshot reviewed September 15
+## Qualification snapshot reviewed September 21
+
+The [official English tournament overview](https://lolesports.com/en-US/tournament/115660540725177488/overview)
+now lists 13 named qualifiers: T1, GEN, HLE, DK (LCK); CFO, MVK, TSW (LCP);
+BLG, TES, AL (LPL); G2, KC, MKOI (LEC). The Korean page's retrieved representation lacks MKOI,
+so the preparation panel links to the newer English list and records its own qualification review
+date. Six unnamed slots remain on that page; this is a partial official-page snapshot, not a claim
+that every other team is unqualified. No seed or actual matchup is inferred from the display order.
+
+All six additions map to exact main-team names in the current September 15 / 16.16 report.
+Their samples are DK 10, TES 4, AL 3, G2 7, KC 5 and MKOI 4. Academy/secondary teams do not substitute
+when a main-team row is missing. The 13 cards retain the same evidence and empty-series controls.
+
+Qualification and rules review dates are separate. Updating participants does not recertify the
+September 15 rules review or make season observations into Worlds-patch evidence. The common
+rules library is reachable on September 21 but the retrieved document list still does not expose
+the International Events v1.1 PDF; its indexed title alone remains insufficient.
+
+## Schedule and event rules reviewed September 15
 
 The [official season schedule](https://lolesports.com/en-GB) lists Worlds for October 15–November 14.
 These are the dates displayed by the source, not inferred match start times in Korea.
-The [official tournament overview](https://lolesports.com/ko-KR/tournament/115660540725177488/overview)
-lists T1, GEN, HLE, CFO, MVK, TSW and BLG as qualified at review time; other slots remain TBD.
 The preparation panel deliberately presents a dated partial qualification snapshot. It does not
 infer seeds, fixtures, opponents or qualification from a power ranking or a team's feed presence.
 The [event ruleset v1.01](https://cdn.sanity.io/files/dsfx7636/news_live/faa5ce974e58615911fbee931c6123e2785a8b46.pdf)
@@ -15,7 +31,6 @@ games. Play-In Round 4 gives the upper-bracket team both choices for Game 1. Pra
 manual and does not award selection rights or infer results. The common international rules and
 event restriction list still need verification before certifying the full Fearless ruleset.
 Do not equate feed patch 16.16 with the Worlds patch; the engine does not relabel old evidence.
-The official participant overview still displays the same seven named teams and unresolved slots.
 
 ### Restriction verification boundary — September 15
 
