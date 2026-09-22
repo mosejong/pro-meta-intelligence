@@ -47,6 +47,7 @@ import { buildTargetMatchDayBrief, serializeTargetMatchDayBrief } from "./target
 import { TargetMatchDayPanel } from "./target-match-day-panel";
 import { T1OnePageBrief } from "./t1-one-page-brief";
 import { buildWorkspaceUrl, parseWorkspaceSearch, type WorkspaceViewMode } from "./workspace-link";
+import "./bright-theme.css";
 
 const MY_TEAM_STORAGE_KEY = "pmi:my-team-id";
 const VIEW_MODE_STORAGE_KEY = "pmi:view-mode";
