@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Oswald, Work_Sans } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const oswald = Oswald({ variable: "--font-display", subsets: ["latin"], weight: ["500", "600", "700"] });
+const workSans = Work_Sans({ variable: "--font-body", subsets: ["latin"] });
 
 export async function generateMetadata(): Promise<Metadata> {
   const incoming = await headers();
@@ -23,5 +25,5 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="ko"><body className={`${geistSans.variable} ${geistMono.variable}`}>{children}</body></html>;
+  return <html lang="ko"><body className={`${geistSans.variable} ${geistMono.variable} ${oswald.variable} ${workSans.variable}`}>{children}</body></html>;
 }
