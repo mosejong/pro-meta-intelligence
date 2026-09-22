@@ -94,6 +94,8 @@ export function ProductHome({
     window.location.assign(productSpaceHref(currentSpace, homeSpaceForQuestion(question)));
   }
 
+  const fixtureTeams = fixtureTitle.includes(" vs ") ? fixtureTitle.split(" vs ") : null;
+
   return <main className="product-home">
     <header className="home-topbar">
       <a className="brand" href={productSpaceHref(currentSpace, "ONBOARDING")} aria-label="Pro Meta Intelligence 홈"><span className="brand-mark">PM</span><span><strong>PRO META</strong><small>INTELLIGENCE</small></span></a>
@@ -105,8 +107,21 @@ export function ProductHome({
 
     <section className="home-spaces" id="home-spaces" aria-labelledby="home-spaces-title">
       <header><span>CHOOSE ONE JOB</span><h1 id="home-spaces-title">어떤 분석을 할까요?</h1><p>쉬운 요약부터 시작하고, 필요할 때 원본 근거까지 내려갑니다.</p></header>
-      <div>
-        <a className="t1" href={productSpaceHref(currentSpace, "T1")}><div className="home-menu-icon"><MenuIcon name="T1" /></div><h3>T1 오늘 준비</h3><p>다음 경기, 반복 픽·밴, 상대 확정 여부와 준비 상태를 한 장으로 봅니다.</p><small>{fixtureTitle} →</small></a>
+      <a className="home-scoreboard-card" href={productSpaceHref(currentSpace, "T1")}>
+        <span className="sb-eyebrow"><MenuIcon name="T1" />T1 오늘 준비</span>
+        <div className={fixtureTeams ? "sb-teams" : "sb-teams sb-teams--single"}>
+          {fixtureTeams
+            ? <>
+                <div className="sb-team sb-team--away"><span className="sb-code">{fixtureTeams[0]}</span></div>
+                <div className="sb-seam" aria-hidden="true" />
+                <div className="sb-team sb-team--home"><span className="sb-code">{fixtureTeams[1]}</span></div>
+              </>
+            : <div className="sb-team sb-team--home"><span className="sb-code">{fixtureTitle}</span></div>}
+        </div>
+        <p className="sb-desc">다음 경기, 반복 픽·밴, 상대 확정 여부와 준비 상태를 한 장으로 봅니다.</p>
+        <span className="sb-cta">일정과 준비 상태 보기 →</span>
+      </a>
+      <div className="home-task-grid">
         <a className="team" href={productSpaceHref(currentSpace, "TEAM")}><div className="home-menu-icon"><MenuIcon name="TEAM" /></div><h3>내 팀 상대 분석</h3><p>소속 팀을 고르면 먼저 볼 상대와 드래프트 충돌 후보를 정리합니다.</p><small>팀 선택하기 →</small></a>
         <a className="draft" href={productSpaceHref(currentSpace, "DRAFT")}><div className="home-menu-icon"><MenuIcon name="DRAFT" /></div><h3>실전 가상 밴픽</h3><p>블루·레드의 실제 순서대로 진행하며 매 턴 근거가 있는 대응 후보를 비교합니다.</p><small>밴픽 시작하기 →</small></a>
         <a className="creator" href={productSpaceHref(currentSpace, "CREATOR")}><div className="home-menu-icon"><MenuIcon name="CREATOR" /></div><h3>영상 소재 만들기</h3><p>같은 근거를 제목, 장면 카드, 쇼츠용 이야기 순서로 바꿉니다.</p><small>영상 아이템 만들기 →</small></a>
