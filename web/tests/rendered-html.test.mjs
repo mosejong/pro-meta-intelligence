@@ -34,8 +34,8 @@ test("server-renders the onboarding home as a focused product entry", async () =
   assert.equal(response.status, 200);
 
   const html = await response.text();
-  assert.match(html, /T1, 오늘/);
-  assert.match(html, /뭐부터 볼까/);
+  assert.match(html, /어떤 분석을 할까요/);
+  assert.ok(html.indexOf('id="home-spaces"') < html.indexOf('id="home-today"'));
   assert.match(html, /오늘은 이것만 먼저 보세요/);
   assert.match(html, /다음 공식 일정/);
   assert.match(html, /T1 공개 경기 반복 픽/);
@@ -44,7 +44,7 @@ test("server-renders the onboarding home as a focused product entry", async () =
   assert.match(html, /입력 내용은 저장하거나 서버로 보내지 않습니다/);
   assert.match(html, /AI 검증 전 · 자동 판단 안 함/);
   assert.match(html, /규칙 기반 분석/);
-  assert.match(html, /하고 싶은 일 하나만 고르세요/);
+  assert.match(html, /예측 검증 결과/);
   assert.match(html, /데이터 최신성과 일정 신뢰 상태/);
   assert.match(html, /데이터 확인 중/);
   assert.match(html, /공식 일정 확인 중/);
@@ -166,9 +166,11 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /T1 프로필 JSON/);
   assert.match(html, /MY TEAM LENS/);
   assert.match(html, /STEP 1 · MY TEAM LENS/);
-  assert.match(html, /팀명 또는 리그 검색/);
-  assert.match(html, /예: T1, LCK, G2/);
-  assert.match(html, /전체 \d+개 팀/);
+  assert.match(html, /팀 이름 검색/);
+  assert.match(html, /리그 필터/);
+  assert.ok(html.indexOf('id="team-setup"') < html.indexOf('class="section-plain-guide"'));
+  assert.match(html, /팀명·별칭·리그 검색/);
+  assert.match(html.replaceAll("<!-- -->", ""), /전체 리그 · \d+개 팀/);
   assert.match(html, /팀 분석 진행 단계/);
   assert.match(html, /드래프트 배틀카드/);
   assert.match(html, /공식 일정 연결 중/);
@@ -177,10 +179,10 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /보호 자원 · 픽 충돌 · 견제 검토 · 교환 시나리오/);
   assert.match(html, /선수 숙련도 · 스크림 · 내부 밴픽 계획은 추정하지 않음/);
   assert.match(html, /원본 상대 통계/);
-  assert.match(html, /상대 검색/);
-  assert.match(html, /개 상대 · T1 기본 타깃 · 점수순/);
+  assert.match(html, /준비할 상대 선택/);
+  assert.match(html, /TEAM SELECT/);
   assert.match(html, /픽·밴·사이드·로테이션 상세는 필요할 때만 펼쳐보세요/);
-  assert.match(html, /모바일 빠른 이동/);
+  assert.match(html, /aria-label="주요 메뉴"/);
   assert.match(html, /HISTORY · WALK-FORWARD/);
   assert.match(html, /실데이터 검증 준비도/);
   assert.match(html, /일일 수집 계속/);
@@ -264,9 +266,14 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   assert.match(html, /전체 출전 명단은 아직 미완성/);
   assert.match(html, /진행 중인 밴픽은 유지됩니다/);
   assert.match(html, /DRAFT LAB · STANDARD 5 BAN \/ 5 PICK/);
-  assert.match(html, /가상 밴픽 에이전트/);
+  assert.match(html, /가상 밴픽/);
   assert.match(html, /TURN 1 \/ 20/);
   assert.match(html, /챔피언 선택판/);
+  assert.ok(html.indexOf('aria-label="실시간 가상 밴픽"') < html.indexOf('id="draft-worlds"'));
+  assert.match(html, /선택 가능한 챔피언만/);
+  assert.match(html, /aria-label="주요 메뉴"/);
+  assert.match(html, /aria-current="page"/);
+  assert.match(html, /aria-haspopup="dialog"/);
   assert.match(html, /밴 확정/);
   assert.match(html, /BLUE TEAM/);
   assert.match(html, /RED TEAM/);
@@ -1364,12 +1371,17 @@ test("filters the large team list by name, alias, and league", async () => {
   });
 
   try {
-    const { matchesTeamQuery } = await vite.ssrLoadModule("/app/radar-dashboard.tsx");
-    assert.equal(matchesTeamQuery(t1, "t1"), true);
-    assert.equal(matchesTeamQuery(t1, "LCK"), true);
-    assert.equal(matchesTeamQuery(t1, "  t1 lck  "), true);
-    assert.equal(matchesTeamQuery(t1, "LEC"), false);
-    assert.ok(feed.opponent_prep.teams.filter((team) => matchesTeamQuery(team, "LCK")).length > 1);
+    const { teamChoices } = await vite.ssrLoadModule("/app/team-chooser.tsx");
+    assert.deepEqual(teamChoices([t1], "  t1 lck  ", "ALL"), [t1]);
+    assert.deepEqual(teamChoices([t1], "t1", "LEC"), []);
+    const academy = { ...t1, team_id: "test-academy", team_name: "T1 Academy", leagues: ["LCKC"] };
+    assert.deepEqual(teamChoices([academy, t1], "t1", "LCK"), [t1]);
+    assert.equal(teamChoices([academy, t1], "t1", "ALL").length, 2);
+    const alias = { ...t1, team_name_aliases: ["티 원", "SK Telecom T1"] };
+    assert.deepEqual(teamChoices([alias], "티원", "LCK"), [alias]);
+    assert.deepEqual(teamChoices([alias], "ＳＫ", "ALL"), [alias]);
+    assert.deepEqual(teamChoices([t1], "없는팀", "ALL"), []);
+    assert.deepEqual(teamChoices([academy, t1], "", "ALL"), teamChoices([t1, academy], "", "ALL"));
   } finally {
     await vite.close();
   }

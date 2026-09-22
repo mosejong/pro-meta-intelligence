@@ -34,6 +34,8 @@ import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlec
 import { ProductHome } from "./product-home";
 import { SubmissionProof } from "./submission-proof";
 import { DraftLab } from "./draft-lab";
+import { TeamChooser } from "./team-chooser";
+import { AppNavigation } from "./app-navigation";
 import { PlayerPracticePanel } from "./player-practice-panel";
 import { productRootHref, productSpaceHref, type ProductSpace } from "./product-space";
 import { sampleReport } from "./sample-report";
@@ -117,16 +119,6 @@ function keyOf(entry: RadarEntry) {
   return `${entry.champion_id}::${entry.role}`;
 }
 
-export function matchesTeamQuery(team: OpponentTeam, query: string) {
-  const terms = query.trim().normalize("NFKD").toLocaleLowerCase("en-US").split(/\s+/).filter(Boolean);
-  if (!terms.length) return true;
-  const searchable = [team.team_name, ...team.team_name_aliases, ...team.leagues]
-    .join(" ")
-    .normalize("NFKD")
-    .toLocaleLowerCase("en-US");
-  return terms.every((term) => searchable.includes(term));
-}
-
 function normalizedTeamIdentity(value: string) {
   return value.normalize("NFKD").toLocaleLowerCase("en-US").replace(/[^\p{L}\p{N}]/gu, "");
 }
@@ -140,10 +132,6 @@ export function findDefaultTargetTeam(teams: OpponentTeam[]) {
       right.game_count - left.game_count ||
       left.team_name.localeCompare(right.team_name)
     ))[0];
-}
-
-function pinSelectedTeam(teams: OpponentTeam[], selected: OpponentTeam | undefined) {
-  return selected && !teams.some((team) => team.team_id === selected.team_id) ? [selected, ...teams] : teams;
 }
 
 function percent(value: number | null, digits = 0) {
@@ -295,8 +283,6 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   const [decisionJournalReady, setDecisionJournalReady] = useState(false);
   const [decisionJournalStorageAvailable, setDecisionJournalStorageAvailable] = useState(true);
   const [myTeamId, setMyTeamId] = useState("");
-  const [myTeamSearch, setMyTeamSearch] = useState("");
-  const [opponentSearch, setOpponentSearch] = useState("");
   const [schedule, setSchedule] = useState<ScheduleSnapshot | null>(null);
   const [scheduleChanges, setScheduleChanges] = useState<ScheduleChangeLog | null>(null);
   const [creatorBrief, setCreatorBrief] = useState<CreatorBrief | null>(null);
@@ -360,21 +346,6 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
     .slice(0, 4), [defaultTargetPriority, opponentPriorities, selectedPriority]);
   const isDefaultTargetSelected = Boolean(selectedOpponent && defaultTargetTeam && selectedOpponent.team_id === defaultTargetTeam.team_id);
   const isOwnTeamDefaultTarget = Boolean(selectedMyTeam && defaultTargetTeam && selectedMyTeam.team_id === defaultTargetTeam.team_id);
-  const myTeamSearchResults = useMemo(() => opponentTeams
-    .filter((team) => matchesTeamQuery(team, myTeamSearch))
-    .sort((left, right) => left.team_name.localeCompare(right.team_name)), [myTeamSearch, opponentTeams]);
-  const myTeamOptions = useMemo(
-    () => pinSelectedTeam(myTeamSearchResults, opponentTeams.find((team) => team.team_id === myTeamId)),
-    [myTeamId, myTeamSearchResults, opponentTeams],
-  );
-  const opponentSearchResults = useMemo(
-    () => rankedOpponentTeams.filter((team) => matchesTeamQuery(team, opponentSearch)),
-    [opponentSearch, rankedOpponentTeams],
-  );
-  const opponentOptions = useMemo(
-    () => pinSelectedTeam(opponentSearchResults, selectedOpponent),
-    [opponentSearchResults, selectedOpponent],
-  );
   const emergencyBrief = selectedOpponent ? buildEmergencyBrief(report, selectedOpponent, selectedMyTeam, effectiveSchedule, scheduleCheckedAt) : null;
   const matchupBattlecard = useMemo(() => (
     selectedMyTeam && selectedOpponent && selectedMyTeam.team_id !== selectedOpponent.team_id
@@ -690,8 +661,6 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
     requestedOpponentId.current = "";
     setMyTeamId(teamId);
     setOpponentId("");
-    setMyTeamSearch("");
-    setOpponentSearch("");
     if (teamId) window.localStorage.setItem(MY_TEAM_STORAGE_KEY, teamId);
     else window.localStorage.removeItem(MY_TEAM_STORAGE_KEY);
   }
@@ -699,7 +668,6 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   function selectOpponent(teamId: string) {
     requestedOpponentId.current = "";
     setOpponentId(teamId);
-    setOpponentSearch("");
   }
 
   function toggleViewMode() {
@@ -1013,6 +981,23 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         collectionStatus={collectionStatus}
       />
 
+      <section className={`team-lens ${selectedMyTeam ? "active" : "setup"}`} id="team-setup" aria-label="내 팀 분석 기준">
+        <div className="team-lens-copy">
+          <span>STEP 1 · MY TEAM LENS</span>
+          <strong>{selectedMyTeam ? selectedMyTeam.team_name : "소속 팀을 먼저 선택하세요"}</strong>
+          <p>{selectedMyTeam ? `${selectedMyTeam.leagues.join(" · ")} · 공개 경기 ${selectedMyTeam.game_count}개를 기준으로 상대 준비 순서를 다시 계산합니다.` : "선택 전에는 글로벌 메타만 표시합니다. 팀 선택값은 이 브라우저에만 저장됩니다."}</p>
+          <em className={`schedule-state ${scheduleState}`}>{scheduleState === "connected" ? `공식 일정 연결 · ${schedule?.events.length ?? 0}경기` : scheduleState === "stale" ? "공식 일정 36시간 경과 · 우선순위에서 제외" : scheduleState === "connecting" ? "공식 일정 연결 중" : "공식 일정 미연결 · 분석 점수만 사용"}</em>
+        </div>
+        <TeamChooser label="내 팀 선택" teams={opponentTeams} value={myTeamId} onChange={selectMyTeam} allowClear />
+        <div className="team-lens-actions">
+          <button type="button" onClick={() => void copyAnalysisLink()} disabled={!selectedMyTeam} aria-live="polite">
+            {shareState === "COPIED" ? "링크 복사 완료" : shareState === "FAILED" ? "복사 실패" : "분석 링크 복사"}
+          </button>
+          <a href="#opponent-prep">{selectedMyTeam ? "상대 우선순위 보기" : "분석 기준 설정"} <span>→</span></a>
+          <small>{selectedMyTeam ? "내 팀·상대 선택을 계정 연결 없이 공유" : "내 팀 선택 후 공유 가능"}</small>
+        </div>
+      </section>
+
       <section className="section-plain-guide" aria-labelledby="plain-guide-title">
         <header><span>처음이라면 여기만</span><h2 id="plain-guide-title">세 줄로 먼저 이해하세요.</h2></header>
         <div>
@@ -1088,33 +1073,6 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         <article><span>비교 경기 수</span><strong>{String(report.windows.recent.match_count).padStart(2, "0")} <b>/ {String(report.windows.prior.match_count).padStart(2, "0")}</b></strong><small>최근 구간 / 이전 구간</small></article>
         <article><span>활성 팀</span><strong>{String(report.windows.recent.active_team_count).padStart(2, "0")}</strong><small>최근 구간의 고유 팀</small></article>
         <article><span>데이터 품질</span><strong className={`quality ${quality.label === "CHECK" ? "caution" : quality.label === "AUDITED" ? "audited" : ""}`}>{quality.label === "AUDITED" ? "검토 완료" : quality.label === "PASS" ? "통과" : "확인 필요"}</strong><small>제외 {quality.excluded} · 위반 {quality.blocking} · 미등록 {quality.unknown}</small></article>
-      </section>
-
-      <section className={`team-lens ${selectedMyTeam ? "active" : "setup"}`} id="team-setup" aria-label="내 팀 분석 기준">
-        <div className="team-lens-copy">
-          <span>STEP 1 · MY TEAM LENS</span>
-          <strong>{selectedMyTeam ? selectedMyTeam.team_name : "소속 팀을 먼저 선택하세요"}</strong>
-          <p>{selectedMyTeam ? `${selectedMyTeam.leagues.join(" · ")} · 공개 경기 ${selectedMyTeam.game_count}개를 기준으로 상대 준비 순서를 다시 계산합니다.` : "선택 전에는 글로벌 메타만 표시합니다. 팀 선택값은 이 브라우저에만 저장됩니다."}</p>
-          <em className={`schedule-state ${scheduleState}`}>{scheduleState === "connected" ? `공식 일정 연결 · ${schedule?.events.length ?? 0}경기` : scheduleState === "stale" ? "공식 일정 36시간 경과 · 우선순위에서 제외" : scheduleState === "connecting" ? "공식 일정 연결 중" : "공식 일정 미연결 · 분석 점수만 사용"}</em>
-        </div>
-        <div className="team-picker">
-          <label htmlFor="my-team-search">팀명 또는 리그 검색</label>
-          <div className="team-picker-fields">
-            <input id="my-team-search" type="search" value={myTeamSearch} onChange={(event) => setMyTeamSearch(event.target.value)} placeholder="예: T1, LCK, G2" autoComplete="off" />
-            <select id="my-team-select" value={myTeamId} onChange={(event) => selectMyTeam(event.target.value)} aria-label="내 팀 선택">
-              <option value="">내 팀 선택</option>
-              {myTeamOptions.map((team) => <option key={team.team_id} value={team.team_id}>{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>)}
-            </select>
-          </div>
-          <small aria-live="polite">{myTeamSearch ? `${myTeamSearchResults.length}개 검색 결과` : `전체 ${opponentTeams.length}개 팀`}{selectedMyTeam ? ` · 현재 ${selectedMyTeam.team_name}` : ""}</small>
-        </div>
-        <div className="team-lens-actions">
-          <button type="button" onClick={() => void copyAnalysisLink()} disabled={!selectedMyTeam} aria-live="polite">
-            {shareState === "COPIED" ? "링크 복사 완료" : shareState === "FAILED" ? "복사 실패" : "분석 링크 복사"}
-          </button>
-          <a href="#opponent-prep">{selectedMyTeam ? "상대 우선순위 보기" : "분석 기준 설정"} <span>→</span></a>
-          <small>{selectedMyTeam ? "내 팀·상대 선택을 계정 연결 없이 공유" : "내 팀 선택 후 공유 가능"}</small>
-        </div>
       </section>
 
       <nav className="decision-flow" aria-label="팀 분석 진행 단계">
@@ -1246,11 +1204,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
             <p className="section-description">{defaultTargetTeam ? "T1을 기본 분석 상대로 고정하고, 내 팀 공개 픽과 T1의 픽·밴·글로벌 메타 교집합을 먼저 봅니다. 다른 상대를 선택해도 점수 기반 순위는 유지됩니다." : "공식 대진 일정, 동일 리그, 양 팀의 픽 충돌, 현재 메타와의 겹침, 공개 경기 표본을 합쳐 먼저 볼 상대를 정합니다."}</p>
           </div>
           {selectedOpponent && <div className="opponent-controls">
-            <div className="opponent-picker">
-              <label htmlFor="opponent-search">상대 검색</label>
-              <div><input id="opponent-search" type="search" value={opponentSearch} onChange={(event) => setOpponentSearch(event.target.value)} placeholder="팀명 또는 리그" autoComplete="off" /><select value={selectedOpponent.team_id} onChange={(event) => selectOpponent(event.target.value)} aria-label="준비할 상대 선택">{opponentOptions.map((team) => { const priority = opponentPriorities.find((item) => item.team.team_id === team.team_id); return <option key={team.team_id} value={team.team_id}>{priority ? `${priority.tier} · ${priority.score}점 · ` : ""}{team.team_name} · {team.leagues.join("/")} · {team.game_count}G</option>; })}</select></div>
-              <small aria-live="polite">{opponentSearch ? `${opponentSearchResults.length}개 검색 결과` : `${rankedOpponentTeams.length}개 상대 · ${defaultOpponentTarget ? "T1 기본 타깃 · " : ""}점수순`}</small>
-            </div>
+            <TeamChooser label="준비할 상대 선택" teams={rankedOpponentTeams} value={selectedOpponent.team_id} onChange={selectOpponent} />
             <button ref={emergencyTrigger} className="emergency-open" type="button" onClick={() => setEmergencyOpen(true)}>3분 브리프</button>
             <button type="button" onClick={downloadOpponentPrep}>선택 팀 JSON</button>
           </div>}
@@ -1440,15 +1394,6 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         캐릭터 이미지는 Riot Games Data Dragon을 통해 제공됩니다. Pro Meta Intelligence isn&apos;t endorsed by Riot Games and doesn&apos;t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
       </section>
 
-      <nav className="mobile-taskbar" aria-label="모바일 빠른 이동">
-        <a href={productSpaceHref(initialSpace, "ONBOARDING")}><b>00</b><span>홈</span></a>
-        <a className={initialSpace === "TEAM" ? "active" : ""} href={productSpaceHref(initialSpace, "TEAM")}><b>01</b><span>팀</span></a>
-        <a className={initialSpace === "T1" ? "active" : ""} href={productSpaceHref(initialSpace, "T1")}><b>02</b><span>T1</span></a>
-        <a className={initialSpace === "CREATOR" ? "active" : ""} href={productSpaceHref(initialSpace, "CREATOR")}><b>03</b><span>콘텐츠</span></a>
-        <a className={initialSpace === "RADAR" ? "active" : ""} href={productSpaceHref(initialSpace, "RADAR")}><b>04</b><span>레이더</span></a>
-        <a href={productSpaceHref(initialSpace, "DRAFT")}><b>05</b><span>밴픽</span></a>
-      </nav>
-
       {evidenceOpen && selected && (
         <div className="dialog-backdrop">
           <button className="dialog-dismiss" type="button" onClick={() => setEvidenceOpen(false)} aria-label="근거 창 닫기" />
@@ -1527,5 +1472,5 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
 }
 
 export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?: ProductSpace }) {
-  return <ChampionNameProvider><RadarDashboardContent initialSpace={initialSpace} /></ChampionNameProvider>;
+  return <ChampionNameProvider><RadarDashboardContent initialSpace={initialSpace} /><AppNavigation currentSpace={initialSpace} /></ChampionNameProvider>;
 }

@@ -12,7 +12,7 @@ export function WorldsPreparationPanel({ report, canChangeMatchup, onChooseOppon
 }) {
   const entries = buildWorldsPreparation(report);
   const ownTeam = entries.find((entry) => entry.code === "T1")?.team;
-  return <details className="worlds-preparation" open>
+  return <details className="worlds-preparation" id="draft-worlds">
     <summary><strong>WORLDS 2026 · 준비실</strong><span>10.15–11.14 · 공식 일정 기준</span></summary>
     <div className="worlds-preparation-content">
       <p>T1 진출 확인 · 아래 팀은 출전 명단에서 확인한 연습 대상입니다. 실제 대진은 아직 지정하지 않았습니다.</p>
