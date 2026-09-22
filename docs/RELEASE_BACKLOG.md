@@ -1,4 +1,4 @@
-# Consolidated release backlog - 2026-09-21
+# Consolidated release backlog - 2026-09-22
 
 This ledger consolidates ROADMAP phases 0-9, open GitHub issues #2/#58, draft validation,
 Worlds preparation and the submission package. Completed product behavior is distinct from
@@ -8,6 +8,7 @@ unmet research gates. No new LCK fixtures are a prerequisite.
 
 | Priority | Work | Result / evidence |
 | --- | --- | --- |
+| P1 | Simplify navigation and team selection | Home opens with six task menus; one mobile bottom navigation across routes. Own/opponent/draft teams use one searchable card dialog with exact league filters, bounded lists and selection state. Draft workspace precedes collapsed preparation panels; legal-only champion filter, visible staged confirmation, reset confirmation and in-progress matchup guards. Automated filter/render checks pass; actual browser interaction QA remains unavailable. |
 | P1 | Evaluate disjoint September draft cohort | Frozen v2/role experiment replayed on 32 new-period matches / 224 states. Production top-three 26/224; LCK 11/56 across eight matches. Protocol, exact aggregates, provenance and public proof table published; no superiority or prospective-validation claim. |
 | P0 | Renew expired source review | September 21 official OE download guidance, dictionary and Riot static-data policies rechecked. OE/Data Dragon keep the same allowed operations, hosts and rate limits; only review timestamps renewed. Schedule review remains due September 23. |
 | P1 | Refresh confirmed Worlds participants | September 21 official English overview names 13 teams. Add DK/TES/AL/G2/KC/MKOI with exact first-team matches; separate qualification and rules review dates. |

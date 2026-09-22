@@ -11,7 +11,7 @@ import { DataTrustBar, type FeedTrustKind, type ScheduleTrustState } from "./dat
 import { homeSpaceForQuestion } from "./home-intent";
 import { PUBLICATION_FRESHNESS_POLICY, snapshotFreshness } from "./freshness";
 import type { ProductSpace } from "./product-space";
-import { productRootHref, productSpaceHref } from "./product-space";
+import { productSpaceHref } from "./product-space";
 
 type ChampionFocus = {
   championId: string;
@@ -79,7 +79,6 @@ export function ProductHome({
   metaFocus,
 }: ProductHomeProps) {
   const { nameOf } = useChampionNames();
-  const rootHref = productRootHref(currentSpace);
   const [question, setQuestion] = useState("");
   const briefValidation = validationForTask(aiValidation, "EVIDENCE_LOCKED_BRIEF");
   const aiEnabled = briefValidation?.ai_features_enabled === true;
@@ -101,26 +100,21 @@ export function ProductHome({
       <span className={`home-feed-state ${dataIsStale ? "stale" : ""}`}><i />{dataIsStale ? "STALE · REVIEW ONLY" : feedLabel}</span>
     </header>
 
-    <section className="home-hero">
-      <div className="home-hero-copy">
-        <span>{dataIsStale ? "HISTORICAL SNAPSHOT · CURRENT DECISIONS LOCKED" : "T1 FIRST · PUBLIC MATCH EVIDENCE"}</span>
-        <h1>{dataIsStale ? <>데이터 갱신을<br /><em>기다리고 있어요.</em></> : <>T1, 오늘<br /><em>뭐부터 볼까?</em></>}</h1>
-        <p>{dataIsStale ? "마지막 검증 발행본은 과거 근거로만 열어둡니다. 새 데이터가 확인되기 전에는 현재 픽이나 상대 준비로 권고하지 않습니다." : "다음 경기, 자주 나온 픽, 이번 패치에서 올라오는 후보를 먼저 보여드립니다. 복잡한 수치는 궁금할 때만 열어보세요."}</p>
-        <div><a href="#home-today">{dataIsStale ? "마지막 발행 근거 3개" : "오늘의 핵심 3개"}</a><a href={productSpaceHref(currentSpace, "TEAM")}>{dataIsStale ? "과거 팀 분석 보기" : "내 팀으로 분석하기"}</a></div>
-        <small>가입 없음 · 공개 경기 데이터 · 모르는 내용은 추정하지 않음</small>
+    <div className={`home-app-status ${dataIsStale ? "stale" : ""}`} role="status"><strong>{dataIsStale ? "데이터 갱신 대기 · 과거 기록으로 분석" : "공개 경기 근거로 분석합니다"}</strong><p>패치 {patchId} · {dataCutoff.slice(0, 10)} 기준{dataIsStale ? " · 현재 경기 추천으로 사용하지 않습니다." : " · 최신성은 아래 데이터 상태에서 확인하세요."}</p></div>
+
+    <section className="home-spaces" id="home-spaces" aria-labelledby="home-spaces-title">
+      <header><span>CHOOSE ONE JOB</span><h1 id="home-spaces-title">어떤 분석을 할까요?</h1><p>쉬운 요약부터 시작하고, 필요할 때 원본 근거까지 내려갑니다.</p></header>
+      <div>
+        <a className="t1" href={productSpaceHref(currentSpace, "T1")}><b>01</b><span>T1 TODAY</span><h3>T1 오늘 준비</h3><p>다음 경기, 반복 픽·밴, 상대 확정 여부와 준비 상태를 한 장으로 봅니다.</p><small>{fixtureTitle} →</small></a>
+        <a className="team" href={productSpaceHref(currentSpace, "TEAM")}><b>02</b><span>MY TEAM</span><h3>내 팀 상대 분석</h3><p>소속 팀을 고르면 먼저 볼 상대와 드래프트 충돌 후보를 정리합니다.</p><small>팀 선택하기 →</small></a>
+        <a className="draft" href={productSpaceHref(currentSpace, "DRAFT")}><b>03</b><span>DRAFT LAB</span><h3>실전 가상 밴픽</h3><p>블루·레드의 실제 순서대로 진행하며 매 턴 근거가 있는 대응 후보를 비교합니다.</p><small>밴픽 시작하기 →</small></a>
+        <a className="creator" href={productSpaceHref(currentSpace, "CREATOR")}><b>04</b><span>VIDEO IDEA</span><h3>영상 소재 만들기</h3><p>같은 근거를 제목, 장면 카드, 쇼츠용 이야기 순서로 바꿉니다.</p><small>영상 아이템 만들기 →</small></a>
+        <a className="radar" href={productSpaceHref(currentSpace, "RADAR")}><b>05</b><span>ALL DATA</span><h3>전체 메타 자세히 보기</h3><p>챔피언별 변화와 지역 차이, 원본 경기 근거를 확인합니다.</p><small>전체 후보 열기 →</small></a>
+        <a className="proof" href={productSpaceHref(currentSpace, "PROOF")}><b>06</b><span>VALIDATION</span><h3>예측 검증 결과</h3><p>실제 평가 성적과 아직 검증하지 못한 범위를 확인합니다.</p><small>검증 결과 보기 →</small></a>
       </div>
-      <figure><img src={`${rootHref}meta-radar-hero-v2.png`} alt="지역별 메타 신호가 분석 후보로 모이는 일러스트" /><figcaption><span>현재 패치 {patchId}</span><b>지금 더 볼 후보 {reviewCount}개</b></figcaption></figure>
     </section>
 
-    <DataTrustBar
-      dataCutoff={dataCutoff}
-      checkedAt={checkedAt}
-      feedKind={feedKind}
-      scheduleRetrievedAt={scheduleRetrievedAt}
-      scheduleState={scheduleState}
-      scheduleSourceUrl={scheduleSourceUrl}
-      collectionStatus={collectionStatus}
-    />
+    <DataTrustBar dataCutoff={dataCutoff} checkedAt={checkedAt} feedKind={feedKind} scheduleRetrievedAt={scheduleRetrievedAt} scheduleState={scheduleState} scheduleSourceUrl={scheduleSourceUrl} collectionStatus={collectionStatus} />
 
     <section className="home-today" id="home-today" aria-labelledby="home-today-title">
       <header><span>{dataIsStale ? "LAST VERIFIED SNAPSHOT · REVIEW ONLY" : "TODAY · 30 SECOND BRIEF"}</span><h2 id="home-today-title">{dataIsStale ? "마지막 발행본은 이렇게 보세요." : "오늘은 이것만 먼저 보세요."}</h2><p>{dataIsStale ? "현재 판단은 잠겨 있습니다. 당시 공개 근거를 복기하거나 제품 구조를 확인할 때만 사용하세요." : "결론을 먼저 읽고, 더 궁금한 카드만 자세히 확인할 수 있습니다."}</p></header>
@@ -162,17 +156,6 @@ export function ProductHome({
       <summary><span><i />{aiEnabled ? "AI 사람 비교 검증 통과" : "AI 검증 전 · 자동 판단 안 함"}</span><small>현재 보이는 핵심 내용은 공개 데이터 규칙으로 계산되며, 검증 전 AI 문장은 결과에 섞지 않습니다.</small><b>검증 기준 보기</b></summary>
       <div><dl><div><dt>메타 브리프 숨김 과제</dt><dd>{briefValidation?.paired_holdout_case_count ?? 0} / {briefValidation?.policy.minimum_paired_holdout_cases ?? 30}</dd></div><div><dt>AI 상태</dt><dd>{aiEnabled ? "사용 가능" : "잠금"}</dd></div><div><dt>현재 결과 생성</dt><dd>{aiEnabled ? "검증 AI + 사람 승인" : "규칙 기반 분석"}</dd></div></dl><p>정확도, 치명적 오류 0건, 근거 경계, 시간 절감을 모두 통과해야 AI 초안이 열립니다. 자동 게시는 하지 않습니다.</p><a href={productSpaceHref(currentSpace, "CREATOR")}>전체 검증 기준 →</a></div>
     </details>
-
-    <section className="home-spaces" aria-labelledby="home-spaces-title">
-      <header><span>CHOOSE ONE JOB</span><h2 id="home-spaces-title">하고 싶은 일 하나만 고르세요.</h2><p>쉬운 요약부터 시작하고, 필요할 때 원본 근거까지 내려갑니다.</p></header>
-      <div>
-        <a className="t1" href={productSpaceHref(currentSpace, "T1")}><b>01</b><span>T1 TODAY</span><h3>T1 오늘 준비</h3><p>다음 경기, 반복 픽·밴, 상대 확정 여부와 준비 상태를 한 장으로 봅니다.</p><small>{fixtureTitle} →</small></a>
-        <a className="team" href={productSpaceHref(currentSpace, "TEAM")}><b>02</b><span>MY TEAM</span><h3>내 팀 상대 분석</h3><p>소속 팀을 고르면 먼저 볼 상대와 드래프트 충돌 후보를 정리합니다.</p><small>팀 선택하기 →</small></a>
-        <a className="draft" href={productSpaceHref(currentSpace, "DRAFT")}><b>03</b><span>DRAFT LAB</span><h3>실전 가상 밴픽</h3><p>블루·레드의 실제 순서대로 진행하며 매 턴 근거가 있는 대응 후보를 비교합니다.</p><small>밴픽 시작하기 →</small></a>
-        <a className="creator" href={productSpaceHref(currentSpace, "CREATOR")}><b>04</b><span>VIDEO IDEA</span><h3>영상 소재 만들기</h3><p>같은 근거를 제목, 장면 카드, 쇼츠용 이야기 순서로 바꿉니다.</p><small>영상 아이템 만들기 →</small></a>
-        <a className="radar" href={productSpaceHref(currentSpace, "RADAR")}><b>05</b><span>ALL DATA</span><h3>전체 메타 자세히 보기</h3><p>챔피언별 변화와 지역 차이, 원본 경기 근거를 확인합니다.</p><small>전체 후보 열기 →</small></a>
-      </div>
-    </section>
 
     <section className="home-principles"><article><b>01</b><h3>결론부터</h3><p>먼저 세 줄로 보고, 궁금한 내용만 자세히 펼칩니다.</p></article><article><b>02</b><h3>모르면 대기</h3><p>TBD 상대, 스크림, 선수 컨디션과 팀 내부 계획은 추정하지 않습니다.</p></article><article><b>03</b><h3>근거는 그대로</h3><p>쉬운 설명과 팀 자료, 영상 소재가 같은 공개 경기 근거를 공유합니다.</p></article></section>
 

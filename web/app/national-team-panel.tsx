@@ -92,7 +92,7 @@ export function NationalTeamPanel({ report, nameOf }: { report: RadarReport; nam
     const link = document.createElement("a"); link.href = url; link.download = "national-team-observation-checks.json"; link.click();
     URL.revokeObjectURL(url);
   }
-  return <details className="national-team" open>
+  return <details className="national-team" id="draft-national">
     <summary><strong>국가대표 · 성향 관찰실</strong><span>선수 기록 → 대표팀 관찰 → 다음 경기 확인</span></summary>
     <div className="national-content">
       <label className="national-subject">관찰 경기<select value={review.id} onChange={(event) => setMatchId(event.target.value)}>

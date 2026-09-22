@@ -1,0 +1,72 @@
+.team-chooser { min-width: 0; width: 100%; }
+.team-chooser-trigger { display: flex; justify-content: space-between; align-items: center; gap: .75rem; width: 100%; min-height: 76px; padding: .9rem 1rem; border: 1px solid #728198; border-radius: 12px; background: #fff; color: #172435; text-align: left; cursor: pointer; }
+.team-chooser-trigger span { display: grid; min-width: 0; gap: .25rem; }
+.team-chooser-trigger small, .team-chooser-trigger em { font-size: .875rem; font-style: normal; }
+.team-chooser-trigger strong { font-size: 1.125rem; overflow-wrap: anywhere; }
+.team-chooser-trigger b { flex-shrink: 0; font-size: .875rem; }
+.team-chooser-trigger:disabled { opacity: .65; cursor: not-allowed; }
+.team-chooser-sheet { width: min(700px, calc(100vw - 32px)); max-height: 85dvh; margin: auto; padding: 1.5rem; border: 1px solid #718298; border-radius: 20px; background: #f8faff; color: #18263a; overflow-y: auto; overscroll-behavior: contain; }
+.team-chooser-sheet::backdrop { background: #030a18bb; }
+.team-chooser-sheet header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.team-chooser-sheet header small { color: #526782; font-size: .75rem; }
+.team-chooser-sheet h2 { margin: .25rem 0; font-size: 1.5rem; }
+.team-chooser-sheet button { min-height: 44px; padding: .65rem .9rem; border: 1px solid #9aa9bd; border-radius: 10px; background: white; color: #172435; font-size: .875rem; cursor: pointer; }
+.team-chooser-search { display: grid; gap: .5rem; font-size: .875rem; font-weight: 700; }
+.team-chooser-search input { width: 100%; min-width: 0; min-height: 48px; padding: .75rem; border: 1px solid #8798b0; border-radius: 10px; background: white; color: #172435; font-size: 1rem; }
+.team-league-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+.team-league-chips button[aria-pressed="true"] { background: #153e77; border-color: #153e77; color: white; }
+.team-other-league { display: flex; align-items: center; gap: .75rem; font-size: .875rem; }
+.team-other-league select { min-height: 44px; min-width: 0; max-width: 70%; padding: .5rem; border: 1px solid #8798b0; border-radius: 8px; background: white; color: #172435; font-size: 1rem; }
+.team-choice-count { font-size: .875rem; color: #4a5c74; overflow-wrap: anywhere; }
+.team-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.team-choice-grid button { display: grid; gap: .5rem; padding: 1rem; text-align: left; }
+.team-choice-grid button[aria-pressed="true"] { border: 2px solid #2059a9; background: #eaf2ff; }
+.team-choice-grid span, .team-choice-grid small { font-size: .75rem; color: #4a5c74; }
+.team-choice-grid strong { font-size: 1rem; overflow-wrap: anywhere; }
+.team-choice-empty { padding: 1.5rem 0; text-align: center; }
+.team-chooser-sheet footer { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+.team-chooser :focus-visible { outline: 3px solid #4084e4; outline-offset: 3px; }
+.app-bottom-navigation { display: none; }
+.home-app-status { margin: 1rem 4vw; padding: 1rem; border: 1px solid #a2aeba; border-radius: 12px; background: #f4f7fa; color: #273b54; font-size: 1rem; line-height: 1.6; }
+.home-app-status.stale { background: #fff5d8; border-color: #ba9556; color: #64471a; }
+.home-app-status p { margin: .25rem 0 0; font-size: .875rem; }
+.product-home > .home-spaces { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+.product-home > .home-spaces > div { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border: 0; }
+.product-home > .home-spaces > div > a { min-height: 160px; padding: 20px; border: 1px solid #637084; border-radius: 14px; }
+.product-home > .home-spaces h3 { font-size: 1.25rem; }
+.product-home > .home-spaces h1 { margin: .5rem 0; font-size: clamp(1.75rem, 4vw, 2.5rem); line-height: 1.3; }
+.product-home > .home-spaces > header { display: block; }
+.product-home > .home-spaces > div > a > span { margin-top: 12px; font-size: .75rem; }
+.product-home > .home-spaces > div > a > p { font-size: .875rem; }
+.product-home > .home-spaces > div > a > small { font-size: .875rem; }
+.product-home > .home-spaces > div > a.proof { box-shadow: inset 0 4px 0 #bccddb; }
+.section-space > .team-lens { margin-top: 16px; }
+.opponent-controls > .team-chooser { flex: 1 1 250px; }
+.opponent-controls .team-chooser button { min-height: 44px; font-size: .875rem; }
+.opponent-controls .team-chooser .team-chooser-trigger { background: white; color: #172435; }
+.opponent-controls .team-chooser .team-choice-grid button { background: white; color: #172435; }
+.opponent-controls .team-chooser .team-choice-grid button[aria-pressed="true"] { background: #eaf2ff; }
+.team-lens .team-chooser label { font-size: .875rem; }
+.product-home > .home-spaces p { font-size: .875rem; line-height: 1.6; }
+.product-home > .home-spaces small, .product-home > .home-spaces a > span { font-size: .75rem; }
+@media (max-width: 900px) {
+  body { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+  .app-bottom-navigation { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; z-index: 40; bottom: 0; left: 0; right: 0; padding: 8px 6px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #455571; background: #101c2e; box-shadow: 0 -6px 25px #07142630; }
+  .app-bottom-navigation a { display: grid; justify-items: center; align-content: center; gap: 4px; min-height: 54px; padding: 4px; border-radius: 10px; color: #bac9de; text-decoration: none; }
+  .app-bottom-navigation a[aria-current="page"] { background: #263f5d; color: #edff91; }
+  .app-bottom-navigation span { font-size: 22px; line-height: 1; }
+  .app-bottom-navigation strong { font-size: .75rem; white-space: nowrap; }
+  .app-bottom-navigation a:focus-visible { outline: 2px solid #edff91; outline-offset: -2px; }
+  .product-home > .home-spaces > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 540px) {
+  .team-chooser-sheet { width: 100%; max-height: 90dvh; margin: auto 0 0; padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; }
+  .product-home > .home-spaces > div > a { min-height: 136px; padding: 14px; }
+  .product-home > .home-spaces a > b, .product-home > .home-spaces a > span { display: none; }
+  .product-home > .home-spaces h3 { font-size: 1.125rem; margin-top: 0; }
+  .product-home > .home-spaces p { display: none; }
+  .section-space > .section-portal-hero { padding: 20px 4vw; }
+  .section-space > .section-portal-hero h1 { font-size: 1.5rem; }
+  .section-space > .team-lens { padding: 16px 4vw; }
+}
+@media print { .app-bottom-navigation { display: none; } body { padding-bottom: 0; } }

@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- champion portraits use Riot Data Dragon */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { championAssetId, championImageUrl } from "./champion-assets";
 import { useChampionNames } from "./champion-names";
 import {
@@ -28,6 +28,8 @@ import { MAX_DRAFT_FILE_BYTES, parseDraftSession, readLocalDraft, writeLocalDraf
 import type { OpponentTeam, RadarReport } from "./radar-types";
 import { WorldsPreparationPanel } from "./worlds-preparation-panel";
 import { NationalTeamPanel } from "./national-team-panel";
+import { TeamChooser } from "./team-chooser";
+import "./draft-workspace.css";
 
 type DraftLabProps = {
   currentSpace: ProductSpace;
@@ -119,6 +121,10 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [selections, setSelections] = useState<DraftSelection[]>([]);
   const [firstPickSide, setFirstPickSide] = useState<DraftSide>("BLUE");
   const [query, setQuery] = useState("");
+  const [availableOnly, setAvailableOnly] = useState(true);
+  const [pendingReset, setPendingReset] = useState<"GAME" | "SERIES" | null>(null);
+  const resetDialog = useRef<HTMLDialogElement>(null);
+  const cancelReset = useRef<HTMLButtonElement>(null);
   const [pendingChampion, setPendingChampion] = useState<string | null>(null);
   const [timer, setTimer] = useState(30);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -136,6 +142,12 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const preview = useMemo(() => previewOpponentPick(report, blueTeam, redTeam, selections, pendingChampion, previousPicks, 3, firstPickSide),
     [report, blueTeam, redTeam, selections, pendingChampion, previousPicks, firstPickSide]);
   const canSelect = sessionReady && !importing && Boolean(blueTeam && redTeam) && (Boolean(seriesReport) || feedLabel !== "FEED CONNECTING");
+  const hasCurrentWork = selections.length > 0 || Boolean(pendingChampion);
+
+  useEffect(() => {
+    if (pendingReset) { resetDialog.current?.showModal(); cancelReset.current?.focus(); }
+    else resetDialog.current?.close();
+  }, [pendingReset]);
 
   const restoreSession = useCallback((session: DraftSession) => {
     setSeriesReport(session.report);
@@ -217,6 +229,17 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       .filter((championId) => matches(championId, query))
       .sort((left, right) => nameOf(left).localeCompare(nameOf(right), "ko-KR"));
   }, [catalog, matches, nameOf, query, report.entries, teams]);
+  const visibleChampions = availableOnly
+    ? championPool.filter((championId) => !isChampionLocked(selections, championId, previousPicks))
+    : championPool;
+
+  function openPreparation(id: string) {
+    const panel = document.getElementById(id);
+    if (!(panel instanceof HTMLDetailsElement)) return;
+    panel.open = true;
+    panel.querySelector("summary")?.focus({ preventScroll: true });
+    panel.scrollIntoView({ block: "start" });
+  }
 
   function resetDraft() {
     setSelections([]);
@@ -240,7 +263,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   }
 
   function changeTeam(side: DraftSide, teamId: string) {
-    if (games.length) return;
+    if (games.length || hasCurrentWork) return;
     if (side === "BLUE") {
       setBlueTeamId(teamId);
       if (teamId === redTeamId) setRedTeamId(teams.find((team) => team.team_id !== teamId)?.team_id ?? "");
@@ -257,9 +280,11 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     setBlueTeamId(t1.team_id);
     setRedTeamId(teamId);
     resetDraft();
+    document.getElementById("draft-workspace")?.scrollIntoView({ block: "start" });
   }
 
   function swapSides() {
+    if (hasCurrentWork) return;
     setBlueTeamId(redTeamId);
     setRedTeamId(blueTeamId);
     resetDraft();
@@ -334,18 +359,17 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     </header>
 
     <section className="draft-lab-intro draft-lab-intro-compact">
-      <div><span>DRAFT LAB · STANDARD 5 BAN / 5 PICK</span><h1>실전 순서로 돌리는<br /><em>가상 밴픽 에이전트</em></h1><p>챔피언 선택은 사람이 확정하고, 에이전트는 매 턴 공개 경기 근거가 있는 안전안·압박안·실험안을 다시 계산합니다.</p></div>
-      <aside><b>규칙 기반 V1</b><span>AI 자동판단 잠금</span><small>승률 예측이 아닌 코칭스태프 검토용 시나리오</small></aside>
+      <div><span>DRAFT LAB · STANDARD 5 BAN / 5 PICK</span><h1>가상 밴픽 <em>연습실</em></h1><p>올려놓기 → 상대 후보 비교 → 직접 확정. 같은 조건에서는 같은 결과를 보여줍니다.</p></div>
+      <aside><b>규칙 기반 분석</b><span>AI 자동판단 잠금</span><small>승률 예측이 아닌 공개 기록 기반 검토</small></aside>
     </section>
 
-    <NationalTeamPanel report={liveReport} nameOf={nameOf} />
-    <WorldsPreparationPanel report={report} nameOf={nameOf} onChooseOpponent={chooseWorldsOpponent} previousPicks={previousPicks}
-      canChangeMatchup={canSelect && games.length === 0 && selections.length === 0 && !pendingChampion} />
+    <nav className="draft-workspace-nav" aria-label="밴픽 작업 이동"><a href="#draft-workspace">밴픽 진행</a><button type="button" onClick={() => openPreparation("draft-worlds")}>월즈 상대 준비</button><button type="button" onClick={() => openPreparation("draft-national")}>국가대표 성향 관찰</button><a href={productSpaceHref(currentSpace, "PROOF")}>예측 검증 결과</a></nav>
 
-    <section className="draft-match-setup" aria-label="밴픽 팀 설정" inert={!canSelect}>
-      <label><span>BLUE TEAM</span><select disabled={games.length > 0} value={blueTeamId} onChange={(event) => changeTeam("BLUE", event.target.value)}>{teams.map((team) => <option value={team.team_id} key={team.team_id}>{team.team_name} · {team.leagues.join("/")}</option>)}</select></label>
-      <button type="button" onClick={swapSides} aria-label="블루와 레드 팀 교체">⇄<small>진영 교체</small></button>
-      <label><span>RED TEAM</span><select disabled={games.length > 0} value={redTeamId} onChange={(event) => changeTeam("RED", event.target.value)}>{teams.map((team) => <option value={team.team_id} key={team.team_id}>{team.team_name} · {team.leagues.join("/")}</option>)}</select></label>
+    <section id="draft-workspace" className="draft-match-setup" aria-label="밴픽 팀 설정" inert={!canSelect}>
+      <TeamChooser label="BLUE TEAM" teams={teams} value={blueTeamId} onChange={(id) => changeTeam("BLUE", id)} disabled={games.length > 0 || hasCurrentWork} />
+      <button type="button" onClick={swapSides} disabled={hasCurrentWork} aria-label="블루와 레드 팀 교체">⇄<small>진영 교체</small></button>
+      <TeamChooser label="RED TEAM" teams={teams} value={redTeamId} onChange={(id) => changeTeam("RED", id)} disabled={games.length > 0 || hasCurrentWork} />
+      {(hasCurrentWork || games.length > 0) && <p className="draft-setup-hint">팀은 빈 시리즈에서, 진영은 각 세트 시작 전에 변경할 수 있습니다.</p>}
     </section>
 
     <section className="draft-series" aria-label="피어리스 시리즈">
@@ -357,11 +381,13 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         <span>진영과 선픽은 별도 선택 · 각 세트 시작 전에 설정</span>
       </label>
       <header><h2>피어리스 · {games.length + 1}세트</h2><span>이전 세트 양 팀 픽 {previousPicks.length}개 자동 잠금 · 일반 밴은 세트마다 초기화</span></header>
+      <details className="draft-session-details"><summary>저장·불러오기 및 시리즈 관리</summary>
       <p>분석 데이터 {seriesReport ? "고정됨" : "첫 선택 시 고정"} · 패치 {report.patch_id} · 기준 {report.cutoff} · {DRAFT_MODEL_VERSION}</p>
       <div className="draft-session-controls"><label>시나리오 불러오기<input type="file" accept=".json,application/json" disabled={!sessionReady || importing} onChange={(event) => void importScenario(event.currentTarget)} /></label><button type="button" onClick={downloadScenario} disabled={!canSelect}>시리즈 JSON 저장</button></div>
       <p role="status">{storageMessage}</p>
       {importMessage && <p role="status">{importMessage}</p>}
-      <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={nextGame} disabled={Boolean(turn)}>세트 저장하고 다음 세트</button><button type="button" onClick={reopenPreviousGame} disabled={!games.length || selections.length > 0 || Boolean(pendingChampion)}>이전 세트 수정</button><button type="button" onClick={resetSeries}>시리즈 초기화</button></div>
+      <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={reopenPreviousGame} disabled={!games.length || hasCurrentWork}>이전 세트 수정</button><button type="button" onClick={() => setPendingReset("SERIES")} disabled={!games.length && !hasCurrentWork}>시리즈 초기화</button></div>
+      </details>
       {games.map((game, index) => <details key={index}><summary>{index + 1}세트 픽 · 다음 세트 사용 불가</summary><div className="draft-series-locks">{game.selections.filter((selection) => selection.kind === "PICK").map((selection) => <span key={selection.champion_id}><img src={championImageUrl(selection.champion_id)} alt="" />{nameOf(selection.champion_id)}</span>)}</div></details>)}
     </section>
 
@@ -369,19 +395,22 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <TeamDraftColumn side="BLUE" team={blueTeam} selections={selections} staged={staged} active={turn?.side === "BLUE"} nameOf={nameOf} />
       <section className="draft-control-room">
         <div className={`draft-clock ${timer <= 10 ? "urgent" : ""}`}><span>{`TURN ${Math.min(selections.length + 1, STANDARD_DRAFT_SEQUENCE.length)} / ${STANDARD_DRAFT_SEQUENCE.length}`}</span><strong>{String(timer).padStart(2, "0")}</strong><button type="button" onClick={() => setTimerRunning((running) => !running)} disabled={!turn}>{timerRunning ? "일시정지" : "타이머 시작"}</button></div>
-        <div className="draft-current-turn"><span>{phaseLabel}</span><h2>{turn ? `${frame.acting_team_name} · ${turn.side} ${turn.kind}` : "시나리오 완성"}</h2><p>{turn ? `${turn.side === "BLUE" ? "B" : "R"}${turn.slot} ${turn.kind === "BAN" ? "밴할" : "선택할"} 챔피언을 확정하세요.` : "20개 선택을 모두 기록했습니다. JSON으로 내려받아 회의와 사후검증에 사용하세요."}</p></div>
+        <div className={`draft-current-turn ${turn?.side.toLowerCase() ?? "complete"}`} role="status"><span>{phaseLabel}</span><h2>{turn ? `${frame.acting_team_name} · ${turn.side === "BLUE" ? "블루" : "레드"} 차례` : "시나리오 완성"}</h2><p>{turn ? `${turn.slot}번째 ${turn.kind === "BAN" ? "밴" : "픽"} · 챔피언을 올려놓으면 상대 후보를 비교할 수 있습니다.` : "양 팀의 픽 10개가 다음 세트부터 자동으로 잠깁니다."}</p>{!turn && <button type="button" onClick={nextGame}>세트 저장하고 다음 세트</button>}</div>
+        <progress className="draft-turn-progress" value={selections.length} max={20} aria-label={`밴픽 ${selections.length}/20 확정`} />
         <section className="draft-picker" aria-label="챔피언 선택판">
+          <div className="draft-catalog">
           <label htmlFor="draft-search">챔피언 검색</label>
-          <input id="draft-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="한글 또는 영문 이름" />
-          <div className="draft-picker-grid">{championPool.map((championId) => {
+          <div className="draft-search-field"><input id="draft-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="한글 또는 영문 이름" /><button type="button" disabled={!query} onClick={() => setQuery("")} aria-label="챔피언 검색 지우기">지우기</button></div>
+          <div className="draft-picker-filter"><label><input type="checkbox" checked={availableOnly} onChange={(event) => setAvailableOnly(event.target.checked)} />선택 가능한 챔피언만</label><span role="status">{visibleChampions.length}개</span></div>
+          <div className="draft-picker-grid">{visibleChampions.map((championId) => {
             const fearless = isChampionLocked([], championId, previousPicks);
             const locked = isChampionLocked(selections, championId, previousPicks);
             return <button type="button" aria-pressed={pendingChampion === championId} disabled={locked || !turn} onClick={() => chooseChampion(championId)} key={championAssetId(championId)} title={fearless ? `${nameOf(championId)} · 이전 세트 픽` : locked ? `${nameOf(championId)} · 이미 선택됨` : nameOf(championId)}><img src={championImageUrl(championId)} alt="" loading="lazy" /><span>{nameOf(championId)}</span>{locked && <b>{fearless ? "피어리스" : "LOCK"}</b>}</button>;
           })}</div>
-          {!championPool.length && <p role="status">검색 결과가 없습니다.</p>}
-          <section className="draft-response-preview" aria-label="확정 전 상대 픽 예상" aria-live="polite">
+          {!visibleChampions.length && <p className="draft-search-empty" role="status">{championPool.length ? "검색된 챔피언이 모두 잠겨 있습니다. 필터를 해제하면 잠금 사유를 볼 수 있습니다." : "검색 결과가 없습니다. 한글 또는 영문 이름을 다시 확인하세요."}</p>}
+          </div>
+          <section id="draft-preview" className="draft-response-preview" aria-label="확정 전 상대 픽 예상" aria-live="polite">
             <h3>{pendingChampion ? `${nameOf(pendingChampion)} ${turn?.kind === "BAN" ? "밴" : "픽"}을 확정한다면` : "챔피언을 올려놓고 상대 픽을 비교하세요"}</h3>
-            {pendingChampion && <button type="button" onClick={() => setPendingChampion(null)}>올려놓기 취소</button>}
             {preview.status === "READY" ? <>
               <p>{preview.team_name}의 다음 픽 예상 후보 · TURN {preview.target_turn}</p>
               <small>{preview.intervening_turns > 0 ? `사이에 남은 ${preview.intervening_turns}개 밴·픽은 미정입니다. 현재 사용 가능한 후보를 비교합니다.` : "바로 다음 상대 픽 차례입니다."} 공개 빈도 순위이며 픽 확률이나 카운터 예측은 아닙니다.</small>
@@ -390,11 +419,12 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
             </> : preview.status === "NO_FUTURE_PICK" ? <p>이번 선택 이후 상대의 픽 차례는 남아 있지 않습니다.</p> : <p>선택만으로 확정되지 않습니다. 후보를 바꿔 비교한 뒤 확정 버튼을 누르세요.</p>}
           </section>
           <div className="draft-lock-in" aria-live="polite">
-            <span>{pendingChampion ? `${nameOf(pendingChampion)} 선택 중` : turn ? "챔피언을 선택하세요" : "밴픽 완료"}</span>
+            <div>{pendingChampion && <img src={championImageUrl(pendingChampion)} alt="" />}<span><small>{pendingChampion ? "올려놓음 · 아직 확정 전" : "선택 → 비교 → 확정"}</small>{pendingChampion ? nameOf(pendingChampion) : turn ? "챔피언을 선택하세요" : "밴픽 완료"}</span></div>
+            {pendingChampion && <button className="draft-cancel-stage" type="button" onClick={() => setPendingChampion(null)}>선택 취소</button>}
             <button type="button" onClick={confirmChampion} disabled={!turn || !pendingChampion || !blueTeam || !redTeam}>{turn?.kind === "BAN" ? "밴 확정" : "픽 확정"}</button>
           </div>
         </section>
-        <div className="draft-actions"><button type="button" onClick={undo} disabled={!selections.length}>한 수 되돌리기</button><button type="button" onClick={resetDraft} disabled={!selections.length && !pendingChampion}>현재 세트 초기화</button><button type="button" onClick={downloadScenario} disabled={!selections.length && !games.length}>시나리오 JSON</button></div>
+        <div className="draft-actions"><button type="button" onClick={undo} disabled={!selections.length}>한 수 되돌리기</button><button type="button" onClick={() => setPendingReset("GAME")} disabled={!hasCurrentWork}>현재 세트 초기화</button><button type="button" onClick={downloadScenario} disabled={!selections.length && !games.length}>시나리오 JSON</button></div>
         <ol className="draft-sequence-mini" aria-label="전체 밴픽 순서">{draftSequence(firstPickSide).map((item, index) => <li className={index < selections.length ? "done" : index === selections.length ? "current" : ""} key={index}><span>{index + 1}</span><b>{item.side === "BLUE" ? "B" : "R"}{item.kind === "BAN" ? "B" : "P"}{item.slot}</b></li>)}</ol>
       </section>
       <TeamDraftColumn side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} />
@@ -402,13 +432,23 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
     <section className="draft-agent-panel" aria-labelledby="draft-agent-title" inert={!canSelect}>
       <header><div><span>TURN-BY-TURN EVIDENCE AGENT</span><h2 id="draft-agent-title">{turn ? `${frame.acting_team_name}의 다음 ${turn.kind === "BAN" ? "밴" : "픽"} 검토안` : "밴픽 시나리오 완료"}</h2><p>{frame.boundary}</p></div><b>{frame.evidence_match_count} MATCHES</b></header>
-      <div className="draft-agent-options">{frame.options.length ? frame.options.map((option) => <button type="button" className={option.lane.toLowerCase()} onClick={() => chooseChampion(option.champion_id)} key={`${option.lane}:${option.champion_id}`}>
+      <div className="draft-agent-options">{frame.options.length ? frame.options.map((option) => <button type="button" className={option.lane.toLowerCase()} onClick={() => { chooseChampion(option.champion_id); document.getElementById("draft-preview")?.scrollIntoView({ block: "center" }); }} key={`${option.lane}:${option.champion_id}`}>
         <span>{laneLabels[option.lane]} · {option.confidence === "HIGH" ? "근거 높음" : option.confidence === "MEDIUM" ? "근거 보통" : "낮은 표본"}</span>
         <div><img src={championImageUrl(option.champion_id)} alt="" /><h3>{nameOf(option.champion_id)}</h3><small>{roleLabels[option.role ?? ""] ?? option.role ?? "역할 확인"}</small></div>
         <p>{option.observation}</p><em>{option.question}</em><b>{option.evidence_team_name} 근거 {option.team_evidence_ids.length}건 · 글로벌 {option.global_evidence_ids.length}건 · 올려놓기 →</b>
       </button>) : <div className="draft-agent-empty"><b>{frame.status === "COMPLETE" ? "COMPLETE" : "NO GROUNDED OPTION"}</b><p>{frame.status === "COMPLETE" ? "완성된 결과를 저장하고 실제 경기 결과와 비교할 수 있습니다." : "현재 조건에서 공개 근거가 있는 선택지를 만들 수 없습니다. 아래 전체 챔피언 목록에서 사람이 직접 선택하세요."}</p></div>}</div>
     </section>
 
+    <div className="draft-preparation-library">
+      <WorldsPreparationPanel report={report} nameOf={nameOf} onChooseOpponent={chooseWorldsOpponent} previousPicks={previousPicks} canChangeMatchup={canSelect && games.length === 0 && !hasCurrentWork} />
+      <NationalTeamPanel report={liveReport} nameOf={nameOf} />
+      <a href="#draft-workspace">밴픽으로 돌아가기 ↑</a>
+    </div>
+    <dialog ref={resetDialog} className="draft-reset-dialog" aria-labelledby="draft-reset-title" aria-describedby="draft-reset-description" onCancel={() => setPendingReset(null)}>
+      <h2 id="draft-reset-title">{pendingReset === "SERIES" ? "시리즈 전체를 초기화할까요?" : "현재 세트를 초기화할까요?"}</h2>
+      <p id="draft-reset-description">{pendingReset === "SERIES" ? "이전 세트와 현재 선택이 모두 삭제됩니다." : "현재 세트의 밴·픽과 올려놓은 선택이 삭제됩니다. 이전 세트는 유지됩니다."} 이 작업은 되돌릴 수 없습니다.</p>
+      <div><button ref={cancelReset} type="button" onClick={() => setPendingReset(null)}>계속 분석하기</button><button type="button" onClick={() => { if (pendingReset === "SERIES") resetSeries(); else if (pendingReset === "GAME") resetDraft(); setPendingReset(null); }}>초기화</button></div>
+    </dialog>
     <footer className="draft-lab-boundary"><b>검증 경계</b><p>이 에이전트는 공개 대회 픽·밴 빈도와 현재 레이더만 사용합니다. 조합 시너지·카운터·패치 강도 모델은 아직 검증되지 않았으므로 자동 승률과 최종 추천을 표시하지 않습니다.</p><a href={productSpaceHref(currentSpace, "PROOF")}>현재 제품 검증 상태 →</a></footer>
   </main>;
 }
