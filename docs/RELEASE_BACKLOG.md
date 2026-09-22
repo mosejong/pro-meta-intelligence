@@ -8,6 +8,7 @@ unmet research gates. No new LCK fixtures are a prerequisite.
 
 | Priority | Work | Result / evidence |
 | --- | --- | --- |
+| P1 | Refresh the visual design | Bright white/blue app surfaces, rounded task cards with shared navigation icons, softer borders and depth. Home, team chooser, mobile navigation, draft and proof share the theme; blue/red draft identity and explicit staged/disabled states remain. Reduced-motion preference is respected; actual viewport QA remains pending. |
 | P1 | Simplify navigation and team selection | Home opens with six task menus; one mobile bottom navigation across routes. Own/opponent/draft teams use one searchable card dialog with exact league filters, bounded lists and selection state. Draft workspace precedes collapsed preparation panels; legal-only champion filter, visible staged confirmation, reset confirmation and in-progress matchup guards. Automated filter/render checks pass; actual browser interaction QA remains unavailable. |
 | P1 | Evaluate disjoint September draft cohort | Frozen v2/role experiment replayed on 32 new-period matches / 224 states. Production top-three 26/224; LCK 11/56 across eight matches. Protocol, exact aggregates, provenance and public proof table published; no superiority or prospective-validation claim. |
 | P0 | Renew expired source review | September 21 official OE download guidance, dictionary and Riot static-data policies rechecked. OE/Data Dragon keep the same allowed operations, hosts and rate limits; only review timestamps renewed. Schedule review remains due September 23. |
