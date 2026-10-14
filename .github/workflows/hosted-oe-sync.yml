@@ -110,6 +110,7 @@ jobs:
             --year 2026 \
             --source-timezone UTC \
             --patch-selection-league LCK \
+            --retain-inactive-league-window \
             --archive-dir "$PRIVATE_ARCHIVE_DIR" \
             --feed-dir web/public/feed \
             --run-dir outputs/oe-feed-jobs \

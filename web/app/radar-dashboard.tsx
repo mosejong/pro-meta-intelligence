@@ -1070,6 +1070,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
       </section>
 
       <section className="summary" aria-label="요약 지표">
+        {report.analysis_window?.mode === "LAST_ACTIVE_PATCH" && <p role="status">비시즌 보관 분석 · 패치 {report.patch_id}의 마지막 경기 {formatCutoff(report.analysis_window.end_inclusive)} KST 기준 비교입니다. 소스 확인 시각은 {formatCutoff(report.cutoff)} KST이며, 현재 경기 메타를 뜻하지 않습니다.</p>}
         <article><span>검토할 후보</span><strong>{String(eligibleCount).padStart(2, "0")}</strong><small>최소 표본 기준 통과</small></article>
         <article><span>비교 경기 수</span><strong>{String(report.windows.recent.match_count).padStart(2, "0")} <b>/ {String(report.windows.prior.match_count).padStart(2, "0")}</b></strong><small>최근 구간 / 이전 구간</small></article>
         <article><span>활성 팀</span><strong>{String(report.windows.recent.active_team_count).padStart(2, "0")}</strong><small>최근 구간의 고유 팀</small></article>

@@ -110,6 +110,31 @@ def entries_by_champion(payload) -> dict[str, dict]:
     return {entry["champion_id"]: entry for entry in payload["entries"]}
 
 
+def test_retained_window_separates_observed_time_from_availability() -> None:
+    matches, events = scenario()
+    cutoff = CUTOFF + timedelta(days=40)
+    events = tuple(
+        replace(event, available_at=cutoff + timedelta(hours=1))
+        if event.champion_id == "Karthus"
+        else event
+        for event in events
+    )
+    config = replace(CONFIG, cutoff=cutoff, window_end=CUTOFF)
+    payload = MetaRadar().build(matches, events, config, REGIONS).to_dict()
+    assert payload["cutoff"] == cutoff.isoformat()
+    assert payload["analysis_window"]["mode"] == "LAST_ACTIVE_PATCH"
+    assert payload["analysis_window"]["historical"] is True
+    assert payload["windows"]["recent"]["end_inclusive"] == CUTOFF.isoformat()
+    assert payload["windows"]["recent"]["match_count"] == 4
+    assert "Karthus" not in entries_by_champion(payload)
+    assert payload["quality"]["future_event_count_excluded"] == 1
+
+
+def test_retained_window_cannot_extend_past_availability_cutoff() -> None:
+    with pytest.raises(ValueError, match="window_end"):
+        replace(CONFIG, window_end=CUTOFF + timedelta(seconds=1))
+
+
 def test_radar_emits_explainable_deltas_divergence_and_concentration() -> None:
     matches, events = scenario()
 

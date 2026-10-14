@@ -64,12 +64,13 @@ class MetaRadar:
         if not any(match.patch_id == patch_id for match in available_matches):
             raise ValueError(f"patch {patch_id!r} has no matches available at the cutoff")
 
-        recent_start = config.cutoff - timedelta(days=config.recent_window_days)
+        window_end = config.window_end or config.cutoff
+        recent_start = window_end - timedelta(days=config.recent_window_days)
         prior_start = recent_start - timedelta(days=config.prior_window_days)
         target_matches = tuple(
             match
             for match in available_matches
-            if match.patch_id == patch_id and prior_start < match.observed_at <= config.cutoff
+            if match.patch_id == patch_id and prior_start < match.observed_at <= window_end
         )
         target_match_ids = {match.match_id for match in target_matches}
         target_picks = tuple(
@@ -81,7 +82,7 @@ class MetaRadar:
             target_matches,
             target_picks,
             start=recent_start,
-            end=config.cutoff,
+            end=window_end,
         )
         prior = self._window(
             target_matches,
@@ -118,6 +119,12 @@ class MetaRadar:
             else False,
             "cutoff": config.cutoff.isoformat(),
             "patch_id": patch_id,
+            "analysis_window": {
+                "mode": "LAST_ACTIVE_PATCH" if config.window_end is not None else "ROLLING",
+                "end_inclusive": window_end.isoformat(),
+                "availability_cutoff": config.cutoff.isoformat(),
+                "historical": window_end < config.cutoff,
+            },
             "windows": {
                 "prior": {
                     "start_exclusive": prior_start.isoformat(),
@@ -128,7 +135,7 @@ class MetaRadar:
                 },
                 "recent": {
                     "start_exclusive": recent_start.isoformat(),
-                    "end_inclusive": config.cutoff.isoformat(),
+                    "end_inclusive": window_end.isoformat(),
                     "days": config.recent_window_days,
                     "match_count": len(recent.matches),
                     "active_team_count": len(recent.active_team_ids),
