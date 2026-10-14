@@ -902,10 +902,15 @@ def test_sync_oe_feed_publishes_with_audited_known_exclusions(tmp_path, monkeypa
 
 
 @pytest.mark.parametrize("has_previous_publication", [False, True])
+@pytest.mark.parametrize("empty_window", [False, True])
 def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
-    tmp_path, monkeypatch, has_previous_publication
+    tmp_path, monkeypatch, has_previous_publication, empty_window
 ) -> None:
-    retrieved_at = datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
+    retrieved_at = (
+        datetime(2026, 10, 8, 3, 0, tzinfo=UTC)
+        if empty_window
+        else datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
+    )
     source_body = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
 
     class FakeDownloadAdapter:
@@ -975,6 +980,20 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
                 str(tmp_path / "jobs"),
                 "--output",
                 str(output),
+                *(
+                    [
+                        "--patch-selection-league",
+                        "LCK",
+                        "--readiness-minimum-matches",
+                        "1",
+                        "--readiness-minimum-teams",
+                        "2",
+                        "--readiness-minimum-regions",
+                        "1",
+                    ]
+                    if empty_window
+                    else []
+                ),
             ]
         )
         == 2
@@ -984,11 +1003,19 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
     assert audit["status"] == "REJECTED"
     assert audit["result"]["status"] == "REJECTED_READINESS"
     assert audit["result"]["published"] is False
-    assert audit["result"]["readiness_audit"]["blocking_reasons"] == [
-        "PATCH_MATCH_COUNT_BELOW_MINIMUM",
-        "PATCH_DISTINCT_TEAM_COUNT_BELOW_MINIMUM",
-        "PATCH_REGION_COUNT_BELOW_MINIMUM",
-    ]
+    if empty_window:
+        assert audit["result"]["readiness_audit"]["ready_for_radar"] is True
+        assert audit["result"]["blocking_reasons"] == ["EMPTY_RADAR_WINDOW"]
+        assert audit["result"]["entry_count"] == 0
+        assert audit["result"]["creator_topic_count"] == 0
+        assert not (feed / "snapshots").exists()
+        assert not (feed / "index.json").exists()
+    else:
+        assert audit["result"]["readiness_audit"]["blocking_reasons"] == [
+            "PATCH_MATCH_COUNT_BELOW_MINIMUM",
+            "PATCH_DISTINCT_TEAM_COUNT_BELOW_MINIMUM",
+            "PATCH_REGION_COUNT_BELOW_MINIMUM",
+        ]
     for path in published_paths:
         if has_previous_publication:
             assert path.read_bytes() == previous

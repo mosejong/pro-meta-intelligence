@@ -1132,6 +1132,20 @@ def _refresh_feed_payload(
         radar["history_status"] = history_status
 
     creator = CreatorBriefBuilder().build(radar, top_k=args.creator_top_k)
+    if publication_readiness is not None and not radar["entries"]:
+        # Annual patch coverage does not guarantee evidence in the analysis windows.
+        # Reject before changing any paired public head or immutable snapshot.
+        return 2, {
+            "schema_version": "1",
+            "status": "REJECTED_READINESS",
+            "published": False,
+            "blocking_reasons": ["EMPTY_RADAR_WINDOW"],
+            "patch_id": radar["patch_id"],
+            "cutoff": radar["cutoff"],
+            "windows": radar["windows"],
+            "entry_count": len(radar["entries"]),
+            "creator_topic_count": len(creator.to_dict()["topic_candidates"]),
+        }
     published_at = parse_datetime(args.published_at) if args.published_at else datetime.now(UTC)
     publisher = SnapshotFeedPublisher(
         args.feed_dir,
