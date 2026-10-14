@@ -11,6 +11,22 @@ crawler.
 
 ## Current official-policy review
 
+### October 14 renewal: official schedule
+
+Rechecked the existing public HTML scope. The official robots endpoint returned only
+`User-agent: *`, with no disallow rules. The LCK schedule page remains publicly accessible;
+the Riot Terms of Service and General Policies were reviewed. Renew only the existing
+`FETCH_SCHEDULE_HTML` registration, retaining the six-hour interval, response limit,
+normalized-facts-only publication, and prohibition on login, undocumented APIs, crawling,
+or access-control bypass. This records maintenance of the repository's existing narrow
+adapter scope, not Riot product approval or a claim that a source snapshot is current.
+The previous August 24 review had expired and was blocking scheduled collection.
+
+Evidence: https://lolesports.com/robots.txt,
+https://lolesports.com/en-US/leagues/lck,
+https://www.riotgames.com/en/terms-of-service,
+https://developer.riotgames.com/policies/general.
+
 ### September 21 renewal: OE and Data Dragon
 
 Rechecked the existing scopes at 01:35 UTC. The live OE download page is a JavaScript application;

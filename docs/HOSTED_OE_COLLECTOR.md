@@ -144,3 +144,17 @@ result rather than trusting either collector.
 This path removes workstation availability from current publication and history accumulation. It
 does not make GitHub Actions a source of truth for Riot or Oracle's Elixir, prove predictive value,
 or authorize raw redistribution.
+## October 2026 publication rejection
+
+Annual coverage readiness is necessary but does not guarantee evidence in the Radar's
+recent/prior windows. An inactive selected LCK patch can pass coverage while producing
+zero entries. Hosted sync now rejects that candidate as `REJECTED_READINESS` with
+`EMPTY_RADAR_WINDOW` before changing any Radar/Creator/history/outcomes head or creating
+an immutable snapshot. The audit retains the selected patch, cutoff, windows and counts.
+Collection status is still updated and private state retained; the existing Pages tests
+can publish this bounded rejection alongside the last accepted public heads.
+
+This does not reset source timestamps, change patch selection, waive freshness checks,
+or bypass the provider retry interval. Freshness recovery still requires accepted source
+evidence and a publishable analysis window. A successful deployment of rejection status
+is not a healthy data signal.
