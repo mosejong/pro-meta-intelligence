@@ -26,15 +26,21 @@
   "publication_ready": false,
   "schema_version": "1",
   "source_snapshot": {
-    "cutoff": "2026-09-15T22:11:48.707723+00:00",
+    "analysis_window": {
+      "availability_cutoff": "2026-10-13T23:16:00.277613+00:00",
+      "end_inclusive": "2026-09-15T09:47:51+00:00",
+      "historical": true,
+      "mode": "LAST_ACTIVE_PATCH"
+    },
+    "cutoff": "2026-10-13T23:16:00.277613+00:00",
     "fixture_only": false,
     "patch_id": "16.16",
     "radar_schema_version": "1",
     "source_versions": [
       {
-        "content_hash": "sha256:d3226e03601c63b6392576ecbaa681ddafc356a6b34dcc354456c5cb881ce2ef",
+        "content_hash": "sha256:7089119bb3d665ff5ed08c97e73ea7622b78cb0cdcd5b3b0598e9e8332513cb1",
         "source_id": "oracles-elixir-match-data",
-        "source_version": "sha256:d3226e03601c63b6392576ecbaa681ddafc356a6b34dcc354456c5cb881ce2ef"
+        "source_version": "sha256:7089119bb3d665ff5ed08c97e73ea7622b78cb0cdcd5b3b0598e9e8332513cb1"
       }
     ]
   },
@@ -43,45 +49,45 @@
     {
       "approved_claims": [
         {
-          "claim_id": "Syndra:MID:pick-presence",
+          "claim_id": "Akali:MID:pick-presence",
           "metric": "pick_presence_delta",
-          "text": "최근 7일 Syndra MID 픽 점유율은 20.7%이며 이전 구간 대비 +10.3pp 변했다.",
-          "value": 0.103448
+          "text": "최근 7일 Akali MID 픽 점유율은 25.0%이며 이전 구간 대비 +15.6pp 변했다.",
+          "value": 0.15625
         },
         {
-          "claim_id": "Syndra:MID:team-demand",
+          "claim_id": "Akali:MID:team-demand",
           "metric": "demand_velocity",
-          "text": "최근 채택 팀은 6개이며 팀 수요는 이전 구간 대비 +47.7pp 변했다.",
-          "value": 0.477273
+          "text": "최근 채택 팀은 6개이며 팀 수요는 이전 구간 대비 +50.0pp 변했다.",
+          "value": 0.5
         },
         {
-          "claim_id": "Syndra:MID:regional-divergence",
+          "claim_id": "Akali:MID:regional-divergence",
           "metric": "most_divergent_region_delta",
           "text": "KOREA의 최근 픽 점유율은 글로벌 점유율과 +0.0pp 차이가 난다.",
           "value": 0.0
         }
       ],
-      "candidate_id": "Syndra:MID",
-      "champion_id": "Syndra",
+      "candidate_id": "Akali:MID",
+      "champion_id": "Akali",
       "chapter_outline": [
         {
           "chapter": "HOOK",
           "uses": [
-            "Syndra:MID:pick-presence"
+            "Akali:MID:pick-presence"
           ]
         },
         {
           "chapter": "WHAT CHANGED",
           "uses": [
-            "Syndra:MID:pick-presence",
-            "Syndra:MID:team-demand",
-            "Syndra:MID:regional-divergence"
+            "Akali:MID:pick-presence",
+            "Akali:MID:team-demand",
+            "Akali:MID:regional-divergence"
           ]
         },
         {
           "chapter": "WHY IT MAY MATTER",
           "uses": [
-            "Syndra:MID:team-demand"
+            "Akali:MID:team-demand"
           ]
         },
         {
@@ -97,22 +103,22 @@
       "data_cards": [
         {
           "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.206897,
-          "prior": 0.103448
+          "current": 0.25,
+          "prior": 0.09375
         },
         {
           "card": "TEAM_DEMAND_COMPARISON",
           "current": 0.75,
-          "prior": 0.272727
+          "prior": 0.25
         },
         {
           "card": "REGIONAL_PRESENCE",
           "values": [
             {
               "delta_from_global": 0.0,
-              "match_count": 29,
-              "pick_count": 6,
-              "pick_presence": 0.206897,
+              "match_count": 32,
+              "pick_count": 8,
+              "pick_presence": 0.25,
               "region": "KOREA",
               "sample_eligible": true
             }
@@ -120,18 +126,20 @@
         }
       ],
       "evidence_event_ids": [
-        "oe:LCK:LOLTMNT02_460749:pick:4",
-        "oe:LCK:LOLTMNT02_460928:pick:1",
-        "oe:LCK:LOLTMNT02_462142:pick:7",
-        "oe:LCK:LOLTMNT02_462565:pick:7",
-        "oe:LCK:LOLTMNT02_463340:pick:6",
-        "oe:LCKC:LOLTMNT02_462428:pick:3",
-        "oe:LCKC:LOLTMNT02_462500:pick:3",
-        "oe:LCKC:LOLTMNT02_462585:pick:6",
-        "oe:LCKC:LOLTMNT02_463188:pick:1",
-        "oe:LES:LOLTMNT02_463052:pick:6",
-        "oe:LFL:LOLTMNT05_220554:pick:1",
-        "oe:LPLOL:LOLTMNT02_460841:pick:1"
+        "oe:LCK:LOLTMNT02_460684:pick:4",
+        "oe:LCK:LOLTMNT02_460995:pick:6",
+        "oe:LCK:LOLTMNT02_462043:pick:9",
+        "oe:LCK:LOLTMNT02_462537:pick:8",
+        "oe:LCK:LOLTMNT02_463373:pick:6",
+        "oe:LCKC:LOLTMNT02_462315:pick:7",
+        "oe:LCKC:LOLTMNT02_462428:pick:5",
+        "oe:LCKC:LOLTMNT02_462589:pick:4",
+        "oe:LCKC:LOLTMNT02_462651:pick:7",
+        "oe:LCKC:LOLTMNT02_463133:pick:4",
+        "oe:LCKC:LOLTMNT02_463188:pick:2",
+        "oe:LCKC:LOLTMNT02_463309:pick:4",
+        "oe:LES:LOLTMNT02_462232:pick:6",
+        "oe:NL:LOLTMNT05_220590:pick:6"
       ],
       "falsifiers": [
         {
@@ -143,64 +151,64 @@
           "metric": "current_distinct_team_count"
         }
       ],
-      "hook": "Syndra MID의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "hook": "Akali MID의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
       "quality_flags": [],
       "radar_rank": 1,
       "review_state": "HUMAN_REVIEW_REQUIRED",
       "role": "MID",
-      "short_summary": "Syndra MID의 최근 픽 점유율은 20.7%로, 이전 구간 대비 +10.3pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "short_summary": "Akali MID의 최근 픽 점유율은 25.0%로, 이전 구간 대비 +15.6pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
       "thumbnail_copy": [
-        "Syndra MID",
-        "+10.3pp"
+        "Akali MID",
+        "+15.6pp"
       ],
       "title_candidates": [
-        "왜 지금 Syndra MID인가: +10.3pp 변화의 근거",
-        "KOREA에서 먼저 보인 Syndra MID, 글로벌과 +0.0pp 차이",
-        "Syndra MID은 진짜 신호일까? 데이터와 반론"
+        "왜 지금 Akali MID인가: +15.6pp 변화의 근거",
+        "KOREA에서 먼저 보인 Akali MID, 글로벌과 +0.0pp 차이",
+        "Akali MID은 진짜 신호일까? 데이터와 반론"
       ]
     },
     {
       "approved_claims": [
         {
-          "claim_id": "Corki:BOTTOM:pick-presence",
+          "claim_id": "Yuumi:SUPPORT:pick-presence",
           "metric": "pick_presence_delta",
-          "text": "최근 7일 Corki BOTTOM 픽 점유율은 17.2%이며 이전 구간 대비 +13.8pp 변했다.",
-          "value": 0.137931
+          "text": "최근 7일 Yuumi SUPPORT 픽 점유율은 12.5%이며 이전 구간 대비 +9.4pp 변했다.",
+          "value": 0.09375
         },
         {
-          "claim_id": "Corki:BOTTOM:team-demand",
+          "claim_id": "Yuumi:SUPPORT:team-demand",
           "metric": "demand_velocity",
-          "text": "최근 채택 팀은 4개이며 팀 수요는 이전 구간 대비 +40.9pp 변했다.",
-          "value": 0.409091
+          "text": "최근 채택 팀은 4개이며 팀 수요는 이전 구간 대비 +41.7pp 변했다.",
+          "value": 0.416667
         },
         {
-          "claim_id": "Corki:BOTTOM:regional-divergence",
+          "claim_id": "Yuumi:SUPPORT:regional-divergence",
           "metric": "most_divergent_region_delta",
           "text": "KOREA의 최근 픽 점유율은 글로벌 점유율과 +0.0pp 차이가 난다.",
           "value": 0.0
         }
       ],
-      "candidate_id": "Corki:BOTTOM",
-      "champion_id": "Corki",
+      "candidate_id": "Yuumi:SUPPORT",
+      "champion_id": "Yuumi",
       "chapter_outline": [
         {
           "chapter": "HOOK",
           "uses": [
-            "Corki:BOTTOM:pick-presence"
+            "Yuumi:SUPPORT:pick-presence"
           ]
         },
         {
           "chapter": "WHAT CHANGED",
           "uses": [
-            "Corki:BOTTOM:pick-presence",
-            "Corki:BOTTOM:team-demand",
-            "Corki:BOTTOM:regional-divergence"
+            "Yuumi:SUPPORT:pick-presence",
+            "Yuumi:SUPPORT:team-demand",
+            "Yuumi:SUPPORT:regional-divergence"
           ]
         },
         {
           "chapter": "WHY IT MAY MATTER",
           "uses": [
-            "Corki:BOTTOM:team-demand"
+            "Yuumi:SUPPORT:team-demand"
           ]
         },
         {
@@ -216,22 +224,22 @@
       "data_cards": [
         {
           "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.172414,
-          "prior": 0.034483
+          "current": 0.125,
+          "prior": 0.03125
         },
         {
           "card": "TEAM_DEMAND_COMPARISON",
           "current": 0.5,
-          "prior": 0.090909
+          "prior": 0.083333
         },
         {
           "card": "REGIONAL_PRESENCE",
           "values": [
             {
               "delta_from_global": 0.0,
-              "match_count": 29,
-              "pick_count": 5,
-              "pick_presence": 0.172414,
+              "match_count": 32,
+              "pick_count": 4,
+              "pick_presence": 0.125,
               "region": "KOREA",
               "sample_eligible": true
             }
@@ -239,13 +247,12 @@
         }
       ],
       "evidence_event_ids": [
-        "oe:LCK:LOLTMNT02_463374:pick:5",
-        "oe:LCKC:LOLTMNT02_462428:pick:7",
-        "oe:LCKC:LOLTMNT02_462587:pick:10",
-        "oe:LCKC:LOLTMNT02_462651:pick:4",
-        "oe:LCKC:LOLTMNT02_463133:pick:7",
-        "oe:LCKC:LOLTMNT02_463300:pick:8",
-        "oe:NL:LOLTMNT05_220605:pick:5"
+        "oe:LCK:LOLTMNT02_460780:pick:6",
+        "oe:LCK:LOLTMNT02_462537:pick:5",
+        "oe:LCK:LOLTMNT02_462565:pick:5",
+        "oe:LCKC:LOLTMNT02_462318:pick:9",
+        "oe:LCKC:LOLTMNT02_463244:pick:10",
+        "oe:LES:LOLTMNT02_463052:pick:10"
       ],
       "falsifiers": [
         {
@@ -257,64 +264,64 @@
           "metric": "current_distinct_team_count"
         }
       ],
-      "hook": "Corki BOTTOM의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "hook": "Yuumi SUPPORT의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
       "quality_flags": [],
       "radar_rank": 2,
       "review_state": "HUMAN_REVIEW_REQUIRED",
-      "role": "BOTTOM",
-      "short_summary": "Corki BOTTOM의 최근 픽 점유율은 17.2%로, 이전 구간 대비 +13.8pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "role": "SUPPORT",
+      "short_summary": "Yuumi SUPPORT의 최근 픽 점유율은 12.5%로, 이전 구간 대비 +9.4pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
       "thumbnail_copy": [
-        "Corki BOTTOM",
-        "+13.8pp"
+        "Yuumi SUPPORT",
+        "+9.4pp"
       ],
       "title_candidates": [
-        "왜 지금 Corki BOTTOM인가: +13.8pp 변화의 근거",
-        "KOREA에서 먼저 보인 Corki BOTTOM, 글로벌과 +0.0pp 차이",
-        "Corki BOTTOM은 진짜 신호일까? 데이터와 반론"
+        "왜 지금 Yuumi SUPPORT인가: +9.4pp 변화의 근거",
+        "KOREA에서 먼저 보인 Yuumi SUPPORT, 글로벌과 +0.0pp 차이",
+        "Yuumi SUPPORT은 진짜 신호일까? 데이터와 반론"
       ]
     },
     {
       "approved_claims": [
         {
-          "claim_id": "Caitlyn:BOTTOM:pick-presence",
+          "claim_id": "Cho'Gath:JUNGLE:pick-presence",
           "metric": "pick_presence_delta",
-          "text": "최근 7일 Caitlyn BOTTOM 픽 점유율은 20.7%이며 이전 구간 대비 +10.3pp 변했다.",
-          "value": 0.103448
+          "text": "최근 7일 Cho'Gath JUNGLE 픽 점유율은 18.8%이며 이전 구간 대비 +10.9pp 변했다.",
+          "value": 0.109375
         },
         {
-          "claim_id": "Caitlyn:BOTTOM:team-demand",
+          "claim_id": "Cho'Gath:JUNGLE:team-demand",
           "metric": "demand_velocity",
-          "text": "최근 채택 팀은 5개이며 팀 수요는 이전 구간 대비 +39.8pp 변했다.",
-          "value": 0.397727
+          "text": "최근 채택 팀은 5개이며 팀 수요는 이전 구간 대비 +41.7pp 변했다.",
+          "value": 0.416667
         },
         {
-          "claim_id": "Caitlyn:BOTTOM:regional-divergence",
+          "claim_id": "Cho'Gath:JUNGLE:regional-divergence",
           "metric": "most_divergent_region_delta",
           "text": "KOREA의 최근 픽 점유율은 글로벌 점유율과 +0.0pp 차이가 난다.",
           "value": 0.0
         }
       ],
-      "candidate_id": "Caitlyn:BOTTOM",
-      "champion_id": "Caitlyn",
+      "candidate_id": "Cho'Gath:JUNGLE",
+      "champion_id": "Cho'Gath",
       "chapter_outline": [
         {
           "chapter": "HOOK",
           "uses": [
-            "Caitlyn:BOTTOM:pick-presence"
+            "Cho'Gath:JUNGLE:pick-presence"
           ]
         },
         {
           "chapter": "WHAT CHANGED",
           "uses": [
-            "Caitlyn:BOTTOM:pick-presence",
-            "Caitlyn:BOTTOM:team-demand",
-            "Caitlyn:BOTTOM:regional-divergence"
+            "Cho'Gath:JUNGLE:pick-presence",
+            "Cho'Gath:JUNGLE:team-demand",
+            "Cho'Gath:JUNGLE:regional-divergence"
           ]
         },
         {
           "chapter": "WHY IT MAY MATTER",
           "uses": [
-            "Caitlyn:BOTTOM:team-demand"
+            "Cho'Gath:JUNGLE:team-demand"
           ]
         },
         {
@@ -330,22 +337,22 @@
       "data_cards": [
         {
           "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.206897,
-          "prior": 0.103448
+          "current": 0.1875,
+          "prior": 0.078125
         },
         {
           "card": "TEAM_DEMAND_COMPARISON",
           "current": 0.625,
-          "prior": 0.227273
+          "prior": 0.208333
         },
         {
           "card": "REGIONAL_PRESENCE",
           "values": [
             {
               "delta_from_global": 0.0,
-              "match_count": 29,
+              "match_count": 32,
               "pick_count": 6,
-              "pick_presence": 0.206897,
+              "pick_presence": 0.1875,
               "region": "KOREA",
               "sample_eligible": true
             }
@@ -353,18 +360,17 @@
         }
       ],
       "evidence_event_ids": [
-        "oe:LCK:LOLTMNT02_460694:pick:1",
-        "oe:LCK:LOLTMNT02_460761:pick:6",
-        "oe:LCK:LOLTMNT02_462142:pick:2",
-        "oe:LCK:LOLTMNT02_463340:pick:4",
-        "oe:LCK:LOLTMNT02_463372:pick:2",
-        "oe:LCKC:LOLTMNT02_462348:pick:2",
-        "oe:LCKC:LOLTMNT02_462415:pick:9",
-        "oe:LCKC:LOLTMNT02_462588:pick:2",
-        "oe:LCKC:LOLTMNT02_462648:pick:8",
-        "oe:LCKC:LOLTMNT02_463132:pick:4",
-        "oe:LES:LOLTMNT02_462232:pick:8",
-        "oe:LFL:LOLTMNT05_220547:pick:3"
+        "oe:LCK:LOLTMNT02_460694:pick:5",
+        "oe:LCK:LOLTMNT02_460772:pick:2",
+        "oe:LCK:LOLTMNT02_460928:pick:5",
+        "oe:LCK:LOLTMNT02_462135:pick:8",
+        "oe:LCK:LOLTMNT02_462538:pick:7",
+        "oe:LCK:LOLTMNT02_462565:pick:6",
+        "oe:LCK:LOLTMNT02_463053:pick:7",
+        "oe:LCKC:LOLTMNT02_462315:pick:10",
+        "oe:LCKC:LOLTMNT02_462585:pick:10",
+        "oe:LCKC:LOLTMNT02_463188:pick:6",
+        "oe:LCKC:LOLTMNT02_463309:pick:5"
       ],
       "falsifiers": [
         {
@@ -376,22 +382,24 @@
           "metric": "current_distinct_team_count"
         }
       ],
-      "hook": "Caitlyn BOTTOM의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "hook": "Cho'Gath JUNGLE의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
       "quality_flags": [],
       "radar_rank": 3,
       "review_state": "HUMAN_REVIEW_REQUIRED",
-      "role": "BOTTOM",
-      "short_summary": "Caitlyn BOTTOM의 최근 픽 점유율은 20.7%로, 이전 구간 대비 +10.3pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "role": "JUNGLE",
+      "short_summary": "Cho'Gath JUNGLE의 최근 픽 점유율은 18.8%로, 이전 구간 대비 +10.9pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
       "thumbnail_copy": [
-        "Caitlyn BOTTOM",
-        "+10.3pp"
+        "Cho'Gath JUNGLE",
+        "+10.9pp"
       ],
       "title_candidates": [
-        "왜 지금 Caitlyn BOTTOM인가: +10.3pp 변화의 근거",
-        "KOREA에서 먼저 보인 Caitlyn BOTTOM, 글로벌과 +0.0pp 차이",
-        "Caitlyn BOTTOM은 진짜 신호일까? 데이터와 반론"
+        "왜 지금 Cho'Gath JUNGLE인가: +10.9pp 변화의 근거",
+        "KOREA에서 먼저 보인 Cho'Gath JUNGLE, 글로벌과 +0.0pp 차이",
+        "Cho'Gath JUNGLE은 진짜 신호일까? 데이터와 반론"
       ]
     }
   ],
-  "warnings": []
+  "warnings": [
+    "INACTIVE_PATCH_HISTORICAL_WINDOW"
+  ]
 }
