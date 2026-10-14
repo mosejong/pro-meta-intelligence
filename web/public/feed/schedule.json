@@ -1,65 +1,48 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-22T19:44:02.521673+00:00",
+  "available_at": "2026-10-14T04:16:21.907751+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:84cef7fb92956c4b90715c0c553107d1fc9c84761e3ad17ea652c207aadbc62b",
+  "content_hash": "sha256:03fdb88e2070401cd158a78f20bce8130eca724042f922a31ecdeb1751512ffc",
   "events": [
     {
       "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:24db89acf69c63082c0c",
-      "league": "LCS",
+      "block": "Play-Ins",
+      "event_id": "lolesports:1356a2fffa23b4a948ba",
+      "league": "Worlds",
       "participants": [
-        {
-          "code": "TBD",
-          "name": "TBD"
-        },
-        {
-          "code": "SR",
-          "name": "Shopify Rebellion"
-        }
-      ],
-      "start_at": "2026-09-25T20:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:a7de37a02c559264ed1b",
-      "league": "LCS",
-      "participants": [
-        {
-          "code": "TBD",
-          "name": "TBD"
-        },
-        {
-          "code": "TBD",
-          "name": "TBD"
-        }
-      ],
-      "start_at": "2026-09-26T20:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:9e7e16411913d9d5d313",
-      "league": "LCS",
-      "participants": [
-        {
-          "code": "TLAW",
-          "name": "Team Liquid Alienware"
-        },
         {
           "code": "C9",
           "name": "Cloud9 Kia"
+        },
+        {
+          "code": "KC",
+          "name": "Karmine Corp"
         }
       ],
-      "start_at": "2026-09-27T20:00:00+00:00"
+      "start_at": "2026-10-15T18:00:00+00:00"
     },
     {
       "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:f31eb1b697f34c4b7a15",
-      "league": "LCS",
+      "block": "Play-Ins",
+      "event_id": "lolesports:6cb9fa46dde3166aab21",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "FUR",
+          "name": "FURIA"
+        },
+        {
+          "code": "MVK",
+          "name": "MVK Esports"
+        }
+      ],
+      "start_at": "2026-10-15T23:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Play-Ins",
+      "event_id": "lolesports:51ac11ccbcf1b2034133",
+      "league": "Worlds",
       "participants": [
         {
           "code": "TBD",
@@ -70,13 +53,13 @@
           "name": "TBD"
         }
       ],
-      "start_at": "2026-10-03T20:00:00+00:00"
+      "start_at": "2026-10-16T18:00:00+00:00"
     },
     {
       "best_of": 5,
-      "block": "Finals",
-      "event_id": "lolesports:262936b17a96e5c0ccfb",
-      "league": "LCS",
+      "block": "Play-Ins",
+      "event_id": "lolesports:0df8249e3210ef4442af",
+      "league": "Worlds",
       "participants": [
         {
           "code": "TBD",
@@ -87,7 +70,619 @@
           "name": "TBD"
         }
       ],
-      "start_at": "2026-10-04T20:00:00+00:00"
+      "start_at": "2026-10-16T23:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Play-Ins",
+      "event_id": "lolesports:65d6b0e94aea6d9a501c",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-17T18:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Play-Ins",
+      "event_id": "lolesports:a752e14977841b9832bd",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-18T18:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:93000ead0fc64fac3339",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-23T17:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:67c2e7297179500bfb04",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-23T18:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:60fa5f25678958c4a2bc",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-23T19:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:7ecdfaafc0690aeccf36",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-23T20:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:15bac4b9d2ec4e0beb5e",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-23T21:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:33d34b47e2dbbb50ae40",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-23T22:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:10c49dc9f8256364eb77",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-23T23:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:24222a4c85eb93650987",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-24T00:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:09567be786ec1cda68ac",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-24T17:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:f60d814a76572765ae86",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-24T18:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:0846c24b16d2415d24a4",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-24T19:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:2b6c446ff15cb5293930",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-24T20:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:261a26d978f839f9b002",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-24T21:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:d2b8ee0e4f41b4d0b6eb",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-24T22:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:0ca6113ed0413bc4d59e",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-24T23:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:6bec14f7ff475e2cc276",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-25T00:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:ac662e4fb28804e43ded",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-25T17:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:dc9b5edfc385d77cd8c4",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-25T18:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:2ed3d410c4cf67ba6fac",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-25T19:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:7eea10f1cc8c593f8276",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-25T22:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:f4e707b1bd2e62c4039e",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-26T17:00:00+00:00"
+    },
+    {
+      "best_of": 1,
+      "block": "Swiss",
+      "event_id": "lolesports:eccd007ff390e3caac77",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-26T18:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:eb5324ae13c161fbc478",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-26T19:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:464fb3ec39138775a194",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-26T22:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:b2f0318f281e0cbcac1c",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-28T20:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:922893cb8d1975b2c668",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-28T23:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:0d9e1a79efdc7ec69aeb",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-29T20:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:8942c9d5fe7b32163f12",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-29T23:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:02c7a232a398025b9adf",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-30T20:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:200a67e88277aa1eaff7",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-30T23:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:f453b6bfa22d8987a67f",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-31T17:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:0be2ca1532ccbbc176ad",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-31T20:00:00+00:00"
+    },
+    {
+      "best_of": 3,
+      "block": "Swiss",
+      "event_id": "lolesports:2422c9d8002cfb2d3b6f",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-10-31T23:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Quarterfinals",
+      "event_id": "lolesports:cbb89ef5a342635cd7c1",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-11-03T22:00:00+00:00"
     }
   ],
   "league_slugs": [
@@ -100,10 +695,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 5,
-    "tbd_participant_count": 7
+    "event_count": 40,
+    "tbd_participant_count": 76
   },
-  "retrieved_at": "2026-09-22T19:44:02.521673+00:00",
+  "retrieved_at": "2026-10-14T04:16:21.907751+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
