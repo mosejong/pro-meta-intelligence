@@ -687,11 +687,18 @@ def test_check_oe_feed_health_cli_returns_scheduler_friendly_exit_codes(tmp_path
     assert main(command) == 2
 
 
-@pytest.mark.parametrize("selection_league,expected_patch", [(None, "16.16"), ("LCK", "16.15")])
+@pytest.mark.parametrize(
+    "selection_league,expected_patch,inactive",
+    [(None, "16.16", False), ("LCK", "16.15", False), ("LCK", "16.15", True)],
+)
 def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
-    tmp_path, monkeypatch, selection_league, expected_patch
+    tmp_path, monkeypatch, selection_league, expected_patch, inactive
 ) -> None:
-    retrieved_at = datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
+    retrieved_at = (
+        datetime(2026, 10, 8, 3, 0, tzinfo=UTC)
+        if inactive
+        else datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
+    )
     source_body = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
     later_academy = b"".join(source_body.splitlines(keepends=True)[1:])
     later_academy = later_academy.replace(b"GAME001", b"GAME002").replace(b",LCK,", b",LAS,")
@@ -769,6 +776,8 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
 
     if selection_league:
         command.extend(["--patch-selection-league", selection_league])
+    if inactive:
+        command.append("--retain-inactive-league-window")
     assert main(command) == 0
 
     audit = json.loads(output.read_text(encoding="utf-8"))
@@ -780,6 +789,17 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
     assert audit["result"]["readiness_audit"]["ready_for_radar"] is True
     assert current["fixture_only"] is False
     assert current["patch_id"] == expected_patch
+    assert current["cutoff"] == retrieved_at.isoformat()
+    if inactive:
+        assert current["analysis_window"]["mode"] == "LAST_ACTIVE_PATCH"
+        assert current["analysis_window"]["historical"] is True
+        assert current["windows"]["recent"]["end_inclusive"].startswith("2026-08-20")
+        assert len(current["entries"]) > 0
+        creator = json.loads((feed / "current-creator.json").read_text(encoding="utf-8"))
+        assert creator["source_snapshot"]["analysis_window"] == current["analysis_window"]
+        assert "INACTIVE_PATCH_HISTORICAL_WINDOW" in creator["warnings"]
+    else:
+        assert current["analysis_window"]["mode"] == "ROLLING"
     assert current["publication_readiness"]["selected_patch_id"] == expected_patch
     assert current["publication_readiness"]["patch_selection"]["league"] == selection_league
     assert current["input"]["authenticity"] == "REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD"

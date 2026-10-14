@@ -20,6 +20,20 @@ it does not relabel old games as the Worlds patch. Acquisition continues on its 
 The selected patch must pass the unchanged readiness gates, and the selection mode/league are
 recorded in public `publication_readiness.patch_selection` and the job audit.
 
+The hosted workflow opts into `--retain-inactive-league-window`. When the selected patch has
+no matches in the rolling recent window, its comparison windows end at the last observed
+match on that patch, across the existing comparison leagues. Both seven-day window lengths
+and sample thresholds stay unchanged. `cutoff` remains the actual source availability time;
+availability filtering still excludes information not available by that cutoff. The public
+`analysis_window` records `LAST_ACTIVE_PATCH`, the historical window end and the independent
+availability cutoff. Radar displays a Korean off-season archive notice, and Creator exports
+retain the same metadata plus `INACTIVE_PATCH_HISTORICAL_WINDOW` warning.
+
+This is a newly verified historical club-patch analysis, not current Worlds meta. Freshness
+checks still fail if the source availability cutoff becomes stale. Omit the opt-in flag to
+retain rolling windows and the empty-window rejection. No patch alias, source timestamp,
+provider interval, or freshness threshold is changed.
+
 The option is mutually exclusive with `--patch`. An absent league or no available league match
 fails the job and preserves accepted analysis heads. Omitting both options retains the generic
 CLI's latest-match behavior. Analysis cutoff, source freshness and match dates remain independent;

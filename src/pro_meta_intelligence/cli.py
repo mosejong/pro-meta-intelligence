@@ -6,7 +6,7 @@ import platform
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from time import perf_counter
 from typing import Any
@@ -293,6 +293,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="select the latest available patch played by this exact league; retain all regions",
     )
     oe_sync.add_argument("--cutoff", help="analysis cutoff; defaults to source retrieval time")
+    oe_sync.add_argument(
+        "--retain-inactive-league-window",
+        action="store_true",
+        help="retain an inactive league patch's last window with explicit historical metadata",
+    )
     oe_sync.add_argument("--recent-days", type=int, default=7)
     oe_sync.add_argument("--prior-days", type=int, default=7)
     oe_sync.add_argument("--minimum-recent-matches", type=int, default=5)
@@ -874,6 +879,19 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 args.patch_selection_league,
                 parse_datetime(args.cutoff) if args.cutoff else latest.retrieved_at,
             )
+        if args.retain_inactive_league_window:
+            if args.patch_selection_league is None:
+                raise ValueError("inactive window retention requires --patch-selection-league")
+            cutoff = parse_datetime(args.cutoff) if args.cutoff else latest.retrieved_at
+            last_match_at = max(
+                match.observed_at
+                for match in imported.matches
+                if match.patch_id == refresh_args.patch
+                and match.available_at <= cutoff
+                and match.observed_at <= cutoff
+            )
+            if last_match_at <= cutoff - timedelta(days=args.recent_days):
+                refresh_args.window_end = last_match_at
         coverage = audit_oe_coverage(
             imported,
             _load_league_regions(args.region_map),
@@ -1089,6 +1107,7 @@ def _meta_radar_config(args: argparse.Namespace, retrieved_at: datetime) -> Meta
         minimum_prior_matches=args.minimum_prior_matches,
         minimum_region_matches=args.minimum_region_matches,
         minimum_current_picks=args.minimum_current_picks,
+        window_end=getattr(args, "window_end", None),
     )
 
 

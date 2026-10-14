@@ -70,9 +70,14 @@ class MetaRadarConfig:
     minimum_prior_matches: int = 5
     minimum_region_matches: int = 3
     minimum_current_picks: int = 2
+    window_end: datetime | None = None
 
     def __post_init__(self) -> None:
         require_aware(self.cutoff, "cutoff")
+        if self.window_end is not None:
+            require_aware(self.window_end, "window_end")
+            if self.window_end > self.cutoff:
+                raise ValueError("window_end cannot be later than the availability cutoff")
         for field_name in (
             "recent_window_days",
             "prior_window_days",
