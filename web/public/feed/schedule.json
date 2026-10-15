@@ -1,43 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-10-14T20:11:39.782042+00:00",
+  "available_at": "2026-10-15T13:23:16.560008+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:01214e022def227ac70de6569ba634f92a84c09e28aadec971318af447271db8",
+  "content_hash": "sha256:b1e84042e01ef6ccc374203de3a544ae64c02450c253edbd2b68ff30620a3f81",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Play-Ins",
-      "event_id": "lolesports:1356a2fffa23b4a948ba",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "C9",
-          "name": "Cloud9 Kia"
-        },
-        {
-          "code": "KC",
-          "name": "Karmine Corp"
-        }
-      ],
-      "start_at": "2026-10-15T18:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Play-Ins",
-      "event_id": "lolesports:6cb9fa46dde3166aab21",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "FUR",
-          "name": "FURIA"
-        },
-        {
-          "code": "MVK",
-          "name": "MVK Esports"
-        }
-      ],
-      "start_at": "2026-10-15T23:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Play-Ins",
@@ -695,10 +661,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 40,
+    "event_count": 38,
     "tbd_participant_count": 76
   },
-  "retrieved_at": "2026-10-14T20:11:39.782042+00:00",
+  "retrieved_at": "2026-10-15T13:23:16.560008+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
