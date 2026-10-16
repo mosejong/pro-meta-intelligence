@@ -2,10 +2,10 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:e906a47006b09ff486cd81ef1b8abd3cd76c1ae1f5e9df33a2af4825ba0cb5c4",
-    "retrieved_at": "2026-10-15T19:52:18.111607+00:00"
+    "content_hash": "sha256:76eb46ce65eb5d890167f60cc7be35cfc1461a4ea97f6a2380781a2f5842e93d",
+    "retrieved_at": "2026-10-16T04:27:25.480965+00:00"
   },
-  "generated_at": "2026-10-15T19:52:18.111607+00:00",
+  "generated_at": "2026-10-16T04:27:25.480965+00:00",
   "history": [
     {
       "change_id": "schedule-change:e164838a3ac636f39640",
@@ -320,8 +320,8 @@
     "status": "UNCHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:b1e84042e01ef6ccc374203de3a544ae64c02450c253edbd2b68ff30620a3f81",
-    "retrieved_at": "2026-10-15T13:23:16.560008+00:00"
+    "content_hash": "sha256:e906a47006b09ff486cd81ef1b8abd3cd76c1ae1f5e9df33a2af4825ba0cb5c4",
+    "retrieved_at": "2026-10-15T19:52:18.111607+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
