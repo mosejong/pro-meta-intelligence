@@ -580,6 +580,8 @@ def _collection_status_artifact_check(
         {
             "state": state,
             "reason_code": collection_status.get("reason_code"),
+            "last_verified_at": last_verified_at if last_verified_at_valid else None,
+            "next_attempt_at": next_attempt_at if next_attempt_at_valid else None,
             "timestamps_valid": (
                 timestamps_valid and last_verified_at_valid and next_attempt_at_valid
             ),
