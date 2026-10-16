@@ -60,6 +60,18 @@ jobs:
             echo "- Status: $(jq -r '.status' "$output_dir/health.json")" >> "$GITHUB_STEP_SUMMARY"
             echo "- Failed checks: $(jq -r '.failed_checks | if length == 0 then "none" else join(", ") end' "$output_dir/health.json")" >> "$GITHUB_STEP_SUMMARY"
             echo "- Next action: $(jq -r '.next_action' "$output_dir/health.json")" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '
+              (.checks[] | select(.id == "RADAR_PUBLICATION_FRESHNESS")) as $radar |
+              (.checks[] | select(.id == "COLLECTION_STATUS_VALID")) as $collection |
+              "",
+              "- Radar age (hours): \($radar.observed.age_hours // "unknown")",
+              "- Maximum Radar age (hours): \($radar.required.maximum_age_hours // "unknown")",
+              "- Source last verified at (UTC): \($collection.observed.last_verified_at // "unknown")",
+              "- Source retry eligible at (UTC): \($collection.observed.next_attempt_at // "unknown")",
+              "",
+              "Retry eligibility is not a scheduled run or a recovery confirmation."
+            ' "$output_dir/health.json" > "$output_dir/diagnostics.md"
+            cat "$output_dir/diagnostics.md" >> "$GITHUB_STEP_SUMMARY"
           fi
           exit "$status"
       - name: Retain the bounded watchdog audit
@@ -114,6 +126,9 @@ jobs:
             '' \
             'This incident is updated in place and will be closed automatically after recovery.' \
             > "$body_file"
+          if [[ -f "$output_dir/diagnostics.md" ]]; then
+            cat "$output_dir/diagnostics.md" >> "$body_file"
+          fi
           issue_number=$(gh issue list \
             --repo "$GITHUB_REPOSITORY" \
             --state open \
