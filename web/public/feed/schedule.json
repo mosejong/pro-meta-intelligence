@@ -1,8 +1,8 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-10-16T13:13:42.166396+00:00",
+  "available_at": "2026-10-16T19:32:38.052671+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:9065f3394a20240526b0ec3797ca0c2444e02808a54b8574fa45c541d7c1a867",
+  "content_hash": "sha256:c81a71b3e1b6d191ac4c28a116ef086ecca3d67041e405f4400f3cb74f9a2a74",
   "events": [
     {
       "best_of": 5,
@@ -649,6 +649,23 @@
         }
       ],
       "start_at": "2026-11-05T22:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Quarterfinals",
+      "event_id": "lolesports:19b628ceaf3bc28c7f1d",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-11-06T22:00:00+00:00"
     }
   ],
   "league_slugs": [
@@ -661,10 +678,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 38,
-    "tbd_participant_count": 76
+    "event_count": 39,
+    "tbd_participant_count": 78
   },
-  "retrieved_at": "2026-10-16T13:13:42.166396+00:00",
+  "retrieved_at": "2026-10-16T19:32:38.052671+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
