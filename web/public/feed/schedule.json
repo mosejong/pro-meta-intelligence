@@ -1,22 +1,22 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-10-19T15:34:06.056909+00:00",
+  "available_at": "2026-10-20T04:45:15.387940+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:229353b0794208c0655ea0acd35a5d823f3d02d4b735f67480d375a3d18e538f",
+  "content_hash": "sha256:c7df0da1fbd8fe6e71de6095440a334545a2890a652b05d35189d3037631d5d1",
   "events": [
     {
       "best_of": 1,
       "block": "Swiss",
-      "event_id": "lolesports:93000ead0fc64fac3339",
+      "event_id": "lolesports:8e9c5d3e09ea17d99bab",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "GEN",
+          "name": "Gen.G Esports"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "IG",
+          "name": "Invictus Gaming"
         }
       ],
       "start_at": "2026-10-23T17:00:00+00:00"
@@ -24,16 +24,16 @@
     {
       "best_of": 1,
       "block": "Swiss",
-      "event_id": "lolesports:67c2e7297179500bfb04",
+      "event_id": "lolesports:5a0dc766a75b33d39516",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "HLE",
+          "name": "Hanwha Life Esports"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "TES",
+          "name": "TOP ESPORTS"
         }
       ],
       "start_at": "2026-10-23T18:00:00+00:00"
@@ -41,16 +41,16 @@
     {
       "best_of": 1,
       "block": "Swiss",
-      "event_id": "lolesports:60fa5f25678958c4a2bc",
+      "event_id": "lolesports:2fd64b64771d7943e898",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "BLG",
+          "name": "BILIBILI GAMING"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "MKOI",
+          "name": "Movistar KOI"
         }
       ],
       "start_at": "2026-10-23T19:00:00+00:00"
@@ -58,16 +58,16 @@
     {
       "best_of": 1,
       "block": "Swiss",
-      "event_id": "lolesports:7ecdfaafc0690aeccf36",
+      "event_id": "lolesports:55d8bbcb8b48a497fefe",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "AL",
+          "name": "Anyone's Legend"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "KC",
+          "name": "Karmine Corp"
         }
       ],
       "start_at": "2026-10-23T20:00:00+00:00"
@@ -75,16 +75,16 @@
     {
       "best_of": 1,
       "block": "Swiss",
-      "event_id": "lolesports:15bac4b9d2ec4e0beb5e",
+      "event_id": "lolesports:70ea57f59a912e96e66f",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "G2",
+          "name": "G2 Esports"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "DK",
+          "name": "Dplus KIA"
         }
       ],
       "start_at": "2026-10-23T21:00:00+00:00"
@@ -92,16 +92,16 @@
     {
       "best_of": 1,
       "block": "Swiss",
-      "event_id": "lolesports:33d34b47e2dbbb50ae40",
+      "event_id": "lolesports:62ee15887ad29688a809",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "TLAW",
+          "name": "Team Liquid Alienware"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "CFO",
+          "name": "CTBC Flying Oyster"
         }
       ],
       "start_at": "2026-10-23T22:00:00+00:00"
@@ -109,16 +109,16 @@
     {
       "best_of": 1,
       "block": "Swiss",
-      "event_id": "lolesports:10c49dc9f8256364eb77",
+      "event_id": "lolesports:a2005089b314e9542464",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "LOS",
+          "name": "LOS"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "T1",
+          "name": "T1"
         }
       ],
       "start_at": "2026-10-23T23:00:00+00:00"
@@ -126,16 +126,16 @@
     {
       "best_of": 1,
       "block": "Swiss",
-      "event_id": "lolesports:24222a4c85eb93650987",
+      "event_id": "lolesports:23fad2bcfecbec3dc6e6",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "TSW",
+          "name": "Team Secret Whales"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "LYON",
+          "name": "LYON"
         }
       ],
       "start_at": "2026-10-24T00:00:00+00:00"
@@ -696,9 +696,9 @@
   "locale": "en-US",
   "quality": {
     "event_count": 40,
-    "tbd_participant_count": 80
+    "tbd_participant_count": 64
   },
-  "retrieved_at": "2026-10-19T15:34:06.056909+00:00",
+  "retrieved_at": "2026-10-20T04:45:15.387940+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
