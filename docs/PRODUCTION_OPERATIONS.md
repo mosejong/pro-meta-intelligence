@@ -1,5 +1,19 @@
 # Production operations
 
+## Failure email policy
+
+Public health and Actions notification status are separate. The watchdog keeps the open incident
+and its health artifact UNHEALTHY while the same failed-check set persists, but only fails its
+notification step for a new incident or changed failed-check set. Ages and retry guidance continue
+to update in place. Recovery still closes the incident, so a later recurrence alerts again.
+Missing reports, HTTP failures, incident read/write failures, and unexpected execution errors
+continue to fail the workflow.
+
+The hosted collector delegates source-freshness-only alerts to that watchdog after a successful
+cached publication. Other collector, readiness, archive, build, and deploy failures still fail.
+An Actions success during an ongoing incident means the monitoring/publication workflow executed;
+it does not establish healthy source data. Check the incident and retained health JSON for health.
+
 The unattended production path has seven separate responsibilities:
 
 1. `sync-oe-feed` performs policy-gated acquisition, archive audit, publication readiness, Radar and

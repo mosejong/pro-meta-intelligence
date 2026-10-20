@@ -93,6 +93,7 @@ jobs:
           --color D73A4A
           --force
       - name: Open or refresh one production incident
+        id: incident
         if: always() && steps.health.outcome != 'success'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -136,7 +137,20 @@ jobs:
             --json number \
             --jq '.[0].number // empty')
           if [[ -n "$issue_number" ]]; then
+            previous_body="$RUNNER_TEMP/previous-publication-incident.md"
+            gh issue view "$issue_number" --repo "$GITHUB_REPOSITORY" \
+              --json body --jq '.body' > "$previous_body"
+            repeated=false
+            if [[ -f "$output_dir/health.json" ]]; then
+              repeated=$(python -m pro_meta_intelligence.operations.notifications watchdog \
+                "$output_dir/health.json" "$previous_body")
+            fi
             gh issue edit "$issue_number" --repo "$GITHUB_REPOSITORY" --body-file "$body_file"
+            # Only acknowledge a duplicate after the incident was successfully updated.
+            echo "repeated=$repeated" >> "$GITHUB_OUTPUT"
+            if [[ "$repeated" == "true" ]]; then
+              echo "Existing incident #$issue_number updated; repeated failure email suppressed. Public health remains UNHEALTHY." >> "$GITHUB_STEP_SUMMARY"
+            fi
           else
             gh issue create \
               --repo "$GITHUB_REPOSITORY" \
@@ -162,6 +176,6 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --comment "Production publication watchdog recovered. All public checks pass."
           fi
-      - name: Fail the workflow when the public surface is unhealthy
-        if: always() && steps.health.outcome != 'success'
+      - name: Alert on a new incident or execution failure
+        if: always() && steps.health.outcome != 'success' && steps.incident.outputs.repeated != 'true'
         run: exit 1

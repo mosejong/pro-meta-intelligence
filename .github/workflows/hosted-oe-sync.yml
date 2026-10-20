@@ -220,7 +220,18 @@ jobs:
           git push origin HEAD:main
       - name: Preserve failed collection health after publishing its public status
         if: always() && steps.sync-health.outcome != 'success'
-        run: exit 1
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_delay_only=$(python -m pro_meta_intelligence.operations.notifications collector \
+            "$PRIVATE_STATE_DIR/sync-report.json" \
+            "$PRIVATE_STATE_DIR/local-health.json" \
+            web/public/feed/collection-status.json)
+          if [[ "$source_delay_only" == "true" ]]; then
+            echo "Source freshness remains UNHEALTHY. The public watchdog owns incident alerts; duplicate collector email suppressed." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          exit 1
 
   deploy:
     environment:
