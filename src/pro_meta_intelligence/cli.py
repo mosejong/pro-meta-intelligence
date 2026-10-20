@@ -814,6 +814,17 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 "REUSED_CACHE_AFTER_SOURCE_ERROR" if latest else "SOURCE_ERROR_NO_CACHE"
             )
             acquisition_error = str(error)
+            # The failed request already starts the policy interval. Publish its retry
+            # boundary immediately, rather than waiting for a later blocked run.
+            attempted_at = attempt_ledger.latest_attempted_at(adapter.source_id, fetch_operation)
+            registration = registry.get(adapter.source_id)
+            if attempted_at is not None and registration is not None:
+                previous_times = [attempted_at]
+                if latest is not None:
+                    previous_times.append(latest.retrieved_at)
+                next_attempt_at = (
+                    max(previous_times) + timedelta(seconds=registration.minimum_interval_seconds)
+                ).isoformat()
 
         history_benchmark = benchmark_oe_blind_spots(
             archive.inspect(adapter.source_id),

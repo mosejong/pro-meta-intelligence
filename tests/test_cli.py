@@ -1047,8 +1047,11 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
     assert collection_status["reason_code"] == "READINESS_GATE_REJECTED"
 
 
-def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, monkeypatch) -> None:
-    attempted_at = datetime(2026, 9, 9, 7, 13, tzinfo=UTC)
+@pytest.mark.parametrize("has_cache", [False, True])
+def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(
+    tmp_path, monkeypatch, has_cache
+) -> None:
+    attempted_at = datetime(2026, 8, 24, 7, 13, tzinfo=UTC)
     call_count = 0
 
     class FailingDownloadAdapter:
@@ -1078,6 +1081,17 @@ def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, m
         FailingDownloadAdapter,
     )
     archive_dir = tmp_path / "raw"
+    if has_cache:
+        SnapshotArchive(archive_dir).store(
+            RawSourceArtifact.create(
+                source_id=FailingDownloadAdapter.source_id,
+                request_url="https://drive.usercontent.google.com/download?id=reviewed",
+                final_url="https://drive.usercontent.google.com/download?id=reviewed",
+                media_type="text/csv",
+                retrieved_at=attempted_at - timedelta(days=2),
+                body=(FIXTURES / "oracles_elixir_game.csv").read_bytes(),
+            )
+        )
     output = tmp_path / "sync.json"
     command = [
         "sync-oe-feed",
@@ -1093,12 +1107,29 @@ def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, m
         str(tmp_path / "jobs"),
         "--output",
         str(output),
+        "--readiness-minimum-matches",
+        "1",
+        "--readiness-minimum-teams",
+        "2",
+        "--readiness-minimum-regions",
+        "1",
     ]
 
-    assert main(command) == 4
+    expected_exit = 0 if has_cache else 4
+    assert main(command) == expected_exit
     first = json.loads(output.read_text(encoding="utf-8"))
-    assert first["result"]["source_acquisition"]["status"] == "SOURCE_ERROR_NO_CACHE"
+    assert first["result"]["source_acquisition"]["status"] == (
+        "REUSED_CACHE_AFTER_SOURCE_ERROR" if has_cache else "SOURCE_ERROR_NO_CACHE"
+    )
     assert first["result"]["network_collection_performed"] is True
+    retry_at = (attempted_at + timedelta(days=1)).isoformat()
+    assert first["result"]["source_acquisition"]["next_attempt_at"] == retry_at
+    public_status = json.loads(
+        (tmp_path / "feed" / "collection-status.json").read_text(encoding="utf-8")
+    )
+    assert public_status["source"]["next_attempt_at"] == retry_at
+    assert public_status["state"] == ("SOURCE_DELAYED" if has_cache else "SOURCE_UNAVAILABLE")
+    assert public_status["reason_code"] == "PROVIDER_QUOTA_OR_HTML_RESPONSE"
     assert (
         SourceAttemptLedger(archive_dir).latest_attempted_at(
             FailingDownloadAdapter.source_id,
@@ -1107,7 +1138,7 @@ def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, m
         == attempted_at
     )
 
-    assert main(command) == 4
+    assert main(command) == expected_exit
     second = json.loads(output.read_text(encoding="utf-8"))
     assert second["result"]["source_acquisition"]["status"] == "REUSED_CACHE_DURING_SOURCE_BACKOFF"
     assert second["result"]["network_collection_performed"] is False
