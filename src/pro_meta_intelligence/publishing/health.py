@@ -954,7 +954,6 @@ def _public_watchdog_next_action(
         if (
             collection_status
             and collection_status.get("state") == "SOURCE_DELAYED"
-            and collection_status.get("reason_code") == "POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR"
             and _is_timestamp(next_attempt)
             and parse_datetime(next_attempt) > now
         ):
