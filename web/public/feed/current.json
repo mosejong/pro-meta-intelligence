@@ -1,11 +1,11 @@
 {
   "analysis_window": {
-    "availability_cutoff": "2026-10-20T22:15:50.671091+00:00",
+    "availability_cutoff": "2026-10-22T03:06:32.925750+00:00",
     "end_inclusive": "2026-09-15T09:47:51+00:00",
     "historical": true,
     "mode": "LAST_ACTIVE_PATCH"
   },
-  "cutoff": "2026-10-20T22:15:50.671091+00:00",
+  "cutoff": "2026-10-22T03:06:32.925750+00:00",
   "entries": [
     {
       "champion_id": "Akali",
@@ -5819,9 +5819,9 @@
     ],
     "source_versions": [
       {
-        "content_hash": "sha256:86414222c2e9849b4d9efaec19c4be3f8db0a88f9d89fbf2999645e9fd53f9f1",
+        "content_hash": "sha256:2159af9db08bb2495400efff8f50cf99953cfb7ac070348445dc2d853883562e",
         "source_id": "oracles-elixir-match-data",
-        "source_version": "sha256:86414222c2e9849b4d9efaec19c4be3f8db0a88f9d89fbf2999645e9fd53f9f1"
+        "source_version": "sha256:2159af9db08bb2495400efff8f50cf99953cfb7ac070348445dc2d853883562e"
       }
     ]
   },
@@ -5839,14 +5839,14 @@
     "archive": {
       "active_cohort": 9,
       "cohort_count": 9,
-      "collection_span_days": 58.776,
-      "last_retrieved_at": "2026-10-20T22:15:50.671091+00:00",
+      "collection_span_days": 59.978,
+      "last_retrieved_at": "2026-10-22T03:06:32.925750+00:00",
       "matured_cutoff_count": 14,
-      "retrieval_count": 16,
+      "retrieval_count": 17,
       "unique_normalized_state_count": 16
     },
     "artifact_type": "oe-history-status",
-    "as_of": "2026-10-20T22:15:50.671091+00:00",
+    "as_of": "2026-10-22T03:06:32.925750+00:00",
     "benchmark_ready": false,
     "blocking_reasons": [
       "RETRIEVAL_COUNT_BELOW_MINIMUM",
@@ -5856,36 +5856,36 @@
     ],
     "boundary": "Operational collection readiness only; not evidence that the Radar predicts adoption.",
     "collection": {
-      "collection_span_days": 0.0,
+      "collection_span_days": 1.202,
       "first_retrieved_at": "2026-10-20T22:15:50.671091+00:00",
-      "last_retrieved_at": "2026-10-20T22:15:50.671091+00:00",
+      "last_retrieved_at": "2026-10-22T03:06:32.925750+00:00",
       "matured_cutoff_count": 0,
-      "retrieval_count": 1,
+      "retrieval_count": 2,
       "unique_normalized_state_count": 1
     },
     "continuity": {
-      "continuity_deadline_at": "2026-10-22T22:15:50.671091+00:00",
+      "continuity_deadline_at": "2026-10-24T03:06:32.925750+00:00",
       "maximum_gap_hours": 48,
-      "next_collection_due_at": "2026-10-21T22:15:50.671091+00:00",
+      "next_collection_due_at": "2026-10-23T03:06:32.925750+00:00",
       "status": "ON_TRACK"
     },
     "forecast": {
       "assumption": "UNINTERRUPTED_DAILY_COLLECTION_WITH_REQUIRED_DISTINCT_STATES",
-      "continuity_deadline_at": "2026-10-22T22:15:50.671091+00:00",
+      "continuity_deadline_at": "2026-10-24T03:06:32.925750+00:00",
       "earliest_possible_ready_at": "2026-11-03T22:15:50.671091+00:00",
       "guaranteed": false,
-      "next_collection_due_at": "2026-10-21T22:15:50.671091+00:00",
+      "next_collection_due_at": "2026-10-23T03:06:32.925750+00:00",
       "remaining": {
-        "collection_span_days": 14.0,
+        "collection_span_days": 12.798,
         "matured_cutoffs": 2,
-        "retrievals": 13,
+        "retrievals": 12,
         "unique_states": 2
       }
     },
-    "gate_progress_percent": 10,
+    "gate_progress_percent": 14,
     "gates": [
       {
-        "current": 1,
+        "current": 2,
         "id": "RETRIEVALS",
         "passed": false,
         "required": 14,
@@ -5899,7 +5899,7 @@
         "unit": "states"
       },
       {
-        "current": 0.0,
+        "current": 1.202,
         "id": "COLLECTION_SPAN",
         "passed": false,
         "required": 14,
@@ -5930,7 +5930,7 @@
     "authenticity": "REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD",
     "import_report": {
       "byte_length": 78256688,
-      "content_hash": "sha256:86414222c2e9849b4d9efaec19c4be3f8db0a88f9d89fbf2999645e9fd53f9f1",
+      "content_hash": "sha256:2159af9db08bb2495400efff8f50cf99953cfb7ac070348445dc2d853883562e",
       "discovered_game_count": 9753,
       "imported_game_count": 9122,
       "issue_context_counts": [
@@ -6980,11 +6980,11 @@
         }
       ],
       "rejected_game_count": 631,
-      "retrieved_at": "2026-10-20T22:15:50.671091+00:00",
+      "retrieved_at": "2026-10-22T03:06:32.925750+00:00",
       "row_count": 117036,
       "source_id": "oracles-elixir-match-data",
       "source_timezone": "UTC",
-      "source_version": "sha256:86414222c2e9849b4d9efaec19c4be3f8db0a88f9d89fbf2999645e9fd53f9f1",
+      "source_version": "sha256:2159af9db08bb2495400efff8f50cf99953cfb7ac070348445dc2d853883562e",
       "truncated_issue_count": 531
     }
   },
@@ -7033,13 +7033,13 @@
       ],
       "top_champions": 5
     },
-    "cutoff": "2026-10-20T22:15:50.671091+00:00",
+    "cutoff": "2026-10-22T03:06:32.925750+00:00",
     "evidence_index": {
       "source_versions": [
         {
-          "content_hash": "sha256:86414222c2e9849b4d9efaec19c4be3f8db0a88f9d89fbf2999645e9fd53f9f1",
+          "content_hash": "sha256:2159af9db08bb2495400efff8f50cf99953cfb7ac070348445dc2d853883562e",
           "source_id": "oracles-elixir-match-data",
-          "source_version": "sha256:86414222c2e9849b4d9efaec19c4be3f8db0a88f9d89fbf2999645e9fd53f9f1"
+          "source_version": "sha256:2159af9db08bb2495400efff8f50cf99953cfb7ac070348445dc2d853883562e"
         }
       ]
     },
@@ -117322,7 +117322,7 @@
       }
     ],
     "ready_for_radar": true,
-    "retrieved_at": "2026-10-20T22:15:50.671091+00:00",
+    "retrieved_at": "2026-10-22T03:06:32.925750+00:00",
     "schema_version": "2",
     "selected_patch": {
       "distinct_team_count": 171,
@@ -117422,7 +117422,7 @@
       "patch_id": "16.16"
     },
     "source_id": "oracles-elixir-match-data",
-    "source_version": "sha256:86414222c2e9849b4d9efaec19c4be3f8db0a88f9d89fbf2999645e9fd53f9f1",
+    "source_version": "sha256:2159af9db08bb2495400efff8f50cf99953cfb7ac070348445dc2d853883562e",
     "warnings": [
       "PATCH_HAS_KNOWN_IMPORT_EXCLUSIONS",
       "ANNUAL_BLOCKING_IMPORT_ISSUES_OUTSIDE_SELECTED_PATCH",

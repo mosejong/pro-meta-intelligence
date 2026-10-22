@@ -3,14 +3,14 @@
   "archive": {
     "active_cohort": 9,
     "cohort_count": 9,
-    "collection_span_days": 58.776,
-    "last_retrieved_at": "2026-10-20T22:15:50.671091+00:00",
+    "collection_span_days": 59.978,
+    "last_retrieved_at": "2026-10-22T03:06:32.925750+00:00",
     "matured_cutoff_count": 14,
-    "retrieval_count": 16,
+    "retrieval_count": 17,
     "unique_normalized_state_count": 16
   },
   "artifact_type": "oe-history-status",
-  "as_of": "2026-10-20T22:15:50.671091+00:00",
+  "as_of": "2026-10-22T03:06:32.925750+00:00",
   "benchmark_ready": false,
   "blocking_reasons": [
     "RETRIEVAL_COUNT_BELOW_MINIMUM",
@@ -20,36 +20,36 @@
   ],
   "boundary": "Operational collection readiness only; not evidence that the Radar predicts adoption.",
   "collection": {
-    "collection_span_days": 0.0,
+    "collection_span_days": 1.202,
     "first_retrieved_at": "2026-10-20T22:15:50.671091+00:00",
-    "last_retrieved_at": "2026-10-20T22:15:50.671091+00:00",
+    "last_retrieved_at": "2026-10-22T03:06:32.925750+00:00",
     "matured_cutoff_count": 0,
-    "retrieval_count": 1,
+    "retrieval_count": 2,
     "unique_normalized_state_count": 1
   },
   "continuity": {
-    "continuity_deadline_at": "2026-10-22T22:15:50.671091+00:00",
+    "continuity_deadline_at": "2026-10-24T03:06:32.925750+00:00",
     "maximum_gap_hours": 48,
-    "next_collection_due_at": "2026-10-21T22:15:50.671091+00:00",
+    "next_collection_due_at": "2026-10-23T03:06:32.925750+00:00",
     "status": "ON_TRACK"
   },
   "forecast": {
     "assumption": "UNINTERRUPTED_DAILY_COLLECTION_WITH_REQUIRED_DISTINCT_STATES",
-    "continuity_deadline_at": "2026-10-22T22:15:50.671091+00:00",
+    "continuity_deadline_at": "2026-10-24T03:06:32.925750+00:00",
     "earliest_possible_ready_at": "2026-11-03T22:15:50.671091+00:00",
     "guaranteed": false,
-    "next_collection_due_at": "2026-10-21T22:15:50.671091+00:00",
+    "next_collection_due_at": "2026-10-23T03:06:32.925750+00:00",
     "remaining": {
-      "collection_span_days": 14.0,
+      "collection_span_days": 12.798,
       "matured_cutoffs": 2,
-      "retrievals": 13,
+      "retrievals": 12,
       "unique_states": 2
     }
   },
-  "gate_progress_percent": 10,
+  "gate_progress_percent": 14,
   "gates": [
     {
-      "current": 1,
+      "current": 2,
       "id": "RETRIEVALS",
       "passed": false,
       "required": 14,
@@ -63,7 +63,7 @@
       "unit": "states"
     },
     {
-      "current": 0.0,
+      "current": 1.202,
       "id": "COLLECTION_SPAN",
       "passed": false,
       "required": 14,

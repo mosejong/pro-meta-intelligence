@@ -1,30 +1,30 @@
 {
   "artifact_type": "oe-collection-status",
   "automation": {
-    "operator_action_required": true,
+    "operator_action_required": false,
     "retry_mode": "AUTOMATIC_POLICY_GATED"
   },
   "boundary": "Collection availability only; excludes raw rows, local paths, provider URLs, and predictive-quality claims.",
   "last_attempt": {
-    "exit_code": 1,
-    "finished_at": "2026-10-21T22:18:21.365379+00:00",
-    "job_status": "FAILED",
-    "network_request_performed": false,
-    "started_at": "2026-10-21T22:18:20.187862+00:00"
+    "exit_code": 0,
+    "finished_at": "2026-10-22T03:08:20.705795+00:00",
+    "job_status": "SUCCEEDED",
+    "network_request_performed": true,
+    "started_at": "2026-10-22T03:06:29.949217+00:00"
   },
   "publication": {
-    "head_accepted": false,
-    "history_status": null,
-    "result_status": "UNKNOWN"
+    "head_accepted": true,
+    "history_status": "HISTORY_NOT_READY",
+    "result_status": "PUBLISHED"
   },
-  "reason_code": "COLLECTOR_JOB_FAILED",
+  "reason_code": "NONE",
   "schema_version": "1",
   "source": {
-    "acquisition_status": "UNKNOWN",
-    "last_verified_at": null,
+    "acquisition_status": "DOWNLOADED",
+    "last_verified_at": "2026-10-22T03:06:32.925750+00:00",
     "next_attempt_at": null,
     "source_id": "oracles-elixir-match-data"
   },
-  "state": "RUN_FAILED",
-  "updated_at": "2026-10-21T22:18:21.365379+00:00"
+  "state": "CURRENT",
+  "updated_at": "2026-10-22T03:08:20.705795+00:00"
 }
