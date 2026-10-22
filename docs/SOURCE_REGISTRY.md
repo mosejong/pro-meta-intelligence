@@ -11,6 +11,29 @@ crawler.
 
 ## Current official-policy review
 
+### October 22 renewal: OE and Data Dragon
+
+Rechecked at 2026-10-22T03:03:07Z after hosted runs failed with `POLICY_REVIEW_EXPIRED`.
+The live, rendered [OE download page](https://master.d36liwrx5rvjnc.amplifyapp.com/tools/downloads)
+still provides CSV data free for analysts, commentators, and fans, states that files update once
+per day, and links data use to Riot's general policies. Its public Google Drive folder link remains
+present. This review did not download the dataset or change the exact reviewed file IDs.
+The [provider dictionary](https://lol.timsevenhuysen.com/matchdata/match-data-dictionary/)
+still warns of schema changes and game IDs that may only be unique per server/league.
+
+Reviewed Riot's [LoL documentation](https://developer.riotgames.com/docs/lol), including the
+Data Dragon static-data routes, [General Policies](https://developer.riotgames.com/policies/general),
+and [API Terms](https://developer.riotgames.com/terms). General Policies display May 29, 2025 as
+last updated; API Terms display December 9, 2013. Product registration/audit and attribution
+obligations remain applicable; this maintenance record does not establish product approval.
+
+Renew only the existing OE and Data Dragon review timestamps. Keep the 30-day expiry, daily OE
+attempt interval, existing host/operation/file-ID allowlists, response limits, private archive,
+and prohibition on raw dataset redistribution. The schedule registration and blocked credentialed
+Riot Web API are unchanged. A current policy review permits the existing adapter scope; it does
+not prove source freshness, download success, or operational recovery. Verify a hosted sync and
+its local health report after this change reaches main.
+
 ### October 14 renewal: official schedule
 
 Rechecked the existing public HTML scope. The official robots endpoint returned only
