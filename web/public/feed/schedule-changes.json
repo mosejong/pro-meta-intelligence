@@ -2,11 +2,40 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:0b07c1ba1afd32458ac45fdd64f6d2885e56b1fa5d6a7bb8017e8df30ced4b1f",
-    "retrieved_at": "2026-10-22T20:05:21.815182+00:00"
+    "content_hash": "sha256:54920d640c5f15e8f9fdefe8d6cb211645ff5084d715f97e13a5744a79fa4ea8",
+    "retrieved_at": "2026-10-23T04:44:53.226469+00:00"
   },
-  "generated_at": "2026-10-22T20:05:21.815182+00:00",
+  "generated_at": "2026-10-23T04:44:53.226469+00:00",
   "history": [
+    {
+      "change_id": "schedule-change:05e14735dcdfea69705b",
+      "correlation_method": "UNMATCHED",
+      "current_event": null,
+      "detected_at": "2026-10-23T04:44:53.226469+00:00",
+      "fields_changed": [
+        "event"
+      ],
+      "previous_event": {
+        "best_of": 1,
+        "block": "Swiss",
+        "event_id": "lolesports:a2005089b314e9542464",
+        "league": "Worlds",
+        "participants": [
+          {
+            "code": "LOS",
+            "name": "LOS"
+          },
+          {
+            "code": "T1",
+            "name": "T1"
+          }
+        ],
+        "start_at": "2026-10-23T23:00:00+00:00"
+      },
+      "severity": "REVIEW",
+      "summary": "T1 fixture left the future schedule",
+      "type": "EVENT_REMOVED"
+    },
     {
       "change_id": "schedule-change:61211a4c94694e4e9737",
       "correlation_method": "UNMATCHED",
@@ -344,13 +373,43 @@
     }
   ],
   "latest_run": {
-    "change_count": 0,
-    "changes": [],
-    "status": "UNCHANGED"
+    "change_count": 1,
+    "changes": [
+      {
+        "change_id": "schedule-change:05e14735dcdfea69705b",
+        "correlation_method": "UNMATCHED",
+        "current_event": null,
+        "detected_at": "2026-10-23T04:44:53.226469+00:00",
+        "fields_changed": [
+          "event"
+        ],
+        "previous_event": {
+          "best_of": 1,
+          "block": "Swiss",
+          "event_id": "lolesports:a2005089b314e9542464",
+          "league": "Worlds",
+          "participants": [
+            {
+              "code": "LOS",
+              "name": "LOS"
+            },
+            {
+              "code": "T1",
+              "name": "T1"
+            }
+          ],
+          "start_at": "2026-10-23T23:00:00+00:00"
+        },
+        "severity": "REVIEW",
+        "summary": "T1 fixture left the future schedule",
+        "type": "EVENT_REMOVED"
+      }
+    ],
+    "status": "CHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:0be1b33b5cd87fb270f56747325839c79677d4d2d7a1b4e39e15d89b3e8586a9",
-    "retrieved_at": "2026-10-22T13:45:05.432055+00:00"
+    "content_hash": "sha256:0b07c1ba1afd32458ac45fdd64f6d2885e56b1fa5d6a7bb8017e8df30ced4b1f",
+    "retrieved_at": "2026-10-22T20:05:21.815182+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
