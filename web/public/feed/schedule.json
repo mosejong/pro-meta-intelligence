@@ -1,22 +1,22 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-10-24T04:32:10.774276+00:00",
+  "available_at": "2026-10-24T12:39:05.675245+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:901e0b9808fb07a520fb5934772ab72f28e00d9c7db19f11df799b5cfb41a262",
+  "content_hash": "sha256:d363747144ce369f8b59a6f96fd21d506b94cc3bf1b1540113cbdb0ab79b44cb",
   "events": [
     {
       "best_of": 1,
       "block": "Swiss",
-      "event_id": "lolesports:6bec14f7ff475e2cc276",
+      "event_id": "lolesports:7ed5859a467ae6863e7b",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "TLAW",
+          "name": "Team Liquid Alienware"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "BLG",
+          "name": "BILIBILI GAMING"
         }
       ],
       "start_at": "2026-10-25T00:00:00+00:00"
@@ -441,9 +441,9 @@
   "locale": "en-US",
   "quality": {
     "event_count": 25,
-    "tbd_participant_count": 50
+    "tbd_participant_count": 48
   },
-  "retrieved_at": "2026-10-24T04:32:10.774276+00:00",
+  "retrieved_at": "2026-10-24T12:39:05.675245+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
