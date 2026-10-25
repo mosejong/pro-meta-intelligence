@@ -1,90 +1,22 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-10-25T04:36:47.232324+00:00",
+  "available_at": "2026-10-25T13:10:01.070373+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:0092ebaf7c30dd690db41b490bd051bce69de3f1669fcd529fa619c25ff520df",
+  "content_hash": "sha256:62bb131ef19a35587c8fafb236291cc7cad1a4b96f6d027a4ee52861ab0998bc",
   "events": [
     {
       "best_of": 1,
       "block": "Swiss",
-      "event_id": "lolesports:ac662e4fb28804e43ded",
+      "event_id": "lolesports:128301a889a56fa74126",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "CFO",
+          "name": "CTBC Flying Oyster"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
-        }
-      ],
-      "start_at": "2026-10-25T17:00:00+00:00"
-    },
-    {
-      "best_of": 1,
-      "block": "Swiss",
-      "event_id": "lolesports:dc9b5edfc385d77cd8c4",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "TBD",
-          "name": "TBD"
-        },
-        {
-          "code": "TBD",
-          "name": "TBD"
-        }
-      ],
-      "start_at": "2026-10-25T18:00:00+00:00"
-    },
-    {
-      "best_of": 3,
-      "block": "Swiss",
-      "event_id": "lolesports:2ed3d410c4cf67ba6fac",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "TBD",
-          "name": "TBD"
-        },
-        {
-          "code": "TBD",
-          "name": "TBD"
-        }
-      ],
-      "start_at": "2026-10-25T19:00:00+00:00"
-    },
-    {
-      "best_of": 3,
-      "block": "Swiss",
-      "event_id": "lolesports:7eea10f1cc8c593f8276",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "TBD",
-          "name": "TBD"
-        },
-        {
-          "code": "TBD",
-          "name": "TBD"
-        }
-      ],
-      "start_at": "2026-10-25T22:00:00+00:00"
-    },
-    {
-      "best_of": 1,
-      "block": "Swiss",
-      "event_id": "lolesports:f4e707b1bd2e62c4039e",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "TBD",
-          "name": "TBD"
-        },
-        {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "T1",
+          "name": "T1"
         }
       ],
       "start_at": "2026-10-26T17:00:00+00:00"
@@ -92,16 +24,16 @@
     {
       "best_of": 1,
       "block": "Swiss",
-      "event_id": "lolesports:eccd007ff390e3caac77",
+      "event_id": "lolesports:14dda36e7adbf4d9edfc",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "BLG",
+          "name": "BILIBILI GAMING"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "KC",
+          "name": "Karmine Corp"
         }
       ],
       "start_at": "2026-10-26T18:00:00+00:00"
@@ -109,16 +41,16 @@
     {
       "best_of": 3,
       "block": "Swiss",
-      "event_id": "lolesports:eb5324ae13c161fbc478",
+      "event_id": "lolesports:964dd0bf68efab9b8a10",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "LOS",
+          "name": "LOS"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "TSW",
+          "name": "Team Secret Whales"
         }
       ],
       "start_at": "2026-10-26T19:00:00+00:00"
@@ -126,16 +58,16 @@
     {
       "best_of": 3,
       "block": "Swiss",
-      "event_id": "lolesports:464fb3ec39138775a194",
+      "event_id": "lolesports:7ed5f3beaa484b66d35e",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "TLAW",
+          "name": "Team Liquid Alienware"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "AL",
+          "name": "Anyone's Legend"
         }
       ],
       "start_at": "2026-10-26T22:00:00+00:00"
@@ -423,10 +355,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 24,
-    "tbd_participant_count": 48
+    "event_count": 20,
+    "tbd_participant_count": 32
   },
-  "retrieved_at": "2026-10-25T04:36:47.232324+00:00",
+  "retrieved_at": "2026-10-25T13:10:01.070373+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
