@@ -27,20 +27,20 @@
   "schema_version": "1",
   "source_snapshot": {
     "analysis_window": {
-      "availability_cutoff": "2026-10-22T03:06:32.925750+00:00",
+      "availability_cutoff": "2026-10-26T23:06:12.889789+00:00",
       "end_inclusive": "2026-09-15T09:47:51+00:00",
       "historical": true,
       "mode": "LAST_ACTIVE_PATCH"
     },
-    "cutoff": "2026-10-22T03:06:32.925750+00:00",
+    "cutoff": "2026-10-26T23:06:12.889789+00:00",
     "fixture_only": false,
     "patch_id": "16.16",
     "radar_schema_version": "1",
     "source_versions": [
       {
-        "content_hash": "sha256:2159af9db08bb2495400efff8f50cf99953cfb7ac070348445dc2d853883562e",
+        "content_hash": "sha256:4eccb6fd01ef3dc05513fa5574b71c08d1b18cd9802268829c785510253f4758",
         "source_id": "oracles-elixir-match-data",
-        "source_version": "sha256:2159af9db08bb2495400efff8f50cf99953cfb7ac070348445dc2d853883562e"
+        "source_version": "sha256:4eccb6fd01ef3dc05513fa5574b71c08d1b18cd9802268829c785510253f4758"
       }
     ]
   },

@@ -1,6 +1,6 @@
 {
   "artifact_type": "team-decision-outcomes",
-  "as_of": "2026-10-22T03:06:32.925750+00:00",
+  "as_of": "2026-10-26T23:06:12.889789+00:00",
   "benchmark_ready": false,
   "boundary": "Only matured point-in-time benchmark outcomes are published. Human journal state is never uploaded, private team data is not inferred, and no raw archive path or provider row is included.",
   "candidate_policy": {
