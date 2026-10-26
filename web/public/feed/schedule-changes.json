@@ -2,11 +2,40 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:516a788f5cd4cb5399183f0a140ab50f8e91cc4ab3077d7a533786f99a0853f6",
-    "retrieved_at": "2026-10-26T04:41:52.957905+00:00"
+    "content_hash": "sha256:20bbd1153c18e28c32d4d2a267cb13333e2a509c341f9204c56de0b18ed2c6d6",
+    "retrieved_at": "2026-10-26T15:09:42.118938+00:00"
   },
-  "generated_at": "2026-10-26T04:41:52.957905+00:00",
+  "generated_at": "2026-10-26T15:09:42.118938+00:00",
   "history": [
+    {
+      "change_id": "schedule-change:56647600d8a7e7e5931b",
+      "correlation_method": "UNMATCHED",
+      "current_event": null,
+      "detected_at": "2026-10-26T15:09:42.118938+00:00",
+      "fields_changed": [
+        "event"
+      ],
+      "previous_event": {
+        "best_of": 1,
+        "block": "Swiss",
+        "event_id": "lolesports:128301a889a56fa74126",
+        "league": "Worlds",
+        "participants": [
+          {
+            "code": "CFO",
+            "name": "CTBC Flying Oyster"
+          },
+          {
+            "code": "T1",
+            "name": "T1"
+          }
+        ],
+        "start_at": "2026-10-26T17:00:00+00:00"
+      },
+      "severity": "REVIEW",
+      "summary": "T1 fixture left the future schedule",
+      "type": "EVENT_REMOVED"
+    },
     {
       "change_id": "schedule-change:467869ad6458eba7d1f5",
       "correlation_method": "UNMATCHED",
@@ -402,13 +431,43 @@
     }
   ],
   "latest_run": {
-    "change_count": 0,
-    "changes": [],
-    "status": "UNCHANGED"
+    "change_count": 1,
+    "changes": [
+      {
+        "change_id": "schedule-change:56647600d8a7e7e5931b",
+        "correlation_method": "UNMATCHED",
+        "current_event": null,
+        "detected_at": "2026-10-26T15:09:42.118938+00:00",
+        "fields_changed": [
+          "event"
+        ],
+        "previous_event": {
+          "best_of": 1,
+          "block": "Swiss",
+          "event_id": "lolesports:128301a889a56fa74126",
+          "league": "Worlds",
+          "participants": [
+            {
+              "code": "CFO",
+              "name": "CTBC Flying Oyster"
+            },
+            {
+              "code": "T1",
+              "name": "T1"
+            }
+          ],
+          "start_at": "2026-10-26T17:00:00+00:00"
+        },
+        "severity": "REVIEW",
+        "summary": "T1 fixture left the future schedule",
+        "type": "EVENT_REMOVED"
+      }
+    ],
+    "status": "CHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:62bb131ef19a35587c8fafb236291cc7cad1a4b96f6d027a4ee52861ab0998bc",
-    "retrieved_at": "2026-10-25T13:10:01.070373+00:00"
+    "content_hash": "sha256:516a788f5cd4cb5399183f0a140ab50f8e91cc4ab3077d7a533786f99a0853f6",
+    "retrieved_at": "2026-10-26T04:41:52.957905+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
