@@ -1,43 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-10-28T05:36:41.864697+00:00",
+  "available_at": "2026-10-28T15:05:01.368107+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:63ef873eafee021afd08425e1f3fc45590cab8609c9e0d25739105ac1ee50874",
+  "content_hash": "sha256:1138b943f03be614dd016c48bd772d35deac7deee6d9a66837eec4abf8a91fa5",
   "events": [
-    {
-      "best_of": 3,
-      "block": "Swiss",
-      "event_id": "lolesports:4cc1b1b115f87d844bdc",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "MKOI",
-          "name": "Movistar KOI"
-        },
-        {
-          "code": "T1",
-          "name": "T1"
-        }
-      ],
-      "start_at": "2026-10-28T20:00:00+00:00"
-    },
-    {
-      "best_of": 3,
-      "block": "Swiss",
-      "event_id": "lolesports:9759d7e2f003c23be6d0",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "LYON",
-          "name": "LYON"
-        },
-        {
-          "code": "IG",
-          "name": "Invictus Gaming"
-        }
-      ],
-      "start_at": "2026-10-28T23:00:00+00:00"
-    },
     {
       "best_of": 3,
       "block": "Swiss",
@@ -287,10 +253,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 16,
+    "event_count": 14,
     "tbd_participant_count": 20
   },
-  "retrieved_at": "2026-10-28T05:36:41.864697+00:00",
+  "retrieved_at": "2026-10-28T15:05:01.368107+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"

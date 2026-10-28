@@ -2,11 +2,40 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:63ef873eafee021afd08425e1f3fc45590cab8609c9e0d25739105ac1ee50874",
-    "retrieved_at": "2026-10-28T05:36:41.864697+00:00"
+    "content_hash": "sha256:1138b943f03be614dd016c48bd772d35deac7deee6d9a66837eec4abf8a91fa5",
+    "retrieved_at": "2026-10-28T15:05:01.368107+00:00"
   },
-  "generated_at": "2026-10-28T05:36:41.864697+00:00",
+  "generated_at": "2026-10-28T15:05:01.368107+00:00",
   "history": [
+    {
+      "change_id": "schedule-change:68c4c03019620e9362e4",
+      "correlation_method": "UNMATCHED",
+      "current_event": null,
+      "detected_at": "2026-10-28T15:05:01.368107+00:00",
+      "fields_changed": [
+        "event"
+      ],
+      "previous_event": {
+        "best_of": 3,
+        "block": "Swiss",
+        "event_id": "lolesports:4cc1b1b115f87d844bdc",
+        "league": "Worlds",
+        "participants": [
+          {
+            "code": "MKOI",
+            "name": "Movistar KOI"
+          },
+          {
+            "code": "T1",
+            "name": "T1"
+          }
+        ],
+        "start_at": "2026-10-28T20:00:00+00:00"
+      },
+      "severity": "REVIEW",
+      "summary": "T1 fixture left the future schedule",
+      "type": "EVENT_REMOVED"
+    },
     {
       "change_id": "schedule-change:1ad46d4939ad854f0b90",
       "correlation_method": "UNMATCHED",
@@ -460,13 +489,43 @@
     }
   ],
   "latest_run": {
-    "change_count": 0,
-    "changes": [],
-    "status": "UNCHANGED"
+    "change_count": 1,
+    "changes": [
+      {
+        "change_id": "schedule-change:68c4c03019620e9362e4",
+        "correlation_method": "UNMATCHED",
+        "current_event": null,
+        "detected_at": "2026-10-28T15:05:01.368107+00:00",
+        "fields_changed": [
+          "event"
+        ],
+        "previous_event": {
+          "best_of": 3,
+          "block": "Swiss",
+          "event_id": "lolesports:4cc1b1b115f87d844bdc",
+          "league": "Worlds",
+          "participants": [
+            {
+              "code": "MKOI",
+              "name": "Movistar KOI"
+            },
+            {
+              "code": "T1",
+              "name": "T1"
+            }
+          ],
+          "start_at": "2026-10-28T20:00:00+00:00"
+        },
+        "severity": "REVIEW",
+        "summary": "T1 fixture left the future schedule",
+        "type": "EVENT_REMOVED"
+      }
+    ],
+    "status": "CHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:4291b4817bf68094fb187695c3ab6fa753807e4a5afff1205c434c07af77f011",
-    "retrieved_at": "2026-10-27T20:40:38.257127+00:00"
+    "content_hash": "sha256:63ef873eafee021afd08425e1f3fc45590cab8609c9e0d25739105ac1ee50874",
+    "retrieved_at": "2026-10-28T05:36:41.864697+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
