@@ -2,10 +2,10 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:1138b943f03be614dd016c48bd772d35deac7deee6d9a66837eec4abf8a91fa5",
-    "retrieved_at": "2026-10-28T15:05:01.368107+00:00"
+    "content_hash": "sha256:617cb4dbde9d8966ef562a159a52bd74c1f4c866bdd3de76b0a7ecb89b810bc9",
+    "retrieved_at": "2026-10-29T05:43:10.275578+00:00"
   },
-  "generated_at": "2026-10-28T15:05:01.368107+00:00",
+  "generated_at": "2026-10-29T05:43:10.275578+00:00",
   "history": [
     {
       "change_id": "schedule-change:68c4c03019620e9362e4",
@@ -489,43 +489,13 @@
     }
   ],
   "latest_run": {
-    "change_count": 1,
-    "changes": [
-      {
-        "change_id": "schedule-change:68c4c03019620e9362e4",
-        "correlation_method": "UNMATCHED",
-        "current_event": null,
-        "detected_at": "2026-10-28T15:05:01.368107+00:00",
-        "fields_changed": [
-          "event"
-        ],
-        "previous_event": {
-          "best_of": 3,
-          "block": "Swiss",
-          "event_id": "lolesports:4cc1b1b115f87d844bdc",
-          "league": "Worlds",
-          "participants": [
-            {
-              "code": "MKOI",
-              "name": "Movistar KOI"
-            },
-            {
-              "code": "T1",
-              "name": "T1"
-            }
-          ],
-          "start_at": "2026-10-28T20:00:00+00:00"
-        },
-        "severity": "REVIEW",
-        "summary": "T1 fixture left the future schedule",
-        "type": "EVENT_REMOVED"
-      }
-    ],
-    "status": "CHANGED"
+    "change_count": 0,
+    "changes": [],
+    "status": "UNCHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:63ef873eafee021afd08425e1f3fc45590cab8609c9e0d25739105ac1ee50874",
-    "retrieved_at": "2026-10-28T05:36:41.864697+00:00"
+    "content_hash": "sha256:1138b943f03be614dd016c48bd772d35deac7deee6d9a66837eec4abf8a91fa5",
+    "retrieved_at": "2026-10-28T15:05:01.368107+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
