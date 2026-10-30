@@ -1,43 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-10-29T15:12:09.663665+00:00",
+  "available_at": "2026-10-30T05:42:21.688223+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:7a2b341de23639d79963745cb7228432e02a11d60770837c6d4ef357644dbd59",
+  "content_hash": "sha256:e0dcaef2a51698acb585030f0437e4f1bc40b8bfa162e989f1a70066a9cb507e",
   "events": [
-    {
-      "best_of": 3,
-      "block": "Swiss",
-      "event_id": "lolesports:3212699b1e01e59b61fe",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "TLAW",
-          "name": "Team Liquid Alienware"
-        },
-        {
-          "code": "LOS",
-          "name": "LOS"
-        }
-      ],
-      "start_at": "2026-10-30T20:00:00+00:00"
-    },
-    {
-      "best_of": 3,
-      "block": "Swiss",
-      "event_id": "lolesports:597c7c25b8abef9aa40c",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "G2",
-          "name": "G2 Esports"
-        },
-        {
-          "code": "HLE",
-          "name": "Hanwha Life Esports"
-        }
-      ],
-      "start_at": "2026-10-30T23:00:00+00:00"
-    },
     {
       "best_of": 3,
       "block": "Swiss",
@@ -219,10 +185,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 12,
+    "event_count": 10,
     "tbd_participant_count": 20
   },
-  "retrieved_at": "2026-10-29T15:12:09.663665+00:00",
+  "retrieved_at": "2026-10-30T05:42:21.688223+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
