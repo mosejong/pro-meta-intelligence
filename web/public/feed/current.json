@@ -1,11 +1,11 @@
 {
   "analysis_window": {
-    "availability_cutoff": "2026-10-26T23:06:12.889789+00:00",
+    "availability_cutoff": "2026-10-30T22:57:03.785997+00:00",
     "end_inclusive": "2026-09-15T09:47:51+00:00",
     "historical": true,
     "mode": "LAST_ACTIVE_PATCH"
   },
-  "cutoff": "2026-10-26T23:06:12.889789+00:00",
+  "cutoff": "2026-10-30T22:57:03.785997+00:00",
   "entries": [
     {
       "champion_id": "Akali",
@@ -5819,9 +5819,9 @@
     ],
     "source_versions": [
       {
-        "content_hash": "sha256:4eccb6fd01ef3dc05513fa5574b71c08d1b18cd9802268829c785510253f4758",
+        "content_hash": "sha256:ede9e5ea6b3f6a59386fc3882108fbb96e79f0c142775d8aa92e1458fa900a35",
         "source_id": "oracles-elixir-match-data",
-        "source_version": "sha256:4eccb6fd01ef3dc05513fa5574b71c08d1b18cd9802268829c785510253f4758"
+        "source_version": "sha256:ede9e5ea6b3f6a59386fc3882108fbb96e79f0c142775d8aa92e1458fa900a35"
       }
     ]
   },
@@ -5837,16 +5837,16 @@
   "history_status": {
     "aggregate": null,
     "archive": {
-      "active_cohort": 10,
-      "cohort_count": 10,
-      "collection_span_days": 64.811,
-      "last_retrieved_at": "2026-10-26T23:06:12.889789+00:00",
-      "matured_cutoff_count": 15,
-      "retrieval_count": 18,
-      "unique_normalized_state_count": 17
+      "active_cohort": 11,
+      "cohort_count": 11,
+      "collection_span_days": 68.805,
+      "last_retrieved_at": "2026-10-30T22:57:03.785997+00:00",
+      "matured_cutoff_count": 16,
+      "retrieval_count": 19,
+      "unique_normalized_state_count": 18
     },
     "artifact_type": "oe-history-status",
-    "as_of": "2026-10-26T23:06:12.889789+00:00",
+    "as_of": "2026-10-30T22:57:03.785997+00:00",
     "benchmark_ready": false,
     "blocking_reasons": [
       "RETRIEVAL_COUNT_BELOW_MINIMUM",
@@ -5857,24 +5857,24 @@
     "boundary": "Operational collection readiness only; not evidence that the Radar predicts adoption.",
     "collection": {
       "collection_span_days": 0.0,
-      "first_retrieved_at": "2026-10-26T23:06:12.889789+00:00",
-      "last_retrieved_at": "2026-10-26T23:06:12.889789+00:00",
+      "first_retrieved_at": "2026-10-30T22:57:03.785997+00:00",
+      "last_retrieved_at": "2026-10-30T22:57:03.785997+00:00",
       "matured_cutoff_count": 0,
       "retrieval_count": 1,
       "unique_normalized_state_count": 1
     },
     "continuity": {
-      "continuity_deadline_at": "2026-10-28T23:06:12.889789+00:00",
+      "continuity_deadline_at": "2026-11-01T22:57:03.785997+00:00",
       "maximum_gap_hours": 48,
-      "next_collection_due_at": "2026-10-27T23:06:12.889789+00:00",
+      "next_collection_due_at": "2026-10-31T22:57:03.785997+00:00",
       "status": "ON_TRACK"
     },
     "forecast": {
       "assumption": "UNINTERRUPTED_DAILY_COLLECTION_WITH_REQUIRED_DISTINCT_STATES",
-      "continuity_deadline_at": "2026-10-28T23:06:12.889789+00:00",
-      "earliest_possible_ready_at": "2026-11-09T23:06:12.889789+00:00",
+      "continuity_deadline_at": "2026-11-01T22:57:03.785997+00:00",
+      "earliest_possible_ready_at": "2026-11-13T22:57:03.785997+00:00",
       "guaranteed": false,
-      "next_collection_due_at": "2026-10-27T23:06:12.889789+00:00",
+      "next_collection_due_at": "2026-10-31T22:57:03.785997+00:00",
       "remaining": {
         "collection_span_days": 14.0,
         "matured_cutoffs": 2,
@@ -5929,10 +5929,10 @@
   "input": {
     "authenticity": "REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD",
     "import_report": {
-      "byte_length": 78734837,
-      "content_hash": "sha256:4eccb6fd01ef3dc05513fa5574b71c08d1b18cd9802268829c785510253f4758",
-      "discovered_game_count": 9813,
-      "imported_game_count": 9176,
+      "byte_length": 78854980,
+      "content_hash": "sha256:ede9e5ea6b3f6a59386fc3882108fbb96e79f0c142775d8aa92e1458fa900a35",
+      "discovered_game_count": 9828,
+      "imported_game_count": 9191,
       "issue_context_counts": [
         {
           "code": "INCOMPLETE_GAME",
@@ -6980,11 +6980,11 @@
         }
       ],
       "rejected_game_count": 637,
-      "retrieved_at": "2026-10-26T23:06:12.889789+00:00",
-      "row_count": 117756,
+      "retrieved_at": "2026-10-30T22:57:03.785997+00:00",
+      "row_count": 117936,
       "source_id": "oracles-elixir-match-data",
       "source_timezone": "UTC",
-      "source_version": "sha256:4eccb6fd01ef3dc05513fa5574b71c08d1b18cd9802268829c785510253f4758",
+      "source_version": "sha256:ede9e5ea6b3f6a59386fc3882108fbb96e79f0c142775d8aa92e1458fa900a35",
       "truncated_issue_count": 537
     }
   },
@@ -7033,13 +7033,13 @@
       ],
       "top_champions": 5
     },
-    "cutoff": "2026-10-26T23:06:12.889789+00:00",
+    "cutoff": "2026-10-30T22:57:03.785997+00:00",
     "evidence_index": {
       "source_versions": [
         {
-          "content_hash": "sha256:4eccb6fd01ef3dc05513fa5574b71c08d1b18cd9802268829c785510253f4758",
+          "content_hash": "sha256:ede9e5ea6b3f6a59386fc3882108fbb96e79f0c142775d8aa92e1458fa900a35",
           "source_id": "oracles-elixir-match-data",
-          "source_version": "sha256:4eccb6fd01ef3dc05513fa5574b71c08d1b18cd9802268829c785510253f4758"
+          "source_version": "sha256:ede9e5ea6b3f6a59386fc3882108fbb96e79f0c142775d8aa92e1458fa900a35"
         }
       ]
     },
@@ -116487,9 +116487,9 @@
   "publication_readiness": {
     "annual_coverage": {
       "blocking_issue_game_count": 9,
-      "discovered_game_count": 9813,
+      "discovered_game_count": 9828,
       "first_observed_at": "2026-01-08T17:08:27+00:00",
-      "imported_game_count": 9176,
+      "imported_game_count": 9191,
       "issue_counts": {
         "INCOMPLETE_GAME": 167,
         "MISSING_FIRST_PICK": 15,
@@ -116497,7 +116497,7 @@
         "PICK_SET_MISMATCH": 9
       },
       "known_exclusion_game_count": 628,
-      "last_observed_at": "2026-10-26T17:12:02+00:00",
+      "last_observed_at": "2026-10-30T00:24:51+00:00",
       "league_count": 42,
       "patch_count": 19,
       "rejected_game_count": 637
@@ -117296,7 +117296,7 @@
       {
         "distinct_team_count": 43,
         "first_observed_at": "2026-10-09T16:06:57+00:00",
-        "last_observed_at": "2026-10-26T17:12:02+00:00",
+        "last_observed_at": "2026-10-30T00:24:51+00:00",
         "league_count": 6,
         "leagues": [
           "EM",
@@ -117306,9 +117306,9 @@
           "VCS",
           "WLDs"
         ],
-        "match_count": 187,
+        "match_count": 202,
         "patch_id": "16.20",
-        "pick_event_count": 1870,
+        "pick_event_count": 2020,
         "region_count": 3,
         "regions": [
           "EMEA",
@@ -117322,7 +117322,7 @@
       }
     ],
     "ready_for_radar": true,
-    "retrieved_at": "2026-10-26T23:06:12.889789+00:00",
+    "retrieved_at": "2026-10-30T22:57:03.785997+00:00",
     "schema_version": "2",
     "selected_patch": {
       "distinct_team_count": 171,
@@ -117422,7 +117422,7 @@
       "patch_id": "16.16"
     },
     "source_id": "oracles-elixir-match-data",
-    "source_version": "sha256:4eccb6fd01ef3dc05513fa5574b71c08d1b18cd9802268829c785510253f4758",
+    "source_version": "sha256:ede9e5ea6b3f6a59386fc3882108fbb96e79f0c142775d8aa92e1458fa900a35",
     "warnings": [
       "PATCH_HAS_KNOWN_IMPORT_EXCLUSIONS",
       "ANNUAL_BLOCKING_IMPORT_ISSUES_OUTSIDE_SELECTED_PATCH",
@@ -117430,7 +117430,7 @@
     ]
   },
   "quality": {
-    "available_other_patch_or_window_match_count_excluded": 9080,
+    "available_other_patch_or_window_match_count_excluded": 9095,
     "future_event_count_excluded": 0,
     "future_match_count_excluded": 0,
     "unknown_leagues": []
