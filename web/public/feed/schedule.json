@@ -1,22 +1,22 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-11-01T05:57:36.503713+00:00",
+  "available_at": "2026-11-01T15:04:34.075557+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:33a878766c01c69fc36ede31ac0baac81bf38a9cc125fb8614ebba7d65a84b8a",
+  "content_hash": "sha256:3d07eaa4f01776bfbdb189eee7447cdad14be24451c25914c78b23cefd45e8c9",
   "events": [
     {
       "best_of": 5,
       "block": "Quarterfinals",
-      "event_id": "lolesports:cbb89ef5a342635cd7c1",
+      "event_id": "lolesports:921aca8254b933c96029",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "TES",
+          "name": "TOP ESPORTS"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "IG",
+          "name": "Invictus Gaming"
         }
       ],
       "start_at": "2026-11-03T22:00:00+00:00"
@@ -24,16 +24,16 @@
     {
       "best_of": 5,
       "block": "Quarterfinals",
-      "event_id": "lolesports:5163660a308e4cf2edc8",
+      "event_id": "lolesports:34f55d4c3ccc5ef1b18c",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "GEN",
+          "name": "Gen.G Esports"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "LYON",
+          "name": "LYON"
         }
       ],
       "start_at": "2026-11-04T22:00:00+00:00"
@@ -41,16 +41,16 @@
     {
       "best_of": 5,
       "block": "Quarterfinals",
-      "event_id": "lolesports:8a01fd9fc29865eccd61",
+      "event_id": "lolesports:0d56685f117c6bef1b81",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "DK",
+          "name": "Dplus KIA"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "BLG",
+          "name": "BILIBILI GAMING"
         }
       ],
       "start_at": "2026-11-05T22:00:00+00:00"
@@ -58,16 +58,16 @@
     {
       "best_of": 5,
       "block": "Quarterfinals",
-      "event_id": "lolesports:19b628ceaf3bc28c7f1d",
+      "event_id": "lolesports:5593c07705f431906e53",
       "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "T1",
+          "name": "T1"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "KC",
+          "name": "Karmine Corp"
         }
       ],
       "start_at": "2026-11-06T22:00:00+00:00"
@@ -135,9 +135,9 @@
   "locale": "en-US",
   "quality": {
     "event_count": 7,
-    "tbd_participant_count": 14
+    "tbd_participant_count": 6
   },
-  "retrieved_at": "2026-11-01T05:57:36.503713+00:00",
+  "retrieved_at": "2026-11-01T15:04:34.075557+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"

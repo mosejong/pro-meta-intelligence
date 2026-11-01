@@ -2,11 +2,40 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:33a878766c01c69fc36ede31ac0baac81bf38a9cc125fb8614ebba7d65a84b8a",
-    "retrieved_at": "2026-11-01T05:57:36.503713+00:00"
+    "content_hash": "sha256:3d07eaa4f01776bfbdb189eee7447cdad14be24451c25914c78b23cefd45e8c9",
+    "retrieved_at": "2026-11-01T15:04:34.075557+00:00"
   },
-  "generated_at": "2026-11-01T05:57:36.503713+00:00",
+  "generated_at": "2026-11-01T15:04:34.075557+00:00",
   "history": [
+    {
+      "change_id": "schedule-change:1c1095366a4a62464a44",
+      "correlation_method": "UNMATCHED",
+      "current_event": {
+        "best_of": 5,
+        "block": "Quarterfinals",
+        "event_id": "lolesports:5593c07705f431906e53",
+        "league": "Worlds",
+        "participants": [
+          {
+            "code": "T1",
+            "name": "T1"
+          },
+          {
+            "code": "KC",
+            "name": "Karmine Corp"
+          }
+        ],
+        "start_at": "2026-11-06T22:00:00+00:00"
+      },
+      "detected_at": "2026-11-01T15:04:34.075557+00:00",
+      "fields_changed": [
+        "event"
+      ],
+      "previous_event": null,
+      "severity": "REVIEW",
+      "summary": "new T1 fixture added",
+      "type": "EVENT_ADDED"
+    },
     {
       "change_id": "schedule-change:68c4c03019620e9362e4",
       "correlation_method": "UNMATCHED",
@@ -489,13 +518,43 @@
     }
   ],
   "latest_run": {
-    "change_count": 0,
-    "changes": [],
-    "status": "UNCHANGED"
+    "change_count": 1,
+    "changes": [
+      {
+        "change_id": "schedule-change:1c1095366a4a62464a44",
+        "correlation_method": "UNMATCHED",
+        "current_event": {
+          "best_of": 5,
+          "block": "Quarterfinals",
+          "event_id": "lolesports:5593c07705f431906e53",
+          "league": "Worlds",
+          "participants": [
+            {
+              "code": "T1",
+              "name": "T1"
+            },
+            {
+              "code": "KC",
+              "name": "Karmine Corp"
+            }
+          ],
+          "start_at": "2026-11-06T22:00:00+00:00"
+        },
+        "detected_at": "2026-11-01T15:04:34.075557+00:00",
+        "fields_changed": [
+          "event"
+        ],
+        "previous_event": null,
+        "severity": "REVIEW",
+        "summary": "new T1 fixture added",
+        "type": "EVENT_ADDED"
+      }
+    ],
+    "status": "CHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:0576a5e516bc423c85bb3fecdca668a3e9c19f97052f9354c648612276ff8663",
-    "retrieved_at": "2026-10-31T14:30:45.236608+00:00"
+    "content_hash": "sha256:33a878766c01c69fc36ede31ac0baac81bf38a9cc125fb8614ebba7d65a84b8a",
+    "retrieved_at": "2026-11-01T05:57:36.503713+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
