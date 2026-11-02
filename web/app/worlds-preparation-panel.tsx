@@ -1,6 +1,6 @@
 import type { RadarReport } from "./radar-types";
 import { isChampionLocked } from "./draft-agent";
-import { buildWorldsPreparation, WORLDS_2026 } from "./worlds-preparation";
+import { buildWorldsPreparation, formatKst, WORLDS_2026 } from "./worlds-preparation";
 import "./worlds-preparation.css";
 
 export function WorldsPreparationPanel({ report, canChangeMatchup, onChooseOpponent, nameOf, previousPicks = [] }: {
@@ -11,12 +11,28 @@ export function WorldsPreparationPanel({ report, canChangeMatchup, onChooseOppon
   previousPicks?: string[];
 }) {
   const entries = buildWorldsPreparation(report);
-  const ownTeam = entries.find((entry) => entry.code === "T1")?.team;
+  const own = entries.find((entry) => entry.code === "T1");
+  const ownTeam = own?.team;
+  const nextOpponent = own?.quarterfinal?.opponent ?? null;
+  const stageOrder = (entry: (typeof entries)[number]) =>
+    entry.code === nextOpponent ? 0 : entry.stage === "QUARTERFINAL" ? 1 : 2;
+  const opponents = entries.filter((entry) => entry.code !== "T1")
+    .map((entry, index) => ({ entry, index }))
+    .sort((left, right) => stageOrder(left.entry) - stageOrder(right.entry) || left.index - right.index)
+    .map(({ entry }) => entry);
   return <details className="worlds-preparation" id="draft-worlds">
     <summary><strong>WORLDS 2026 · 준비실</strong><span>10.15–11.14 · 공식 일정 기준</span></summary>
     <div className="worlds-preparation-content">
-      <p>T1 진출 확인 · 아래 팀은 출전 명단에서 확인한 연습 대상입니다. 실제 대진은 아직 지정하지 않았습니다.</p>
-      <p>{WORLDS_2026.qualification_checked_on} 공식 페이지 확인 · 진출 팀 {entries.length}개 · 명단 순서는 시드나 전력 순위가 아닙니다.</p>
+      {own?.quarterfinal
+        ? <p className="worlds-next-match"><strong>T1 8강 · vs {own.quarterfinal.opponent}</strong> · {formatKst(own.quarterfinal.start_at)} · 5판 3선승 · 결과는 반영하지 않습니다.</p>
+        : <p>T1 8강 대진 미확인 · 아래 팀은 출전 명단에서 확인한 연습 대상입니다.</p>}
+      <div className="worlds-bracket" aria-label="8강 대진">
+        {WORLDS_2026.quarterfinals.map((match) => <span key={match.start_at} className={(match.teams as readonly string[]).includes("T1") ? "is-own" : undefined}>
+          <b>{match.teams[0]} vs {match.teams[1]}</b>{formatKst(match.start_at)}
+        </span>)}
+      </div>
+      <p>대진 {WORLDS_2026.knockout_checked_on} 언론 보도 기준 · 4강 {WORLDS_2026.semifinal_dates.map((date) => date.slice(5).replace("-", ".")).join("·")} · 결승 {WORLDS_2026.final_date.slice(5).replace("-", ".")} (미국 현지) · 4강 맞대결 조합은 확인하지 못했습니다.</p>
+      <p>{WORLDS_2026.qualification_checked_on} 공식 진출 명단 + 8강 진출팀 · 확인 팀 {entries.length}개 · 명단 순서는 시드나 전력 순위가 아닙니다.</p>
       <div className="worlds-preparation-status">
         <span><b>대회 패치</b>{WORLDS_2026.patch} · 규정집 {WORLDS_2026.rules_version} 확인</span>
         <span><b>현재 분석</b>{report.fixture_only ? "예제" : "공개 경기"} · {report.patch_id} · {report.cutoff.slice(0, 10)} 기준</span>
@@ -31,8 +47,8 @@ export function WorldsPreparationPanel({ report, canChangeMatchup, onChooseOppon
         <p>월즈 규정집 5.1은 제한 목록을 대회 전에 참가 팀에 전달한다고 명시합니다. 공개된 챔피언별 목록은 확인하지 못했으며, 운영진은 대회 중에도 제한이나 패치를 변경할 수 있습니다.</p>
       </details>
       <div className="worlds-opponents">
-        {entries.filter((entry) => entry.code !== "T1").map((entry) => <article key={entry.code}>
-          <header><strong>{entry.code}</strong><span>{entry.league} · 진출 확인</span></header>
+        {opponents.map((entry) => <article key={entry.code} className={entry.code === nextOpponent ? "is-next" : entry.stage === "OUT_OF_KNOCKOUTS" ? "is-out" : undefined}>
+          <header><strong>{entry.code}</strong><span>{entry.league} · {entry.code === nextOpponent ? "T1 8강 상대" : entry.stage === "QUARTERFINAL" ? "8강 진출" : "탈락 · 기록 참고"}</span></header>
           <p>{entry.team?.team_name ?? entry.names[0]} · {entry.sample ? `${entry.sample}경기 표본` : "현재 분석 표본 없음"}</p>
           <p>{entry.first_picks.length ? entry.first_picks.map(nameOf).join(" · ") : "패치별 픽 근거 보강 필요"}</p>
           <details className="worlds-role-coverage"><summary>역할별 관측 챔피언</summary>
@@ -53,11 +69,12 @@ export function WorldsPreparationPanel({ report, canChangeMatchup, onChooseOppon
             <p>공개 보고서에 수록된 챔피언만 집계합니다. 역할별 중복은 허용하며 전체 챔피언 폭·숙련도·현재 선수단의 확정값은 아닙니다.</p>
           </details>
           <button type="button" disabled={!canChangeMatchup || !ownTeam || !entry.team || entry.sample === 0}
-            onClick={() => entry.team && onChooseOpponent(entry.team.team_id)}>T1 vs {entry.code} 연습</button>
+            onClick={() => entry.team && onChooseOpponent(entry.team.team_id)}>T1 vs {entry.code} {entry.code === nextOpponent ? "8강 대비" : "연습"}</button>
         </article>)}
       </div>
       {!canChangeMatchup && <p>진행 중인 밴픽은 유지됩니다. 상대 변경은 빈 시리즈에서 할 수 있습니다.</p>}
-      <p className="worlds-preparation-sources">명단 {WORLDS_2026.qualification_checked_on} 확인 · 규정 {WORLDS_2026.checked_on} 확인 · 전체 출전 명단은 아직 미완성 ·
+      <p className="worlds-preparation-sources">명단 {WORLDS_2026.qualification_checked_on} 확인 · 대진 {WORLDS_2026.knockout_checked_on} 확인 · 규정 {WORLDS_2026.checked_on} 확인 ·
+        <a href={WORLDS_2026.knockout_source} target="_blank" rel="noreferrer">8강 대진 보도</a> ·
         <a href={WORLDS_2026.qualification_source} target="_blank" rel="noreferrer">공식 진출 명단</a> ·
         <a href={WORLDS_2026.schedule_source} target="_blank" rel="noreferrer">공식 일정</a> ·
         <a href={WORLDS_2026.rules_source} target="_blank" rel="noreferrer">월즈 규정집</a> ·

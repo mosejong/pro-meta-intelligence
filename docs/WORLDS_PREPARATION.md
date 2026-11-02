@@ -1,5 +1,18 @@
 # Worlds 2026 preparation
 
+## Knockout draw reviewed November 3
+
+The Swiss stage ended October 31. The press-reported draw ([Strafe, Nov 1](https://www.strafe.com/news/read/worlds-2026-playoffs-bracket-schedule-start-times-and-format/))
+lists eight best-of-five quarterfinals at 16:00 CST (22:00 UTC, 07:00 KST next day):
+TES vs IG (Nov 3), GEN vs LYON (Nov 4), DK vs BLG (Nov 5) and **T1 vs KC (Nov 6 CST / Nov 7
+KST)**. Semifinals are Nov 7–8 and the final Nov 14 (US dates). The official bracket page was not
+directly retrievable, so this is a dated press snapshot; semifinal pairings were not verified.
+
+The preparation panel now leads with T1's quarterfinal and KC, lists all four pairings, adds IG
+and LYON with exact main-team matches (samples 3 each in the September report) and labels other
+named qualifiers as out of the knockouts for reference only. No match result is stored or
+inferred; update `WORLDS_2026.quarterfinals` and the review date as rounds complete.
+
 ## International events in the Radar — November 3
 
 OE international events (`WLDs`, `MSI`, `FST`, `EWC`) now map to a separate `INTERNATIONAL`

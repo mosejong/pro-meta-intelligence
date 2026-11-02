@@ -13,16 +13,16 @@ test("historical draft evaluation measures the production preview and rejects le
     const { applyDraftSelection, previewOpponentPick, STANDARD_DRAFT_SEQUENCE, draftSequence, completeFearlessGame, fearlessLocks, serializeDraftScenario } = await vite.ssrLoadModule("/app/draft-agent.ts");
     const { parseDraftSession } = await vite.ssrLoadModule("/app/draft-session.ts");
     const { canAssignDistinctRoles, observedChampionRoles, previewRoleExperiment } = await vite.ssrLoadModule("/app/draft-role-experiment.ts");
-    const { buildWorldsPreparation, worldsRoleCoverage, WORLDS_2026 } = await vite.ssrLoadModule("/app/worlds-preparation.ts");
+    const { buildWorldsPreparation, formatKst, worldsQuarterfinalFor, worldsRoleCoverage, WORLDS_2026 } = await vite.ssrLoadModule("/app/worlds-preparation.ts");
     const report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
     report.fixture_only = true;
     await t.test("Worlds preparation requires exact main-team identity and separates official patch from evidence", () => {
       const before = JSON.stringify(report);
       const entries = buildWorldsPreparation(report);
-      assert.equal(entries.length, 13);
+      assert.equal(entries.length, 15);
       assert.equal(WORLDS_2026.qualification_checked_on, "2026-09-21");
       assert.equal(WORLDS_2026.checked_on, "2026-09-15");
-      const additions = { DK: "Dplus Kia", TES: "Top Esports", AL: "Anyone's Legend", G2: "G2 Esports", KC: "Karmine Corp", MKOI: "Movistar KOI" };
+      const additions = { DK: "Dplus Kia", TES: "Top Esports", AL: "Anyone's Legend", G2: "G2 Esports", KC: "Karmine Corp", MKOI: "Movistar KOI", IG: "Invictus Gaming", LYON: "LYON" };
       for (const [code, name] of Object.entries(additions)) {
         assert.equal(entries.find((entry) => entry.code === code).team.team_name, name);
       }
@@ -35,6 +35,16 @@ test("historical draft evaluation measures the production preview and rejects le
       assert.equal(entries.find((entry) => entry.code === "T1").team.team_name, "T1");
       assert.equal(entries.some((entry) => entry.team?.team_name.includes("Academy")), false);
       assert.equal(JSON.stringify(report), before);
+      const knockout = WORLDS_2026.quarterfinals.flatMap((match) => match.teams);
+      assert.equal(new Set(knockout).size, 8);
+      assert.ok(knockout.every((code) => entries.some((entry) => entry.code === code)));
+      assert.deepEqual(entries.filter((entry) => entry.stage === "QUARTERFINAL").map((entry) => entry.code).sort(), [...knockout].sort());
+      assert.equal(entries.find((entry) => entry.code === "HLE").stage, "OUT_OF_KNOCKOUTS");
+      assert.deepEqual(worldsQuarterfinalFor("T1"), { start_at: "2026-11-06T22:00:00Z", opponent: "KC" });
+      assert.equal(worldsQuarterfinalFor("KC").opponent, "T1");
+      assert.equal(worldsQuarterfinalFor("G2"), null);
+      assert.equal(formatKst("2026-11-06T22:00:00Z"), "11.7 07:00 KST");
+      assert.equal(formatKst("2026-12-31T15:30:00Z"), "1.1 00:30 KST");
       const missing = structuredClone(report);
       missing.opponent_prep.teams = missing.opponent_prep.teams.filter((team) => team.team_name !== "T1");
       assert.equal(buildWorldsPreparation(missing).find((entry) => entry.code === "T1").team, null);

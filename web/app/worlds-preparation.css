@@ -37,3 +37,9 @@
 .worlds-champion-evidence em { font-style: normal; font-size: .75rem; background: #e3def9; color: #382263; padding: .15rem .3rem; }
 .worlds-champion-evidence small { font-size: .75rem; line-height: 1.5; color: #56564d; }
 .worlds-rules-notes summary:focus-visible, .worlds-role-coverage summary:focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
+.worlds-next-match { padding: .75rem 1rem; border-left: 4px solid #e2012d; background: #fff1f3; }
+.worlds-bracket { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: .5rem; margin: .75rem 0; }
+.worlds-bracket span { display: flex; flex-direction: column; gap: .125rem; padding: .5rem .75rem; border: 1px solid #d5deeb; border-radius: .5rem; font-size: .875rem; }
+.worlds-bracket span.is-own { border-color: #e2012d; }
+.worlds-opponents article.is-next { border-color: #e2012d; box-shadow: 0 0 0 2px #e2012d33; }
+.worlds-opponents article.is-out { opacity: .72; }

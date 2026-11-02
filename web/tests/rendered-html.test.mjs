@@ -263,7 +263,12 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   assert.match(html, /대회 패치/);
   assert.match(html, /레드 선픽/);
   assert.match(html.replaceAll("<!-- -->", ""), /T1 vs BLG 연습/);
-  assert.match(html, /전체 출전 명단은 아직 미완성/);
+  const text = html.replaceAll("<!-- -->", "");
+  assert.match(text, /T1 8강 · vs KC/);
+  assert.match(text, /11\.7 07:00 KST/);
+  assert.match(text, /T1 vs KC 8강 대비/);
+  assert.match(text, /4강 맞대결 조합은 확인하지 못했습니다/);
+  assert.ok(text.indexOf("T1 vs KC 8강 대비") < text.indexOf("T1 vs BLG 연습"));
   assert.match(html, /진행 중인 밴픽은 유지됩니다/);
   assert.match(html, /DRAFT LAB · STANDARD 5 BAN \/ 5 PICK/);
   assert.match(html, /가상 밴픽/);

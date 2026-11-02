@@ -28,8 +28,37 @@ export const WORLDS_2026 = {
     { code: "G2", league: "LEC", names: ["G2 Esports", "G2"] },
     { code: "KC", league: "LEC", names: ["Karmine Corp", "KC"] },
     { code: "MKOI", league: "LEC", names: ["Movistar KOI", "MKOI"] },
+    { code: "IG", league: "LPL", names: ["Invictus Gaming", "IG"] },
+    { code: "LYON", league: "LCS", names: ["LYON"] },
   ],
+  // Press-reported draw after the Swiss stage; official bracket page was not directly retrievable.
+  // Results are never inferred: a pairing only says who meets whom and when.
+  knockout_checked_on: "2026-11-03",
+  knockout_source: "https://www.strafe.com/news/read/worlds-2026-playoffs-bracket-schedule-start-times-and-format/",
+  quarterfinals: [
+    { start_at: "2026-11-03T22:00:00Z", teams: ["TES", "IG"] },
+    { start_at: "2026-11-04T22:00:00Z", teams: ["GEN", "LYON"] },
+    { start_at: "2026-11-05T22:00:00Z", teams: ["DK", "BLG"] },
+    { start_at: "2026-11-06T22:00:00Z", teams: ["T1", "KC"] },
+  ],
+  semifinal_dates: ["2026-11-07", "2026-11-08"],
+  final_date: "2026-11-14",
 } as const;
+
+export type WorldsStage = "QUARTERFINAL" | "OUT_OF_KNOCKOUTS";
+
+// Fixed KST (UTC+9, no daylight saving) so server and browser render the same text.
+export function formatKst(isoUtc: string) {
+  const kst = new Date(Date.parse(isoUtc) + 9 * 60 * 60 * 1000);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${kst.getUTCMonth() + 1}.${kst.getUTCDate()} ${pad(kst.getUTCHours())}:${pad(kst.getUTCMinutes())} KST`;
+}
+
+export function worldsQuarterfinalFor(code: string) {
+  const match = WORLDS_2026.quarterfinals.find((item) => (item.teams as readonly string[]).includes(code));
+  if (!match) return null;
+  return { start_at: match.start_at, opponent: match.teams[0] === code ? match.teams[1] : match.teams[0] };
+}
 
 const roles = [
   ["TOP", "탑"], ["JUNGLE", "정글"], ["MID", "미드"], ["BOTTOM", "바텀"], ["SUPPORT", "서포터"],
@@ -79,7 +108,9 @@ export function buildWorldsPreparation(report: RadarReport) {
       qualified.names.some((name) => normalize(name) === normalize(team.team_name)));
     // An ambiguous identity never silently picks one feed row or an academy team.
     const team: OpponentTeam | null = matches.length === 1 ? matches[0] : null;
-    return { ...qualified, team, sample: team?.game_count ?? 0,
+    const quarterfinal = worldsQuarterfinalFor(qualified.code);
+    const stage: WorldsStage = quarterfinal ? "QUARTERFINAL" : "OUT_OF_KNOCKOUTS";
+    return { ...qualified, team, sample: team?.game_count ?? 0, stage, quarterfinal,
       first_picks: team?.priority_picks.slice(0, 3).map((pick) => pick.champion_id) ?? [],
       role_coverage: worldsRoleCoverage(team),
     };
