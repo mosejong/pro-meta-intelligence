@@ -1,0 +1,85 @@
+import { buildDraftScoutBrief, draftScoutFor, formatRate, headToHeadSeries, headToHeadStaples } from "./draft-scout";
+import { formatKst, worldsQuarterfinalFor } from "./worlds-preparation";
+import "./draft-scout.css";
+
+const roleLabels: Record<string, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
+const leagueLabels: Record<string, string> = { INTERNATIONAL: "국제대회" };
+
+export function DraftScoutPanel({ nameOf, previousPicks = [] }: { nameOf: (championId: string) => string; previousPicks?: string[] }) {
+  const quarterfinal = worldsQuarterfinalFor("T1");
+  const pack = draftScoutFor(quarterfinal?.opponent);
+  if (!quarterfinal || !pack) return null;
+  const code = quarterfinal.opponent;
+  const brief = buildDraftScoutBrief(pack, previousPicks);
+  const { target, own } = pack;
+  const lock = (locked: boolean) => locked ? <em>피어리스 잠금</em> : null;
+  const leagues = (counts: Record<string, number>) => Object.entries(counts).map(([league, count]) => `${league} ${count}`).join(" · ");
+  return <details className="draft-scout" id="draft-scout" open>
+    <summary><strong>T1 vs {code} · 밴픽 스카우팅</strong><span>8강 {formatKst(quarterfinal.start_at)} · 밴픽 단계에서 주도권을 가져오기 위한 근거</span></summary>
+    <div className="draft-scout-content">
+      <p className="draft-scout-window">{pack.cutoff.slice(0, 10)} 기준 시즌 공개 경기 · {code} 최근 {target.game_count}경기 ({leagues(target.leagues)}) · T1 최근 {own.game_count}경기 ({leagues(own.leagues)}) · 패치 {target.patches[0]}–{target.patches.at(-1)}
+        {pack.quality_flags.includes("CURRENT_EVENT_GAMES_MISSING") && <b> · 월즈 스위스 경기 미포함</b>}</p>
+
+      <section aria-labelledby="draft-scout-h2h">
+        <h3 id="draft-scout-h2h">상대전적과 서로 먼저 쓴 밴</h3>
+        <ul className="draft-scout-series">{headToHeadSeries(pack).map((series) => <li key={`${series.league}:${series.date}`}>
+          <b>{series.league} {series.date.slice(5).replace("-", ".")}</b>
+          <span>T1 {series.own_wins} : {series.target_wins} {code}</span>
+        </li>)}</ul>
+        <p>{code}가 T1 상대로 반복한 밴: {headToHeadStaples(pack, "target").map((item) => `${nameOf(item.champion_id)} ${item.count}/${pack.head_to_head.length}`).join(" · ") || "반복 밴 없음"}</p>
+        <p>T1이 {code} 상대로 반복한 밴: {headToHeadStaples(pack, "own").map((item) => `${nameOf(item.champion_id)} ${item.count}/${pack.head_to_head.length}`).join(" · ") || "반복 밴 없음"}</p>
+      </section>
+
+      <div className="draft-scout-levers">
+        <section aria-labelledby="draft-scout-deny">
+          <h3 id="draft-scout-deny">밴으로 지울 {code} 주력</h3>
+          <ol>{brief.deny.map((item) => <li key={item.champion_id}>
+            <span>{nameOf(item.champion_id)}{lock(item.locked)}</span>
+            <small>{item.player_name} {roleLabels[item.role] ?? item.role} · {item.game_count}경기 {item.win_count}승 · 선수 픽의 {formatRate(item.share)}{item.also_own_priority ? " · T1도 우선 픽" : ""}</small>
+          </li>)}</ol>
+        </section>
+        <section aria-labelledby="draft-scout-contested">
+          <h3 id="draft-scout-contested">선픽으로 먼저 가져올 공통 우선순위</h3>
+          <ol>{brief.contested.map((item) => <li key={item.champion_id}>
+            <span>{nameOf(item.champion_id)}{lock(item.locked)}</span>
+            <small>T1 {item.own_game_count}픽 · {code} {item.target_game_count}픽 · 양 팀 상위 픽 또는 1로테이션</small>
+          </li>)}</ol>
+        </section>
+        <section aria-labelledby="draft-scout-protect">
+          <h3 id="draft-scout-protect">{code}가 T1에게 먼저 지울 챔피언</h3>
+          <ol>{brief.protect.map((item) => <li key={item.champion_id}>
+            <span>{nameOf(item.champion_id)}{lock(item.locked)}</span>
+            <small>상대전 밴 {item.banned_by_target_head_to_head}/{pack.head_to_head.length} · 시즌 1페이즈 피밴 {item.received_phase_one_ban_count} · T1 {item.own_game_count}픽</small>
+          </li>)}</ol>
+          <p>밴이 예상되는 챔피언은 대체 픽을 미리 준비하고, 풀리면 선픽 후보로 검토합니다.</p>
+        </section>
+        <section aria-labelledby="draft-scout-fearless">
+          <h3 id="draft-scout-fearless">피어리스 5판 소진 압박</h3>
+          <ol>{brief.pressure.map((pool) => <li key={pool.role}>
+            <span>{roleLabels[pool.role] ?? pool.role} · {pool.player_name}</span>
+            <small>{pool.unique_champions}개 사용 · {pack.config.minimum_comfort_games}경기 이상 {pool.comfort_champions}개 · 상위 3개 비중 {formatRate(pool.top_three_share)}{previousPicks.length > 0 ? ` · 상위 ${pool.top_total}개 중 남은 ${pool.top_remaining}개` : ""}</small>
+          </li>)}</ol>
+          <p>상위 3개 비중이 높은 포지션부터 주력이 잠길수록 선택지가 빠르게 줄어듭니다.</p>
+        </section>
+      </div>
+
+      <div className="draft-scout-facts">
+        <span><b>{code} 진영</b>블루 {target.side_record.BLUE.win_count}-{target.side_record.BLUE.game_count - target.side_record.BLUE.win_count} · 레드 {target.side_record.RED.win_count}-{target.side_record.RED.game_count - target.side_record.RED.win_count} · 선픽 {formatRate(target.first_selection.rate)}</span>
+        <span><b>{code} 1페이즈 밴</b>{pack.levers.target_spends_phase_one_bans.map((item) => `${nameOf(item.champion_id)} ${formatRate(item.rate)}`).join(" · ")}</span>
+        <span><b>{code} 마지막 픽 포지션</b>{brief.counterpick_role ? `${roleLabels[brief.counterpick_role.champion_id] ?? brief.counterpick_role.champion_id} ${brief.counterpick_role.game_count}/${brief.last_pick_games}` : "근거 없음"} · 해당 포지션 카운터를 늦게 받지 않도록 공개 순서 검토</span>
+        <span><b>{code} 1로테이션 픽</b>{target.first_rotation_picks.slice(0, 4).map((item) => `${nameOf(item.champion_id)} ${item.game_count}`).join(" · ")}</span>
+      </div>
+
+      <section aria-labelledby="draft-scout-leagues">
+        <h3 id="draft-scout-leagues">리그 메타 비교 · 밴픽 관여율</h3>
+        <div className="draft-scout-leagues">{pack.league_meta.map((group) => <article key={group.group}>
+          <header><strong>{leagueLabels[group.group] ?? group.group}</strong><span>{group.game_count}경기 · 패치 {group.patches.join("·")}</span></header>
+          <ol>{group.presence.slice(0, 8).map((item) => <li key={item.champion_id}><span>{nameOf(item.champion_id)}</span><b>{formatRate(item.presence_rate)}</b></li>)}</ol>
+        </article>)}</div>
+        <p>{target.home_league}에서만 상위권: {brief.target_league_only.map((item) => nameOf(item.champion_id)).join(" · ") || "없음"} · {own.home_league}에서만 상위권: {brief.own_league_only.map((item) => nameOf(item.champion_id)).join(" · ") || "없음"}</p>
+      </section>
+
+      <p className="draft-scout-boundary">공개 대회 기록의 횟수만 보여줍니다. 승률 예측이나 확정 밴픽이 아니며, 최종 판단과 인게임 실행은 코칭스태프와 선수의 몫입니다.</p>
+    </div>
+  </details>;
+}

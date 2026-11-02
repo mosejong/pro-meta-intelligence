@@ -16,6 +16,26 @@ test("historical draft evaluation measures the production preview and rejects le
     const { buildWorldsPreparation, formatKst, worldsQuarterfinalFor, worldsRoleCoverage, WORLDS_2026 } = await vite.ssrLoadModule("/app/worlds-preparation.ts");
     const report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
     report.fixture_only = true;
+    const { buildDraftScoutBrief, draftScoutFor, headToHeadSeries, headToHeadStaples } = await vite.ssrLoadModule("/app/draft-scout.ts");
+    await t.test("draft scouting pack follows T1's quarterfinal opponent and respects fearless locks", () => {
+      assert.equal(draftScoutFor(worldsQuarterfinalFor("T1").opponent), draftScoutFor("KC"));
+      assert.equal(draftScoutFor("BLG"), null);
+      const pack = draftScoutFor("KC");
+      assert.equal(pack.artifact_type, "draft-scout-pack");
+      assert.equal(pack.target.team_name, "Karmine Corp");
+      assert.ok(pack.quality_flags.includes("CURRENT_EVENT_GAMES_MISSING"));
+      assert.deepEqual(headToHeadSeries(pack).map((series) => [series.league, series.own_wins, series.target_wins]), [["MSI", 3, 0], ["EWC", 1, 2]]);
+      assert.ok(headToHeadStaples(pack, "own").some((item) => item.champion_id === "Rumble" && item.count === 3));
+      assert.deepEqual(pack.league_meta.map((group) => group.group), ["LEC", "LCK", "INTERNATIONAL"]);
+      const fresh = buildDraftScoutBrief(pack);
+      assert.ok(fresh.deny.length > 0 && fresh.deny.every((item) => !item.locked));
+      const used = fresh.deny[0].champion_id;
+      const after = buildDraftScoutBrief(pack, [used]);
+      assert.equal(after.deny[0].locked, true);
+      const role = after.deny[0].role;
+      const pool = after.pressure.find((item) => item.role === role);
+      assert.equal(pool.top_remaining, pool.top_total - 1);
+    });
     await t.test("Worlds preparation requires exact main-team identity and separates official patch from evidence", () => {
       const before = JSON.stringify(report);
       const entries = buildWorldsPreparation(report);

@@ -41,7 +41,12 @@ from pro_meta_intelligence.ingestion.oracles_elixir import (
     OracleElixirImport,
 )
 from pro_meta_intelligence.models import BacktestWindow, DraftAction, MatchRecord
-from pro_meta_intelligence.opponent import OpponentPrepBuilder, OpponentPrepConfig
+from pro_meta_intelligence.opponent import (
+    DraftScoutBuilder,
+    DraftScoutConfig,
+    OpponentPrepBuilder,
+    OpponentPrepConfig,
+)
 from pro_meta_intelligence.publishing import (
     FeedJobAlreadyRunning,
     FeedJobOperationResult,
@@ -191,6 +196,26 @@ def build_parser() -> argparse.ArgumentParser:
     oe_audit.add_argument("--patch", help="patch to evaluate; latest observed patch if omitted")
     _add_readiness_arguments(oe_audit)
     oe_audit.add_argument("--output", type=Path, help="optional JSON coverage audit path")
+
+    draft_scout = subparsers.add_parser(
+        "scout-opponent-draft",
+        help="season-wide head-to-head ban/pick scouting pack for one opponent",
+    )
+    draft_scout.add_argument("--input", type=Path, required=True)
+    draft_scout.add_argument("--source-timezone", required=True)
+    draft_scout.add_argument(
+        "--retrieved-at", help="snapshot retrieval time; defaults to current UTC"
+    )
+    draft_scout.add_argument("--source-uri", help="optional registered provider HTTPS source URL")
+    draft_scout.add_argument("--registry", type=Path, help="optional source registry JSON")
+    draft_scout.add_argument(
+        "--region-map", type=Path, help="optional league-to-region JSON mapping"
+    )
+    draft_scout.add_argument("--target-team", required=True, help="exact opponent team name")
+    draft_scout.add_argument("--own-team", default="T1", help="exact own team name")
+    draft_scout.add_argument("--cutoff", help="analysis cutoff; defaults to the retrieval time")
+    draft_scout.add_argument("--maximum-games", type=int, default=40)
+    draft_scout.add_argument("--output", type=Path, help="optional JSON scouting pack path")
 
     oe_history = subparsers.add_parser(
         "audit-oe-history",
@@ -421,6 +446,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _fetch_oe(args)
     if args.command == "audit-oe-coverage":
         return _audit_oe(args)
+    if args.command == "scout-opponent-draft":
+        return _scout_opponent_draft(args)
     if args.command == "audit-oe-history":
         return _audit_oe_history(args)
     if args.command == "benchmark-oe-history":
@@ -707,6 +734,24 @@ def _audit_oe(args: argparse.Namespace) -> int:
         args.output,
     )
     return 0 if audit.ready_for_radar else 2
+
+
+def _scout_opponent_draft(args: argparse.Namespace) -> int:
+    retrieved_at = parse_datetime(args.retrieved_at) if args.retrieved_at else datetime.now(UTC)
+    imported = _load_oe_import(args, retrieved_at=retrieved_at)
+    report = DraftScoutBuilder().build(
+        imported.matches,
+        imported.draft_events,
+        _load_league_regions(args.region_map),
+        DraftScoutConfig(
+            cutoff=parse_datetime(args.cutoff) if args.cutoff else retrieved_at,
+            target_team_name=args.target_team,
+            own_team_name=args.own_team,
+            maximum_games_per_team=args.maximum_games,
+        ),
+    )
+    _emit(report.to_json(), args.output)
+    return 0
 
 
 def _audit_oe_history(args: argparse.Namespace) -> int:

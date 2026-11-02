@@ -26,6 +26,7 @@ import {
 import { productSpaceHref, type ProductSpace } from "./product-space";
 import { MAX_DRAFT_FILE_BYTES, parseDraftSession, readLocalDraft, writeLocalDraft, type DraftSession } from "./draft-session";
 import type { OpponentTeam, RadarReport } from "./radar-types";
+import { DraftScoutPanel } from "./draft-scout-panel";
 import { WorldsPreparationPanel } from "./worlds-preparation-panel";
 import { NationalTeamPanel } from "./national-team-panel";
 import { TeamChooser } from "./team-chooser";
@@ -440,6 +441,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     </section>
 
     <div className="draft-preparation-library">
+      <DraftScoutPanel nameOf={nameOf} previousPicks={previousPicks} />
       <WorldsPreparationPanel report={report} nameOf={nameOf} onChooseOpponent={chooseWorldsOpponent} previousPicks={previousPicks} canChangeMatchup={canSelect && games.length === 0 && !hasCurrentWork} />
       <NationalTeamPanel report={liveReport} nameOf={nameOf} />
       <a href="#draft-workspace">밴픽으로 돌아가기 ↑</a>

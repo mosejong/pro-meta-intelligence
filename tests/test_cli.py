@@ -378,6 +378,36 @@ def test_audit_oe_coverage_cli_writes_machine_readable_readiness(tmp_path) -> No
     assert payload["selected_patch_id"] == "16.15"
 
 
+def test_scout_opponent_draft_cli_writes_head_to_head_pack(tmp_path) -> None:
+    output = tmp_path / "scout.json"
+
+    assert (
+        main(
+            [
+                "scout-opponent-draft",
+                "--input",
+                str(FIXTURES / "oracles_elixir_game.csv"),
+                "--source-timezone",
+                "UTC",
+                "--retrieved-at",
+                "2026-08-22T03:00:00Z",
+                "--target-team",
+                "Red Team",
+                "--own-team",
+                "Blue Team",
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["artifact_type"] == "draft-scout-pack"
+    assert payload["target"]["team_name"] == "Red Team"
+    assert len(payload["head_to_head"]) == 1
+
+
 def test_benchmark_oe_cli_emits_bounded_pipeline_measurements(tmp_path) -> None:
     output = tmp_path / "oe-benchmark.json"
     radar_output = tmp_path / "radar.json"

@@ -208,3 +208,27 @@ Next priorities are to verify the remaining common Fearless rules and event rest
 the confirmed participant snapshot, expand evidence on patch 26.20 when available, and evaluate the frozen role
 experiment on disjoint data. First Selection support does not establish every Worlds rule or
 turn rehearsal into a validated counter-pick recommendation.
+
+## Opponent draft scouting — November 3
+
+The Draft Lab now opens with a season-wide ban/pick scouting pack for T1's next knockout
+opponent (`web/app/scouting/t1-vs-kc.json`). It is built from the archived public OE season file
+with the new CLI command and is regenerated, never hand-edited:
+
+```bash
+python -m pro_meta_intelligence scout-opponent-draft \
+  --input <archived OE CSV> --source-timezone UTC \
+  --retrieved-at 2026-08-23T12:00:00+00:00 \
+  --target-team "Karmine Corp" --own-team T1 \
+  --output web/app/scouting/t1-vs-kc.json
+```
+
+The pack covers the newest 40 games per team across leagues and international events, the full
+season head-to-head (MSI T1 3-0, EWC KC 2-1), phase-one/phase-two bans given and received,
+first-rotation picks, last-pick roles, per-player pools for fearless pressure, and a league
+presence comparison (opponent home league, LCK, international events). Levers (deny comfort,
+contested priority, protect own, fearless pressure, counterpick role) are deterministic counting
+rules for staff review, not win probabilities. The current pack stops at August 23 and contains
+no Worlds Swiss games because the source-policy reviews have expired; regenerate it once a
+reviewed snapshot with `WLDs` games is available. Adding the next opponent means one more
+`scout-opponent-draft` output and one entry in `DRAFT_SCOUT_PACKS`.
