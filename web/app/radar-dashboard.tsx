@@ -73,6 +73,7 @@ const regionLabels: Record<string, string> = {
   BRAZIL: "브라질",
   CHINA: "중국",
   EMEA: "유럽권",
+  INTERNATIONAL: "국제대회",
   KOREA: "한국",
   LATIN_AMERICA: "라틴",
   NORTH_AMERICA: "북미",
@@ -522,7 +523,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         PUBLICATION_FRESHNESS_POLICY,
       );
       const stalePublication = !publishedReport.fixture_only && publishedFreshness.level === "STALE";
-      const collectionDetail = collectionStatusMessage(publishedCollectionStatus);
+      const collectionDetail = collectionStatusMessage(publishedCollectionStatus, checkedAt);
       setFeedState({
         kind: publishedReport.fixture_only ? "demo" : "published",
         label: publishedReport.fixture_only ? "PUBLISHED DEMO FEED" : stalePublication ? "STALE · REVIEW ONLY" : "LIVE PUBLISHED FEED",

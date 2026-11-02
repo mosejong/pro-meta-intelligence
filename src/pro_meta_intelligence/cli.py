@@ -40,7 +40,7 @@ from pro_meta_intelligence.ingestion.oracles_elixir import (
     OracleElixirCSVAdapter,
     OracleElixirImport,
 )
-from pro_meta_intelligence.models import BacktestWindow, DraftAction
+from pro_meta_intelligence.models import BacktestWindow, DraftAction, MatchRecord
 from pro_meta_intelligence.opponent import OpponentPrepBuilder, OpponentPrepConfig
 from pro_meta_intelligence.publishing import (
     FeedJobAlreadyRunning,
@@ -65,7 +65,12 @@ from pro_meta_intelligence.quality import (
     audit_oe_history,
 )
 from pro_meta_intelligence.radar import LeagueRegionMap, MetaRadar, MetaRadarConfig
-from pro_meta_intelligence.sources import SnapshotArchive, SourceAttemptLedger, SourceRegistry
+from pro_meta_intelligence.sources import (
+    SnapshotArchive,
+    SourceAttemptLedger,
+    SourcePolicyError,
+    SourceRegistry,
+)
 from pro_meta_intelligence.temporal import parse_datetime
 
 
@@ -290,7 +295,11 @@ def build_parser() -> argparse.ArgumentParser:
     patch_selection.add_argument("--patch", help="patch ID; latest match patch if omitted")
     patch_selection.add_argument(
         "--patch-selection-league",
-        help="select the latest available patch played by this exact league; retain all regions",
+        action="append",
+        help=(
+            "select the patch of the latest available match among these exact leagues "
+            "(repeatable); retain all regions"
+        ),
     )
     oe_sync.add_argument("--cutoff", help="analysis cutoff; defaults to source retrieval time")
     oe_sync.add_argument("--recent-days", type=int, default=7)
@@ -545,6 +554,18 @@ def _fetch_schedule(args: argparse.Namespace) -> int:
             locale=args.locale,
             last_retrieved_at=last_retrieved_at,
         )
+    except SourcePolicyError as error:
+        payload = {
+            "schema_version": "1",
+            "status": "POLICY_BLOCKED",
+            "source_id": adapter.source_id,
+            "reason_code": error.decision.reason_code,
+            "network_collection_performed": False,
+            "existing_snapshot_preserved": args.output.is_file(),
+            "next_action": "REVIEW_SOURCE_POLICY",
+        }
+        _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", None)
+        return 5
     except ScheduleFetchIntervalError as error:
         payload = {
             "schema_version": "1",
@@ -868,12 +889,14 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             input_authenticity="REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD",
         )
         imported = _load_oe_import(refresh_args)
+        selection_match = None
         if args.patch_selection_league is not None:
-            refresh_args.patch = _latest_league_patch(
+            selection_match = _latest_league_match(
                 imported,
                 args.patch_selection_league,
                 parse_datetime(args.cutoff) if args.cutoff else latest.retrieved_at,
             )
+            refresh_args.patch = selection_match.patch_id
         coverage = audit_oe_coverage(
             imported,
             _load_league_regions(args.region_map),
@@ -888,7 +911,8 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 if args.patch
                 else "LATEST_MATCH_PATCH"
             ),
-            "league": args.patch_selection_league,
+            "league": selection_match.league if selection_match is not None else None,
+            "candidate_leagues": args.patch_selection_league,
             "comparison_scope": "ALL_MAPPED_LEAGUES_ON_SELECTED_PATCH",
         }
         if not coverage.ready_for_radar:
@@ -1418,15 +1442,19 @@ def _readiness_criteria(args: argparse.Namespace) -> OECoverageCriteria:
     )
 
 
-def _latest_league_patch(imported: OracleElixirImport, league: str, cutoff: datetime) -> str:
+def _latest_league_match(
+    imported: OracleElixirImport, leagues: Sequence[str], cutoff: datetime
+) -> MatchRecord:
     matches = tuple(
         match
         for match in imported.matches
-        if match.league == league and match.available_at <= cutoff and match.observed_at <= cutoff
+        if match.league in leagues and match.available_at <= cutoff and match.observed_at <= cutoff
     )
     if not matches:
-        raise ValueError(f"league {league!r} has no matches available at the analysis cutoff")
-    return max(matches, key=lambda match: (match.observed_at, match.match_id)).patch_id
+        raise ValueError(
+            f"leagues {list(leagues)!r} have no matches available at the analysis cutoff"
+        )
+    return max(matches, key=lambda match: (match.observed_at, match.match_id))
 
 
 def _load_oe_import(

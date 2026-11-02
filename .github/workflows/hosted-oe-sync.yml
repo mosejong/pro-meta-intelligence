@@ -110,6 +110,9 @@ jobs:
             --year 2026 \
             --source-timezone UTC \
             --patch-selection-league LCK \
+            --patch-selection-league WLDs \
+            --patch-selection-league MSI \
+            --patch-selection-league FST \
             --archive-dir "$PRIVATE_ARCHIVE_DIR" \
             --feed-dir web/public/feed \
             --run-dir outputs/oe-feed-jobs \

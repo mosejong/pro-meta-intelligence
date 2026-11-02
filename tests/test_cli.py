@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from pro_meta_intelligence.cli import _latest_league_patch, build_parser, main
+from pro_meta_intelligence.cli import _latest_league_match, build_parser, main
 from pro_meta_intelligence.ingestion import (
     OracleElixirDownloadError,
     OracleElixirDownloadIntervalError,
@@ -36,10 +36,44 @@ def test_league_patch_selection_respects_exact_identity_and_availability() -> No
         match,
     )
     for ordered in (variants, tuple(reversed(variants))):
-        assert _latest_league_patch(replace(imported, matches=ordered), "LCK", cutoff) == "16.15"
+        selected = _latest_league_match(replace(imported, matches=ordered), ("LCK",), cutoff)
+        assert selected.patch_id == "16.15"
     for league, boundary in (("LCKX", cutoff), ("LCK", cutoff - timedelta(seconds=1))):
         with pytest.raises(ValueError, match="no matches available"):
-            _latest_league_patch(imported, league, boundary)
+            _latest_league_match(imported, (league,), boundary)
+
+
+def test_league_patch_selection_follows_international_event_after_league_season() -> None:
+    cutoff = datetime(2026, 8, 22, 3, tzinfo=UTC)
+    imported = OracleElixirCSVAdapter(SourceRegistry.load_default()).import_file(
+        FIXTURES / "oracles_elixir_game.csv", retrieved_at=cutoff, source_timezone="UTC"
+    )
+    match = imported.matches[0]
+    later = cutoff + timedelta(days=20)
+    worlds = replace(
+        match,
+        match_id="worlds",
+        league="WLDs",
+        patch_id="16.20",
+        observed_at=later,
+        available_at=later,
+    )
+    academy = replace(
+        worlds,
+        match_id="academy-later",
+        league="LCKC",
+        patch_id="16.21",
+        observed_at=later + timedelta(days=1),
+        available_at=later + timedelta(days=1),
+    )
+    candidates = replace(imported, matches=(match, worlds, academy))
+    analysis_cutoff = later + timedelta(days=5)
+
+    assert _latest_league_match(candidates, ("LCK",), analysis_cutoff).patch_id == "16.15"
+    selected = _latest_league_match(candidates, ("LCK", "WLDs", "MSI"), analysis_cutoff)
+    assert (selected.league, selected.patch_id) == ("WLDs", "16.20")
+    before_worlds = later - timedelta(seconds=1)
+    assert _latest_league_match(candidates, ("LCK", "WLDs"), before_worlds).league == "LCK"
 
 
 def test_sync_rejects_conflicting_patch_selection_options() -> None:
@@ -85,9 +119,75 @@ def test_sources_cli_reports_enabled_and_blocked_policy_state(tmp_path) -> None:
     assert sources["riot-web-api"]["status"] == "REVIEW_REQUIRED"
 
 
-def test_fetch_schedule_uses_published_snapshot_time_to_block_an_early_ci_request(
-    tmp_path, capsys
+@pytest.mark.parametrize("has_snapshot", [True, False])
+def test_fetch_schedule_policy_expiry_preserves_outputs_without_network(
+    tmp_path, monkeypatch, capsys, has_snapshot
 ) -> None:
+    registry_path = tmp_path / "registry.json"
+    raw = json.loads(
+        Path("src/pro_meta_intelligence/config/source_registry.json").read_text(encoding="utf-8")
+    )
+    for source in raw["sources"]:
+        source["policy_reviewed_at"] = "2000-01-01T00:00:00Z"
+    registry_path.write_text(json.dumps(raw), encoding="utf-8")
+    output = tmp_path / "schedule.json"
+    changes = tmp_path / "changes.json"
+    original = '{"retrieved_at":"2000-01-01T00:00:00Z"}\n'
+    if has_snapshot:
+        output.write_text(original, encoding="utf-8")
+        changes.write_text("{}\n", encoding="utf-8")
+
+    def forbid_network(*args, **kwargs):
+        pytest.fail("policy-blocked collection must not request the source")
+
+    from pro_meta_intelligence.ingestion.lolesports_schedule import LoLEsportsScheduleAdapter
+
+    adapter = LoLEsportsScheduleAdapter(SourceRegistry.from_json(registry_path))
+    monkeypatch.setattr(adapter.transport, "fetch", forbid_network)
+    monkeypatch.setattr("pro_meta_intelligence.cli.LoLEsportsScheduleAdapter", lambda _: adapter)
+    assert (
+        main(
+            [
+                "fetch-schedule",
+                "--registry",
+                str(registry_path),
+                "--archive-dir",
+                str(tmp_path / "raw"),
+                "--output",
+                str(output),
+                "--changes-output",
+                str(changes),
+            ]
+        )
+        == 5
+    )
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "POLICY_BLOCKED"
+    assert result["reason_code"] == "POLICY_REVIEW_EXPIRED"
+    assert result["network_collection_performed"] is False
+    assert result["existing_snapshot_preserved"] is has_snapshot
+    assert result["next_action"] == "REVIEW_SOURCE_POLICY"
+    if has_snapshot:
+        assert output.read_text(encoding="utf-8") == original
+        assert changes.read_text(encoding="utf-8") == "{}\n"
+    else:
+        assert not output.exists()
+        assert not changes.exists()
+
+
+def test_fetch_schedule_uses_published_snapshot_time_to_block_an_early_ci_request(
+    tmp_path, capsys, monkeypatch
+) -> None:
+    from pro_meta_intelligence.ingestion.lolesports_schedule import LoLEsportsScheduleAdapter
+
+    def adapter_at_review_time(registry):
+        registration = registry.get("lol-esports-schedule")
+        assert registration is not None
+        return LoLEsportsScheduleAdapter(registry, clock=lambda: registration.policy_reviewed_at)
+
+    monkeypatch.setattr(
+        "pro_meta_intelligence.cli.LoLEsportsScheduleAdapter", adapter_at_review_time
+    )
     output = tmp_path / "schedule.json"
     changes = tmp_path / "schedule-changes.json"
     original = {
@@ -781,7 +881,11 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
     assert current["fixture_only"] is False
     assert current["patch_id"] == expected_patch
     assert current["publication_readiness"]["selected_patch_id"] == expected_patch
-    assert current["publication_readiness"]["patch_selection"]["league"] == selection_league
+    patch_selection = current["publication_readiness"]["patch_selection"]
+    assert patch_selection["league"] == selection_league
+    assert patch_selection["candidate_leagues"] == (
+        [selection_league] if selection_league else None
+    )
     assert current["input"]["authenticity"] == "REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD"
     assert "network_collection_performed" not in current["input"]
     assert current["history_status"]["artifact_type"] == "oe-history-status"

@@ -1,5 +1,19 @@
 # Worlds 2026 preparation
 
+## International events in the Radar — November 3
+
+OE international events (`WLDs`, `MSI`, `FST`, `EWC`) now map to a separate `INTERNATIONAL`
+comparison group instead of being flagged `UNMAPPED_LEAGUE_EVIDENCE`; they are not merged into
+any home region. Re-auditing the archived August 23 CSV places FST (16.05), EWC (16.07–16.13)
+and MSI (16.13) in that group. The 2026 file predates Worlds, so the `WLDs` code is taken from
+OE's prior-year convention and must be confirmed on the first Worlds-era download.
+
+The hosted sync now passes `--patch-selection-league` for LCK, WLDs, MSI and FST. The patch of
+the most recent available match among them is selected, so the Radar follows the Worlds patch
+while LCK is idle and returns to LCK afterwards. Publication records the selected league and the
+candidate list. This changes no readiness threshold and does not restore source freshness: the
+expired source-policy reviews still block collection until they are rechecked.
+
 ## Disjoint September draft replay — September 21
 
 The frozen [protocol and run provenance](benchmarks/SEPTEMBER_DRAFT_PROTOCOL.md) and

@@ -22,6 +22,7 @@ function regionName(region: string | null) {
     BRAZIL: "브라질",
     CHINA: "중국",
     EMEA: "유럽권",
+    INTERNATIONAL: "국제대회",
     KOREA: "한국",
     LATIN_AMERICA: "라틴",
     NORTH_AMERICA: "북미",

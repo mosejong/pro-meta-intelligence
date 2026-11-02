@@ -73,7 +73,7 @@ export function DataTrustBar({
   const protectionActive = scheduleState === "stale" || scheduleState === "unavailable";
   const reviewOnly = dataLevel === "STALE" || feedKind === "demo";
   const checking = dataLevel === "UNKNOWN" || scheduleLevel === "UNKNOWN";
-  const collectionMessage = collectionStatusMessage(collectionStatus);
+  const collectionMessage = collectionStatusMessage(collectionStatus, checkedAt);
   const guardClass = reviewOnly || protectionActive ? "guarded" : checking ? "checking" : "ready";
   const guardLabel = feedKind === "demo"
     ? "예시 화면"

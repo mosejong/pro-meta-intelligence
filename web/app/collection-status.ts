@@ -89,8 +89,19 @@ export function isCollectionStatus(value: unknown): value is CollectionStatus {
     && typeof automation.operator_action_required === "boolean";
 }
 
-export function collectionStatusMessage(status: CollectionStatus | null): string | null {
+// The collector runs twice daily. Beyond three missed intervals, its old
+// status cannot establish that automation is still running.
+export const COLLECTION_STATUS_MAX_AGE_MS = 36 * 60 * 60 * 1000;
+
+export function collectionStatusMessage(status: CollectionStatus | null, checkedAt: string | null = null): string | null {
   if (!status) return null;
+  if (checkedAt) {
+    const age = Date.parse(checkedAt) - Date.parse(status.updated_at);
+    if (!Number.isFinite(age) || age < 0) return "수집 상태의 확인 시각을 검증할 수 없습니다.";
+    if (age > COLLECTION_STATUS_MAX_AGE_MS) {
+      return "수집 상태 기록이 오래되어 자동 갱신 여부를 확인할 수 없습니다. 마지막 발행본만 표시합니다.";
+    }
+  }
   if (status.state === "CURRENT") return "자동 수집이 정상 동작하고 있습니다.";
   if (status.state === "SOURCE_DELAYED" && status.reason_code === "PROVIDER_QUOTA_OR_HTML_RESPONSE") {
     return "원천 제공량 제한으로 갱신이 지연됐습니다. 정책을 지키며 자동 재시도합니다.";

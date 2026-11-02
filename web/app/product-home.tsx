@@ -113,11 +113,12 @@ export function ProductHome({
           {fixtureTeams
             ? <>
                 <div className="sb-team sb-team--away"><span className="sb-code">{fixtureTeams[0]}</span></div>
-                <div className="sb-seam" aria-hidden="true" />
+                <div className="sb-seam"><span className="visually-hidden">vs</span></div>
                 <div className="sb-team sb-team--home"><span className="sb-code">{fixtureTeams[1]}</span></div>
               </>
             : <div className="sb-team sb-team--home"><span className="sb-code">{fixtureTitle}</span></div>}
         </div>
+        <p className="sb-fixture-detail">{fixtureDetail}</p>
         <p className="sb-desc">다음 경기, 반복 픽·밴, 상대 확정 여부와 준비 상태를 한 장으로 봅니다.</p>
         <span className="sb-cta">일정과 준비 상태 보기 →</span>
       </a>

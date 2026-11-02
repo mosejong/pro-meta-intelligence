@@ -4,6 +4,52 @@ import test from "node:test";
 
 const root = new URL("../dist-pages/", import.meta.url);
 
+function assertCreatorCandidates(creator, feed) {
+  assert.equal(creator.mode, "CREATOR");
+  assert.equal(creator.source_snapshot.patch_id, feed.patch_id);
+  assert.equal(creator.source_snapshot.cutoff, feed.cutoff);
+  assert.equal(creator.human_review_required, true);
+  assert.equal(creator.publication_ready, false);
+  assert.ok(Array.isArray(creator.topic_candidates));
+  const eligible = new Set(feed.entries.filter((entry) => entry.eligible_for_review)
+    .map((entry) => `${entry.champion_id}:${entry.role}`));
+  if (eligible.size === 0) {
+    assert.equal(creator.topic_candidates.length, 0);
+    assert.ok(creator.warnings?.includes("NO_ELIGIBLE_CANDIDATES"));
+  } else {
+    assert.ok(creator.topic_candidates.length > 0);
+    assert.ok(!creator.warnings?.includes("NO_ELIGIBLE_CANDIDATES"));
+    const seen = new Set();
+    for (const topic of creator.topic_candidates) {
+      assert.equal(topic.candidate_id, `${topic.champion_id}:${topic.role}`);
+      assert.ok(eligible.has(topic.candidate_id));
+      assert.ok(!seen.has(topic.candidate_id));
+      seen.add(topic.candidate_id);
+      assert.equal(topic.review_state, "HUMAN_REVIEW_REQUIRED");
+    }
+  }
+}
+
+test("creator publication accepts intentional abstention but rejects missing or unsupported candidates", async () => {
+  const feed = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
+  const creator = JSON.parse(await readFile(new URL("../public/feed/current-creator.json", import.meta.url), "utf8"));
+  assertCreatorCandidates(creator, feed);
+  const noEligible = { ...feed, entries: feed.entries.map((entry) => ({ ...entry, eligible_for_review: false })) };
+  const empty = { ...creator, topic_candidates: [], warnings: ["NO_ELIGIBLE_CANDIDATES"] };
+  assert.doesNotThrow(() => assertCreatorCandidates(empty, noEligible));
+  assert.throws(() => assertCreatorCandidates({ ...empty, warnings: [] }, noEligible));
+  assert.throws(() => assertCreatorCandidates({ ...empty, publication_ready: true }, noEligible));
+  assert.throws(() => assertCreatorCandidates({ ...empty, topic_candidates: null }, noEligible));
+  const eligibleFeed = { ...feed, entries: [{ champion_id: "Ahri", role: "MID", eligible_for_review: true }] };
+  assert.throws(() => assertCreatorCandidates(empty, eligibleFeed));
+  const topic = { candidate_id: "Ahri:MID", champion_id: "Ahri", role: "MID", review_state: "HUMAN_REVIEW_REQUIRED" };
+  const populated = { ...creator, warnings: [], topic_candidates: [topic] };
+  assert.doesNotThrow(() => assertCreatorCandidates(populated, eligibleFeed));
+  assert.throws(() => assertCreatorCandidates(populated, noEligible));
+  assert.throws(() => assertCreatorCandidates({ ...populated, topic_candidates: [topic, topic] }, eligibleFeed));
+  assert.throws(() => assertCreatorCandidates({ ...empty, source_snapshot: { ...empty.source_snapshot, patch_id: "wrong" } }, noEligible));
+});
+
 test("builds direct-loadable onboarding and field pages", async () => {
   const pages = [
     ["index.html", "Pro Meta Intelligence · 공개 팀 분석 플랫폼"],
@@ -99,11 +145,8 @@ test("copies the same-origin feed and social card", async () => {
   assert.equal(scheduleChanges.artifact_type, "pro-schedule-change-log");
   assert.equal(scheduleChanges.watched_team, "T1");
   assert.equal(scheduleChanges.current_snapshot.content_hash, schedule.content_hash);
-  assert.equal(creator.mode, "CREATOR");
-  assert.equal(creator.source_snapshot.patch_id, feed.patch_id);
-  assert.equal(creator.source_snapshot.cutoff, feed.cutoff);
-  assert.equal(creator.human_review_required, true);
-  assert.ok(creator.topic_candidates.length > 0);
+  assertCreatorCandidates(creator, feed);
+  assert.deepEqual(creator, JSON.parse(await readFile(new URL("../public/feed/current-creator.json", import.meta.url), "utf8")));
   assert.doesNotMatch(feedText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(collectionStatusText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
   assert.doesNotMatch(historyText, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);

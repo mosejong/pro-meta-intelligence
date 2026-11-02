@@ -1719,6 +1719,7 @@ test("classifies publication freshness at explicit safety boundaries", async () 
       scheduleState: "stale",
       scheduleSourceUrl: null,
       collectionStatus: {
+        updated_at: "2026-08-26T18:00:00Z",
         state: "SOURCE_DELAYED",
         reason_code: "PROVIDER_QUOTA_OR_HTML_RESPONSE",
         last_attempt: { finished_at: "2026-08-26T18:00:00Z" },
@@ -1888,6 +1889,24 @@ test("ships a fail-closed human-paired AI validation status", async () => {
   assert.equal(status.gates.length, 8);
   assert.equal(status.next_action, "COLLECT_PAIRED_HUMAN_HOLDOUTS");
   assert.doesNotMatch(text, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
+});
+
+test("expired collection records never claim automation is currently running", async () => {
+  const vite = await createServer({ root: fileURLToPath(templateRoot), configFile: false, publicDir: false,
+    server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { collectionStatusMessage } = await vite.ssrLoadModule("/app/collection-status.ts");
+    const status = JSON.parse(await readFile(new URL("../public/feed/collection-status.json", import.meta.url), "utf8"));
+    status.updated_at = "2026-09-21T00:00:00Z";
+    for (const state of ["CURRENT", "SOURCE_DELAYED", "SOURCE_UNAVAILABLE"]) {
+      const record = { ...status, state };
+      assert.match(collectionStatusMessage(record, "2026-09-22T12:00:00.001Z"), /자동 갱신 여부를 확인할 수 없습니다/);
+      assert.doesNotMatch(collectionStatusMessage(record, "2026-09-22T12:00:00Z"), /기록이 오래/);
+      assert.match(collectionStatusMessage(record, "2026-09-20T00:00:00Z"), /확인 시각을 검증할 수 없습니다/);
+      assert.match(collectionStatusMessage(record, "invalid"), /확인 시각을 검증할 수 없습니다/);
+    }
+    assert.equal(collectionStatusMessage(null, "2026-09-29T00:00:00Z"), null);
+  } finally { await vite.close(); }
 });
 
 test("maps official champion names and searches in Korean or English", async () => {
