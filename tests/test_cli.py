@@ -817,11 +817,18 @@ def test_check_oe_feed_health_cli_returns_scheduler_friendly_exit_codes(tmp_path
     assert main(command) == 2
 
 
-@pytest.mark.parametrize("selection_league,expected_patch", [(None, "16.16"), ("LCK", "16.15")])
+@pytest.mark.parametrize(
+    "selection_league,expected_patch,inactive",
+    [(None, "16.16", False), ("LCK", "16.15", False), ("LCK", "16.15", True)],
+)
 def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
-    tmp_path, monkeypatch, selection_league, expected_patch
+    tmp_path, monkeypatch, selection_league, expected_patch, inactive
 ) -> None:
-    retrieved_at = datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
+    retrieved_at = (
+        datetime(2026, 10, 8, 3, 0, tzinfo=UTC)
+        if inactive
+        else datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
+    )
     source_body = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
     later_academy = b"".join(source_body.splitlines(keepends=True)[1:])
     later_academy = later_academy.replace(b"GAME001", b"GAME002").replace(b",LCK,", b",LAS,")
@@ -899,6 +906,8 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
 
     if selection_league:
         command.extend(["--patch-selection-league", selection_league])
+    if inactive:
+        command.append("--retain-inactive-league-window")
     assert main(command) == 0
 
     audit = json.loads(output.read_text(encoding="utf-8"))
@@ -910,6 +919,17 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
     assert audit["result"]["readiness_audit"]["ready_for_radar"] is True
     assert current["fixture_only"] is False
     assert current["patch_id"] == expected_patch
+    assert current["cutoff"] == retrieved_at.isoformat()
+    if inactive:
+        assert current["analysis_window"]["mode"] == "LAST_ACTIVE_PATCH"
+        assert current["analysis_window"]["historical"] is True
+        assert current["windows"]["recent"]["end_inclusive"].startswith("2026-08-20")
+        assert len(current["entries"]) > 0
+        creator = json.loads((feed / "current-creator.json").read_text(encoding="utf-8"))
+        assert creator["source_snapshot"]["analysis_window"] == current["analysis_window"]
+        assert "INACTIVE_PATCH_HISTORICAL_WINDOW" in creator["warnings"]
+    else:
+        assert current["analysis_window"]["mode"] == "ROLLING"
     assert current["publication_readiness"]["selected_patch_id"] == expected_patch
     patch_selection = current["publication_readiness"]["patch_selection"]
     assert patch_selection["league"] == selection_league
@@ -1036,10 +1056,15 @@ def test_sync_oe_feed_publishes_with_audited_known_exclusions(tmp_path, monkeypa
 
 
 @pytest.mark.parametrize("has_previous_publication", [False, True])
+@pytest.mark.parametrize("empty_window", [False, True])
 def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
-    tmp_path, monkeypatch, has_previous_publication
+    tmp_path, monkeypatch, has_previous_publication, empty_window
 ) -> None:
-    retrieved_at = datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
+    retrieved_at = (
+        datetime(2026, 10, 8, 3, 0, tzinfo=UTC)
+        if empty_window
+        else datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
+    )
     source_body = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
 
     class FakeDownloadAdapter:
@@ -1109,6 +1134,20 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
                 str(tmp_path / "jobs"),
                 "--output",
                 str(output),
+                *(
+                    [
+                        "--patch-selection-league",
+                        "LCK",
+                        "--readiness-minimum-matches",
+                        "1",
+                        "--readiness-minimum-teams",
+                        "2",
+                        "--readiness-minimum-regions",
+                        "1",
+                    ]
+                    if empty_window
+                    else []
+                ),
             ]
         )
         == 2
@@ -1118,11 +1157,19 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
     assert audit["status"] == "REJECTED"
     assert audit["result"]["status"] == "REJECTED_READINESS"
     assert audit["result"]["published"] is False
-    assert audit["result"]["readiness_audit"]["blocking_reasons"] == [
-        "PATCH_MATCH_COUNT_BELOW_MINIMUM",
-        "PATCH_DISTINCT_TEAM_COUNT_BELOW_MINIMUM",
-        "PATCH_REGION_COUNT_BELOW_MINIMUM",
-    ]
+    if empty_window:
+        assert audit["result"]["readiness_audit"]["ready_for_radar"] is True
+        assert audit["result"]["blocking_reasons"] == ["EMPTY_RADAR_WINDOW"]
+        assert audit["result"]["entry_count"] == 0
+        assert audit["result"]["creator_topic_count"] == 0
+        assert not (feed / "snapshots").exists()
+        assert not (feed / "index.json").exists()
+    else:
+        assert audit["result"]["readiness_audit"]["blocking_reasons"] == [
+            "PATCH_MATCH_COUNT_BELOW_MINIMUM",
+            "PATCH_DISTINCT_TEAM_COUNT_BELOW_MINIMUM",
+            "PATCH_REGION_COUNT_BELOW_MINIMUM",
+        ]
     for path in published_paths:
         if has_previous_publication:
             assert path.read_bytes() == previous
@@ -1134,8 +1181,11 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
     assert collection_status["reason_code"] == "READINESS_GATE_REJECTED"
 
 
-def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, monkeypatch) -> None:
-    attempted_at = datetime(2026, 9, 9, 7, 13, tzinfo=UTC)
+@pytest.mark.parametrize("has_cache", [False, True])
+def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(
+    tmp_path, monkeypatch, has_cache
+) -> None:
+    attempted_at = datetime(2026, 8, 24, 7, 13, tzinfo=UTC)
     call_count = 0
 
     class FailingDownloadAdapter:
@@ -1165,6 +1215,17 @@ def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, m
         FailingDownloadAdapter,
     )
     archive_dir = tmp_path / "raw"
+    if has_cache:
+        SnapshotArchive(archive_dir).store(
+            RawSourceArtifact.create(
+                source_id=FailingDownloadAdapter.source_id,
+                request_url="https://drive.usercontent.google.com/download?id=reviewed",
+                final_url="https://drive.usercontent.google.com/download?id=reviewed",
+                media_type="text/csv",
+                retrieved_at=attempted_at - timedelta(days=2),
+                body=(FIXTURES / "oracles_elixir_game.csv").read_bytes(),
+            )
+        )
     output = tmp_path / "sync.json"
     command = [
         "sync-oe-feed",
@@ -1180,12 +1241,29 @@ def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, m
         str(tmp_path / "jobs"),
         "--output",
         str(output),
+        "--readiness-minimum-matches",
+        "1",
+        "--readiness-minimum-teams",
+        "2",
+        "--readiness-minimum-regions",
+        "1",
     ]
 
-    assert main(command) == 4
+    expected_exit = 0 if has_cache else 4
+    assert main(command) == expected_exit
     first = json.loads(output.read_text(encoding="utf-8"))
-    assert first["result"]["source_acquisition"]["status"] == "SOURCE_ERROR_NO_CACHE"
+    assert first["result"]["source_acquisition"]["status"] == (
+        "REUSED_CACHE_AFTER_SOURCE_ERROR" if has_cache else "SOURCE_ERROR_NO_CACHE"
+    )
     assert first["result"]["network_collection_performed"] is True
+    retry_at = (attempted_at + timedelta(days=1)).isoformat()
+    assert first["result"]["source_acquisition"]["next_attempt_at"] == retry_at
+    public_status = json.loads(
+        (tmp_path / "feed" / "collection-status.json").read_text(encoding="utf-8")
+    )
+    assert public_status["source"]["next_attempt_at"] == retry_at
+    assert public_status["state"] == ("SOURCE_DELAYED" if has_cache else "SOURCE_UNAVAILABLE")
+    assert public_status["reason_code"] == "PROVIDER_QUOTA_OR_HTML_RESPONSE"
     assert (
         SourceAttemptLedger(archive_dir).latest_attempted_at(
             FailingDownloadAdapter.source_id,
@@ -1194,7 +1272,7 @@ def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(tmp_path, m
         == attempted_at
     )
 
-    assert main(command) == 4
+    assert main(command) == expected_exit
     second = json.loads(output.read_text(encoding="utf-8"))
     assert second["result"]["source_acquisition"]["status"] == "REUSED_CACHE_DURING_SOURCE_BACKOFF"
     assert second["result"]["network_collection_performed"] is False

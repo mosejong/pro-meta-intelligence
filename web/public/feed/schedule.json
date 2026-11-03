@@ -1,65 +1,65 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-09-21T15:05:12.954631+00:00",
+  "available_at": "2026-11-03T06:43:25.755692+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:d6cce21f1f1c03cbaf883f86f139fc9c547431d755135bf7143bc7b1f7c46f62",
+  "content_hash": "sha256:78ab9e0b03b813441d4db32f8a5736f89d8664aa21c3ea8c4ae1360856943232",
   "events": [
     {
       "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:24db89acf69c63082c0c",
-      "league": "LCS",
+      "block": "Quarterfinals",
+      "event_id": "lolesports:34f55d4c3ccc5ef1b18c",
+      "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "GEN",
+          "name": "Gen.G Esports"
         },
         {
-          "code": "SR",
-          "name": "Shopify Rebellion"
+          "code": "LYON",
+          "name": "LYON"
         }
       ],
-      "start_at": "2026-09-25T20:00:00+00:00"
+      "start_at": "2026-11-04T22:00:00+00:00"
     },
     {
       "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:a7de37a02c559264ed1b",
-      "league": "LCS",
+      "block": "Quarterfinals",
+      "event_id": "lolesports:0d56685f117c6bef1b81",
+      "league": "Worlds",
       "participants": [
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "DK",
+          "name": "Dplus KIA"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "BLG",
+          "name": "BILIBILI GAMING"
         }
       ],
-      "start_at": "2026-09-26T20:00:00+00:00"
+      "start_at": "2026-11-05T22:00:00+00:00"
     },
     {
       "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:9e7e16411913d9d5d313",
-      "league": "LCS",
+      "block": "Quarterfinals",
+      "event_id": "lolesports:5593c07705f431906e53",
+      "league": "Worlds",
       "participants": [
         {
-          "code": "TLAW",
-          "name": "Team Liquid Alienware"
+          "code": "T1",
+          "name": "T1"
         },
         {
-          "code": "C9",
-          "name": "Cloud9 Kia"
+          "code": "KC",
+          "name": "Karmine Corp"
         }
       ],
-      "start_at": "2026-09-27T20:00:00+00:00"
+      "start_at": "2026-11-06T22:00:00+00:00"
     },
     {
       "best_of": 5,
-      "block": "Playoffs",
-      "event_id": "lolesports:f31eb1b697f34c4b7a15",
-      "league": "LCS",
+      "block": "Semifinals",
+      "event_id": "lolesports:fe0472e1e8ce85e6a306",
+      "league": "Worlds",
       "participants": [
         {
           "code": "TBD",
@@ -70,13 +70,30 @@
           "name": "TBD"
         }
       ],
-      "start_at": "2026-10-03T20:00:00+00:00"
+      "start_at": "2026-11-07T22:00:00+00:00"
+    },
+    {
+      "best_of": 5,
+      "block": "Semifinals",
+      "event_id": "lolesports:8181cf9446bca49c79a4",
+      "league": "Worlds",
+      "participants": [
+        {
+          "code": "TBD",
+          "name": "TBD"
+        },
+        {
+          "code": "TBD",
+          "name": "TBD"
+        }
+      ],
+      "start_at": "2026-11-08T22:00:00+00:00"
     },
     {
       "best_of": 5,
       "block": "Finals",
-      "event_id": "lolesports:262936b17a96e5c0ccfb",
-      "league": "LCS",
+      "event_id": "lolesports:5e095f6f89aa78c4eb7f",
+      "league": "Worlds",
       "participants": [
         {
           "code": "TBD",
@@ -87,7 +104,7 @@
           "name": "TBD"
         }
       ],
-      "start_at": "2026-10-04T20:00:00+00:00"
+      "start_at": "2026-11-14T19:00:00+00:00"
     }
   ],
   "league_slugs": [
@@ -100,10 +117,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 5,
-    "tbd_participant_count": 7
+    "event_count": 6,
+    "tbd_participant_count": 6
   },
-  "retrieved_at": "2026-09-21T15:05:12.954631+00:00",
+  "retrieved_at": "2026-11-03T06:43:25.755692+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"

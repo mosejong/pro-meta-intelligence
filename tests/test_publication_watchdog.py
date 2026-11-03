@@ -225,15 +225,22 @@ def test_publication_watchdog_distinguishes_radar_and_schedule_staleness() -> No
         ("invalid", False, "RESTORE_COLLECTION_STATUS"),
     ],
 )
+@pytest.mark.parametrize(
+    "reason_code",
+    [
+        "POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR",
+        "PROVIDER_QUOTA_OR_HTML_RESPONSE",
+        "PROVIDER_SCHEMA_REJECTED",
+        "PROVIDER_REQUEST_FAILED",
+    ],
+)
 def test_watchdog_respects_source_backoff_without_hiding_stale_evidence(
-    retry_at: str | None, schedule_stale: bool, expected: str
+    retry_at: str | None, schedule_stale: bool, expected: str, reason_code: str
 ) -> None:
     old = "2026-08-20T00:00:00+00:00"
     creator = _creator()
     creator["source_snapshot"]["cutoff"] = old
-    collection = _collection_status(
-        state="SOURCE_DELAYED", reason_code="POLICY_INTERVAL_ACTIVE_AFTER_SOURCE_ERROR"
-    )
+    collection = _collection_status(state="SOURCE_DELAYED", reason_code=reason_code)
     collection["source"]["next_attempt_at"] = retry_at
     report = assess_publication_watchdog(
         _radar(cutoff=old),

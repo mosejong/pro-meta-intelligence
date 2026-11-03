@@ -282,6 +282,12 @@ export type RadarReport = {
   fixture_only: boolean;
   cutoff: string;
   patch_id: string;
+  analysis_window?: {
+    mode: "ROLLING" | "LAST_ACTIVE_PATCH";
+    end_inclusive: string;
+    availability_cutoff: string;
+    historical: boolean;
+  };
   windows: {
     prior: { start_exclusive: string; end_inclusive: string; days: number; match_count: number; active_team_count: number };
     recent: { start_exclusive: string; end_inclusive: string; days: number; match_count: number; active_team_count: number };

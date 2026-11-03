@@ -30,6 +30,9 @@ class CreatorBriefBuilder:
         entries = [entry for entry in report["entries"] if entry["eligible_for_review"]][:top_k]
         source_versions = report["evidence_index"]["source_versions"]
         warnings = [] if entries else ["NO_ELIGIBLE_CANDIDATES"]
+        analysis_window = report.get("analysis_window")
+        if isinstance(analysis_window, dict) and analysis_window.get("mode") == "LAST_ACTIVE_PATCH":
+            warnings.append("INACTIVE_PATCH_HISTORICAL_WINDOW")
         payload = {
             "schema_version": "1",
             "mode": "CREATOR",
@@ -42,6 +45,7 @@ class CreatorBriefBuilder:
                 "patch_id": report["patch_id"],
                 "fixture_only": report["fixture_only"],
                 "source_versions": source_versions,
+                "analysis_window": analysis_window,
             },
             "warnings": warnings,
             "narrative_constraints": [

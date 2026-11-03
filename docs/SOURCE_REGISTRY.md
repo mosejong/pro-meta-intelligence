@@ -13,8 +13,8 @@ crawler.
 
 ### November 3 renewal: OE, Data Dragon and LoL Esports schedule
 
-All three enabled reviews had expired (OE/Data Dragon due October 21, schedule due September 23), so
-the policy gate was correctly refusing them. Rechecked each page at 14:05 UTC before renewing:
+Renewed ahead of the October 22 (OE/Data Dragon) and October 14 (schedule) reviews' expiry so all
+three share one review date through the Worlds knockout stage. Rechecked each page at 14:05 UTC:
 
 - OE downloads page returned 200; its bundle is now `static/js/main.9ef7a6a4.js` and still states
   "It is provided free of charge, and is intended for use by analysts, commentators, and fans.",
@@ -36,6 +36,45 @@ This renews only the three registry timestamps for the same operations. No host,
 frequency, raw redistribution scope or public API permission is expanded; the 24-hour attempt ledger
 and 30-day expiry remain enforced. It does not establish Riot product registration/approval or source
 freshness. The credentialed Riot web API remains `REVIEW_REQUIRED` with no operations.
+
+### October 22 renewal: OE and Data Dragon
+
+Rechecked at 2026-10-22T03:03:07Z after hosted runs failed with `POLICY_REVIEW_EXPIRED`.
+The live, rendered [OE download page](https://master.d36liwrx5rvjnc.amplifyapp.com/tools/downloads)
+still provides CSV data free for analysts, commentators, and fans, states that files update once
+per day, and links data use to Riot's general policies. Its public Google Drive folder link remains
+present. This review did not download the dataset or change the exact reviewed file IDs.
+The [provider dictionary](https://lol.timsevenhuysen.com/matchdata/match-data-dictionary/)
+still warns of schema changes and game IDs that may only be unique per server/league.
+
+Reviewed Riot's [LoL documentation](https://developer.riotgames.com/docs/lol), including the
+Data Dragon static-data routes, [General Policies](https://developer.riotgames.com/policies/general),
+and [API Terms](https://developer.riotgames.com/terms). General Policies display May 29, 2025 as
+last updated; API Terms display December 9, 2013. Product registration/audit and attribution
+obligations remain applicable; this maintenance record does not establish product approval.
+
+Renew only the existing OE and Data Dragon review timestamps. Keep the 30-day expiry, daily OE
+attempt interval, existing host/operation/file-ID allowlists, response limits, private archive,
+and prohibition on raw dataset redistribution. The schedule registration and blocked credentialed
+Riot Web API are unchanged. A current policy review permits the existing adapter scope; it does
+not prove source freshness, download success, or operational recovery. Verify a hosted sync and
+its local health report after this change reaches main.
+
+### October 14 renewal: official schedule
+
+Rechecked the existing public HTML scope. The official robots endpoint returned only
+`User-agent: *`, with no disallow rules. The LCK schedule page remains publicly accessible;
+the Riot Terms of Service and General Policies were reviewed. Renew only the existing
+`FETCH_SCHEDULE_HTML` registration, retaining the six-hour interval, response limit,
+normalized-facts-only publication, and prohibition on login, undocumented APIs, crawling,
+or access-control bypass. This records maintenance of the repository's existing narrow
+adapter scope, not Riot product approval or a claim that a source snapshot is current.
+The previous August 24 review had expired and was blocking scheduled collection.
+
+Evidence: https://lolesports.com/robots.txt,
+https://lolesports.com/en-US/leagues/lck,
+https://www.riotgames.com/en/terms-of-service,
+https://developer.riotgames.com/policies/general.
 
 ### September 21 renewal: OE and Data Dragon
 

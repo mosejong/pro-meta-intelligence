@@ -20,6 +20,20 @@ it does not relabel old games as the Worlds patch. Acquisition continues on its 
 The selected patch must pass the unchanged readiness gates, and the selection mode/league are
 recorded in public `publication_readiness.patch_selection` and the job audit.
 
+The hosted workflow opts into `--retain-inactive-league-window`. When the selected patch has
+no matches in the rolling recent window, its comparison windows end at the last observed
+match on that patch, across the existing comparison leagues. Both seven-day window lengths
+and sample thresholds stay unchanged. `cutoff` remains the actual source availability time;
+availability filtering still excludes information not available by that cutoff. The public
+`analysis_window` records `LAST_ACTIVE_PATCH`, the historical window end and the independent
+availability cutoff. Radar displays a Korean off-season archive notice, and Creator exports
+retain the same metadata plus `INACTIVE_PATCH_HISTORICAL_WINDOW` warning.
+
+This is a newly verified historical club-patch analysis, not current Worlds meta. Freshness
+checks still fail if the source availability cutoff becomes stale. Omit the opt-in flag to
+retain rolling windows and the empty-window rejection. No patch alias, source timestamp,
+provider interval, or freshness threshold is changed.
+
 The option is mutually exclusive with `--patch`. An absent league or no available league match
 fails the job and preserves accepted analysis heads. Omitting both options retains the generic
 CLI's latest-match behavior. Analysis cutoff, source freshness and match dates remain independent;
@@ -144,3 +158,17 @@ result rather than trusting either collector.
 This path removes workstation availability from current publication and history accumulation. It
 does not make GitHub Actions a source of truth for Riot or Oracle's Elixir, prove predictive value,
 or authorize raw redistribution.
+## October 2026 publication rejection
+
+Annual coverage readiness is necessary but does not guarantee evidence in the Radar's
+recent/prior windows. An inactive selected LCK patch can pass coverage while producing
+zero entries. Hosted sync now rejects that candidate as `REJECTED_READINESS` with
+`EMPTY_RADAR_WINDOW` before changing any Radar/Creator/history/outcomes head or creating
+an immutable snapshot. The audit retains the selected patch, cutoff, windows and counts.
+Collection status is still updated and private state retained; the existing Pages tests
+can publish this bounded rejection alongside the last accepted public heads.
+
+This does not reset source timestamps, change patch selection, waive freshness checks,
+or bypass the provider retry interval. Freshness recovery still requires accepted source
+evidence and a publishable analysis window. A successful deployment of rejection status
+is not a healthy data signal.

@@ -6,7 +6,7 @@ import platform
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from time import perf_counter
 from typing import Any
@@ -327,6 +327,11 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     oe_sync.add_argument("--cutoff", help="analysis cutoff; defaults to source retrieval time")
+    oe_sync.add_argument(
+        "--retain-inactive-league-window",
+        action="store_true",
+        help="retain an inactive league patch's last window with explicit historical metadata",
+    )
     oe_sync.add_argument("--recent-days", type=int, default=7)
     oe_sync.add_argument("--prior-days", type=int, default=7)
     oe_sync.add_argument("--minimum-recent-matches", type=int, default=5)
@@ -875,6 +880,17 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 "REUSED_CACHE_AFTER_SOURCE_ERROR" if latest else "SOURCE_ERROR_NO_CACHE"
             )
             acquisition_error = str(error)
+            # The failed request already starts the policy interval. Publish its retry
+            # boundary immediately, rather than waiting for a later blocked run.
+            attempted_at = attempt_ledger.latest_attempted_at(adapter.source_id, fetch_operation)
+            registration = registry.get(adapter.source_id)
+            if attempted_at is not None and registration is not None:
+                previous_times = [attempted_at]
+                if latest is not None:
+                    previous_times.append(latest.retrieved_at)
+                next_attempt_at = (
+                    max(previous_times) + timedelta(seconds=registration.minimum_interval_seconds)
+                ).isoformat()
 
         history_benchmark = benchmark_oe_blind_spots(
             archive.inspect(adapter.source_id),
@@ -942,6 +958,19 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 parse_datetime(args.cutoff) if args.cutoff else latest.retrieved_at,
             )
             refresh_args.patch = selection_match.patch_id
+        if args.retain_inactive_league_window:
+            if args.patch_selection_league is None:
+                raise ValueError("inactive window retention requires --patch-selection-league")
+            cutoff = parse_datetime(args.cutoff) if args.cutoff else latest.retrieved_at
+            last_match_at = max(
+                match.observed_at
+                for match in imported.matches
+                if match.patch_id == refresh_args.patch
+                and match.available_at <= cutoff
+                and match.observed_at <= cutoff
+            )
+            if last_match_at <= cutoff - timedelta(days=args.recent_days):
+                refresh_args.window_end = last_match_at
         coverage = audit_oe_coverage(
             imported,
             _load_league_regions(args.region_map),
@@ -1158,6 +1187,7 @@ def _meta_radar_config(args: argparse.Namespace, retrieved_at: datetime) -> Meta
         minimum_prior_matches=args.minimum_prior_matches,
         minimum_region_matches=args.minimum_region_matches,
         minimum_current_picks=args.minimum_current_picks,
+        window_end=getattr(args, "window_end", None),
     )
 
 
@@ -1201,6 +1231,20 @@ def _refresh_feed_payload(
         radar["history_status"] = history_status
 
     creator = CreatorBriefBuilder().build(radar, top_k=args.creator_top_k)
+    if publication_readiness is not None and not radar["entries"]:
+        # Annual patch coverage does not guarantee evidence in the analysis windows.
+        # Reject before changing any paired public head or immutable snapshot.
+        return 2, {
+            "schema_version": "1",
+            "status": "REJECTED_READINESS",
+            "published": False,
+            "blocking_reasons": ["EMPTY_RADAR_WINDOW"],
+            "patch_id": radar["patch_id"],
+            "cutoff": radar["cutoff"],
+            "windows": radar["windows"],
+            "entry_count": len(radar["entries"]),
+            "creator_topic_count": len(creator.to_dict()["topic_candidates"]),
+        }
     published_at = parse_datetime(args.published_at) if args.published_at else datetime.now(UTC)
     publisher = SnapshotFeedPublisher(
         args.feed_dir,
