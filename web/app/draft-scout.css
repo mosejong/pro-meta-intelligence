@@ -27,3 +27,5 @@
 .draft-scout-content .draft-scout-boundary { margin-bottom: 0; color: #56564d; }
 @media (max-width: 900px) { .draft-scout-levers, .draft-scout-facts { grid-template-columns: 1fr; } }
 @media (max-width: 540px) { .draft-scout-leagues { grid-template-columns: 1fr; } }
+.draft-scout-picker { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: 1rem; font-size: .875rem; }
+.draft-scout-picker select { min-height: 44px; padding: .5rem; font-size: 1rem; background: white; color: var(--ink); border: 1px solid var(--ink); }

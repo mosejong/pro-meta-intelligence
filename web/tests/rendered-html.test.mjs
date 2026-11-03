@@ -273,6 +273,7 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   assert.match(text, /피어리스 5판 소진 압박/);
   assert.match(text, /월즈 스위스 경기 미포함/);
   assert.match(text, /T1 3 : 0 KC/);
+  assert.match(text, /GEN · 8강 진출 · 4강 이후 후보/);
   assert.ok(text.indexOf("T1 vs KC · 밴픽 스카우팅") < text.indexOf("WORLDS 2026 · 준비실"));
   assert.ok(text.indexOf("T1 vs KC 8강 대비") < text.indexOf("T1 vs BLG 연습"));
   assert.match(html, /진행 중인 밴픽은 유지됩니다/);

@@ -1,4 +1,5 @@
-import { buildDraftScoutBrief, draftScoutFor, formatRate, headToHeadSeries, headToHeadStaples } from "./draft-scout";
+import { useState } from "react";
+import { DRAFT_SCOUT_PACKS, buildDraftScoutBrief, draftScoutFor, formatRate, headToHeadSeries, headToHeadStaples } from "./draft-scout";
 import { formatKst, worldsQuarterfinalFor } from "./worlds-preparation";
 import "./draft-scout.css";
 
@@ -7,27 +8,37 @@ const leagueLabels: Record<string, string> = { INTERNATIONAL: "국제대회" };
 
 export function DraftScoutPanel({ nameOf, previousPicks = [] }: { nameOf: (championId: string) => string; previousPicks?: string[] }) {
   const quarterfinal = worldsQuarterfinalFor("T1");
-  const pack = draftScoutFor(quarterfinal?.opponent);
-  if (!quarterfinal || !pack) return null;
-  const code = quarterfinal.opponent;
+  const [chosen, setChosen] = useState<string | null>(null);
+  const code = chosen ?? quarterfinal?.opponent ?? null;
+  const pack = draftScoutFor(code);
+  if (!quarterfinal || !code || !pack) return null;
+  const isNext = code === quarterfinal.opponent;
   const brief = buildDraftScoutBrief(pack, previousPicks);
   const { target, own } = pack;
   const lock = (locked: boolean) => locked ? <em>피어리스 잠금</em> : null;
   const leagues = (counts: Record<string, number>) => Object.entries(counts).map(([league, count]) => `${league} ${count}`).join(" · ");
   return <details className="draft-scout" id="draft-scout" open>
-    <summary><strong>T1 vs {code} · 밴픽 스카우팅</strong><span>8강 {formatKst(quarterfinal.start_at)} · 밴픽 단계에서 주도권을 가져오기 위한 근거</span></summary>
+    <summary><strong>T1 vs {code} · 밴픽 스카우팅</strong><span>{isNext ? `8강 ${formatKst(quarterfinal.start_at)}` : "4강 이후 후보 미리보기"} · 밴픽 단계에서 주도권을 가져오기 위한 근거</span></summary>
     <div className="draft-scout-content">
+      <label className="draft-scout-picker">상대 선택
+        <select value={code} onChange={(event) => setChosen(event.target.value)}>
+          {Object.keys(DRAFT_SCOUT_PACKS).map((option) => <option key={option} value={option}>
+            {option} · {option === quarterfinal.opponent ? "8강 상대" : "8강 진출 · 4강 이후 후보"}
+          </option>)}
+        </select>
+      </label>
       <p className="draft-scout-window">{pack.cutoff.slice(0, 10)} 기준 시즌 공개 경기 · {code} 최근 {target.game_count}경기 ({leagues(target.leagues)}) · T1 최근 {own.game_count}경기 ({leagues(own.leagues)}) · 패치 {target.patches[0]}–{target.patches.at(-1)}
         {pack.quality_flags.includes("CURRENT_EVENT_GAMES_MISSING") && <b> · 월즈 스위스 경기 미포함</b>}</p>
 
       <section aria-labelledby="draft-scout-h2h">
         <h3 id="draft-scout-h2h">상대전적과 서로 먼저 쓴 밴</h3>
-        <ul className="draft-scout-series">{headToHeadSeries(pack).map((series) => <li key={`${series.league}:${series.date}`}>
+        {pack.head_to_head.length === 0 && <p>시즌 공개 경기에서 맞대결 기록이 없습니다. 아래 시즌 성향으로 준비하세요.</p>}
+        <ul className="draft-scout-series">{headToHeadSeries(pack).map((series) => <li key={series.games[0].match_id}>
           <b>{series.league} {series.date.slice(5).replace("-", ".")}</b>
           <span>T1 {series.own_wins} : {series.target_wins} {code}</span>
         </li>)}</ul>
-        <p>{code}가 T1 상대로 반복한 밴: {headToHeadStaples(pack, "target").map((item) => `${nameOf(item.champion_id)} ${item.count}/${pack.head_to_head.length}`).join(" · ") || "반복 밴 없음"}</p>
-        <p>T1이 {code} 상대로 반복한 밴: {headToHeadStaples(pack, "own").map((item) => `${nameOf(item.champion_id)} ${item.count}/${pack.head_to_head.length}`).join(" · ") || "반복 밴 없음"}</p>
+        <p>{code}의 T1전 반복 밴: {headToHeadStaples(pack, "target").map((item) => `${nameOf(item.champion_id)} ${item.count}/${pack.head_to_head.length}`).join(" · ") || "반복 밴 없음"}</p>
+        <p>T1의 {code}전 반복 밴: {headToHeadStaples(pack, "own").map((item) => `${nameOf(item.champion_id)} ${item.count}/${pack.head_to_head.length}`).join(" · ") || "반복 밴 없음"}</p>
       </section>
 
       <div className="draft-scout-levers">
@@ -46,7 +57,7 @@ export function DraftScoutPanel({ nameOf, previousPicks = [] }: { nameOf: (champ
           </li>)}</ol>
         </section>
         <section aria-labelledby="draft-scout-protect">
-          <h3 id="draft-scout-protect">{code}가 T1에게 먼저 지울 챔피언</h3>
+          <h3 id="draft-scout-protect">T1이 먼저 밴당할 챔피언</h3>
           <ol>{brief.protect.map((item) => <li key={item.champion_id}>
             <span>{nameOf(item.champion_id)}{lock(item.locked)}</span>
             <small>상대전 밴 {item.banned_by_target_head_to_head}/{pack.head_to_head.length} · 시즌 1페이즈 피밴 {item.received_phase_one_ban_count} · T1 {item.own_game_count}픽</small>

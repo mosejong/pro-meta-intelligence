@@ -1,20 +1,64 @@
 import { isChampionLocked } from "./draft-agent";
+import blgPack from "./scouting/t1-vs-blg.json";
+import dkPack from "./scouting/t1-vs-dk.json";
+import genPack from "./scouting/t1-vs-gen.json";
+import igPack from "./scouting/t1-vs-ig.json";
 import kcPack from "./scouting/t1-vs-kc.json";
+import lyonPack from "./scouting/t1-vs-lyon.json";
+import tesPack from "./scouting/t1-vs-tes.json";
+
+type Counted = { champion_id: string; game_count: number; rate: number | null };
+type Record_ = { game_count: number; win_count: number; win_rate: number | null };
+type ScoutDraft = { bans: string[]; picks: { sequence: number; champion_id: string; role: string; player_name: string | null }[] };
+type ScoutTeam = {
+  team_name: string; team_ids: string[]; game_count: number; record: Record_; home_league: string | null;
+  leagues: Record<string, number>; patches: string[]; window: { first_observed_at: string; last_observed_at: string };
+  side_record: { BLUE: Record_; RED: Record_ }; first_selection: Record_ & { rate: number | null };
+  phase_one_bans: Counted[]; phase_two_bans: Counted[]; received_phase_one_bans: Counted[]; received_phase_two_bans: Counted[];
+  first_rotation_picks: Counted[]; top_picks: (Counted & { role: string; win_count: number })[]; pick_counts: Record<string, number>;
+  last_pick: { game_count: number; roles: Counted[]; champions: Counted[] };
+  player_pools: { role: string; player_name: string | null; game_count: number; unique_champions: number; comfort_champions: number;
+    top_three_share: number | null; champions: { champion_id: string; game_count: number; win_count: number; share: number | null }[]; other_players: string[] }[];
+};
+
+// Mirrors `draft-scout-pack` schema 1 written by `scout-opponent-draft`.
+export type DraftScoutPack = {
+  schema_version: string; artifact_type: string; cutoff: string; boundary: string; quality_flags: string[];
+  config: { maximum_games_per_team: number; meta_patches_per_region: number; minimum_comfort_games: number; top_champions: number };
+  target: ScoutTeam; own: ScoutTeam;
+  head_to_head: { match_id: string; observed_at: string; league: string; patch_id: string; own_side: string;
+    own_first_selection: boolean; own_won: boolean; own: ScoutDraft; target: ScoutDraft }[];
+  league_meta: { group: string; leagues: string[]; patches: string[]; game_count: number;
+    presence: { champion_id: string; presence_rate: number | null; pick_count: number; ban_count: number }[] }[];
+  levers: {
+    deny_comfort: { champion_id: string; role: string; player_name: string | null; game_count: number; win_count: number; share: number | null; also_own_priority: boolean }[];
+    contested_priority: { champion_id: string; own_game_count: number; target_game_count: number }[];
+    protect_own: { champion_id: string; own_game_count: number; received_phase_one_ban_count: number; banned_by_target_head_to_head: number }[];
+    target_spends_phase_one_bans: Counted[];
+    fearless_pressure: { role: string; player_name: string | null; unique_champions: number; comfort_champions: number; top_three_share: number | null }[];
+    counterpick_role: Counted | null;
+  };
+};
 
 // Reviewed season packs from `scout-opponent-draft`; regenerated per opponent, never edited by hand.
-export type DraftScoutPack = typeof kcPack;
-export const DRAFT_SCOUT_PACKS: Record<string, DraftScoutPack> = { KC: kcPack };
+export const DRAFT_SCOUT_PACKS: Record<string, DraftScoutPack> = {
+  KC: kcPack, TES: tesPack, IG: igPack, GEN: genPack, LYON: lyonPack, DK: dkPack, BLG: blgPack,
+};
 
 export function draftScoutFor(code: string | null | undefined) {
   return code ? DRAFT_SCOUT_PACKS[code] ?? null : null;
 }
 
-// Consecutive games in one league between the same teams read as one series.
+const SERIES_GAP_MS = 12 * 60 * 60 * 1000;
+
+// Games in one league within 12 hours of the previous game read as one series.
 export function headToHeadSeries(pack: DraftScoutPack) {
   const series: { league: string; date: string; own_wins: number; target_wins: number; games: DraftScoutPack["head_to_head"] }[] = [];
   for (const game of pack.head_to_head) {
     const last = series.at(-1);
-    const current = last && last.league === game.league ? last : null;
+    const previous = last?.games.at(-1);
+    const current = last && previous && last.league === game.league &&
+      Date.parse(game.observed_at) - Date.parse(previous.observed_at) <= SERIES_GAP_MS ? last : null;
     const entry = current ?? { league: game.league, date: game.observed_at.slice(0, 10), own_wins: 0, target_wins: 0, games: [] };
     if (!current) series.push(entry);
     entry.games.push(game);

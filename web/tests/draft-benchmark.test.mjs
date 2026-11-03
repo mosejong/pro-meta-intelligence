@@ -16,10 +16,18 @@ test("historical draft evaluation measures the production preview and rejects le
     const { buildWorldsPreparation, formatKst, worldsQuarterfinalFor, worldsRoleCoverage, WORLDS_2026 } = await vite.ssrLoadModule("/app/worlds-preparation.ts");
     const report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
     report.fixture_only = true;
-    const { buildDraftScoutBrief, draftScoutFor, headToHeadSeries, headToHeadStaples } = await vite.ssrLoadModule("/app/draft-scout.ts");
+    const { DRAFT_SCOUT_PACKS, buildDraftScoutBrief, draftScoutFor, headToHeadSeries, headToHeadStaples } = await vite.ssrLoadModule("/app/draft-scout.ts");
     await t.test("draft scouting pack follows T1's quarterfinal opponent and respects fearless locks", () => {
       assert.equal(draftScoutFor(worldsQuarterfinalFor("T1").opponent), draftScoutFor("KC"));
-      assert.equal(draftScoutFor("BLG"), null);
+      assert.deepEqual(Object.keys(DRAFT_SCOUT_PACKS).sort(), ["BLG", "DK", "GEN", "IG", "KC", "LYON", "TES"]);
+      for (const entry of WORLDS_2026.quarterfinals.flatMap((match) => match.teams).filter((code) => code !== "T1")) {
+        assert.equal(draftScoutFor(entry).target.team_name, WORLDS_2026.teams.find((team) => team.code === entry).names[0]);
+      }
+      assert.equal(draftScoutFor("HLE"), null);
+      const dkSeries = headToHeadSeries(draftScoutFor("DK"));
+      assert.ok(dkSeries.filter((series) => series.league === "LCK").length > 1);
+      assert.ok(dkSeries.every((series) => series.own_wins <= 3 && series.target_wins <= 3));
+      assert.equal(headToHeadSeries(draftScoutFor("IG")).length, 0);
       const pack = draftScoutFor("KC");
       assert.equal(pack.artifact_type, "draft-scout-pack");
       assert.equal(pack.target.team_name, "Karmine Corp");

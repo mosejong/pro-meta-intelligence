@@ -230,5 +230,9 @@ presence comparison (opponent home league, LCK, international events). Levers (d
 contested priority, protect own, fearless pressure, counterpick role) are deterministic counting
 rules for staff review, not win probabilities. The current pack stops at August 23 and contains
 no Worlds Swiss games because the source-policy reviews have expired; regenerate it once a
-reviewed snapshot with `WLDs` games is available. Adding the next opponent means one more
-`scout-opponent-draft` output and one entry in `DRAFT_SCOUT_PACKS`.
+reviewed snapshot with `WLDs` games is available.
+
+Packs exist for every other quarterfinalist (TES, IG, GEN, LYON, DK, BLG) so a semifinal or
+final opponent can be scouted the moment a result is known; the panel defaults to T1's next
+opponent and offers the rest as candidates. Head-to-head games are grouped into series when
+the same league's games fall within 12 hours of each other.
