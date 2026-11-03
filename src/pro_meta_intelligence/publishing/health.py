@@ -65,7 +65,7 @@ def assess_oe_feed_health(
         "phase": "BENCHMARK_READY" if benchmark_ready else "COLLECTING_HISTORY",
         "checks": checks,
         "failed_checks": failed,
-        "next_action": _next_action(failed, history_status),
+        "next_action": _next_action(failed, history_status, latest_job, now),
         "summary": {
             "last_job_status": latest_job.get("status") if isinstance(latest_job, dict) else None,
             "patch_id": current_feed.get("patch_id") if isinstance(current_feed, dict) else None,
@@ -907,7 +907,26 @@ def _check(check_id: str, passed: bool, observed: object, required: object) -> d
     }
 
 
-def _next_action(failed: list[str], history_status: dict[str, Any] | None) -> str:
+def _next_action(
+    failed: list[str],
+    history_status: dict[str, Any] | None,
+    latest_job: dict[str, Any] | None,
+    now: datetime,
+) -> str:
+    # Only a fresh successful job with no other broken artifacts can justify
+    # waiting. Stale evidence continues to fail health during this interval.
+    if failed == ["SOURCE_SNAPSHOT_FRESHNESS"] and isinstance(latest_job, dict):
+        result = latest_job.get("result")
+        acquisition = result.get("source_acquisition") if isinstance(result, dict) else None
+        if isinstance(acquisition, dict):
+            retry_at = acquisition.get("next_attempt_at")
+            if (
+                acquisition.get("status") == "REUSED_CACHE_DURING_SOURCE_BACKOFF"
+                and result.get("network_collection_performed") is False
+                and _is_timestamp(retry_at)
+                and parse_datetime(retry_at) > now
+            ):
+                return "WAIT_FOR_SOURCE_RETRY_WINDOW"
     if "LAST_JOB_SUCCEEDED" in failed:
         return "INSPECT_LAST_JOB"
     if "JOB_FRESHNESS" in failed or "SOURCE_SNAPSHOT_FRESHNESS" in failed:

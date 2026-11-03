@@ -110,6 +110,9 @@ jobs:
             --year 2026 \
             --source-timezone UTC \
             --patch-selection-league LCK \
+            --patch-selection-league WLDs \
+            --patch-selection-league MSI \
+            --patch-selection-league FST \
             --retain-inactive-league-window \
             --archive-dir "$PRIVATE_ARCHIVE_DIR" \
             --feed-dir web/public/feed \

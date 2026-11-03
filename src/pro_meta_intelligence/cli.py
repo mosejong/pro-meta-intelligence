@@ -40,8 +40,13 @@ from pro_meta_intelligence.ingestion.oracles_elixir import (
     OracleElixirCSVAdapter,
     OracleElixirImport,
 )
-from pro_meta_intelligence.models import BacktestWindow, DraftAction
-from pro_meta_intelligence.opponent import OpponentPrepBuilder, OpponentPrepConfig
+from pro_meta_intelligence.models import BacktestWindow, DraftAction, MatchRecord
+from pro_meta_intelligence.opponent import (
+    DraftScoutBuilder,
+    DraftScoutConfig,
+    OpponentPrepBuilder,
+    OpponentPrepConfig,
+)
 from pro_meta_intelligence.publishing import (
     FeedJobAlreadyRunning,
     FeedJobOperationResult,
@@ -65,7 +70,12 @@ from pro_meta_intelligence.quality import (
     audit_oe_history,
 )
 from pro_meta_intelligence.radar import LeagueRegionMap, MetaRadar, MetaRadarConfig
-from pro_meta_intelligence.sources import SnapshotArchive, SourceAttemptLedger, SourceRegistry
+from pro_meta_intelligence.sources import (
+    SnapshotArchive,
+    SourceAttemptLedger,
+    SourcePolicyError,
+    SourceRegistry,
+)
 from pro_meta_intelligence.temporal import parse_datetime
 
 
@@ -187,6 +197,26 @@ def build_parser() -> argparse.ArgumentParser:
     _add_readiness_arguments(oe_audit)
     oe_audit.add_argument("--output", type=Path, help="optional JSON coverage audit path")
 
+    draft_scout = subparsers.add_parser(
+        "scout-opponent-draft",
+        help="season-wide head-to-head ban/pick scouting pack for one opponent",
+    )
+    draft_scout.add_argument("--input", type=Path, required=True)
+    draft_scout.add_argument("--source-timezone", required=True)
+    draft_scout.add_argument(
+        "--retrieved-at", help="snapshot retrieval time; defaults to current UTC"
+    )
+    draft_scout.add_argument("--source-uri", help="optional registered provider HTTPS source URL")
+    draft_scout.add_argument("--registry", type=Path, help="optional source registry JSON")
+    draft_scout.add_argument(
+        "--region-map", type=Path, help="optional league-to-region JSON mapping"
+    )
+    draft_scout.add_argument("--target-team", required=True, help="exact opponent team name")
+    draft_scout.add_argument("--own-team", default="T1", help="exact own team name")
+    draft_scout.add_argument("--cutoff", help="analysis cutoff; defaults to the retrieval time")
+    draft_scout.add_argument("--maximum-games", type=int, default=40)
+    draft_scout.add_argument("--output", type=Path, help="optional JSON scouting pack path")
+
     oe_history = subparsers.add_parser(
         "audit-oe-history",
         help="verify archived OE snapshots and measure historical backtest readiness",
@@ -290,7 +320,11 @@ def build_parser() -> argparse.ArgumentParser:
     patch_selection.add_argument("--patch", help="patch ID; latest match patch if omitted")
     patch_selection.add_argument(
         "--patch-selection-league",
-        help="select the latest available patch played by this exact league; retain all regions",
+        action="append",
+        help=(
+            "select the patch of the latest available match among these exact leagues "
+            "(repeatable); retain all regions"
+        ),
     )
     oe_sync.add_argument("--cutoff", help="analysis cutoff; defaults to source retrieval time")
     oe_sync.add_argument(
@@ -417,6 +451,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _fetch_oe(args)
     if args.command == "audit-oe-coverage":
         return _audit_oe(args)
+    if args.command == "scout-opponent-draft":
+        return _scout_opponent_draft(args)
     if args.command == "audit-oe-history":
         return _audit_oe_history(args)
     if args.command == "benchmark-oe-history":
@@ -550,6 +586,18 @@ def _fetch_schedule(args: argparse.Namespace) -> int:
             locale=args.locale,
             last_retrieved_at=last_retrieved_at,
         )
+    except SourcePolicyError as error:
+        payload = {
+            "schema_version": "1",
+            "status": "POLICY_BLOCKED",
+            "source_id": adapter.source_id,
+            "reason_code": error.decision.reason_code,
+            "network_collection_performed": False,
+            "existing_snapshot_preserved": args.output.is_file(),
+            "next_action": "REVIEW_SOURCE_POLICY",
+        }
+        _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", None)
+        return 5
     except ScheduleFetchIntervalError as error:
         payload = {
             "schema_version": "1",
@@ -691,6 +739,24 @@ def _audit_oe(args: argparse.Namespace) -> int:
         args.output,
     )
     return 0 if audit.ready_for_radar else 2
+
+
+def _scout_opponent_draft(args: argparse.Namespace) -> int:
+    retrieved_at = parse_datetime(args.retrieved_at) if args.retrieved_at else datetime.now(UTC)
+    imported = _load_oe_import(args, retrieved_at=retrieved_at)
+    report = DraftScoutBuilder().build(
+        imported.matches,
+        imported.draft_events,
+        _load_league_regions(args.region_map),
+        DraftScoutConfig(
+            cutoff=parse_datetime(args.cutoff) if args.cutoff else retrieved_at,
+            target_team_name=args.target_team,
+            own_team_name=args.own_team,
+            maximum_games_per_team=args.maximum_games,
+        ),
+    )
+    _emit(report.to_json(), args.output)
+    return 0
 
 
 def _audit_oe_history(args: argparse.Namespace) -> int:
@@ -884,12 +950,14 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             input_authenticity="REVIEWED_PROVIDER_PUBLISHED_DOWNLOAD",
         )
         imported = _load_oe_import(refresh_args)
+        selection_match = None
         if args.patch_selection_league is not None:
-            refresh_args.patch = _latest_league_patch(
+            selection_match = _latest_league_match(
                 imported,
                 args.patch_selection_league,
                 parse_datetime(args.cutoff) if args.cutoff else latest.retrieved_at,
             )
+            refresh_args.patch = selection_match.patch_id
         if args.retain_inactive_league_window:
             if args.patch_selection_league is None:
                 raise ValueError("inactive window retention requires --patch-selection-league")
@@ -917,7 +985,8 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 if args.patch
                 else "LATEST_MATCH_PATCH"
             ),
-            "league": args.patch_selection_league,
+            "league": selection_match.league if selection_match is not None else None,
+            "candidate_leagues": args.patch_selection_league,
             "comparison_scope": "ALL_MAPPED_LEAGUES_ON_SELECTED_PATCH",
         }
         if not coverage.ready_for_radar:
@@ -1462,15 +1531,19 @@ def _readiness_criteria(args: argparse.Namespace) -> OECoverageCriteria:
     )
 
 
-def _latest_league_patch(imported: OracleElixirImport, league: str, cutoff: datetime) -> str:
+def _latest_league_match(
+    imported: OracleElixirImport, leagues: Sequence[str], cutoff: datetime
+) -> MatchRecord:
     matches = tuple(
         match
         for match in imported.matches
-        if match.league == league and match.available_at <= cutoff and match.observed_at <= cutoff
+        if match.league in leagues and match.available_at <= cutoff and match.observed_at <= cutoff
     )
     if not matches:
-        raise ValueError(f"league {league!r} has no matches available at the analysis cutoff")
-    return max(matches, key=lambda match: (match.observed_at, match.match_id)).patch_id
+        raise ValueError(
+            f"leagues {list(leagues)!r} have no matches available at the analysis cutoff"
+        )
+    return max(matches, key=lambda match: (match.observed_at, match.match_id))
 
 
 def _load_oe_import(

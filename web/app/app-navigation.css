@@ -85,6 +85,7 @@ body main.product-home {
 #home-spaces .sb-team--home .sb-code { color: var(--sb-accent); }
 #home-spaces .sb-seam { width: 4px; align-self: stretch; background: var(--sb-accent); transform: skewX(-12deg); }
 #home-spaces .sb-desc { max-width: 52ch; color: var(--sb-on-strong-muted); font-size: .95rem; }
+#home-spaces .sb-fixture-detail { margin: 0 0 12px; color: var(--sb-on-strong); font-size: .95rem; overflow-wrap: anywhere; }
 #home-spaces .sb-cta { display: inline-flex; align-items: center; gap: 10px; margin-top: 18px; padding: 11px 18px; border-radius: 2px; background: var(--sb-accent); color: var(--sb-on-accent); font-family: var(--sb-font-display); font-weight: 600; font-size: .88rem; }
 
 #home-spaces .home-task-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 14px; border: 0; }
@@ -94,7 +95,7 @@ body main.product-home {
 #home-spaces .home-menu-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 4px; background: var(--sb-surface-alt); color: var(--sb-text); }
 #home-spaces .home-menu-icon svg { width: 20px; height: 20px; }
 #home-spaces .home-task-grid h3 { margin: 0; font-size: 1.02rem; font-weight: 700; color: var(--sb-text); }
-#home-spaces .home-task-grid > a > p { flex: 1; margin: 0; color: var(--sb-text-muted); font-size: .85rem; line-height: 1.6; word-break: keep-all; }
+#home-spaces .home-task-grid > a > p { display: block; flex: 1; margin: 0; color: var(--sb-text-muted); font-size: .85rem; line-height: 1.6; word-break: keep-all; }
 #home-spaces .home-task-grid > a > small { color: var(--sb-accent-ink); font-family: var(--sb-font-display); font-weight: 600; font-size: .8rem; }
 
 #home-today { padding: clamp(40px, 6vw, 64px) max(4vw, calc((100vw - 1500px) / 2)); border: 0; border-top: 1px solid var(--sb-line); background: var(--sb-surface-alt); }
@@ -167,7 +168,7 @@ body .product-home section.home-principles { border: 0; border-top: 1px solid va
 .opponent-controls .team-chooser .team-choice-grid button { background: white; color: #172435; }
 .opponent-controls .team-chooser .team-choice-grid button[aria-pressed="true"] { background: #eaf2ff; }
 .team-lens .team-chooser label { font-size: .875rem; }
-@media (max-width: 900px) {
+@media (max-width: 960px) {
   body { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
   body nav.app-bottom-navigation { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; z-index: 40; bottom: 0; left: 0; right: 0; padding: 8px 6px calc(8px + env(safe-area-inset-bottom)); border-top: 3px solid #E3A429; background: #131C3F; box-shadow: 0 -6px 25px #07142630; }
   body nav.app-bottom-navigation a { display: grid; justify-items: center; align-content: center; gap: 4px; min-height: 54px; padding: 4px; border-radius: 4px; color: #AEB6DC; text-decoration: none; }

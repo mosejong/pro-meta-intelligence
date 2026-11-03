@@ -263,7 +263,19 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   assert.match(html, /대회 패치/);
   assert.match(html, /레드 선픽/);
   assert.match(html.replaceAll("<!-- -->", ""), /T1 vs BLG 연습/);
-  assert.match(html, /전체 출전 명단은 아직 미완성/);
+  const text = html.replaceAll("<!-- -->", "");
+  assert.match(text, /T1 8강 · vs KC/);
+  assert.match(text, /11\.7 07:00 KST/);
+  assert.match(text, /T1 vs KC 8강 대비/);
+  assert.match(text, /4강 맞대결 조합은 확인하지 못했습니다/);
+  assert.match(text, /T1 vs KC · 밴픽 스카우팅/);
+  assert.match(text, /밴으로 지울 KC 주력/);
+  assert.match(text, /피어리스 5판 소진 압박/);
+  assert.match(text, /월즈 스위스 경기 미포함/);
+  assert.match(text, /T1 3 : 0 KC/);
+  assert.match(text, /GEN · 8강 진출 · 4강 이후 후보/);
+  assert.ok(text.indexOf("T1 vs KC · 밴픽 스카우팅") < text.indexOf("WORLDS 2026 · 준비실"));
+  assert.ok(text.indexOf("T1 vs KC 8강 대비") < text.indexOf("T1 vs BLG 연습"));
   assert.match(html, /진행 중인 밴픽은 유지됩니다/);
   assert.match(html, /DRAFT LAB · STANDARD 5 BAN \/ 5 PICK/);
   assert.match(html, /가상 밴픽/);
@@ -1719,6 +1731,7 @@ test("classifies publication freshness at explicit safety boundaries", async () 
       scheduleState: "stale",
       scheduleSourceUrl: null,
       collectionStatus: {
+        updated_at: "2026-08-26T18:00:00Z",
         state: "SOURCE_DELAYED",
         reason_code: "PROVIDER_QUOTA_OR_HTML_RESPONSE",
         last_attempt: { finished_at: "2026-08-26T18:00:00Z" },
@@ -1888,6 +1901,24 @@ test("ships a fail-closed human-paired AI validation status", async () => {
   assert.equal(status.gates.length, 8);
   assert.equal(status.next_action, "COLLECT_PAIRED_HUMAN_HOLDOUTS");
   assert.doesNotMatch(text, /C:\\\\Users|\.csv|chatgpt|openai|gpt login|sign in/i);
+});
+
+test("expired collection records never claim automation is currently running", async () => {
+  const vite = await createServer({ root: fileURLToPath(templateRoot), configFile: false, publicDir: false,
+    server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { collectionStatusMessage } = await vite.ssrLoadModule("/app/collection-status.ts");
+    const status = JSON.parse(await readFile(new URL("../public/feed/collection-status.json", import.meta.url), "utf8"));
+    status.updated_at = "2026-09-21T00:00:00Z";
+    for (const state of ["CURRENT", "SOURCE_DELAYED", "SOURCE_UNAVAILABLE"]) {
+      const record = { ...status, state };
+      assert.match(collectionStatusMessage(record, "2026-09-22T12:00:00.001Z"), /자동 갱신 여부를 확인할 수 없습니다/);
+      assert.doesNotMatch(collectionStatusMessage(record, "2026-09-22T12:00:00Z"), /기록이 오래/);
+      assert.match(collectionStatusMessage(record, "2026-09-20T00:00:00Z"), /확인 시각을 검증할 수 없습니다/);
+      assert.match(collectionStatusMessage(record, "invalid"), /확인 시각을 검증할 수 없습니다/);
+    }
+    assert.equal(collectionStatusMessage(null, "2026-09-29T00:00:00Z"), null);
+  } finally { await vite.close(); }
 });
 
 test("maps official champion names and searches in Korean or English", async () => {

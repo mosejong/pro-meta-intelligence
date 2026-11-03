@@ -106,6 +106,71 @@ def test_health_detects_stale_source_without_calling_history_incomplete_an_outag
     assert report["next_action"] == "RUN_SYNC_NOW"
 
 
+@pytest.mark.parametrize(
+    ("retry_at", "status", "network", "expected"),
+    [
+        (
+            "2026-08-24T13:00:00Z",
+            "REUSED_CACHE_DURING_SOURCE_BACKOFF",
+            False,
+            "WAIT_FOR_SOURCE_RETRY_WINDOW",
+        ),
+        ("2026-08-24T12:00:00Z", "REUSED_CACHE_DURING_SOURCE_BACKOFF", False, "RUN_SYNC_NOW"),
+        ("2026-08-24T11:00:00Z", "REUSED_CACHE_DURING_SOURCE_BACKOFF", False, "RUN_SYNC_NOW"),
+        ("invalid", "REUSED_CACHE_DURING_SOURCE_BACKOFF", False, "RUN_SYNC_NOW"),
+        (None, "REUSED_CACHE_DURING_SOURCE_BACKOFF", False, "RUN_SYNC_NOW"),
+        ("2026-08-24T13:00:00Z", "FETCHED", False, "RUN_SYNC_NOW"),
+        ("2026-08-24T13:00:00Z", "REUSED_CACHE_DURING_SOURCE_BACKOFF", True, "RUN_SYNC_NOW"),
+    ],
+)
+def test_health_respects_verified_source_backoff(retry_at, status, network, expected) -> None:
+    job = _latest_job(
+        result={
+            "network_collection_performed": network,
+            "source_acquisition": {"status": status, "next_attempt_at": retry_at},
+        }
+    )
+    report = assess_oe_feed_health(
+        job,
+        _feed(),
+        _history(as_of="2026-08-20T00:00:00Z"),
+        _outcomes(as_of="2026-08-20T00:00:00Z"),
+        checked_at=NOW,
+    )
+    assert report["healthy"] is False
+    assert report["failed_checks"] == ["SOURCE_SNAPSHOT_FRESHNESS"]
+    assert report["next_action"] == expected
+
+
+@pytest.mark.parametrize(
+    "updates",
+    [
+        {"status": "FAILED", "exit_code": 1},
+        {"finished_at": "2026-08-20T00:00:00Z"},
+    ],
+)
+def test_backoff_never_masks_failed_or_stale_jobs(updates) -> None:
+    job = _latest_job(
+        result={
+            "network_collection_performed": False,
+            "source_acquisition": {
+                "status": "REUSED_CACHE_DURING_SOURCE_BACKOFF",
+                "next_attempt_at": "2026-08-24T13:00:00Z",
+            },
+        },
+        **updates,
+    )
+    report = assess_oe_feed_health(
+        job,
+        _feed(),
+        _history(as_of="2026-08-20T00:00:00Z"),
+        _outcomes(as_of="2026-08-20T00:00:00Z"),
+        checked_at=NOW,
+    )
+    assert report["healthy"] is False
+    assert report["next_action"] != "WAIT_FOR_SOURCE_RETRY_WINDOW"
+
+
 def test_health_fails_closed_when_operational_artifacts_are_missing() -> None:
     report = assess_oe_feed_health(None, None, None, None, checked_at=NOW)
 

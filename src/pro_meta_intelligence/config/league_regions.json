@@ -5,6 +5,8 @@
     "CBLOL": "BRAZIL",
     "CD": "BRAZIL",
     "EBL": "EMEA",
+    "EWC": "INTERNATIONAL",
+    "FST": "INTERNATIONAL",
     "HC": "EMEA",
     "HLL": "EMEA",
     "HM": "EMEA",
@@ -23,6 +25,7 @@
     "LPLOL": "EMEA",
     "LRN": "LATIN_AMERICA",
     "LRS": "LATIN_AMERICA",
+    "MSI": "INTERNATIONAL",
     "NACL": "NORTH_AMERICA",
     "NL": "EMEA",
     "NLC": "EMEA",
@@ -31,6 +34,7 @@
     "RL": "EMEA",
     "ROL": "EMEA",
     "TCL": "EMEA",
-    "VCS": "PACIFIC"
+    "VCS": "PACIFIC",
+    "WLDs": "INTERNATIONAL"
   }
 }

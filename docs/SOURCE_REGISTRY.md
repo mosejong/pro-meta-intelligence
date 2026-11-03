@@ -11,6 +11,32 @@ crawler.
 
 ## Current official-policy review
 
+### November 3 renewal: OE, Data Dragon and LoL Esports schedule
+
+Renewed ahead of the October 22 (OE/Data Dragon) and October 14 (schedule) reviews' expiry so all
+three share one review date through the Worlds knockout stage. Rechecked each page at 14:05 UTC:
+
+- OE downloads page returned 200; its bundle is now `static/js/main.9ef7a6a4.js` and still states
+  "It is provided free of charge, and is intended for use by analysts, commentators, and fans.",
+  "Data files are updated ONCE PER DAY. There is no value in downloading the files more frequently
+  than this." and that game statistics are Riot's property and usage must follow Riot's terms and
+  policies. The linked Drive folder still matches `oe_published_files.json`.
+- OE dictionary still warns "Data file structure is subject to change." and that `gameid` may not be
+  unique across servers/leagues.
+- Riot developer docs still document Data Dragon `versions.json` and `champion.json` (current 16.21.1).
+  General Policies (last updated May 29, 2025) still list Data Dragon among usable assets, prohibit
+  de-anonymizing players and ask products to use supported Riot services. API terms (December 9, 2013)
+  and Terms of Service (December 1, 2024; rule 7.1 covers automation that interacts with Riot Services)
+  are unchanged; no explicit ban on reading the public schedule page was found.
+- lolesports robots.txt still returns only a wildcard user-agent declaration. The live LCK schedule
+  page parsed with the existing `parse_schedule_html` into 6 Worlds knockout events (quarterfinals
+  November 4–6 including T1 vs KC, semifinals TBD), so the adapter contract still holds.
+
+This renews only the three registry timestamps for the same operations. No host, file ID, collection
+frequency, raw redistribution scope or public API permission is expanded; the 24-hour attempt ledger
+and 30-day expiry remain enforced. It does not establish Riot product registration/approval or source
+freshness. The credentialed Riot web API remains `REVIEW_REQUIRED` with no operations.
+
 ### October 22 renewal: OE and Data Dragon
 
 Rechecked at 2026-10-22T03:03:07Z after hosted runs failed with `POLICY_REVIEW_EXPIRED`.

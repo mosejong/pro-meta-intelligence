@@ -1,5 +1,32 @@
 # Worlds 2026 preparation
 
+## Knockout draw reviewed November 3
+
+The Swiss stage ended October 31. The press-reported draw ([Strafe, Nov 1](https://www.strafe.com/news/read/worlds-2026-playoffs-bracket-schedule-start-times-and-format/))
+lists eight best-of-five quarterfinals at 16:00 CST (22:00 UTC, 07:00 KST next day):
+TES vs IG (Nov 3), GEN vs LYON (Nov 4), DK vs BLG (Nov 5) and **T1 vs KC (Nov 6 CST / Nov 7
+KST)**. Semifinals are Nov 7–8 and the final Nov 14 (US dates). The official bracket page was not
+directly retrievable, so this is a dated press snapshot; semifinal pairings were not verified.
+
+The preparation panel now leads with T1's quarterfinal and KC, lists all four pairings, adds IG
+and LYON with exact main-team matches (samples 3 each in the September report) and labels other
+named qualifiers as out of the knockouts for reference only. No match result is stored or
+inferred; update `WORLDS_2026.quarterfinals` and the review date as rounds complete.
+
+## International events in the Radar — November 3
+
+OE international events (`WLDs`, `MSI`, `FST`, `EWC`) now map to a separate `INTERNATIONAL`
+comparison group instead of being flagged `UNMAPPED_LEAGUE_EVIDENCE`; they are not merged into
+any home region. Re-auditing the archived August 23 CSV places FST (16.05), EWC (16.07–16.13)
+and MSI (16.13) in that group. The 2026 file predates Worlds, so the `WLDs` code is taken from
+OE's prior-year convention and must be confirmed on the first Worlds-era download.
+
+The hosted sync now passes `--patch-selection-league` for LCK, WLDs, MSI and FST. The patch of
+the most recent available match among them is selected, so the Radar follows the Worlds patch
+while LCK is idle and returns to LCK afterwards. Publication records the selected league and the
+candidate list. This changes no readiness threshold and does not restore source freshness: the
+expired source-policy reviews still block collection until they are rechecked.
+
 ## Disjoint September draft replay — September 21
 
 The frozen [protocol and run provenance](benchmarks/SEPTEMBER_DRAFT_PROTOCOL.md) and
@@ -181,3 +208,31 @@ Next priorities are to verify the remaining common Fearless rules and event rest
 the confirmed participant snapshot, expand evidence on patch 26.20 when available, and evaluate the frozen role
 experiment on disjoint data. First Selection support does not establish every Worlds rule or
 turn rehearsal into a validated counter-pick recommendation.
+
+## Opponent draft scouting — November 3
+
+The Draft Lab now opens with a season-wide ban/pick scouting pack for T1's next knockout
+opponent (`web/app/scouting/t1-vs-kc.json`). It is built from the archived public OE season file
+with the new CLI command and is regenerated, never hand-edited:
+
+```bash
+python -m pro_meta_intelligence scout-opponent-draft \
+  --input <archived OE CSV> --source-timezone UTC \
+  --retrieved-at 2026-08-23T12:00:00+00:00 \
+  --target-team "Karmine Corp" --own-team T1 \
+  --output web/app/scouting/t1-vs-kc.json
+```
+
+The pack covers the newest 40 games per team across leagues and international events, the full
+season head-to-head (MSI T1 3-0, EWC KC 2-1), phase-one/phase-two bans given and received,
+first-rotation picks, last-pick roles, per-player pools for fearless pressure, and a league
+presence comparison (opponent home league, LCK, international events). Levers (deny comfort,
+contested priority, protect own, fearless pressure, counterpick role) are deterministic counting
+rules for staff review, not win probabilities. The current pack stops at August 23 and contains
+no Worlds Swiss games because the source-policy reviews have expired; regenerate it once a
+reviewed snapshot with `WLDs` games is available.
+
+Packs exist for every other quarterfinalist (TES, IG, GEN, LYON, DK, BLG) so a semifinal or
+final opponent can be scouted the moment a result is known; the panel defaults to T1's next
+opponent and offers the rest as candidates. Head-to-head games are grouped into series when
+the same league's games fall within 12 hours of each other.

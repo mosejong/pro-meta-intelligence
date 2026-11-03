@@ -29,6 +29,7 @@ jobs:
       - name: Fetch policy-gated official schedule and detect T1 changes
         shell: bash
         run: |
+          mkdir -p outputs/schedule-diagnostics
           set +e
           python -m pro_meta_intelligence fetch-schedule \
             --league lck \
@@ -40,14 +41,25 @@ jobs:
             --archive-dir outputs/lolesports/raw \
             --output web/public/feed/schedule.json \
             --changes-output web/public/feed/schedule-changes.json \
-            --watch-team T1
-          status=$?
+            --watch-team T1 | tee outputs/schedule-diagnostics/result.json
+          status=${PIPESTATUS[0]}
           set -e
+          if [ "$status" -eq 5 ]; then
+            echo "::error::Schedule policy gate blocked collection. Review docs/SOURCE_REGISTRY.md and the registered source policies before renewing access. Published snapshots were preserved."
+          fi
           if [ "$status" -eq 3 ]; then
             echo "Schedule source interval has not elapsed; keeping the published snapshot."
             exit 0
           fi
           exit "$status"
+      - name: Preserve schedule failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: schedule-diagnostics-${{ github.run_id }}
+          path: outputs/schedule-diagnostics/result.json
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Validate public schedule artifacts
         working-directory: web
         run: npm ci && npm run test:pages

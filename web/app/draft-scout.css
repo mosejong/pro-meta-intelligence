@@ -1,0 +1,31 @@
+.draft-scout { margin: 0 0 1.5rem; border: 1px solid var(--ink); background: #fff; color: var(--ink); }
+.draft-scout > summary { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; padding: 1rem; cursor: pointer; background: #fff1f3; border-left: 4px solid #e2012d; }
+.draft-scout > summary strong { font-size: 1.125rem; }
+.draft-scout > summary span { font-size: .875rem; }
+.draft-scout > summary:focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
+.draft-scout-content { padding: 1rem; }
+.draft-scout-content p { margin: 0 0 1rem; font-size: .875rem; line-height: 1.6; overflow-wrap: anywhere; }
+.draft-scout-content h3 { margin: 0 0 .5rem; font-size: 1rem; }
+.draft-scout-content section { margin-bottom: 1rem; min-width: 0; }
+.draft-scout-content ol { list-style: none; margin: 0 0 .5rem; padding: 0; }
+.draft-scout-series { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 .75rem; padding: 0; }
+.draft-scout-series li { display: flex; flex-direction: column; gap: .15rem; padding: .5rem .75rem; border: 1px solid #d8d8d3; font-size: .875rem; }
+.draft-scout-levers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.draft-scout-levers section { padding: .75rem; border: 1px solid #d8d8d3; }
+.draft-scout-levers li { display: flex; flex-direction: column; gap: .2rem; padding: .45rem .5rem; margin-bottom: .35rem; background: #f6f6f2; overflow-wrap: anywhere; }
+.draft-scout-levers li > span { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .35rem; font-weight: 600; }
+.draft-scout-levers small { font-size: .75rem; line-height: 1.5; color: #56564d; }
+.draft-scout-levers em { font-style: normal; font-weight: 400; font-size: .75rem; background: #e3def9; color: #382263; padding: .15rem .3rem; }
+.draft-scout-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+.draft-scout-facts span { padding-left: .75rem; border-left: 3px solid var(--violet); font-size: .875rem; line-height: 1.5; overflow-wrap: anywhere; }
+.draft-scout-facts b { display: block; margin-bottom: .25rem; }
+.draft-scout-leagues { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-bottom: .75rem; }
+.draft-scout-leagues article { padding: .75rem; border: 1px solid #d8d8d3; min-width: 0; }
+.draft-scout-leagues header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem; margin-bottom: .5rem; font-size: .875rem; }
+.draft-scout-leagues li { display: flex; justify-content: space-between; gap: .5rem; padding: .2rem 0; border-top: 1px solid #e3e3df; font-size: .875rem; }
+.draft-scout-leagues li b { font-weight: 500; }
+.draft-scout-content .draft-scout-boundary { margin-bottom: 0; color: #56564d; }
+@media (max-width: 900px) { .draft-scout-levers, .draft-scout-facts { grid-template-columns: 1fr; } }
+@media (max-width: 540px) { .draft-scout-leagues { grid-template-columns: 1fr; } }
+.draft-scout-picker { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: 1rem; font-size: .875rem; }
+.draft-scout-picker select { min-height: 44px; padding: .5rem; font-size: 1rem; background: white; color: var(--ink); border: 1px solid var(--ink); }

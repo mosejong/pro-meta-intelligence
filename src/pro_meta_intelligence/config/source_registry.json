@@ -18,7 +18,7 @@
         "https://lol.timsevenhuysen.com/matchdata/match-data-dictionary/",
         "https://developer.riotgames.com/policies/general"
       ],
-      "policy_reviewed_at": "2026-10-22T03:03:07Z",
+      "policy_reviewed_at": "2026-11-03T14:05:00Z",
       "review_interval_days": 30,
       "credential_requirement": "NONE_FOR_PROVIDER_PUBLISHED_DOWNLOAD",
       "minimum_interval_seconds": 86400.0,
@@ -42,7 +42,7 @@
         "https://developer.riotgames.com/policies/general",
         "https://developer.riotgames.com/terms"
       ],
-      "policy_reviewed_at": "2026-10-22T03:03:07Z",
+      "policy_reviewed_at": "2026-11-03T14:05:00Z",
       "review_interval_days": 30,
       "credential_requirement": "NONE_FOR_DOCUMENTED_STATIC_CDN_ENDPOINTS",
       "minimum_interval_seconds": 1.0,
@@ -91,7 +91,7 @@
         "https://www.riotgames.com/en/terms-of-service",
         "https://developer.riotgames.com/policies/general"
       ],
-      "policy_reviewed_at": "2026-10-14T04:00:00Z",
+      "policy_reviewed_at": "2026-11-03T14:05:00Z",
       "review_interval_days": 30,
       "credential_requirement": "NONE_FOR_PUBLIC_SCHEDULE_PAGE",
       "minimum_interval_seconds": 21600.0,
