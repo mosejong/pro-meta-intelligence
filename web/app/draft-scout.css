@@ -12,6 +12,9 @@
 .draft-scout-series li { display: flex; flex-direction: column; gap: .15rem; padding: .5rem .75rem; border: 1px solid #d8d8d3; font-size: .875rem; }
 .draft-scout-levers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
 .draft-scout-levers section { padding: .75rem; border: 1px solid #d8d8d3; }
+.draft-scout-levers section:first-child { grid-column: 1 / -1; }
+.draft-scout-levers section:first-child ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .35rem; }
+.draft-scout-levers section:first-child li { margin-bottom: 0; }
 .draft-scout-levers li { display: flex; flex-direction: column; gap: .2rem; padding: .45rem .5rem; margin-bottom: .35rem; background: #f6f6f2; overflow-wrap: anywhere; }
 .draft-scout-levers li > span { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .35rem; font-weight: 600; }
 .draft-scout-levers small { font-size: .75rem; line-height: 1.5; color: #56564d; }
@@ -24,8 +27,9 @@
 .draft-scout-leagues header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem; margin-bottom: .5rem; font-size: .875rem; }
 .draft-scout-leagues li { display: flex; justify-content: space-between; gap: .5rem; padding: .2rem 0; border-top: 1px solid #e3e3df; font-size: .875rem; }
 .draft-scout-leagues li b { font-weight: 500; }
+.draft-scout-content .draft-scout-check { padding: .6rem .75rem; border-left: 3px solid var(--violet); background: #f4f4f1; font-size: .875rem; line-height: 1.5; }
 .draft-scout-content .draft-scout-boundary { margin-bottom: 0; color: #56564d; }
 @media (max-width: 900px) { .draft-scout-levers, .draft-scout-facts { grid-template-columns: 1fr; } }
-@media (max-width: 540px) { .draft-scout-leagues { grid-template-columns: 1fr; } }
+@media (max-width: 540px) { .draft-scout-leagues, .draft-scout-levers section:first-child ol { grid-template-columns: 1fr; } }
 .draft-scout-picker { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: 1rem; font-size: .875rem; }
 .draft-scout-picker select { min-height: 44px; padding: .5rem; font-size: 1rem; background: white; color: var(--ink); border: 1px solid var(--ink); }

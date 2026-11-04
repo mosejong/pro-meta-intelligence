@@ -228,11 +228,36 @@ season head-to-head (MSI T1 3-0, EWC KC 2-1), phase-one/phase-two bans given and
 first-rotation picks, last-pick roles, per-player pools for fearless pressure, and a league
 presence comparison (opponent home league, LCK, international events). Levers (deny comfort,
 contested priority, protect own, fearless pressure, counterpick role) are deterministic counting
-rules for staff review, not win probabilities. The current pack stops at August 23 and contains
-no Worlds Swiss games because the source-policy reviews have expired; regenerate it once a
-reviewed snapshot with `WLDs` games is available.
+rules for staff review, not win probabilities. The packs were regenerated on November 4 from
+an OE file carrying 85 `WLDs` games (September 17 – October 31).
 
 Packs exist for every other quarterfinalist (TES, IG, GEN, LYON, DK, BLG) so a semifinal or
 final opponent can be scouted the moment a result is known; the panel defaults to T1's next
 opponent and offers the rest as candidates. Head-to-head games are grouped into series when
 the same league's games fall within 12 hours of each other.
+
+### Walk-forward validation — November 4
+
+`backtest-draft-scout` replays one event: every series is scouted using only games public before
+it started (availability simulated as game time + 24 hours, the provider's daily publication),
+then each game's real drafts are scored, with Fearless-locked champions removed from every set.
+
+```sh
+python -m pro_meta_intelligence backtest-draft-scout   --input <archived OE CSV> --source-timezone UTC   --retrieved-at 2026-11-04T03:03:22.056760+00:00 --league WLDs   --target-team "KC=Karmine Corp" --target-team "TES=Top Esports" ...   --output web/app/scouting/validation.json
+```
+
+Over the seven quarterfinalists' 70 Worlds games:
+
+| Set (top 6 unless noted) | Hit rate |
+|---|---|
+| Phase-one bans from international presence | 52.9% (111/210) |
+| Phase-one bans from the team's season habit | 35.2% (74/210) |
+| Picks inside the player's role pool | 59.4% (208/350) |
+| Picks inside international presence (same set size) | 21.7% (76/350) |
+| Games where the deny list named a champion actually picked | 51.4% (36/70) |
+
+So the panel leads with "expected phase-one bans" from the international meta and keeps the
+team's ban habit as reference, while picks keep reading player pools. Exploratory variants
+(team's last 10 games 41%, Worlds-only habit 33%, meta reordered by habit 50%; player pools
+from the last 10/20/80/all games 49/54/58/55% versus 59% for 40) did not beat these. Seventy
+games is a small sample: read the direction, not the decimals.

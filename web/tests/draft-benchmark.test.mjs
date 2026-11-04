@@ -16,7 +16,7 @@ test("historical draft evaluation measures the production preview and rejects le
     const { buildWorldsPreparation, formatKst, worldsQuarterfinalFor, worldsRoleCoverage, WORLDS_2026 } = await vite.ssrLoadModule("/app/worlds-preparation.ts");
     const report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
     report.fixture_only = true;
-    const { DRAFT_SCOUT_PACKS, buildDraftScoutBrief, draftScoutFor, headToHeadSeries, headToHeadStaples } = await vite.ssrLoadModule("/app/draft-scout.ts");
+    const { DRAFT_SCOUT_PACKS, DRAFT_SCOUT_VALIDATION, buildDraftScoutBrief, draftScoutFor, headToHeadSeries, headToHeadStaples } = await vite.ssrLoadModule("/app/draft-scout.ts");
     await t.test("draft scouting pack follows T1's quarterfinal opponent and respects fearless locks", () => {
       assert.equal(draftScoutFor(worldsQuarterfinalFor("T1").opponent), draftScoutFor("KC"));
       assert.deepEqual(Object.keys(DRAFT_SCOUT_PACKS).sort(), ["BLG", "DK", "GEN", "IG", "KC", "LYON", "TES"]);
@@ -44,6 +44,17 @@ test("historical draft evaluation measures the production preview and rejects le
       const role = after.deny[0].role;
       const pool = after.pressure.find((item) => item.role === role);
       assert.equal(pool.top_remaining, pool.top_total - 1);
+      assert.equal(fresh.expected_bans.length, pack.config.top_champions);
+      const metaLocked = buildDraftScoutBrief(pack, [fresh.expected_bans[0].champion_id]);
+      assert.ok(!metaLocked.expected_bans.some((item) => item.champion_id === fresh.expected_bans[0].champion_id));
+      assert.equal(metaLocked.expected_bans.length, pack.config.top_champions);
+      assert.equal(DRAFT_SCOUT_VALIDATION.league, "WLDs");
+      assert.ok(DRAFT_SCOUT_VALIDATION.game_count > 0);
+      assert.deepEqual(Object.keys(DRAFT_SCOUT_VALIDATION.teams).sort(), Object.keys(DRAFT_SCOUT_PACKS).sort());
+      const { overall } = DRAFT_SCOUT_VALIDATION;
+      // The panel leads with the international meta because it out-scored season ban habits.
+      assert.ok(overall.expected_phase_one_bans.rate > overall.season_ban_habit.rate);
+      assert.ok(overall.player_pool_picks.rate > overall.international_meta_picks.rate);
     });
     await t.test("Worlds preparation requires exact main-team identity and separates official patch from evidence", () => {
       const before = JSON.stringify(report);

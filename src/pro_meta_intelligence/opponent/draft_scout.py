@@ -119,7 +119,7 @@ class DraftScoutBuilder:
                 "own": own_profile,
                 "head_to_head": head_to_head,
                 "league_meta": league_meta,
-                "levers": _levers(target_profile, own_profile, head_to_head, config),
+                "levers": _levers(target_profile, own_profile, head_to_head, league_meta, config),
                 "quality_flags": quality_flags,
                 "boundary": (
                     "Descriptive counts from public pro games at the cutoff. Levers are review "
@@ -478,6 +478,7 @@ def _levers(
     target: dict[str, Any],
     own: dict[str, Any],
     head_to_head: list[dict[str, Any]],
+    league_meta: list[dict[str, Any]],
     config: DraftScoutConfig,
 ) -> dict[str, Any]:
     own_priority = {item["champion_id"] for item in own["top_picks"]} | {
@@ -556,6 +557,15 @@ def _levers(
         "contested_priority": contested[: config.top_champions],
         "protect_own": protect,
         "target_spends_phase_one_bans": target["phase_one_bans"][:3],
+        # Worlds walk-forward checks found current international presence predicts a team's
+        # phase-one bans better than that team's own season ban habit. The full presence list
+        # is kept so readers can skip Fearless-locked champions and still show top_champions.
+        "expected_phase_one_bans": [
+            {"champion_id": item["champion_id"], "presence_rate": item["presence_rate"]}
+            for group in league_meta
+            if group["group"] == INTERNATIONAL
+            for item in group["presence"]
+        ],
         "fearless_pressure": [
             {
                 "role": pool["role"],
