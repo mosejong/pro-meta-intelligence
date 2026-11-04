@@ -218,7 +218,7 @@ with the new CLI command and is regenerated, never hand-edited:
 ```bash
 python -m pro_meta_intelligence scout-opponent-draft \
   --input <archived OE CSV> --source-timezone UTC \
-  --retrieved-at 2026-08-23T12:00:00+00:00 \
+  --retrieved-at 2026-11-04T03:03:22.056760+00:00 \
   --target-team "Karmine Corp" --own-team T1 \
   --output web/app/scouting/t1-vs-kc.json
 ```

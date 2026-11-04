@@ -271,7 +271,8 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   assert.match(text, /T1 vs KC · 밴픽 스카우팅/);
   assert.match(text, /밴으로 지울 KC 주력/);
   assert.match(text, /피어리스 5판 소진 압박/);
-  assert.match(text, /월즈 스위스 경기 미포함/);
+  assert.doesNotMatch(text, /월즈 스위스 경기 미포함/);
+  assert.match(text, /KC 최근 40경기 \(LEC \d+ · WLDs \d+\)/);
   assert.match(text, /T1 3 : 0 KC/);
   assert.match(text, /GEN · 8강 진출 · 4강 이후 후보/);
   assert.ok(text.indexOf("T1 vs KC · 밴픽 스카우팅") < text.indexOf("WORLDS 2026 · 준비실"));
