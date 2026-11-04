@@ -1,26 +1,9 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-11-03T16:12:42.759236+00:00",
+  "available_at": "2026-11-04T06:12:32.372018+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:165576bbccc074d6b02cce9600b8df7723356ff6949d077e93c950d6b3d9bb8b",
+  "content_hash": "sha256:14652a67d123a3a625fc5e61874dfd7fef46a2b6e7ce6c580d9bef1dfa2b4ad9",
   "events": [
-    {
-      "best_of": 5,
-      "block": "Quarterfinals",
-      "event_id": "lolesports:34f55d4c3ccc5ef1b18c",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "GEN",
-          "name": "Gen.G Esports"
-        },
-        {
-          "code": "LYON",
-          "name": "LYON"
-        }
-      ],
-      "start_at": "2026-11-04T22:00:00+00:00"
-    },
     {
       "best_of": 5,
       "block": "Quarterfinals",
@@ -58,7 +41,7 @@
     {
       "best_of": 5,
       "block": "Semifinals",
-      "event_id": "lolesports:fe0472e1e8ce85e6a306",
+      "event_id": "lolesports:7ee843fc438f7bda577c",
       "league": "Worlds",
       "participants": [
         {
@@ -66,8 +49,8 @@
           "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "IG",
+          "name": "Invictus Gaming"
         }
       ],
       "start_at": "2026-11-07T22:00:00+00:00"
@@ -117,10 +100,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 6,
-    "tbd_participant_count": 6
+    "event_count": 5,
+    "tbd_participant_count": 5
   },
-  "retrieved_at": "2026-11-03T16:12:42.759236+00:00",
+  "retrieved_at": "2026-11-04T06:12:32.372018+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
