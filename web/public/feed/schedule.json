@@ -1,8 +1,8 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-11-05T06:40:18.728390+00:00",
+  "available_at": "2026-11-05T16:26:46.823954+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:f6064c24defc01cc74866857371ed434cb57dca702231c56d25b116c3c100936",
+  "content_hash": "sha256:1826557144fb1c614726b2b2ab398d933210d4757e6f2883487c25ad56dd40eb",
   "events": [
     {
       "best_of": 5,
@@ -86,7 +86,7 @@
     "event_count": 4,
     "tbd_participant_count": 4
   },
-  "retrieved_at": "2026-11-05T06:40:18.728390+00:00",
+  "retrieved_at": "2026-11-05T16:26:46.823954+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
