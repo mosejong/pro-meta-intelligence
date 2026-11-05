@@ -64,7 +64,7 @@ def test_oe_coverage_reports_explicit_patch_measurements() -> None:
 
 def test_reviewed_league_regions_preserve_unknown_league_gate(tmp_path) -> None:
     games = []
-    for league in ("HC", "LAS", "LJL", "VCS"):
+    for league in ("EM", "HC", "LAS", "LJL", "VCS"):
         rows = _game_rows(game_id=league, patch="16.17")
         for row in rows:
             row["league"] = league
@@ -75,6 +75,7 @@ def test_reviewed_league_regions_preserve_unknown_league_gate(tmp_path) -> None:
     assert audit["ready_for_radar"] is True
     assert audit["selected_patch"]["regions"] == ["EMEA", "KOREA", "PACIFIC"]
     assert regions.region_for("LAS") == "KOREA"
+    assert regions.region_for("EM") == "EMEA"
     for row in games[-1]:
         row["league"] = "UNREVIEWED"
     rejected = audit_oe_coverage(_import_games(tmp_path, games), regions, criteria).to_dict()
