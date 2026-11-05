@@ -49,6 +49,12 @@ These are geographic analysis buckets, not aliases of first-tier leagues. Unknow
 to block publication on the selected patch. Regression imports cover all four mappings and an
 unreviewed code.
 
+Reviewed region addition (2026-11-05): `EM` → EMEA, EMEA Masters, the cross-ERL tournament
+([split schedule](https://www.sheepesports.com/kr/articles/emea-masters-summer-split-2026-start-date-and-slot-distribution/en)).
+Its 2026 rows are ERL teams such as Solary, Galions and Karmine Corp Blue. Hosted syncs from
+November 3 were rejected with `PATCH_HAS_UNKNOWN_LEAGUES` once the Worlds patch 16.20 also carried
+EM games; accepted feed heads stayed in place. `WSCI` and `DCGI` remain unreviewed on older patches.
+
 ## Private state model
 
 Provider CSV rows are never committed, deployed to Pages, attached to a release in plaintext, or
