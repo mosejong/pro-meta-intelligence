@@ -22,6 +22,11 @@ FIRST_ROTATION_LAST_SEQUENCE = 3
 LAST_PICK_SEQUENCE = 10
 ROLES = ("TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT")
 INTERNATIONAL = "INTERNATIONAL"
+# Worlds walk-forward checks: ranking each player's pool with a quarter weight on the current
+# international role meta, and refilling the list after Fearless locks, beat the raw pool.
+EXPECTED_PICK_PLAYER_WEIGHT = 0.75
+EXPECTED_PICK_LIMIT = 15
+ROLE_META_LIMIT = 20
 
 
 @dataclass(frozen=True, slots=True)
@@ -119,7 +124,12 @@ class DraftScoutBuilder:
                 "own": own_profile,
                 "head_to_head": head_to_head,
                 "league_meta": league_meta,
-                "levers": _levers(target_profile, own_profile, head_to_head, league_meta, config),
+                "levers": {
+                    **_levers(target_profile, own_profile, head_to_head, league_meta, config),
+                    "expected_picks": _expected_picks(
+                        target.games, target_profile["player_pools"], league_meta
+                    ),
+                },
                 "quality_flags": quality_flags,
                 "boundary": (
                     "Descriptive counts from public pro games at the cutoff. Levers are review "
@@ -450,12 +460,15 @@ def _league_meta(
     presence: Counter[str] = Counter()
     picked: Counter[str] = Counter()
     banned: Counter[str] = Counter()
+    role_picks: dict[str, Counter[str]] = {role: Counter() for role in ROLES}
     for match in window:
         events = events_by_match.get(match.match_id, ())
         for champion in {event.champion_id for event in events}:
             presence[champion] += 1
         for event in events:
             (picked if event.action is DraftAction.PICK else banned)[event.champion_id] += 1
+            if event.action is DraftAction.PICK and event.role in role_picks:
+                role_picks[event.role][event.champion_id] += 1
     ordered = sorted(presence.items(), key=lambda item: (-item[1], item[0]))[:10]
     return {
         "group": group,
@@ -471,7 +484,62 @@ def _league_meta(
             }
             for champion, count in ordered
         ],
+        # Only the international group feeds expected picks, so home leagues stay compact.
+        "role_picks": {
+            role: [
+                {"champion_id": champion, "pick_share": _rate(count, sum(counts.values()))}
+                for champion, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))[
+                    :ROLE_META_LIMIT
+                ]
+            ]
+            for role, counts in role_picks.items()
+            if group == INTERNATIONAL
+        },
     }
+
+
+def _expected_picks(
+    games: tuple[_Game, ...], pools: list[dict[str, Any]], league_meta: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    role_meta = next(
+        (group["role_picks"] for group in league_meta if group["group"] == INTERNATIONAL), {}
+    )
+    expected = []
+    for pool in pools:
+        role = pool["role"]
+        counts = Counter(
+            event.champion_id
+            for game in games
+            for event in game.own_events
+            if event.action is DraftAction.PICK
+            and event.role == role
+            and event.player_name == pool["player_name"]
+        )
+        played = sum(counts.values())
+        meta = {item["champion_id"]: item["pick_share"] or 0.0 for item in role_meta.get(role, [])}
+        scores = {
+            champion: EXPECTED_PICK_PLAYER_WEIGHT * (counts[champion] / played if played else 0.0)
+            + (1 - EXPECTED_PICK_PLAYER_WEIGHT) * meta.get(champion, 0.0)
+            for champion in set(counts) | set(meta)
+        }
+        ordered = sorted(scores.items(), key=lambda item: (-item[1], item[0]))
+        expected.append(
+            {
+                "role": role,
+                "player_name": pool["player_name"],
+                # Kept longer than top_champions so readers can skip Fearless-locked champions.
+                "champions": [
+                    {
+                        "champion_id": champion,
+                        "score": round(score, 3),
+                        "player_game_count": counts[champion],
+                        "meta_pick_share": meta.get(champion),
+                    }
+                    for champion, score in ordered[:EXPECTED_PICK_LIMIT]
+                ],
+            }
+        )
+    return expected
 
 
 def _levers(

@@ -252,7 +252,9 @@ Over the seven quarterfinalists' 70 Worlds games:
 |---|---|
 | Phase-one bans from international presence | 52.9% (111/210) |
 | Phase-one bans from the team's season habit | 35.2% (74/210) |
+| Expected picks: player pool blended with Worlds role meta, refilled after Fearless locks | 67.1% (235/350) |
 | Picks inside the player's role pool | 59.4% (208/350) |
+| Picks inside the international role meta alone | 66.6% (233/350) |
 | Picks inside international presence (same set size) | 21.7% (76/350) |
 | Games where the deny list named a champion actually picked | 51.4% (36/70) |
 
@@ -261,3 +263,17 @@ team's ban habit as reference, while picks keep reading player pools. Explorator
 (team's last 10 games 41%, Worlds-only habit 33%, meta reordered by habit 50%; player pools
 from the last 10/20/80/all games 49/54/58/55% versus 59% for 40) did not beat these. Seventy
 games is a small sample: read the direction, not the decimals.
+
+### Expected picks — November 5
+
+Each role's expected picks score `0.75 × the current player's pick share + 0.25 × the role's pick
+share in international games`, and keep 15 candidates so a Fearless-locked champion gives way to
+the next one. Per team the blend never fell below the raw pool: KC 55.6→61.1%, TES 56→68%,
+IG 63→70%, GEN 48→56%, LYON 64→73%, BLG 70→80%, DK 55→55%. The player weight was fixed at 0.75
+before looking; weights from 0.25 to 0.9 all land at 66–69%, and the role meta alone is within half
+a point, so the gain comes mostly from refilling locked slots with the Worlds meta, not from the
+exact weight. Refilling from deeper team history or the player's career scored below the meta.
+
+Pick-timing tendencies were checked and not added: the team's habitual last-pick role matched
+46% of games versus 49% for the international habit (top two roles 68% versus 60%, 37 games), and
+first-rotation roles 47% versus 49%. Neither is a reliable edge over the meta at this sample size.

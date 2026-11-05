@@ -14,6 +14,11 @@
       "of": 210,
       "rate": 0.529
     },
+    "expected_picks": {
+      "hit": 235,
+      "of": 350,
+      "rate": 0.671
+    },
     "international_meta_picks": {
       "hit": 76,
       "of": 350,
@@ -23,6 +28,11 @@
       "hit": 208,
       "of": 350,
       "rate": 0.594
+    },
+    "role_meta_picks": {
+      "hit": 233,
+      "of": 350,
+      "rate": 0.666
     },
     "season_ban_habit": {
       "hit": 74,
@@ -46,6 +56,11 @@
         "of": 24,
         "rate": 0.542
       },
+      "expected_picks": {
+        "hit": 32,
+        "of": 40,
+        "rate": 0.8
+      },
       "international_meta_picks": {
         "hit": 10,
         "of": 40,
@@ -55,6 +70,11 @@
         "hit": 28,
         "of": 40,
         "rate": 0.7
+      },
+      "role_meta_picks": {
+        "hit": 35,
+        "of": 40,
+        "rate": 0.875
       },
       "season_ban_habit": {
         "hit": 8,
@@ -73,12 +93,22 @@
         "of": 12,
         "rate": 0.417
       },
+      "expected_picks": {
+        "hit": 11,
+        "of": 20,
+        "rate": 0.55
+      },
       "international_meta_picks": {
         "hit": 7,
         "of": 20,
         "rate": 0.35
       },
       "player_pool_picks": {
+        "hit": 11,
+        "of": 20,
+        "rate": 0.55
+      },
+      "role_meta_picks": {
         "hit": 11,
         "of": 20,
         "rate": 0.55
@@ -100,6 +130,11 @@
         "of": 15,
         "rate": 0.4
       },
+      "expected_picks": {
+        "hit": 14,
+        "of": 25,
+        "rate": 0.56
+      },
       "international_meta_picks": {
         "hit": 6,
         "of": 25,
@@ -109,6 +144,11 @@
         "hit": 12,
         "of": 25,
         "rate": 0.48
+      },
+      "role_meta_picks": {
+        "hit": 17,
+        "of": 25,
+        "rate": 0.68
       },
       "season_ban_habit": {
         "hit": 4,
@@ -127,6 +167,11 @@
         "of": 42,
         "rate": 0.571
       },
+      "expected_picks": {
+        "hit": 49,
+        "of": 70,
+        "rate": 0.7
+      },
       "international_meta_picks": {
         "hit": 10,
         "of": 70,
@@ -136,6 +181,11 @@
         "hit": 44,
         "of": 70,
         "rate": 0.629
+      },
+      "role_meta_picks": {
+        "hit": 41,
+        "of": 70,
+        "rate": 0.586
       },
       "season_ban_habit": {
         "hit": 19,
@@ -154,6 +204,11 @@
         "of": 54,
         "rate": 0.593
       },
+      "expected_picks": {
+        "hit": 55,
+        "of": 90,
+        "rate": 0.611
+      },
       "international_meta_picks": {
         "hit": 18,
         "of": 90,
@@ -163,6 +218,11 @@
         "hit": 50,
         "of": 90,
         "rate": 0.556
+      },
+      "role_meta_picks": {
+        "hit": 57,
+        "of": 90,
+        "rate": 0.633
       },
       "season_ban_habit": {
         "hit": 24,
@@ -181,6 +241,11 @@
         "of": 33,
         "rate": 0.455
       },
+      "expected_picks": {
+        "hit": 40,
+        "of": 55,
+        "rate": 0.727
+      },
       "international_meta_picks": {
         "hit": 15,
         "of": 55,
@@ -190,6 +255,11 @@
         "hit": 35,
         "of": 55,
         "rate": 0.636
+      },
+      "role_meta_picks": {
+        "hit": 39,
+        "of": 55,
+        "rate": 0.709
       },
       "season_ban_habit": {
         "hit": 10,
@@ -208,6 +278,11 @@
         "of": 30,
         "rate": 0.533
       },
+      "expected_picks": {
+        "hit": 34,
+        "of": 50,
+        "rate": 0.68
+      },
       "international_meta_picks": {
         "hit": 10,
         "of": 50,
@@ -217,6 +292,11 @@
         "hit": 28,
         "of": 50,
         "rate": 0.56
+      },
+      "role_meta_picks": {
+        "hit": 33,
+        "of": 50,
+        "rate": 0.66
       },
       "season_ban_habit": {
         "hit": 5,

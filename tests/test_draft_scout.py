@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import timedelta
 
 import pytest
@@ -9,13 +10,16 @@ from pro_meta_intelligence.sources import SourceRegistry
 from tests.test_opponent import FIXTURE, RETRIEVED_AT
 
 
-def build(**overrides):
+def build(*, league=None, **overrides):
     imported = OracleElixirCSVAdapter(SourceRegistry.load_default()).import_file(
         FIXTURE,
         retrieved_at=RETRIEVED_AT,
         source_timezone="+09:00",
         source_uri="https://drive.google.com/example",
     )
+    matches = imported.matches
+    if league is not None:
+        matches = tuple(replace(match, league=league) for match in matches)
     settings = {
         "cutoff": RETRIEVED_AT,
         "target_team_name": "Red Team",
@@ -25,7 +29,7 @@ def build(**overrides):
     config = DraftScoutConfig(**settings)
     return (
         DraftScoutBuilder()
-        .build(imported.matches, imported.draft_events, LeagueRegionMap.load_default(), config)
+        .build(matches, imported.draft_events, LeagueRegionMap.load_default(), config)
         .to_dict()
     )
 
@@ -86,6 +90,29 @@ def test_draft_scout_levers_need_comfort_evidence() -> None:
     assert levers["protect_own"] == []
     assert levers["counterpick_role"]["game_count"] == 1
     assert build()["levers"]["deny_comfort"] == []
+
+
+def test_expected_picks_blend_player_pool_with_international_role_meta() -> None:
+    league_only = build()["levers"]["expected_picks"]
+    # Without international games the list is the current player's pool alone.
+    assert [len(group["champions"]) for group in league_only] == [1, 1, 1, 1, 1]
+    assert league_only[0]["champions"][0]["score"] == 0.75
+
+    report = build(league="WLDs")
+    [international] = [
+        group for group in report["league_meta"] if group["group"] == "INTERNATIONAL"
+    ]
+    assert all(len(items) == 2 for items in international["role_picks"].values())
+    assert all(group["role_picks"] == {} for group in report["league_meta"][:-1])
+    top = report["levers"]["expected_picks"][0]
+    assert top["role"] == "TOP"
+    own_pick, other_pick = top["champions"]
+    assert own_pick["player_game_count"] == 1
+    assert own_pick["score"] == 0.875
+    # The other team's top pick enters on role meta alone, below the player's own champion.
+    assert other_pick["player_game_count"] == 0
+    assert other_pick["meta_pick_share"] == 0.5
+    assert other_pick["score"] == 0.125
 
 
 def test_draft_scout_rejects_unknown_teams_and_future_games() -> None:

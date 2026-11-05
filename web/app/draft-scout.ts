@@ -30,13 +30,16 @@ export type DraftScoutPack = {
   head_to_head: { match_id: string; observed_at: string; league: string; patch_id: string; own_side: string;
     own_first_selection: boolean; own_won: boolean; own: ScoutDraft; target: ScoutDraft }[];
   league_meta: { group: string; leagues: string[]; patches: string[]; game_count: number;
-    presence: { champion_id: string; presence_rate: number | null; pick_count: number; ban_count: number }[] }[];
+    presence: { champion_id: string; presence_rate: number | null; pick_count: number; ban_count: number }[];
+    role_picks: Partial<Record<string, { champion_id: string; pick_share: number | null }[]>> }[];
   levers: {
     deny_comfort: { champion_id: string; role: string; player_name: string | null; game_count: number; win_count: number; share: number | null; also_own_priority: boolean }[];
     contested_priority: { champion_id: string; own_game_count: number; target_game_count: number }[];
     protect_own: { champion_id: string; own_game_count: number; received_phase_one_ban_count: number; banned_by_target_head_to_head: number }[];
     target_spends_phase_one_bans: Counted[];
     expected_phase_one_bans: { champion_id: string; presence_rate: number | null }[];
+    expected_picks: { role: string; player_name: string | null;
+      champions: { champion_id: string; score: number; player_game_count: number; meta_pick_share: number | null }[] }[];
     fearless_pressure: { role: string; player_name: string | null; unique_champions: number; comfort_champions: number; top_three_share: number | null }[];
     counterpick_role: Counted | null;
   };
@@ -48,7 +51,7 @@ export const DRAFT_SCOUT_PACKS: Record<string, DraftScoutPack> = {
 };
 
 type Hit = { hit: number; of: number; rate: number | null };
-type HitRates = Record<"expected_phase_one_bans" | "season_ban_habit" | "player_pool_picks" | "international_meta_picks" | "deny_hits_real_pick", Hit>;
+type HitRates = Record<"expected_phase_one_bans" | "season_ban_habit" | "expected_picks" | "player_pool_picks" | "role_meta_picks" | "international_meta_picks" | "deny_hits_real_pick", Hit>;
 
 // Mirrors `draft-scout-backtest` schema 1 written by `backtest-draft-scout`.
 export const DRAFT_SCOUT_VALIDATION: { league: string; game_count: number; publication_delay_hours: number; overall: HitRates; teams: Record<string, HitRates> } = validation;
@@ -97,6 +100,10 @@ export function buildDraftScoutBrief(pack: DraftScoutPack, previousPicks: string
     protect: pack.levers.protect_own.map((item) => ({ ...item, locked: locked(item.champion_id) })),
     // Locked champions cannot be picked, so they leave the expected ban shortlist.
     expected_bans: pack.levers.expected_phase_one_bans.filter((item) => !locked(item.champion_id)).slice(0, pack.config.top_champions),
+    // Each role keeps top_champions candidates: locked champions give way to the next in the list.
+    expected_picks: pack.levers.expected_picks.map((group) => ({
+      ...group, champions: group.champions.filter((item) => !locked(item.champion_id)).slice(0, pack.config.top_champions),
+    })),
     pressure: pack.levers.fearless_pressure.map((pool) => {
       const champions = pack.target.player_pools.find((item) => item.role === pool.role)?.champions ?? [];
       return { ...pool, top_remaining: champions.filter((champion) => !locked(champion.champion_id)).length, top_total: champions.length };

@@ -58,6 +58,8 @@ def test_backtest_scores_event_drafts_with_only_previously_published_games() -> 
     red = report["teams"]["RED"]
     assert red["player_pool_picks"] == {"hit": 5, "of": 5, "rate": 1.0}
     assert red["season_ban_habit"] == {"hit": 3, "of": 3, "rate": 1.0}
+    assert red["expected_picks"] == {"hit": 5, "of": 5, "rate": 1.0}
+    assert red["role_meta_picks"]["hit"] == 0
     # The earlier game was a league game, so there is no international meta to lean on yet.
     assert red["expected_phase_one_bans"]["hit"] == 0
     assert red["deny_hits_real_pick"]["of"] == 1
