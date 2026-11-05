@@ -1,0 +1,228 @@
+{
+  "artifact_type": "draft-scout-backtest",
+  "boundary": "Hit rates of descriptive scouting sets against later public drafts. Availability is simulated from the provider's daily publication; not a win-probability claim.",
+  "game_count": 70,
+  "league": "WLDs",
+  "overall": {
+    "deny_hits_real_pick": {
+      "hit": 36,
+      "of": 70,
+      "rate": 0.514
+    },
+    "expected_phase_one_bans": {
+      "hit": 111,
+      "of": 210,
+      "rate": 0.529
+    },
+    "international_meta_picks": {
+      "hit": 76,
+      "of": 350,
+      "rate": 0.217
+    },
+    "player_pool_picks": {
+      "hit": 208,
+      "of": 350,
+      "rate": 0.594
+    },
+    "season_ban_habit": {
+      "hit": 74,
+      "of": 210,
+      "rate": 0.352
+    }
+  },
+  "own_team_name": "T1",
+  "publication_delay_hours": 24.0,
+  "schema_version": "1",
+  "skipped_series": [],
+  "teams": {
+    "BLG": {
+      "deny_hits_real_pick": {
+        "hit": 5,
+        "of": 8,
+        "rate": 0.625
+      },
+      "expected_phase_one_bans": {
+        "hit": 13,
+        "of": 24,
+        "rate": 0.542
+      },
+      "international_meta_picks": {
+        "hit": 10,
+        "of": 40,
+        "rate": 0.25
+      },
+      "player_pool_picks": {
+        "hit": 28,
+        "of": 40,
+        "rate": 0.7
+      },
+      "season_ban_habit": {
+        "hit": 8,
+        "of": 24,
+        "rate": 0.333
+      }
+    },
+    "DK": {
+      "deny_hits_real_pick": {
+        "hit": 2,
+        "of": 4,
+        "rate": 0.5
+      },
+      "expected_phase_one_bans": {
+        "hit": 5,
+        "of": 12,
+        "rate": 0.417
+      },
+      "international_meta_picks": {
+        "hit": 7,
+        "of": 20,
+        "rate": 0.35
+      },
+      "player_pool_picks": {
+        "hit": 11,
+        "of": 20,
+        "rate": 0.55
+      },
+      "season_ban_habit": {
+        "hit": 4,
+        "of": 12,
+        "rate": 0.333
+      }
+    },
+    "GEN": {
+      "deny_hits_real_pick": {
+        "hit": 2,
+        "of": 5,
+        "rate": 0.4
+      },
+      "expected_phase_one_bans": {
+        "hit": 6,
+        "of": 15,
+        "rate": 0.4
+      },
+      "international_meta_picks": {
+        "hit": 6,
+        "of": 25,
+        "rate": 0.24
+      },
+      "player_pool_picks": {
+        "hit": 12,
+        "of": 25,
+        "rate": 0.48
+      },
+      "season_ban_habit": {
+        "hit": 4,
+        "of": 15,
+        "rate": 0.267
+      }
+    },
+    "IG": {
+      "deny_hits_real_pick": {
+        "hit": 8,
+        "of": 14,
+        "rate": 0.571
+      },
+      "expected_phase_one_bans": {
+        "hit": 24,
+        "of": 42,
+        "rate": 0.571
+      },
+      "international_meta_picks": {
+        "hit": 10,
+        "of": 70,
+        "rate": 0.143
+      },
+      "player_pool_picks": {
+        "hit": 44,
+        "of": 70,
+        "rate": 0.629
+      },
+      "season_ban_habit": {
+        "hit": 19,
+        "of": 42,
+        "rate": 0.452
+      }
+    },
+    "KC": {
+      "deny_hits_real_pick": {
+        "hit": 9,
+        "of": 18,
+        "rate": 0.5
+      },
+      "expected_phase_one_bans": {
+        "hit": 32,
+        "of": 54,
+        "rate": 0.593
+      },
+      "international_meta_picks": {
+        "hit": 18,
+        "of": 90,
+        "rate": 0.2
+      },
+      "player_pool_picks": {
+        "hit": 50,
+        "of": 90,
+        "rate": 0.556
+      },
+      "season_ban_habit": {
+        "hit": 24,
+        "of": 54,
+        "rate": 0.444
+      }
+    },
+    "LYON": {
+      "deny_hits_real_pick": {
+        "hit": 7,
+        "of": 11,
+        "rate": 0.636
+      },
+      "expected_phase_one_bans": {
+        "hit": 15,
+        "of": 33,
+        "rate": 0.455
+      },
+      "international_meta_picks": {
+        "hit": 15,
+        "of": 55,
+        "rate": 0.273
+      },
+      "player_pool_picks": {
+        "hit": 35,
+        "of": 55,
+        "rate": 0.636
+      },
+      "season_ban_habit": {
+        "hit": 10,
+        "of": 33,
+        "rate": 0.303
+      }
+    },
+    "TES": {
+      "deny_hits_real_pick": {
+        "hit": 3,
+        "of": 10,
+        "rate": 0.3
+      },
+      "expected_phase_one_bans": {
+        "hit": 16,
+        "of": 30,
+        "rate": 0.533
+      },
+      "international_meta_picks": {
+        "hit": 10,
+        "of": 50,
+        "rate": 0.2
+      },
+      "player_pool_picks": {
+        "hit": 28,
+        "of": 50,
+        "rate": 0.56
+      },
+      "season_ban_habit": {
+        "hit": 5,
+        "of": 30,
+        "rate": 0.167
+      }
+    }
+  }
+}

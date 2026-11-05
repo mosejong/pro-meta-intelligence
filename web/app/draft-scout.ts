@@ -6,6 +6,7 @@ import igPack from "./scouting/t1-vs-ig.json";
 import kcPack from "./scouting/t1-vs-kc.json";
 import lyonPack from "./scouting/t1-vs-lyon.json";
 import tesPack from "./scouting/t1-vs-tes.json";
+import validation from "./scouting/validation.json";
 
 type Counted = { champion_id: string; game_count: number; rate: number | null };
 type Record_ = { game_count: number; win_count: number; win_rate: number | null };
@@ -35,6 +36,7 @@ export type DraftScoutPack = {
     contested_priority: { champion_id: string; own_game_count: number; target_game_count: number }[];
     protect_own: { champion_id: string; own_game_count: number; received_phase_one_ban_count: number; banned_by_target_head_to_head: number }[];
     target_spends_phase_one_bans: Counted[];
+    expected_phase_one_bans: { champion_id: string; presence_rate: number | null }[];
     fearless_pressure: { role: string; player_name: string | null; unique_champions: number; comfort_champions: number; top_three_share: number | null }[];
     counterpick_role: Counted | null;
   };
@@ -44,6 +46,12 @@ export type DraftScoutPack = {
 export const DRAFT_SCOUT_PACKS: Record<string, DraftScoutPack> = {
   KC: kcPack, TES: tesPack, IG: igPack, GEN: genPack, LYON: lyonPack, DK: dkPack, BLG: blgPack,
 };
+
+type Hit = { hit: number; of: number; rate: number | null };
+type HitRates = Record<"expected_phase_one_bans" | "season_ban_habit" | "player_pool_picks" | "international_meta_picks" | "deny_hits_real_pick", Hit>;
+
+// Mirrors `draft-scout-backtest` schema 1 written by `backtest-draft-scout`.
+export const DRAFT_SCOUT_VALIDATION: { league: string; game_count: number; publication_delay_hours: number; overall: HitRates; teams: Record<string, HitRates> } = validation;
 
 export function draftScoutFor(code: string | null | undefined) {
   return code ? DRAFT_SCOUT_PACKS[code] ?? null : null;
@@ -87,6 +95,8 @@ export function buildDraftScoutBrief(pack: DraftScoutPack, previousPicks: string
     deny: pack.levers.deny_comfort.map((item) => ({ ...item, locked: locked(item.champion_id) })),
     contested: pack.levers.contested_priority.map((item) => ({ ...item, locked: locked(item.champion_id) })),
     protect: pack.levers.protect_own.map((item) => ({ ...item, locked: locked(item.champion_id) })),
+    // Locked champions cannot be picked, so they leave the expected ban shortlist.
+    expected_bans: pack.levers.expected_phase_one_bans.filter((item) => !locked(item.champion_id)).slice(0, pack.config.top_champions),
     pressure: pack.levers.fearless_pressure.map((pool) => {
       const champions = pack.target.player_pools.find((item) => item.role === pool.role)?.champions ?? [];
       return { ...pool, top_remaining: champions.filter((champion) => !locked(champion.champion_id)).length, top_total: champions.length };

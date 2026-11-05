@@ -304,6 +304,48 @@
         "win_count": 2
       }
     ],
+    "expected_phase_one_bans": [
+      {
+        "champion_id": "Nocturne",
+        "presence_rate": 0.906
+      },
+      {
+        "champion_id": "Vi",
+        "presence_rate": 0.765
+      },
+      {
+        "champion_id": "Cassiopeia",
+        "presence_rate": 0.729
+      },
+      {
+        "champion_id": "Renata Glasc",
+        "presence_rate": 0.671
+      },
+      {
+        "champion_id": "Olaf",
+        "presence_rate": 0.624
+      },
+      {
+        "champion_id": "Qiyana",
+        "presence_rate": 0.6
+      },
+      {
+        "champion_id": "Syndra",
+        "presence_rate": 0.553
+      },
+      {
+        "champion_id": "Jarvan IV",
+        "presence_rate": 0.541
+      },
+      {
+        "champion_id": "Akali",
+        "presence_rate": 0.518
+      },
+      {
+        "champion_id": "Ezreal",
+        "presence_rate": 0.518
+      }
+    ],
     "fearless_pressure": [
       {
         "comfort_champions": 5,

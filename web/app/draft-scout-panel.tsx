@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DRAFT_SCOUT_PACKS, buildDraftScoutBrief, draftScoutFor, formatRate, headToHeadSeries, headToHeadStaples } from "./draft-scout";
+import { DRAFT_SCOUT_PACKS, DRAFT_SCOUT_VALIDATION, buildDraftScoutBrief, draftScoutFor, formatRate, headToHeadSeries, headToHeadStaples } from "./draft-scout";
 import { formatKst, worldsQuarterfinalFor } from "./worlds-preparation";
 import "./draft-scout.css";
 
@@ -16,6 +16,8 @@ export function DraftScoutPanel({ nameOf, previousPicks = [] }: { nameOf: (champ
   const brief = buildDraftScoutBrief(pack, previousPicks);
   const { target, own } = pack;
   const lock = (locked: boolean) => locked ? <em>피어리스 잠금</em> : null;
+  const check = DRAFT_SCOUT_VALIDATION;
+  const teamCheck = check.teams[code];
   const leagues = (counts: Record<string, number>) => Object.entries(counts).map(([league, count]) => `${league} ${count}`).join(" · ");
   return <details className="draft-scout" id="draft-scout" open>
     <summary><strong>T1 vs {code} · 밴픽 스카우팅</strong><span>{isNext ? `8강 ${formatKst(quarterfinal.start_at)}` : "4강 이후 후보 미리보기"} · 밴픽 단계에서 주도권을 가져오기 위한 근거</span></summary>
@@ -42,6 +44,14 @@ export function DraftScoutPanel({ nameOf, previousPicks = [] }: { nameOf: (champ
       </section>
 
       <div className="draft-scout-levers">
+        <section aria-labelledby="draft-scout-expected-bans">
+          <h3 id="draft-scout-expected-bans">{code} 예상 1페이즈 밴 · 월즈 메타</h3>
+          <ol>{brief.expected_bans.map((item) => <li key={item.champion_id}>
+            <span>{nameOf(item.champion_id)}</span>
+            <small>국제대회 밴픽 관여율 {formatRate(item.presence_rate)}</small>
+          </li>)}</ol>
+          <p>상대 팀의 시즌 밴 습관보다 지금 국제대회에서 많이 다뤄지는 챔피언이 실제 1페이즈 밴을 더 잘 맞혔습니다.</p>
+        </section>
         <section aria-labelledby="draft-scout-deny">
           <h3 id="draft-scout-deny">밴으로 지울 {code} 주력</h3>
           <ol>{brief.deny.map((item) => <li key={item.champion_id}>
@@ -76,7 +86,7 @@ export function DraftScoutPanel({ nameOf, previousPicks = [] }: { nameOf: (champ
 
       <div className="draft-scout-facts">
         <span><b>{code} 진영</b>블루 {target.side_record.BLUE.win_count}-{target.side_record.BLUE.game_count - target.side_record.BLUE.win_count} · 레드 {target.side_record.RED.win_count}-{target.side_record.RED.game_count - target.side_record.RED.win_count} · 선픽 {formatRate(target.first_selection.rate)}</span>
-        <span><b>{code} 1페이즈 밴</b>{pack.levers.target_spends_phase_one_bans.map((item) => `${nameOf(item.champion_id)} ${formatRate(item.rate)}`).join(" · ")}</span>
+        <span><b>{code} 시즌 밴 습관 · 참고</b>{pack.levers.target_spends_phase_one_bans.map((item) => `${nameOf(item.champion_id)} ${formatRate(item.rate)}`).join(" · ")}</span>
         <span><b>{code} 마지막 픽 포지션</b>{brief.counterpick_role ? `${roleLabels[brief.counterpick_role.champion_id] ?? brief.counterpick_role.champion_id} ${brief.counterpick_role.game_count}/${brief.last_pick_games}` : "근거 없음"} · 해당 포지션 카운터를 늦게 받지 않도록 공개 순서 검토</span>
         <span><b>{code} 1로테이션 픽</b>{target.first_rotation_picks.slice(0, 4).map((item) => `${nameOf(item.champion_id)} ${item.game_count}`).join(" · ")}</span>
       </div>
@@ -90,6 +100,11 @@ export function DraftScoutPanel({ nameOf, previousPicks = [] }: { nameOf: (champ
         <p>{target.home_league}에서만 상위권: {brief.target_league_only.map((item) => nameOf(item.champion_id)).join(" · ") || "없음"} · {own.home_league}에서만 상위권: {brief.own_league_only.map((item) => nameOf(item.champion_id)).join(" · ") || "없음"}</p>
       </section>
 
+      <p className="draft-scout-check">사전 검증 · {check.league} {check.game_count}경기를 시리즈 시작 전 공개 자료만으로 다시 채점 ·
+        예상 밴 {formatRate(check.overall.expected_phase_one_bans.rate)} (시즌 습관 {formatRate(check.overall.season_ban_habit.rate)}) ·
+        선수 챔피언 폭으로 본 픽 {formatRate(check.overall.player_pool_picks.rate)} (메타만 {formatRate(check.overall.international_meta_picks.rate)}) ·
+        주력 밴 목록이 실제 픽을 짚은 경기 {formatRate(check.overall.deny_hits_real_pick.rate)}
+        {teamCheck && <b> · {code} {teamCheck.deny_hits_real_pick.of}경기: 예상 밴 {formatRate(teamCheck.expected_phase_one_bans.rate)} · 픽 {formatRate(teamCheck.player_pool_picks.rate)}</b>}</p>
       <p className="draft-scout-boundary">공개 대회 기록의 횟수만 보여줍니다. 승률 예측이나 확정 밴픽이 아니며, 최종 판단과 인게임 실행은 코칭스태프와 선수의 몫입니다.</p>
     </div>
   </details>;

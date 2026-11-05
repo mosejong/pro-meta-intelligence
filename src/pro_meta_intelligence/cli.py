@@ -42,10 +42,12 @@ from pro_meta_intelligence.ingestion.oracles_elixir import (
 )
 from pro_meta_intelligence.models import BacktestWindow, DraftAction, MatchRecord
 from pro_meta_intelligence.opponent import (
+    DraftScoutBacktestConfig,
     DraftScoutBuilder,
     DraftScoutConfig,
     OpponentPrepBuilder,
     OpponentPrepConfig,
+    backtest_draft_scout,
 )
 from pro_meta_intelligence.publishing import (
     FeedJobAlreadyRunning,
@@ -216,6 +218,34 @@ def build_parser() -> argparse.ArgumentParser:
     draft_scout.add_argument("--cutoff", help="analysis cutoff; defaults to the retrieval time")
     draft_scout.add_argument("--maximum-games", type=int, default=40)
     draft_scout.add_argument("--output", type=Path, help="optional JSON scouting pack path")
+
+    scout_backtest = subparsers.add_parser(
+        "backtest-draft-scout",
+        help="walk-forward hit rates of scouting packs against one event's later drafts",
+    )
+    scout_backtest.add_argument("--input", type=Path, required=True)
+    scout_backtest.add_argument("--source-timezone", required=True)
+    scout_backtest.add_argument(
+        "--retrieved-at", help="snapshot retrieval time; defaults to current UTC"
+    )
+    scout_backtest.add_argument(
+        "--source-uri", help="optional registered provider HTTPS source URL"
+    )
+    scout_backtest.add_argument("--registry", type=Path, help="optional source registry JSON")
+    scout_backtest.add_argument(
+        "--region-map", type=Path, help="optional league-to-region JSON mapping"
+    )
+    scout_backtest.add_argument("--league", default="WLDs", help="exact event league to replay")
+    scout_backtest.add_argument(
+        "--target-team",
+        action="append",
+        required=True,
+        help="CODE=exact team name (repeatable)",
+    )
+    scout_backtest.add_argument("--own-team", default="T1", help="exact own team name")
+    scout_backtest.add_argument("--publication-delay-hours", type=float, default=24.0)
+    scout_backtest.add_argument("--maximum-games", type=int, default=40)
+    scout_backtest.add_argument("--output", type=Path, help="optional JSON report path")
 
     oe_history = subparsers.add_parser(
         "audit-oe-history",
@@ -453,6 +483,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _audit_oe(args)
     if args.command == "scout-opponent-draft":
         return _scout_opponent_draft(args)
+    if args.command == "backtest-draft-scout":
+        return _backtest_draft_scout(args)
     if args.command == "audit-oe-history":
         return _audit_oe_history(args)
     if args.command == "benchmark-oe-history":
@@ -752,6 +784,30 @@ def _scout_opponent_draft(args: argparse.Namespace) -> int:
             cutoff=parse_datetime(args.cutoff) if args.cutoff else retrieved_at,
             target_team_name=args.target_team,
             own_team_name=args.own_team,
+            maximum_games_per_team=args.maximum_games,
+        ),
+    )
+    _emit(report.to_json(), args.output)
+    return 0
+
+
+def _backtest_draft_scout(args: argparse.Namespace) -> int:
+    teams = {}
+    for entry in args.target_team:
+        code, separator, name = entry.partition("=")
+        if not separator or not code or not name:
+            raise ValueError(f"--target-team expects CODE=team name, got {entry!r}")
+        teams[code] = name
+    imported = _load_oe_import(args)
+    report = backtest_draft_scout(
+        imported.matches,
+        imported.draft_events,
+        _load_league_regions(args.region_map),
+        DraftScoutBacktestConfig(
+            league=args.league,
+            target_teams=teams,
+            own_team_name=args.own_team,
+            publication_delay=timedelta(hours=args.publication_delay_hours),
             maximum_games_per_team=args.maximum_games,
         ),
     )
