@@ -2,10 +2,10 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:bd655a29aecc3c7aede716d9202fbbced6de78f69b1fd4c12e9fb64d73a75e8a",
-    "retrieved_at": "2026-11-06T06:36:41.492731+00:00"
+    "content_hash": "sha256:80874f405ff135b7de361a77a43ad6cc393e3f02065120dc8d14d86f73137ea5",
+    "retrieved_at": "2026-11-06T15:53:50.986087+00:00"
   },
-  "generated_at": "2026-11-06T06:36:41.492731+00:00",
+  "generated_at": "2026-11-06T15:53:50.986087+00:00",
   "history": [
     {
       "change_id": "schedule-change:e890328257079f267e57",
@@ -547,43 +547,13 @@
     }
   ],
   "latest_run": {
-    "change_count": 1,
-    "changes": [
-      {
-        "change_id": "schedule-change:e890328257079f267e57",
-        "correlation_method": "UNMATCHED",
-        "current_event": null,
-        "detected_at": "2026-11-06T06:36:41.492731+00:00",
-        "fields_changed": [
-          "event"
-        ],
-        "previous_event": {
-          "best_of": 5,
-          "block": "Quarterfinals",
-          "event_id": "lolesports:5593c07705f431906e53",
-          "league": "Worlds",
-          "participants": [
-            {
-              "code": "T1",
-              "name": "T1"
-            },
-            {
-              "code": "KC",
-              "name": "Karmine Corp"
-            }
-          ],
-          "start_at": "2026-11-06T22:00:00+00:00"
-        },
-        "severity": "REVIEW",
-        "summary": "T1 fixture left the future schedule",
-        "type": "EVENT_REMOVED"
-      }
-    ],
-    "status": "CHANGED"
+    "change_count": 0,
+    "changes": [],
+    "status": "UNCHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:1826557144fb1c614726b2b2ab398d933210d4757e6f2883487c25ad56dd40eb",
-    "retrieved_at": "2026-11-05T16:26:46.823954+00:00"
+    "content_hash": "sha256:bd655a29aecc3c7aede716d9202fbbced6de78f69b1fd4c12e9fb64d73a75e8a",
+    "retrieved_at": "2026-11-06T06:36:41.492731+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
