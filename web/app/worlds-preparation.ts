@@ -104,7 +104,8 @@ export function buildWorldsPreparation(report: RadarReport) {
   const normalize = (name: string) => name.trim().toUpperCase();
   const teams = report.opponent_prep?.teams ?? [];
   return WORLDS_2026.teams.map((qualified) => {
-    const matches = teams.filter((team) => team.leagues.includes(qualified.league) &&
+    // On the Worlds patch a qualified team's games are labelled WLDs, not its home league.
+    const matches = teams.filter((team) => (team.leagues.includes(qualified.league) || team.leagues.includes("WLDs")) &&
       qualified.names.some((name) => normalize(name) === normalize(team.team_name)));
     // An ambiguous identity never silently picks one feed row or an academy team.
     const team: OpponentTeam | null = matches.length === 1 ? matches[0] : null;
