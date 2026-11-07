@@ -158,8 +158,11 @@ class OracleElixirCSVAdapter:
         retrieved_at: datetime,
         source_timezone: str,
         source_uri: str | None = None,
+        issue_detail_limit: int | None = MAX_ISSUE_DETAILS,
     ) -> OracleElixirImport:
         require_aware(retrieved_at, "retrieved_at")
+        if issue_detail_limit is not None and issue_detail_limit < 0:
+            raise ValueError("issue_detail_limit cannot be negative")
         registration = self._gate.require(self.source_id, IMPORT_OPERATION, retrieved_at)
         resolved = path.resolve(strict=True)
         if not resolved.is_file():
@@ -223,8 +226,10 @@ class OracleElixirCSVAdapter:
                     ),
                 )
             ),
-            issues=tuple(issues[:MAX_ISSUE_DETAILS]),
-            truncated_issue_count=max(0, len(issues) - MAX_ISSUE_DETAILS),
+            issues=tuple(issues if issue_detail_limit is None else issues[:issue_detail_limit]),
+            truncated_issue_count=(
+                0 if issue_detail_limit is None else max(0, len(issues) - issue_detail_limit)
+            ),
         )
         return OracleElixirImport(tuple(matches), tuple(events), report)
 

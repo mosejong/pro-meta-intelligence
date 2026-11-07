@@ -17,6 +17,20 @@ test("historical draft evaluation measures the production preview and rejects le
     const report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
     report.fixture_only = true;
     const { DRAFT_SCOUT_PACKS, DRAFT_SCOUT_VALIDATION, buildDraftScoutBrief, draftScoutFor, headToHeadSeries, headToHeadStaples } = await vite.ssrLoadModule("/app/draft-scout.ts");
+    const { DraftScoutPanel } = await vite.ssrLoadModule("/app/draft-scout-panel.tsx");
+    await t.test("scouting applies current locks only to the matching matchup, on either side", () => {
+      const pack = draftScoutFor("KC");
+      const selections = applyDraftSelection([], "Leona");
+      const props = { nameOf: (id) => id, selections, previousPicks: [] };
+      for (const [blueTeamId, redTeamId] of [[pack.own.team_ids[0], pack.target.team_ids[0]], [pack.target.team_ids[0], pack.own.team_ids[0]]]) {
+        const html = renderToStaticMarkup(createElement(DraftScoutPanel, { ...props, blueTeamId, redTeamId }));
+        assert.match(html, /현재 연습 대진 연결/);
+        assert.match(html, /<em>사용 불가/);
+      }
+      const unrelated = renderToStaticMarkup(createElement(DraftScoutPanel, { ...props, blueTeamId: "different", redTeamId: "other" }));
+      assert.match(unrelated, /독립 스카우팅 보기/);
+      assert.doesNotMatch(unrelated, /<em>사용 불가/);
+    });
     await t.test("draft scouting pack follows T1's quarterfinal opponent and respects fearless locks", () => {
       assert.equal(draftScoutFor(worldsQuarterfinalFor("T1").opponent), draftScoutFor("KC"));
       assert.deepEqual(Object.keys(DRAFT_SCOUT_PACKS).sort(), ["BLG", "DK", "GEN", "IG", "KC", "LYON", "TES"]);
@@ -31,12 +45,25 @@ test("historical draft evaluation measures the production preview and rejects le
       const pack = draftScoutFor("KC");
       assert.equal(pack.artifact_type, "draft-scout-pack");
       assert.equal(pack.target.team_name, "Karmine Corp");
+      assert.equal(pack.target.import_coverage.observed_games, pack.target.import_coverage.accepted_games + pack.target.import_coverage.excluded_games);
+      const incomplete = draftScoutFor("BLG").target.import_coverage;
+      assert.ok(incomplete.excluded_games > 0);
+      assert.ok(!("excluded_game_details" in incomplete));
       assert.ok(!pack.quality_flags.includes("CURRENT_EVENT_GAMES_MISSING"));
       assert.ok(pack.target.leagues.WLDs > 0 && pack.own.leagues.WLDs > 0);
       assert.deepEqual(headToHeadSeries(pack).map((series) => [series.league, series.own_wins, series.target_wins]), [["MSI", 3, 0], ["EWC", 1, 2]]);
       assert.ok(headToHeadStaples(pack, "own").some((item) => item.champion_id === "Rumble" && item.count === 3));
       assert.deepEqual(pack.league_meta.map((group) => group.group), ["LEC", "LCK", "INTERNATIONAL"]);
       const fresh = buildDraftScoutBrief(pack);
+      const busio = fresh.season.find((player) => player.player_name === "Busio");
+      assert.ok(busio.season_games > busio.recent_games);
+      const leona = busio.champions.find((champion) => champion.champion_id === "Leona");
+      assert.ok(leona.season_games >= leona.recent_games && leona.evidence_ids.length > 0);
+      const state = applyDraftSelection([], fresh.expected_picks[0].champions[0].champion_id);
+      const during = buildDraftScoutBrief(pack, [], state);
+      assert.ok(!during.expected_picks[0].champions.some((champion) => champion.champion_id === state[0].champion_id));
+      assert.ok(during.season.flatMap((player) => player.champions).some((champion) => champion.champion_id === state[0].champion_id && champion.locked));
+      assert.deepEqual(buildDraftScoutBrief(pack, [], []), fresh);
       assert.ok(fresh.deny.length > 0 && fresh.deny.every((item) => !item.locked));
       const used = fresh.deny[0].champion_id;
       const after = buildDraftScoutBrief(pack, [used]);

@@ -1361,6 +1361,35 @@
     },
     "game_count": 40,
     "home_league": "LCK",
+    "import_coverage": {
+      "accepted_games": 170,
+      "excluded_games": 0,
+      "excluded_rate": 0.0,
+      "exclusion_reasons": {},
+      "leagues": {
+        "EWC": {
+          "accepted": 20,
+          "observed": 20
+        },
+        "KeSPA Cup": {
+          "accepted": 15,
+          "observed": 15
+        },
+        "LCK": {
+          "accepted": 109,
+          "observed": 109
+        },
+        "MSI": {
+          "accepted": 21,
+          "observed": 21
+        },
+        "WLDs": {
+          "accepted": 5,
+          "observed": 5
+        }
+      },
+      "observed_games": 170
+    },
     "last_pick": {
       "champions": [
         {
@@ -2003,6 +2032,35 @@
     },
     "game_count": 40,
     "home_league": "LCS",
+    "import_coverage": {
+      "accepted_games": 133,
+      "excluded_games": 0,
+      "excluded_rate": 0.0,
+      "exclusion_reasons": {},
+      "leagues": {
+        "EWC": {
+          "accepted": 11,
+          "observed": 11
+        },
+        "FST": {
+          "accepted": 12,
+          "observed": 12
+        },
+        "LCS": {
+          "accepted": 82,
+          "observed": 82
+        },
+        "MSI": {
+          "accepted": 17,
+          "observed": 17
+        },
+        "WLDs": {
+          "accepted": 11,
+          "observed": 11
+        }
+      },
+      "observed_games": 133
+    },
     "last_pick": {
       "champions": [
         {
@@ -2516,6 +2574,1769 @@
       "win_count": 25,
       "win_rate": 0.625
     },
+    "season_tendencies": [
+      {
+        "champions": [
+          {
+            "champion_id": "Yunara",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_366054:pick:2",
+              "oe:EWC:LOLTMNT02_384635:pick:2",
+              "oe:FST:LOLTMNT01_350457:pick:2",
+              "oe:FST:LOLTMNT01_350979:pick:3",
+              "oe:LCS:LOLTMNT01_324980:pick:7",
+              "oe:LCS:LOLTMNT01_362920:pick:7",
+              "oe:LCS:LOLTMNT01_405809:pick:4",
+              "oe:LCS:LOLTMNT01_450816:pick:6",
+              "oe:LCS:LOLTMNT01_462473:pick:2",
+              "oe:LCS:LOLTMNT01_468449:pick:4",
+              "oe:LCS:LOLTMNT01_469853:pick:4",
+              "oe:LCS:LOLTMNT02_349089:pick:2",
+              "oe:LCS:LOLTMNT02_382257:pick:2",
+              "oe:LCS:LOLTMNT02_390611:pick:4",
+              "oe:LCS:LOLTMNT02_404341:pick:2",
+              "oe:LCS:LOLTMNT02_450875:pick:4",
+              "oe:LCS:LOLTMNT03_350273:pick:2",
+              "oe:LCS:LOLTMNT03_350458:pick:1",
+              "oe:WLDs:LOLTMNT02_483571:pick:8",
+              "oe:WLDs:LOLTMNT02_483730:pick:6",
+              "oe:WLDs:LOLTMNT02_485488:pick:2"
+            ],
+            "recent_games": 8,
+            "recent_share": 0.2,
+            "season_games": 21,
+            "season_share": 0.158
+          },
+          {
+            "champion_id": "Ezreal",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_384018:pick:6",
+              "oe:FST:LOLTMNT01_352208:pick:6",
+              "oe:LCS:LOLTMNT01_334729:pick:7",
+              "oe:LCS:LOLTMNT01_382446:pick:5",
+              "oe:LCS:LOLTMNT01_405807:pick:2",
+              "oe:LCS:LOLTMNT01_433972:pick:2",
+              "oe:LCS:LOLTMNT01_440962:pick:1",
+              "oe:LCS:LOLTMNT01_456445:pick:1",
+              "oe:LCS:LOLTMNT03_350449:pick:10",
+              "oe:LCS:LOLTMNT03_350640:pick:4",
+              "oe:LCS:LOLTMNT03_351308:pick:2",
+              "oe:MSI:LOLTMNT01_417195:pick:3",
+              "oe:MSI:LOLTMNT01_419700:pick:1",
+              "oe:MSI:LOLTMNT01_422565:pick:2",
+              "oe:MSI:LOLTMNT01_423068:pick:2",
+              "oe:WLDs:LOLTMNT02_482335:pick:2",
+              "oe:WLDs:LOLTMNT02_485482:pick:4",
+              "oe:WLDs:LOLTMNT02_486183:pick:2"
+            ],
+            "recent_games": 6,
+            "recent_share": 0.15,
+            "season_games": 18,
+            "season_share": 0.135
+          },
+          {
+            "champion_id": "Lucian",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_383080:pick:3",
+              "oe:EWC:LOLTMNT02_384602:pick:5",
+              "oe:FST:LOLTMNT01_350472:pick:2",
+              "oe:FST:LOLTMNT01_350983:pick:6",
+              "oe:LCS:LOLTMNT01_382451:pick:3",
+              "oe:LCS:LOLTMNT01_399373:pick:2",
+              "oe:LCS:LOLTMNT01_433992:pick:4",
+              "oe:LCS:LOLTMNT01_440970:pick:2",
+              "oe:LCS:LOLTMNT01_451553:pick:2",
+              "oe:LCS:LOLTMNT01_452021:pick:2",
+              "oe:LCS:LOLTMNT01_457447:pick:1",
+              "oe:LCS:LOLTMNT01_470683:pick:2",
+              "oe:LCS:LOLTMNT02_403327:pick:3",
+              "oe:MSI:LOLTMNT01_424060:pick:2",
+              "oe:WLDs:LOLTMNT02_482805:pick:2",
+              "oe:WLDs:LOLTMNT02_486192:pick:2",
+              "oe:WLDs:LOLTMNT02_486555:pick:4"
+            ],
+            "recent_games": 9,
+            "recent_share": 0.225,
+            "season_games": 17,
+            "season_share": 0.128
+          },
+          {
+            "champion_id": "Jhin",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_427071:pick:9",
+              "oe:FST:LOLTMNT01_349576:pick:3",
+              "oe:LCS:LOLTMNT01_466801:pick:6",
+              "oe:LCS:LOLTMNT01_470699:pick:4",
+              "oe:LCS:LOLTMNT02_390623:pick:8",
+              "oe:LCS:LOLTMNT02_412354:pick:4",
+              "oe:LCS:LOLTMNT03_344400:pick:7",
+              "oe:LCS:LOLTMNT03_351519:pick:4",
+              "oe:MSI:LOLTMNT01_423038:pick:7"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.05,
+            "season_games": 9,
+            "season_share": 0.068
+          },
+          {
+            "champion_id": "Caitlyn",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_365272:pick:3",
+              "oe:EWC:LOLTMNT01_425900:pick:10",
+              "oe:LCS:LOLTMNT01_356643:pick:6",
+              "oe:LCS:LOLTMNT01_362925:pick:7",
+              "oe:LCS:LOLTMNT01_470828:pick:2",
+              "oe:LCS:LOLTMNT02_403334:pick:5",
+              "oe:LCS:LOLTMNT02_411607:pick:2",
+              "oe:MSI:LOLTMNT01_422614:pick:6"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 8,
+            "season_share": 0.06
+          },
+          {
+            "champion_id": "Varus",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_385252:pick:1",
+              "oe:FST:LOLTMNT01_351241:pick:2",
+              "oe:LCS:LOLTMNT01_371869:pick:1",
+              "oe:LCS:LOLTMNT01_399392:pick:2",
+              "oe:LCS:LOLTMNT01_470714:pick:6",
+              "oe:LCS:LOLTMNT03_344407:pick:1",
+              "oe:MSI:LOLTMNT01_419702:pick:1",
+              "oe:MSI:LOLTMNT01_422589:pick:1"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 8,
+            "season_share": 0.06
+          },
+          {
+            "champion_id": "Ashe",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_349555:pick:2",
+              "oe:FST:LOLTMNT01_351028:pick:2",
+              "oe:LCS:LOLTMNT01_356663:pick:4",
+              "oe:LCS:LOLTMNT01_466805:pick:4",
+              "oe:LCS:LOLTMNT02_381247:pick:3",
+              "oe:LCS:LOLTMNT03_351304:pick:2",
+              "oe:LCS:LOLTMNT03_351699:pick:2"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 7,
+            "season_share": 0.053
+          },
+          {
+            "champion_id": "Corki",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_386212:pick:7",
+              "oe:FST:LOLTMNT01_350498:pick:1",
+              "oe:FST:LOLTMNT01_351251:pick:3",
+              "oe:LCS:LOLTMNT01_382460:pick:4",
+              "oe:LCS:LOLTMNT02_350086:pick:9",
+              "oe:LCS:LOLTMNT03_344416:pick:2",
+              "oe:WLDs:LOLTMNT02_486186:pick:5"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 7,
+            "season_share": 0.053
+          },
+          {
+            "champion_id": "Sivir",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_363170:pick:7",
+              "oe:LCS:LOLTMNT01_372786:pick:7",
+              "oe:LCS:LOLTMNT01_462487:pick:8",
+              "oe:LCS:LOLTMNT03_350455:pick:2",
+              "oe:MSI:LOLTMNT01_418707:pick:8"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 5,
+            "season_share": 0.038
+          },
+          {
+            "champion_id": "Aphelios",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_351262:pick:3",
+              "oe:LCS:LOLTMNT01_324984:pick:4",
+              "oe:LCS:LOLTMNT01_333860:pick:7",
+              "oe:LCS:LOLTMNT03_351697:pick:4"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 4,
+            "season_share": 0.03
+          },
+          {
+            "champion_id": "Ziggs",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_428055:pick:5",
+              "oe:MSI:LOLTMNT01_417198:pick:4",
+              "oe:MSI:LOLTMNT01_418698:pick:7",
+              "oe:MSI:LOLTMNT01_419708:pick:4"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 4,
+            "season_share": 0.03
+          },
+          {
+            "champion_id": "Kalista",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_462480:pick:4",
+              "oe:LCS:LOLTMNT01_468459:pick:6",
+              "oe:WLDs:LOLTMNT02_482793:pick:2"
+            ],
+            "recent_games": 3,
+            "recent_share": 0.075,
+            "season_games": 3,
+            "season_share": 0.023
+          },
+          {
+            "champion_id": "Miss Fortune",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_354955:pick:6",
+              "oe:LCS:LOLTMNT01_399397:pick:4",
+              "oe:LCS:LOLTMNT02_450878:pick:7"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 3,
+            "season_share": 0.023
+          },
+          {
+            "champion_id": "Xayah",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_469879:pick:2",
+              "oe:LCS:LOLTMNT03_351286:pick:10",
+              "oe:MSI:LOLTMNT01_424125:pick:7"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 3,
+            "season_share": 0.023
+          },
+          {
+            "champion_id": "Cassiopeia",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT02_440260:pick:7",
+              "oe:LCS:LOLTMNT02_450870:pick:2"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Jayce",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_463432:pick:3",
+              "oe:LCS:LOLTMNT02_439318:pick:1"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Jinx",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_470734:pick:10",
+              "oe:LCS:LOLTMNT02_411619:pick:10"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Kai'Sa",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_470830:pick:8",
+              "oe:LCS:LOLTMNT03_350644:pick:7"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Senna",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_405808:pick:2",
+              "oe:LCS:LOLTMNT02_411603:pick:4"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Kog'Maw",
+            "evidence_ids": [
+              "oe:MSI:LOLTMNT01_417200:pick:8"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Mel",
+            "evidence_ids": [
+              "oe:MSI:LOLTMNT01_423127:pick:4"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Smolder",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT02_411614:pick:6"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Taliyah",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_451798:pick:6"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Tristana",
+            "evidence_ids": [
+              "oe:MSI:LOLTMNT01_417741:pick:10"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Zeri",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT02_349098:pick:4"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          }
+        ],
+        "player_id": "oe:player:460ae5a7af8d68f7831b70307210ab3",
+        "player_name": "Berserker",
+        "recent_games": 40,
+        "role": "BOTTOM",
+        "season_games": 133,
+        "status": "OBSERVED",
+        "year": 2026
+      },
+      {
+        "champions": [
+          {
+            "champion_id": "Xin Zhao",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_384635:pick:3",
+              "oe:FST:LOLTMNT01_350498:pick:4",
+              "oe:FST:LOLTMNT01_351028:pick:3",
+              "oe:LCS:LOLTMNT01_371869:pick:5",
+              "oe:LCS:LOLTMNT01_405807:pick:3",
+              "oe:LCS:LOLTMNT01_451553:pick:6",
+              "oe:LCS:LOLTMNT01_456445:pick:5",
+              "oe:LCS:LOLTMNT01_468459:pick:10",
+              "oe:LCS:LOLTMNT01_470683:pick:10",
+              "oe:LCS:LOLTMNT02_349098:pick:1",
+              "oe:LCS:LOLTMNT02_390611:pick:9",
+              "oe:LCS:LOLTMNT02_411607:pick:3",
+              "oe:LCS:LOLTMNT03_350640:pick:8",
+              "oe:LCS:LOLTMNT03_351304:pick:6",
+              "oe:MSI:LOLTMNT01_422565:pick:3",
+              "oe:MSI:LOLTMNT01_424125:pick:10",
+              "oe:WLDs:LOLTMNT02_482793:pick:7",
+              "oe:WLDs:LOLTMNT02_486192:pick:7"
+            ],
+            "recent_games": 6,
+            "recent_share": 0.182,
+            "season_games": 18,
+            "season_share": 0.145
+          },
+          {
+            "champion_id": "Wukong",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_366054:pick:6",
+              "oe:EWC:LOLTMNT02_384018:pick:3",
+              "oe:FST:LOLTMNT01_350472:pick:3",
+              "oe:FST:LOLTMNT01_350983:pick:3",
+              "oe:LCS:LOLTMNT01_356663:pick:9",
+              "oe:LCS:LOLTMNT01_363170:pick:2",
+              "oe:LCS:LOLTMNT01_399373:pick:6",
+              "oe:LCS:LOLTMNT01_405808:pick:7",
+              "oe:LCS:LOLTMNT01_451798:pick:2",
+              "oe:LCS:LOLTMNT01_462473:pick:7",
+              "oe:LCS:LOLTMNT01_468449:pick:1",
+              "oe:LCS:LOLTMNT02_381247:pick:7",
+              "oe:LCS:LOLTMNT02_412354:pick:9",
+              "oe:LCS:LOLTMNT03_344416:pick:3",
+              "oe:MSI:LOLTMNT01_417198:pick:5",
+              "oe:WLDs:LOLTMNT02_483571:pick:1"
+            ],
+            "recent_games": 4,
+            "recent_share": 0.121,
+            "season_games": 16,
+            "season_share": 0.129
+          },
+          {
+            "champion_id": "Nocturne",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_428055:pick:1",
+              "oe:FST:LOLTMNT01_351241:pick:3",
+              "oe:LCS:LOLTMNT01_334729:pick:3",
+              "oe:LCS:LOLTMNT01_362920:pick:2",
+              "oe:LCS:LOLTMNT01_382460:pick:1",
+              "oe:LCS:LOLTMNT01_405809:pick:1",
+              "oe:LCS:LOLTMNT01_452021:pick:6",
+              "oe:LCS:LOLTMNT02_403327:pick:2",
+              "oe:LCS:LOLTMNT03_344400:pick:3",
+              "oe:LCS:LOLTMNT03_351286:pick:3",
+              "oe:MSI:LOLTMNT01_418707:pick:1",
+              "oe:MSI:LOLTMNT01_419708:pick:1",
+              "oe:WLDs:LOLTMNT02_482335:pick:3",
+              "oe:WLDs:LOLTMNT02_486183:pick:3",
+              "oe:WLDs:LOLTMNT02_486555:pick:1"
+            ],
+            "recent_games": 4,
+            "recent_share": 0.121,
+            "season_games": 15,
+            "season_share": 0.121
+          },
+          {
+            "champion_id": "Jarvan IV",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_425900:pick:3",
+              "oe:EWC:LOLTMNT02_386212:pick:2",
+              "oe:LCS:LOLTMNT01_324980:pick:3",
+              "oe:LCS:LOLTMNT01_354955:pick:2",
+              "oe:LCS:LOLTMNT01_382446:pick:4",
+              "oe:LCS:LOLTMNT01_466805:pick:1",
+              "oe:LCS:LOLTMNT01_470830:pick:4",
+              "oe:LCS:LOLTMNT03_350449:pick:3",
+              "oe:LCS:LOLTMNT03_350644:pick:3",
+              "oe:MSI:LOLTMNT01_417195:pick:7",
+              "oe:MSI:LOLTMNT01_419702:pick:5"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.061,
+            "season_games": 11,
+            "season_share": 0.089
+          },
+          {
+            "champion_id": "Vi",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_383080:pick:7",
+              "oe:EWC:LOLTMNT02_384602:pick:1",
+              "oe:LCS:LOLTMNT01_333860:pick:3",
+              "oe:LCS:LOLTMNT01_356643:pick:3",
+              "oe:LCS:LOLTMNT01_362925:pick:3",
+              "oe:LCS:LOLTMNT01_382451:pick:7",
+              "oe:LCS:LOLTMNT02_350086:pick:4",
+              "oe:LCS:LOLTMNT02_382257:pick:6",
+              "oe:LCS:LOLTMNT02_404341:pick:7",
+              "oe:WLDs:LOLTMNT02_483730:pick:2"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.03,
+            "season_games": 10,
+            "season_share": 0.081
+          },
+          {
+            "champion_id": "Lee Sin",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_450816:pick:2",
+              "oe:LCS:LOLTMNT01_466801:pick:2",
+              "oe:MSI:LOLTMNT01_417200:pick:5",
+              "oe:MSI:LOLTMNT01_417741:pick:2",
+              "oe:MSI:LOLTMNT01_422589:pick:5",
+              "oe:MSI:LOLTMNT01_423068:pick:3",
+              "oe:WLDs:LOLTMNT02_485488:pick:7"
+            ],
+            "recent_games": 3,
+            "recent_share": 0.091,
+            "season_games": 7,
+            "season_share": 0.056
+          },
+          {
+            "champion_id": "Skarner",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_365272:pick:7",
+              "oe:EWC:LOLTMNT02_385252:pick:4",
+              "oe:LCS:LOLTMNT01_457447:pick:5",
+              "oe:LCS:LOLTMNT01_462480:pick:8",
+              "oe:LCS:LOLTMNT01_470828:pick:7",
+              "oe:MSI:LOLTMNT01_418698:pick:3",
+              "oe:MSI:LOLTMNT01_424060:pick:7"
+            ],
+            "recent_games": 3,
+            "recent_share": 0.091,
+            "season_games": 7,
+            "season_share": 0.056
+          },
+          {
+            "champion_id": "Trundle",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_469853:pick:9",
+              "oe:LCS:LOLTMNT01_470734:pick:6",
+              "oe:LCS:LOLTMNT02_349089:pick:6",
+              "oe:LCS:LOLTMNT02_411619:pick:3",
+              "oe:LCS:LOLTMNT03_351699:pick:7",
+              "oe:MSI:LOLTMNT01_419700:pick:5",
+              "oe:MSI:LOLTMNT01_422614:pick:7"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.061,
+            "season_games": 7,
+            "season_share": 0.056
+          },
+          {
+            "champion_id": "Pantheon",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_350457:pick:3",
+              "oe:LCS:LOLTMNT01_324984:pick:8",
+              "oe:LCS:LOLTMNT01_372786:pick:2",
+              "oe:LCS:LOLTMNT01_462487:pick:4",
+              "oe:MSI:LOLTMNT01_423127:pick:9",
+              "oe:WLDs:LOLTMNT02_485482:pick:5"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.061,
+            "season_games": 6,
+            "season_share": 0.048
+          },
+          {
+            "champion_id": "Sejuani",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_351262:pick:7",
+              "oe:LCS:LOLTMNT01_469879:pick:7",
+              "oe:LCS:LOLTMNT02_390623:pick:9",
+              "oe:LCS:LOLTMNT02_403334:pick:9",
+              "oe:LCS:LOLTMNT02_411603:pick:9"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.03,
+            "season_games": 5,
+            "season_share": 0.04
+          },
+          {
+            "champion_id": "Malphite",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_351251:pick:10",
+              "oe:LCS:LOLTMNT03_344407:pick:5",
+              "oe:LCS:LOLTMNT03_350273:pick:7",
+              "oe:LCS:LOLTMNT03_351519:pick:9"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 4,
+            "season_share": 0.032
+          },
+          {
+            "champion_id": "Qiyana",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_427071:pick:5",
+              "oe:LCS:LOLTMNT01_470714:pick:3",
+              "oe:MSI:LOLTMNT01_423038:pick:3",
+              "oe:WLDs:LOLTMNT02_486186:pick:1"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.061,
+            "season_games": 4,
+            "season_share": 0.032
+          },
+          {
+            "champion_id": "Dr. Mundo",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_349555:pick:7",
+              "oe:LCS:LOLTMNT03_350458:pick:4"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 2,
+            "season_share": 0.016
+          },
+          {
+            "champion_id": "Jayce",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_399397:pick:8",
+              "oe:LCS:LOLTMNT03_350455:pick:7"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 2,
+            "season_share": 0.016
+          },
+          {
+            "champion_id": "Maokai",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_349576:pick:7",
+              "oe:WLDs:LOLTMNT02_482805:pick:7"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.03,
+            "season_games": 2,
+            "season_share": 0.016
+          },
+          {
+            "champion_id": "Naafiri",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_399392:pick:10",
+              "oe:LCS:LOLTMNT01_463432:pick:2"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.03,
+            "season_games": 2,
+            "season_share": 0.016
+          },
+          {
+            "champion_id": "Ornn",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT02_411614:pick:7",
+              "oe:LCS:LOLTMNT03_351308:pick:7"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 2,
+            "season_share": 0.016
+          },
+          {
+            "champion_id": "Aatrox",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT03_351697:pick:8"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Ambessa",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_352208:pick:2"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Kha'Zix",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_470699:pick:9"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.03,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Viego",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_350979:pick:7"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          }
+        ],
+        "player_id": "oe:player:a8307167f3a1c933295bb9e3d43700e",
+        "player_name": "Inspired",
+        "recent_games": 33,
+        "role": "JUNGLE",
+        "season_games": 124,
+        "status": "OBSERVED",
+        "year": 2026
+      },
+      {
+        "champions": [
+          {
+            "champion_id": "Ryze",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_427071:pick:1",
+              "oe:FST:LOLTMNT01_352208:pick:3",
+              "oe:LCS:LOLTMNT01_324984:pick:1",
+              "oe:LCS:LOLTMNT01_356643:pick:7",
+              "oe:LCS:LOLTMNT01_362925:pick:2",
+              "oe:LCS:LOLTMNT01_371869:pick:4",
+              "oe:LCS:LOLTMNT01_399373:pick:7",
+              "oe:LCS:LOLTMNT01_440962:pick:8",
+              "oe:LCS:LOLTMNT01_462480:pick:1",
+              "oe:LCS:LOLTMNT01_470734:pick:2",
+              "oe:LCS:LOLTMNT01_470830:pick:1",
+              "oe:LCS:LOLTMNT02_450878:pick:3",
+              "oe:LCS:LOLTMNT03_350455:pick:3",
+              "oe:MSI:LOLTMNT01_422614:pick:2",
+              "oe:MSI:LOLTMNT01_423038:pick:2"
+            ],
+            "recent_games": 5,
+            "recent_share": 0.125,
+            "season_games": 15,
+            "season_share": 0.113
+          },
+          {
+            "champion_id": "Viktor",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_428055:pick:9",
+              "oe:FST:LOLTMNT01_350498:pick:9",
+              "oe:FST:LOLTMNT01_351251:pick:7",
+              "oe:LCS:LOLTMNT01_399392:pick:6",
+              "oe:LCS:LOLTMNT01_463432:pick:6",
+              "oe:LCS:LOLTMNT01_469879:pick:10",
+              "oe:LCS:LOLTMNT02_439318:pick:4",
+              "oe:MSI:LOLTMNT01_417200:pick:4",
+              "oe:MSI:LOLTMNT01_418698:pick:2",
+              "oe:MSI:LOLTMNT01_419702:pick:4",
+              "oe:MSI:LOLTMNT01_422589:pick:9",
+              "oe:MSI:LOLTMNT01_424060:pick:6"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.05,
+            "season_games": 12,
+            "season_share": 0.09
+          },
+          {
+            "champion_id": "Ahri",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_384602:pick:9",
+              "oe:FST:LOLTMNT01_350457:pick:7",
+              "oe:FST:LOLTMNT01_350979:pick:6",
+              "oe:LCS:LOLTMNT01_333860:pick:6",
+              "oe:LCS:LOLTMNT01_354955:pick:10",
+              "oe:LCS:LOLTMNT01_382451:pick:10",
+              "oe:LCS:LOLTMNT01_433972:pick:10",
+              "oe:LCS:LOLTMNT03_351308:pick:6",
+              "oe:LCS:LOLTMNT03_351697:pick:9",
+              "oe:MSI:LOLTMNT01_419708:pick:8",
+              "oe:WLDs:LOLTMNT02_482793:pick:10"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.05,
+            "season_games": 11,
+            "season_share": 0.083
+          },
+          {
+            "champion_id": "Sylas",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_351028:pick:7",
+              "oe:LCS:LOLTMNT01_363170:pick:10",
+              "oe:LCS:LOLTMNT01_382460:pick:9",
+              "oe:LCS:LOLTMNT01_457447:pick:8",
+              "oe:LCS:LOLTMNT01_470699:pick:8",
+              "oe:LCS:LOLTMNT02_403327:pick:7",
+              "oe:LCS:LOLTMNT02_411607:pick:6",
+              "oe:LCS:LOLTMNT03_350458:pick:8",
+              "oe:MSI:LOLTMNT01_422565:pick:7",
+              "oe:MSI:LOLTMNT01_424125:pick:6",
+              "oe:WLDs:LOLTMNT02_486183:pick:10"
+            ],
+            "recent_games": 3,
+            "recent_share": 0.075,
+            "season_games": 11,
+            "season_share": 0.083
+          },
+          {
+            "champion_id": "Akali",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_384635:pick:6",
+              "oe:LCS:LOLTMNT01_324980:pick:6",
+              "oe:LCS:LOLTMNT01_356663:pick:5",
+              "oe:LCS:LOLTMNT01_372786:pick:6",
+              "oe:LCS:LOLTMNT01_405807:pick:6",
+              "oe:LCS:LOLTMNT01_462487:pick:5",
+              "oe:LCS:LOLTMNT02_382257:pick:7",
+              "oe:LCS:LOLTMNT03_351304:pick:7",
+              "oe:MSI:LOLTMNT01_423068:pick:6",
+              "oe:WLDs:LOLTMNT02_483730:pick:7"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.05,
+            "season_games": 10,
+            "season_share": 0.075
+          },
+          {
+            "champion_id": "Azir",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_351262:pick:10",
+              "oe:LCS:LOLTMNT01_362920:pick:3",
+              "oe:LCS:LOLTMNT01_452021:pick:10",
+              "oe:LCS:LOLTMNT02_381247:pick:10",
+              "oe:LCS:LOLTMNT03_344400:pick:6",
+              "oe:LCS:LOLTMNT03_350449:pick:2",
+              "oe:LCS:LOLTMNT03_350640:pick:1",
+              "oe:LCS:LOLTMNT03_351286:pick:6"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 8,
+            "season_share": 0.06
+          },
+          {
+            "champion_id": "Syndra",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_451798:pick:3",
+              "oe:LCS:LOLTMNT01_468459:pick:7",
+              "oe:LCS:LOLTMNT01_469853:pick:1",
+              "oe:LCS:LOLTMNT01_470683:pick:6",
+              "oe:LCS:LOLTMNT02_450870:pick:10",
+              "oe:MSI:LOLTMNT01_417195:pick:10",
+              "oe:WLDs:LOLTMNT02_483571:pick:5",
+              "oe:WLDs:LOLTMNT02_485482:pick:1"
+            ],
+            "recent_games": 7,
+            "recent_share": 0.175,
+            "season_games": 8,
+            "season_share": 0.06
+          },
+          {
+            "champion_id": "Taliyah",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT02_350086:pick:5",
+              "oe:LCS:LOLTMNT02_411619:pick:6",
+              "oe:LCS:LOLTMNT03_344416:pick:10",
+              "oe:LCS:LOLTMNT03_350273:pick:3",
+              "oe:MSI:LOLTMNT01_417741:pick:7",
+              "oe:MSI:LOLTMNT01_419700:pick:9",
+              "oe:WLDs:LOLTMNT02_486186:pick:9",
+              "oe:WLDs:LOLTMNT02_486555:pick:8"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.05,
+            "season_games": 8,
+            "season_share": 0.06
+          },
+          {
+            "champion_id": "LeBlanc",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_350472:pick:7",
+              "oe:FST:LOLTMNT01_350983:pick:7",
+              "oe:LCS:LOLTMNT01_405808:pick:6",
+              "oe:LCS:LOLTMNT01_450816:pick:10",
+              "oe:LCS:LOLTMNT01_470714:pick:2",
+              "oe:LCS:LOLTMNT02_440260:pick:10",
+              "oe:WLDs:LOLTMNT02_486192:pick:6"
+            ],
+            "recent_games": 3,
+            "recent_share": 0.075,
+            "season_games": 7,
+            "season_share": 0.053
+          },
+          {
+            "champion_id": "Orianna",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_383080:pick:2",
+              "oe:LCS:LOLTMNT01_334729:pick:2",
+              "oe:LCS:LOLTMNT01_399397:pick:1",
+              "oe:LCS:LOLTMNT02_390611:pick:1",
+              "oe:LCS:LOLTMNT02_450875:pick:1",
+              "oe:WLDs:LOLTMNT02_485488:pick:6"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.05,
+            "season_games": 6,
+            "season_share": 0.045
+          },
+          {
+            "champion_id": "Annie",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_366054:pick:7",
+              "oe:LCS:LOLTMNT01_433992:pick:9",
+              "oe:LCS:LOLTMNT01_456445:pick:8",
+              "oe:LCS:LOLTMNT01_468449:pick:8",
+              "oe:MSI:LOLTMNT01_423127:pick:8"
+            ],
+            "recent_games": 3,
+            "recent_share": 0.075,
+            "season_games": 5,
+            "season_share": 0.038
+          },
+          {
+            "champion_id": "Cassiopeia",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_349555:pick:3",
+              "oe:LCS:LOLTMNT02_349098:pick:8",
+              "oe:LCS:LOLTMNT02_411614:pick:3",
+              "oe:LCS:LOLTMNT03_350644:pick:6",
+              "oe:MSI:LOLTMNT01_418707:pick:5"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 5,
+            "season_share": 0.038
+          },
+          {
+            "champion_id": "Yone",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_365272:pick:10",
+              "oe:LCS:LOLTMNT02_390623:pick:5",
+              "oe:LCS:LOLTMNT02_403334:pick:8",
+              "oe:LCS:LOLTMNT02_411603:pick:8",
+              "oe:LCS:LOLTMNT03_351519:pick:8"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 5,
+            "season_share": 0.038
+          },
+          {
+            "champion_id": "Anivia",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_386212:pick:10",
+              "oe:LCS:LOLTMNT02_349089:pick:3",
+              "oe:LCS:LOLTMNT02_412354:pick:5",
+              "oe:WLDs:LOLTMNT02_482335:pick:7"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 4,
+            "season_share": 0.03
+          },
+          {
+            "champion_id": "Aurora",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_384018:pick:10",
+              "oe:LCS:LOLTMNT02_404341:pick:6",
+              "oe:LCS:LOLTMNT03_344407:pick:4",
+              "oe:LCS:LOLTMNT03_351699:pick:6"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 4,
+            "season_share": 0.03
+          },
+          {
+            "champion_id": "Galio",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_351241:pick:6",
+              "oe:LCS:LOLTMNT01_405809:pick:9",
+              "oe:LCS:LOLTMNT01_466801:pick:10",
+              "oe:MSI:LOLTMNT01_417198:pick:8"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 4,
+            "season_share": 0.03
+          },
+          {
+            "champion_id": "Twisted Fate",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_382446:pick:8",
+              "oe:LCS:LOLTMNT01_466805:pick:9",
+              "oe:LCS:LOLTMNT01_470828:pick:6"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.05,
+            "season_games": 3,
+            "season_share": 0.023
+          },
+          {
+            "champion_id": "Locke",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_451553:pick:10",
+              "oe:LCS:LOLTMNT01_462473:pick:6"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.05,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Hwei",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_385252:pick:5"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Jayce",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_349576:pick:6"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Lissandra",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_440970:pick:10"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Tristana",
+            "evidence_ids": [
+              "oe:WLDs:LOLTMNT02_482805:pick:10"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Ziggs",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_425900:pick:2"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          }
+        ],
+        "player_id": "oe:player:f45792335d83b10581da2f0cbdd6e8e",
+        "player_name": "Saint",
+        "recent_games": 40,
+        "role": "MID",
+        "season_games": 133,
+        "status": "OBSERVED",
+        "year": 2026
+      },
+      {
+        "champions": [
+          {
+            "champion_id": "Lulu",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_366054:pick:3",
+              "oe:FST:LOLTMNT01_350457:pick:6",
+              "oe:FST:LOLTMNT01_351028:pick:6",
+              "oe:LCS:LOLTMNT01_324984:pick:5",
+              "oe:LCS:LOLTMNT01_362920:pick:10",
+              "oe:LCS:LOLTMNT01_405809:pick:5",
+              "oe:LCS:LOLTMNT01_450816:pick:3",
+              "oe:LCS:LOLTMNT01_462473:pick:3",
+              "oe:LCS:LOLTMNT01_468449:pick:5",
+              "oe:LCS:LOLTMNT01_469853:pick:5",
+              "oe:LCS:LOLTMNT02_349098:pick:5",
+              "oe:LCS:LOLTMNT02_382257:pick:3",
+              "oe:LCS:LOLTMNT02_390611:pick:5",
+              "oe:LCS:LOLTMNT02_450875:pick:5",
+              "oe:LCS:LOLTMNT03_350273:pick:6",
+              "oe:LCS:LOLTMNT03_350458:pick:5",
+              "oe:LCS:LOLTMNT03_351697:pick:5",
+              "oe:MSI:LOLTMNT01_417200:pick:9",
+              "oe:WLDs:LOLTMNT02_483571:pick:9",
+              "oe:WLDs:LOLTMNT02_483730:pick:3",
+              "oe:WLDs:LOLTMNT02_485488:pick:3"
+            ],
+            "recent_games": 8,
+            "recent_share": 0.2,
+            "season_games": 21,
+            "season_share": 0.158
+          },
+          {
+            "champion_id": "Milio",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_383080:pick:6",
+              "oe:LCS:LOLTMNT01_382451:pick:6",
+              "oe:LCS:LOLTMNT01_399373:pick:3",
+              "oe:LCS:LOLTMNT01_433992:pick:5",
+              "oe:LCS:LOLTMNT01_440970:pick:3",
+              "oe:LCS:LOLTMNT01_451553:pick:3",
+              "oe:LCS:LOLTMNT01_452021:pick:3",
+              "oe:LCS:LOLTMNT01_457447:pick:4",
+              "oe:LCS:LOLTMNT01_470683:pick:3",
+              "oe:LCS:LOLTMNT02_403327:pick:6",
+              "oe:MSI:LOLTMNT01_424060:pick:3",
+              "oe:WLDs:LOLTMNT02_482805:pick:3",
+              "oe:WLDs:LOLTMNT02_486192:pick:3",
+              "oe:WLDs:LOLTMNT02_486555:pick:5"
+            ],
+            "recent_games": 9,
+            "recent_share": 0.225,
+            "season_games": 14,
+            "season_share": 0.105
+          },
+          {
+            "champion_id": "Nautilus",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_427071:pick:8",
+              "oe:EWC:LOLTMNT02_384635:pick:10",
+              "oe:EWC:LOLTMNT02_386212:pick:3",
+              "oe:FST:LOLTMNT01_350979:pick:10",
+              "oe:FST:LOLTMNT01_351262:pick:6",
+              "oe:LCS:LOLTMNT01_354955:pick:3",
+              "oe:LCS:LOLTMNT01_371869:pick:8",
+              "oe:LCS:LOLTMNT01_405808:pick:3",
+              "oe:LCS:LOLTMNT01_470699:pick:5",
+              "oe:LCS:LOLTMNT02_390623:pick:4",
+              "oe:LCS:LOLTMNT02_411603:pick:5",
+              "oe:LCS:LOLTMNT02_450878:pick:6",
+              "oe:MSI:LOLTMNT01_418707:pick:4"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.05,
+            "season_games": 13,
+            "season_share": 0.098
+          },
+          {
+            "champion_id": "Alistar",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_428055:pick:8",
+              "oe:LCS:LOLTMNT01_405807:pick:7",
+              "oe:LCS:LOLTMNT01_451798:pick:7",
+              "oe:LCS:LOLTMNT01_463432:pick:7",
+              "oe:LCS:LOLTMNT01_466801:pick:7",
+              "oe:LCS:LOLTMNT01_470734:pick:3",
+              "oe:LCS:LOLTMNT01_470830:pick:5",
+              "oe:MSI:LOLTMNT01_419700:pick:4",
+              "oe:MSI:LOLTMNT01_423068:pick:7",
+              "oe:WLDs:LOLTMNT02_482335:pick:6",
+              "oe:WLDs:LOLTMNT02_485482:pick:8",
+              "oe:WLDs:LOLTMNT02_486186:pick:4"
+            ],
+            "recent_games": 8,
+            "recent_share": 0.2,
+            "season_games": 12,
+            "season_share": 0.09
+          },
+          {
+            "champion_id": "Karma",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_334729:pick:10",
+              "oe:LCS:LOLTMNT01_382446:pick:1",
+              "oe:LCS:LOLTMNT01_456445:pick:4",
+              "oe:LCS:LOLTMNT01_470828:pick:3",
+              "oe:LCS:LOLTMNT02_412354:pick:1",
+              "oe:LCS:LOLTMNT03_350449:pick:7",
+              "oe:LCS:LOLTMNT03_350640:pick:5",
+              "oe:LCS:LOLTMNT03_351308:pick:3",
+              "oe:MSI:LOLTMNT01_422565:pick:6",
+              "oe:WLDs:LOLTMNT02_486183:pick:6"
+            ],
+            "recent_games": 3,
+            "recent_share": 0.075,
+            "season_games": 10,
+            "season_share": 0.075
+          },
+          {
+            "champion_id": "Bard",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_365272:pick:2",
+              "oe:EWC:LOLTMNT01_425900:pick:6",
+              "oe:LCS:LOLTMNT01_324980:pick:10",
+              "oe:LCS:LOLTMNT01_372786:pick:3",
+              "oe:LCS:LOLTMNT01_399392:pick:3",
+              "oe:LCS:LOLTMNT02_411619:pick:2",
+              "oe:LCS:LOLTMNT03_350455:pick:6",
+              "oe:MSI:LOLTMNT01_422614:pick:3"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 8,
+            "season_share": 0.06
+          },
+          {
+            "champion_id": "Neeko",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_384018:pick:2",
+              "oe:FST:LOLTMNT01_351241:pick:7",
+              "oe:LCS:LOLTMNT01_356643:pick:2",
+              "oe:LCS:LOLTMNT02_403334:pick:4",
+              "oe:LCS:LOLTMNT03_344400:pick:2",
+              "oe:LCS:LOLTMNT03_351519:pick:1",
+              "oe:MSI:LOLTMNT01_417195:pick:6"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 7,
+            "season_share": 0.053
+          },
+          {
+            "champion_id": "Nami",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_384602:pick:4",
+              "oe:FST:LOLTMNT01_350983:pick:2",
+              "oe:FST:LOLTMNT01_351251:pick:6",
+              "oe:LCS:LOLTMNT01_382460:pick:5",
+              "oe:LCS:LOLTMNT02_411614:pick:2",
+              "oe:LCS:LOLTMNT03_344416:pick:6"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 6,
+            "season_share": 0.045
+          },
+          {
+            "champion_id": "Renata Glasc",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_333860:pick:10",
+              "oe:LCS:LOLTMNT01_462480:pick:5",
+              "oe:LCS:LOLTMNT01_468459:pick:2",
+              "oe:LCS:LOLTMNT01_470714:pick:7",
+              "oe:MSI:LOLTMNT01_424125:pick:2",
+              "oe:WLDs:LOLTMNT02_482793:pick:3"
+            ],
+            "recent_games": 4,
+            "recent_share": 0.1,
+            "season_games": 6,
+            "season_share": 0.045
+          },
+          {
+            "champion_id": "Seraphine",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_349555:pick:6",
+              "oe:LCS:LOLTMNT01_356663:pick:1",
+              "oe:LCS:LOLTMNT01_466805:pick:5",
+              "oe:LCS:LOLTMNT02_381247:pick:2",
+              "oe:LCS:LOLTMNT03_351304:pick:3",
+              "oe:LCS:LOLTMNT03_351699:pick:3"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 6,
+            "season_share": 0.045
+          },
+          {
+            "champion_id": "Camille",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_440962:pick:5",
+              "oe:LCS:LOLTMNT02_440260:pick:2",
+              "oe:MSI:LOLTMNT01_417198:pick:1",
+              "oe:MSI:LOLTMNT01_419702:pick:8"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 4,
+            "season_share": 0.03
+          },
+          {
+            "champion_id": "Poppy",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_349576:pick:10",
+              "oe:LCS:LOLTMNT03_344407:pick:8",
+              "oe:LCS:LOLTMNT03_350644:pick:10",
+              "oe:MSI:LOLTMNT01_423038:pick:6"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 4,
+            "season_share": 0.03
+          },
+          {
+            "champion_id": "Rakan",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_350498:pick:5",
+              "oe:LCS:LOLTMNT01_363170:pick:3",
+              "oe:LCS:LOLTMNT01_469879:pick:3",
+              "oe:LCS:LOLTMNT02_404341:pick:3"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 4,
+            "season_share": 0.03
+          },
+          {
+            "champion_id": "Rell",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_399397:pick:5",
+              "oe:LCS:LOLTMNT01_462487:pick:9",
+              "oe:LCS:LOLTMNT02_350086:pick:8",
+              "oe:MSI:LOLTMNT01_419708:pick:9"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 4,
+            "season_share": 0.03
+          },
+          {
+            "champion_id": "Shen",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_433972:pick:6",
+              "oe:LCS:LOLTMNT02_439318:pick:9",
+              "oe:LCS:LOLTMNT02_450870:pick:7",
+              "oe:MSI:LOLTMNT01_417741:pick:6"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.05,
+            "season_games": 4,
+            "season_share": 0.03
+          },
+          {
+            "champion_id": "Braum",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_350472:pick:6",
+              "oe:LCS:LOLTMNT02_349089:pick:10",
+              "oe:LCS:LOLTMNT02_411607:pick:10"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 3,
+            "season_share": 0.023
+          },
+          {
+            "champion_id": "Leona",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_352208:pick:10",
+              "oe:LCS:LOLTMNT03_351286:pick:7",
+              "oe:MSI:LOLTMNT01_422589:pick:4"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 3,
+            "season_share": 0.023
+          },
+          {
+            "champion_id": "Pyke",
+            "evidence_ids": [
+              "oe:MSI:LOLTMNT01_418698:pick:10",
+              "oe:MSI:LOLTMNT01_423127:pick:5"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Lux",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_362925:pick:10"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Soraka",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_385252:pick:9"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          }
+        ],
+        "player_id": "oe:player:40704dfd2d966862568d29770de57bd",
+        "player_name": "Isles",
+        "recent_games": 40,
+        "role": "SUPPORT",
+        "season_games": 133,
+        "status": "OBSERVED",
+        "year": 2026
+      },
+      {
+        "champions": [
+          {
+            "champion_id": "Gnar",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_427071:pick:4",
+              "oe:EWC:LOLTMNT02_383080:pick:10",
+              "oe:FST:LOLTMNT01_350457:pick:10",
+              "oe:FST:LOLTMNT01_351241:pick:10",
+              "oe:LCS:LOLTMNT01_372786:pick:10",
+              "oe:LCS:LOLTMNT01_440970:pick:6",
+              "oe:LCS:LOLTMNT01_451553:pick:7",
+              "oe:LCS:LOLTMNT01_462487:pick:1",
+              "oe:LCS:LOLTMNT01_469879:pick:6",
+              "oe:LCS:LOLTMNT02_382257:pick:10",
+              "oe:LCS:LOLTMNT02_411614:pick:10",
+              "oe:LCS:LOLTMNT02_440260:pick:6",
+              "oe:LCS:LOLTMNT03_350449:pick:6",
+              "oe:LCS:LOLTMNT03_350640:pick:9",
+              "oe:MSI:LOLTMNT01_417198:pick:9",
+              "oe:MSI:LOLTMNT01_419702:pick:9",
+              "oe:MSI:LOLTMNT01_422589:pick:8",
+              "oe:WLDs:LOLTMNT02_485488:pick:10"
+            ],
+            "recent_games": 5,
+            "recent_share": 0.125,
+            "season_games": 18,
+            "season_share": 0.138
+          },
+          {
+            "champion_id": "Rumble",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_365272:pick:6",
+              "oe:EWC:LOLTMNT02_384018:pick:7",
+              "oe:EWC:LOLTMNT02_384602:pick:8",
+              "oe:EWC:LOLTMNT02_386212:pick:6",
+              "oe:FST:LOLTMNT01_349576:pick:2",
+              "oe:LCS:LOLTMNT01_324980:pick:2",
+              "oe:LCS:LOLTMNT01_333860:pick:2",
+              "oe:LCS:LOLTMNT01_399392:pick:7",
+              "oe:LCS:LOLTMNT01_405809:pick:8",
+              "oe:LCS:LOLTMNT01_452021:pick:7",
+              "oe:LCS:LOLTMNT01_470699:pick:1",
+              "oe:LCS:LOLTMNT02_350086:pick:1",
+              "oe:LCS:LOLTMNT02_381247:pick:6",
+              "oe:LCS:LOLTMNT02_390623:pick:1",
+              "oe:LCS:LOLTMNT02_411603:pick:1",
+              "oe:LCS:LOLTMNT03_351697:pick:1",
+              "oe:WLDs:LOLTMNT02_485482:pick:9",
+              "oe:WLDs:LOLTMNT02_486183:pick:7"
+            ],
+            "recent_games": 4,
+            "recent_share": 0.1,
+            "season_games": 18,
+            "season_share": 0.138
+          },
+          {
+            "champion_id": "K'Sante",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_351028:pick:10",
+              "oe:FST:LOLTMNT01_351251:pick:2",
+              "oe:LCS:LOLTMNT01_362920:pick:6",
+              "oe:LCS:LOLTMNT01_371869:pick:9",
+              "oe:LCS:LOLTMNT01_405808:pick:10",
+              "oe:LCS:LOLTMNT01_433972:pick:7",
+              "oe:LCS:LOLTMNT01_468459:pick:3",
+              "oe:LCS:LOLTMNT01_469853:pick:8",
+              "oe:LCS:LOLTMNT02_349098:pick:9",
+              "oe:LCS:LOLTMNT03_344407:pick:9",
+              "oe:LCS:LOLTMNT03_350273:pick:10",
+              "oe:MSI:LOLTMNT01_417741:pick:3",
+              "oe:WLDs:LOLTMNT02_482335:pick:10",
+              "oe:WLDs:LOLTMNT02_482805:pick:6",
+              "oe:WLDs:LOLTMNT02_486192:pick:10",
+              "oe:WLDs:LOLTMNT02_486555:pick:9"
+            ],
+            "recent_games": 7,
+            "recent_share": 0.175,
+            "season_games": 16,
+            "season_share": 0.123
+          },
+          {
+            "champion_id": "Renekton",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_385252:pick:8",
+              "oe:LCS:LOLTMNT01_324984:pick:9",
+              "oe:LCS:LOLTMNT01_334729:pick:6",
+              "oe:LCS:LOLTMNT01_399373:pick:10",
+              "oe:LCS:LOLTMNT01_450816:pick:7",
+              "oe:LCS:LOLTMNT01_457447:pick:9",
+              "oe:LCS:LOLTMNT01_463432:pick:10",
+              "oe:LCS:LOLTMNT03_344400:pick:10",
+              "oe:MSI:LOLTMNT01_419700:pick:8",
+              "oe:MSI:LOLTMNT01_422565:pick:10"
+            ],
+            "recent_games": 3,
+            "recent_share": 0.075,
+            "season_games": 10,
+            "season_share": 0.077
+          },
+          {
+            "champion_id": "Jayce",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_366054:pick:10",
+              "oe:EWC:LOLTMNT01_428055:pick:4",
+              "oe:LCS:LOLTMNT01_362925:pick:6",
+              "oe:LCS:LOLTMNT01_382446:pick:9",
+              "oe:LCS:LOLTMNT01_470830:pick:9",
+              "oe:MSI:LOLTMNT01_417195:pick:2",
+              "oe:MSI:LOLTMNT01_419708:pick:5",
+              "oe:MSI:LOLTMNT01_423127:pick:1"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 8,
+            "season_share": 0.062
+          },
+          {
+            "champion_id": "Sion",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT02_384635:pick:7",
+              "oe:LCS:LOLTMNT01_356663:pick:8",
+              "oe:LCS:LOLTMNT01_470714:pick:10",
+              "oe:LCS:LOLTMNT02_349089:pick:7",
+              "oe:LCS:LOLTMNT02_390611:pick:8",
+              "oe:LCS:LOLTMNT02_412354:pick:8",
+              "oe:LCS:LOLTMNT03_350644:pick:2"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 7,
+            "season_share": 0.054
+          },
+          {
+            "champion_id": "Gwen",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_462473:pick:10",
+              "oe:LCS:LOLTMNT01_466805:pick:8",
+              "oe:LCS:LOLTMNT01_470683:pick:7",
+              "oe:LCS:LOLTMNT01_470828:pick:10",
+              "oe:LCS:LOLTMNT03_350455:pick:10",
+              "oe:MSI:LOLTMNT01_424060:pick:10"
+            ],
+            "recent_games": 4,
+            "recent_share": 0.1,
+            "season_games": 6,
+            "season_share": 0.046
+          },
+          {
+            "champion_id": "Olaf",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_433992:pick:8",
+              "oe:LCS:LOLTMNT01_468449:pick:9",
+              "oe:LCS:LOLTMNT02_450870:pick:6",
+              "oe:MSI:LOLTMNT01_422614:pick:10",
+              "oe:WLDs:LOLTMNT02_482793:pick:6",
+              "oe:WLDs:LOLTMNT02_486186:pick:8"
+            ],
+            "recent_games": 5,
+            "recent_share": 0.125,
+            "season_games": 6,
+            "season_share": 0.046
+          },
+          {
+            "champion_id": "Ambessa",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT02_450878:pick:10",
+              "oe:LCS:LOLTMNT03_351519:pick:5",
+              "oe:MSI:LOLTMNT01_418698:pick:6",
+              "oe:MSI:LOLTMNT01_423038:pick:10"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 4,
+            "season_share": 0.031
+          },
+          {
+            "champion_id": "Anivia",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_425900:pick:7",
+              "oe:LCS:LOLTMNT01_382460:pick:8",
+              "oe:LCS:LOLTMNT01_466801:pick:3",
+              "oe:LCS:LOLTMNT02_403334:pick:1"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 4,
+            "season_share": 0.031
+          },
+          {
+            "champion_id": "Vayne",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_349555:pick:10",
+              "oe:LCS:LOLTMNT01_363170:pick:6",
+              "oe:LCS:LOLTMNT01_451798:pick:10",
+              "oe:LCS:LOLTMNT03_351308:pick:10"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 4,
+            "season_share": 0.031
+          },
+          {
+            "champion_id": "Shen",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_405807:pick:10",
+              "oe:MSI:LOLTMNT01_424125:pick:3",
+              "oe:WLDs:LOLTMNT02_483730:pick:10"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 3,
+            "season_share": 0.023
+          },
+          {
+            "champion_id": "Varus",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_462480:pick:9",
+              "oe:LCS:LOLTMNT03_351286:pick:2",
+              "oe:MSI:LOLTMNT01_417200:pick:1"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 3,
+            "season_share": 0.023
+          },
+          {
+            "champion_id": "Aatrox",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_351262:pick:2",
+              "oe:LCS:LOLTMNT03_350458:pick:9"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Aurora",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_350979:pick:2",
+              "oe:FST:LOLTMNT01_352208:pick:7"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Galio",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT03_344416:pick:7",
+              "oe:WLDs:LOLTMNT02_483571:pick:4"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Garen",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_350472:pick:10",
+              "oe:LCS:LOLTMNT01_470734:pick:7"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Irelia",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_350983:pick:10",
+              "oe:LCS:LOLTMNT03_351304:pick:10"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Malphite",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_456445:pick:9",
+              "oe:LCS:LOLTMNT02_411607:pick:7"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Ornn",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_356643:pick:10",
+              "oe:LCS:LOLTMNT02_450875:pick:8"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Zaahen",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT03_351699:pick:10",
+              "oe:MSI:LOLTMNT01_418707:pick:9"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 2,
+            "season_share": 0.015
+          },
+          {
+            "champion_id": "Gragas",
+            "evidence_ids": [
+              "oe:MSI:LOLTMNT01_423068:pick:10"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Jax",
+            "evidence_ids": [
+              "oe:FST:LOLTMNT01_350498:pick:8"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Kennen",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_354955:pick:7"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Poppy",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT02_411619:pick:7"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Sejuani",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_399397:pick:9"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Swain",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT01_440962:pick:9"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
+            "season_games": 1,
+            "season_share": 0.008
+          },
+          {
+            "champion_id": "Volibear",
+            "evidence_ids": [
+              "oe:LCS:LOLTMNT02_439318:pick:8"
+            ],
+            "recent_games": 0,
+            "recent_share": 0.0,
+            "season_games": 1,
+            "season_share": 0.008
+          }
+        ],
+        "player_id": "oe:player:5385f74da3e5deb5b66d9a1ee56cf97",
+        "player_name": "Dhokla",
+        "recent_games": 40,
+        "role": "TOP",
+        "season_games": 130,
+        "status": "OBSERVED",
+        "year": 2026
+      }
+    ],
     "side_record": {
       "BLUE": {
         "game_count": 19,

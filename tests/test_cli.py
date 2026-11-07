@@ -406,6 +406,10 @@ def test_scout_opponent_draft_cli_writes_head_to_head_pack(tmp_path) -> None:
     assert payload["artifact_type"] == "draft-scout-pack"
     assert payload["target"]["team_name"] == "Red Team"
     assert len(payload["head_to_head"]) == 1
+    coverage = payload["target"]["import_coverage"]
+    assert coverage["observed_games"] == coverage["accepted_games"] == 1
+    assert coverage["excluded_games"] == 0
+    assert "excluded_game_details" not in coverage
 
 
 def test_benchmark_oe_cli_emits_bounded_pipeline_measurements(tmp_path) -> None:

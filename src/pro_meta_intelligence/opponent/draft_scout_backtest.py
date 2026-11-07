@@ -235,7 +235,17 @@ def _side_team_id(match: MatchRecord, team_name: str) -> str | None:
 def _series(games: list[MatchRecord]) -> list[list[MatchRecord]]:
     series: list[list[MatchRecord]] = []
     for game in sorted(games, key=lambda match: match.observed_at):
-        if series and game.observed_at - series[-1][-1].observed_at <= SERIES_GAP:
+        previous = series[-1][-1] if series else None
+        same_pair = previous is not None and {game.blue_team_id, game.red_team_id} == {
+            previous.blue_team_id,
+            previous.red_team_id,
+        }
+        if (
+            previous is not None
+            and same_pair
+            and game.league == previous.league
+            and game.observed_at - previous.observed_at <= SERIES_GAP
+        ):
             series[-1].append(game)
         else:
             series.append([game])
