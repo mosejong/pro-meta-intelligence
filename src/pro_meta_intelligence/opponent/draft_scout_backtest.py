@@ -27,7 +27,9 @@ SERIES_GAP = timedelta(hours=12)
 METRICS = (
     "expected_phase_one_bans",
     "season_ban_habit",
+    "expected_picks",
     "player_pool_picks",
+    "role_meta_picks",
     "international_meta_picks",
     "deny_hits_real_pick",
 )
@@ -138,6 +140,16 @@ def _score_series(
         pool["role"]: [item["champion_id"] for item in pool["champions"]]
         for pool in pack["target"]["player_pools"]
     }
+    expected_picks = {
+        group["role"]: [item["champion_id"] for item in group["champions"]]
+        for group in levers["expected_picks"]
+    }
+    role_meta = {
+        role: [item["champion_id"] for item in items]
+        for group in pack["league_meta"]
+        if group["group"] == INTERNATIONAL
+        for role, items in group["role_picks"].items()
+    }
     deny = [item["champion_id"] for item in levers["deny_comfort"]]
     meta = [
         item["champion_id"]
@@ -166,6 +178,17 @@ def _score_series(
         scores = {
             "expected_phase_one_bans": (_hits(bans, open_(expected)[:size]), len(bans)),
             "season_ban_habit": (_hits(bans, open_(habit)[:size]), len(bans)),
+            "expected_picks": (
+                sum(
+                    champion in open_(expected_picks.get(role, []))[:size]
+                    for champion, role in picks
+                ),
+                len(picks),
+            ),
+            "role_meta_picks": (
+                sum(champion in open_(role_meta.get(role, []))[:size] for champion, role in picks),
+                len(picks),
+            ),
             "player_pool_picks": (
                 sum(champion in open_(pools.get(role, [])) for champion, role in picks),
                 len(picks),

@@ -273,6 +273,8 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   assert.match(text, /피어리스 5판 소진 압박/);
   assert.match(text, /KC 예상 1페이즈 밴 · 월즈 메타/);
   assert.match(text, /KC 시즌 밴 습관 · 참고/);
+  assert.match(text, /KC 예상 픽 · 선수 성향 \+ 월즈 포지션 메타/);
+  assert.match(text, /예상 픽 \d+% \(선수 기록만 \d+% · 포지션 메타만 \d+%\)/);
   assert.match(text, /사전 검증 · WLDs \d+경기/);
   assert.doesNotMatch(text, /월즈 스위스 경기 미포함/);
   assert.match(text, /KC 최근 40경기 \(LEC \d+ · WLDs \d+\)/);

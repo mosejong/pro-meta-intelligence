@@ -48,6 +48,11 @@ test("historical draft evaluation measures the production preview and rejects le
       const metaLocked = buildDraftScoutBrief(pack, [fresh.expected_bans[0].champion_id]);
       assert.ok(!metaLocked.expected_bans.some((item) => item.champion_id === fresh.expected_bans[0].champion_id));
       assert.equal(metaLocked.expected_bans.length, pack.config.top_champions);
+      assert.ok(fresh.expected_picks.every((group) => group.champions.length === pack.config.top_champions));
+      const firstPick = fresh.expected_picks[0].champions[0].champion_id;
+      const refilled = buildDraftScoutBrief(pack, [firstPick]).expected_picks[0].champions;
+      assert.ok(!refilled.some((item) => item.champion_id === firstPick));
+      assert.equal(refilled.length, pack.config.top_champions);
       assert.equal(DRAFT_SCOUT_VALIDATION.league, "WLDs");
       assert.ok(DRAFT_SCOUT_VALIDATION.game_count > 0);
       assert.deepEqual(Object.keys(DRAFT_SCOUT_VALIDATION.teams).sort(), Object.keys(DRAFT_SCOUT_PACKS).sort());
@@ -55,6 +60,8 @@ test("historical draft evaluation measures the production preview and rejects le
       // The panel leads with the international meta because it out-scored season ban habits.
       assert.ok(overall.expected_phase_one_bans.rate > overall.season_ban_habit.rate);
       assert.ok(overall.player_pool_picks.rate > overall.international_meta_picks.rate);
+      // Expected picks blend the player's pool with the role meta and refill after locks.
+      assert.ok(overall.expected_picks.rate > overall.player_pool_picks.rate);
     });
     await t.test("Worlds preparation requires exact main-team identity and separates official patch from evidence", () => {
       const before = JSON.stringify(report);
