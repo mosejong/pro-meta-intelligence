@@ -3,9 +3,28 @@ from datetime import timedelta
 
 from pro_meta_intelligence.ingestion.oracles_elixir import OracleElixirCSVAdapter
 from pro_meta_intelligence.opponent import DraftScoutBacktestConfig, backtest_draft_scout
+from pro_meta_intelligence.opponent.draft_scout_backtest import _series
 from pro_meta_intelligence.radar.models import LeagueRegionMap
 from pro_meta_intelligence.sources import SourceRegistry
 from tests.test_opponent import FIXTURE, RETRIEVED_AT
+
+
+def test_nearby_matches_against_different_opponents_are_not_one_series():
+    imported = OracleElixirCSVAdapter(SourceRegistry.load_default()).import_file(
+        FIXTURE, retrieved_at=RETRIEVED_AT, source_timezone="+09:00"
+    )
+    first = imported.matches[0]
+    later = replace(
+        first,
+        match_id="different-opponent",
+        red_team_id="different",
+        observed_at=first.observed_at + timedelta(minutes=10),
+    )
+    assert len(_series([first, later])) == 2
+    swapped = replace(later, blue_team_id=first.red_team_id, red_team_id=first.blue_team_id)
+    assert len(_series([first, swapped])) == 1
+    another_league = replace(swapped, league="OTHER")
+    assert len(_series([first, another_league])) == 2
 
 
 def replayed(*, delay_hours: float = 24.0):

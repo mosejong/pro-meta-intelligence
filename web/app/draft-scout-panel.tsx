@@ -1,4 +1,6 @@
 import { useState } from "react";
+import type { DraftSelection, DraftSide } from "./draft-agent";
+import { DraftExchangePanel } from "./draft-exchange-panel";
 import { DRAFT_SCOUT_PACKS, DRAFT_SCOUT_VALIDATION, buildDraftScoutBrief, draftScoutFor, formatRate, headToHeadSeries, headToHeadStaples } from "./draft-scout";
 import { formatKst, worldsQuarterfinalFor } from "./worlds-preparation";
 import "./draft-scout.css";
@@ -6,22 +8,32 @@ import "./draft-scout.css";
 const roleLabels: Record<string, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
 const leagueLabels: Record<string, string> = { INTERNATIONAL: "국제대회" };
 
-export function DraftScoutPanel({ nameOf, previousPicks = [] }: { nameOf: (championId: string) => string; previousPicks?: string[] }) {
+export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], blueTeamId, redTeamId, firstPickSide = "BLUE" }: {
+  nameOf: (championId: string) => string; previousPicks?: string[]; selections?: DraftSelection[];
+  blueTeamId?: string; redTeamId?: string;
+  firstPickSide?: DraftSide;
+}) {
   const quarterfinal = worldsQuarterfinalFor("T1");
   const [chosen, setChosen] = useState<string | null>(null);
   const code = chosen ?? quarterfinal?.opponent ?? null;
   const pack = draftScoutFor(code);
   if (!quarterfinal || !code || !pack) return null;
   const isNext = code === quarterfinal.opponent;
-  const brief = buildDraftScoutBrief(pack, previousPicks);
+  const connected = Boolean(blueTeamId && redTeamId && (
+    (pack.own.team_ids.includes(blueTeamId) && pack.target.team_ids.includes(redTeamId)) ||
+    (pack.own.team_ids.includes(redTeamId) && pack.target.team_ids.includes(blueTeamId))));
+  const brief = buildDraftScoutBrief(pack, connected ? previousPicks : [], connected ? selections : []);
   const { target, own } = pack;
-  const lock = (locked: boolean) => locked ? <em>피어리스 잠금</em> : null;
+  const lock = (locked: boolean) => locked ? <em>사용 불가 · 확정 밴픽/이전 픽</em> : null;
   const check = DRAFT_SCOUT_VALIDATION;
   const teamCheck = check.teams[code];
   const leagues = (counts: Record<string, number>) => Object.entries(counts).map(([league, count]) => `${league} ${count}`).join(" · ");
   return <details className="draft-scout" id="draft-scout" open>
     <summary><strong>T1 vs {code} · 밴픽 스카우팅</strong><span>{isNext ? `8강 ${formatKst(quarterfinal.start_at)}` : "4강 이후 후보 미리보기"} · 밴픽 단계에서 주도권을 가져오기 위한 근거</span></summary>
     <div className="draft-scout-content">
+      <p role="status">{connected ? `현재 연습 대진 연결 · 확정 밴픽 ${selections.length}개와 이전 세트 픽을 후보에서 제외합니다.` :
+        "독립 스카우팅 보기 · 현재 연습 대진과 달라 밴픽 잠금을 적용하지 않습니다."}</p>
+      <p>후보 갱신은 사용 불가 챔피언 제외입니다. 상대 조합에 대한 카운터나 남은 역할 확정은 추론하지 않습니다.</p>
       <label className="draft-scout-picker">상대 선택
         <select value={code} onChange={(event) => setChosen(event.target.value)}>
           {Object.keys(DRAFT_SCOUT_PACKS).map((option) => <option key={option} value={option}>
@@ -32,6 +44,26 @@ export function DraftScoutPanel({ nameOf, previousPicks = [] }: { nameOf: (champ
       <p className="draft-scout-window">{pack.cutoff.slice(0, 10)} 기준 시즌 공개 경기 · {code} 최근 {target.game_count}경기 ({leagues(target.leagues)}) · T1 최근 {own.game_count}경기 ({leagues(own.leagues)}) · 패치 {target.patches[0]}–{target.patches.at(-1)}
         {pack.quality_flags.includes("CURRENT_EVENT_GAMES_MISSING") && <b> · 월즈 스위스 경기 미포함</b>}</p>
 
+      <section aria-labelledby="draft-scout-season">
+        <h3 id="draft-scout-season">선수 시즌 선호 · 최근 변화</h3>
+        {target.import_coverage && <p>원본 파일 수입 범위 · {target.import_coverage.observed_games}경기 관측 / {target.import_coverage.accepted_games}경기 채택 / {target.import_coverage.excluded_games}경기 제외
+          {target.import_coverage.excluded_games > 0 && ` · 제외율 ${formatRate(target.import_coverage.excluded_rate)}`}
+          · 이 파일 밖의 누락 경기까지 보장하지 않습니다.</p>}
+        <p>올해 전체 선수 기록(이적 전 포함)과 현재 팀 최근 경기 표본을 비교합니다. 변화는 선택률 차이이며 실력 변화나 선택 기회를 보정한 선호도가 아닙니다.</p>
+        {brief.season.length === 0 && <p>이 자료에는 시즌 성향이 없습니다. 데이터 재생성이 필요합니다.</p>}
+        {brief.season.map((player) => <details key={player.role}>
+          <summary>{roleLabels[player.role] ?? player.role} · {player.player_name ?? "선수 미상"} · {player.year}년 {player.season_games}경기 / 최근 {player.recent_games}경기</summary>
+          {player.status !== "OBSERVED" && <p>선수 ID 또는 시즌 기록이 부족합니다.</p>}
+          <ul>{player.champions.map((champion) => <li key={champion.champion_id}>
+            {nameOf(champion.champion_id)} · 시즌 {champion.season_games}회 · 최근 {champion.recent_games}회
+            {champion.change !== null && ` · 선택률 차이 ${champion.change >= 0 ? "+" : ""}${(champion.change * 100).toFixed(1)}%p`}
+            {lock(champion.locked)} · 근거 {champion.evidence_ids.length}건
+          </li>)}</ul>
+        </details>)}
+      </section>
+      {connected ? <DraftExchangePanel key={pack.target.team_ids.join(":")} pack={pack} selections={selections} previousPicks={previousPicks}
+        ownSide={pack.own.team_ids.includes(blueTeamId ?? "") ? "BLUE" : "RED"} firstPickSide={firstPickSide} nameOf={nameOf} /> :
+        <p>밴픽 교환 시나리오는 현재 연습 대진과 스카우팅 상대가 일치할 때 표시합니다.</p>}
       <section aria-labelledby="draft-scout-h2h">
         <h3 id="draft-scout-h2h">상대전적과 서로 먼저 쓴 밴</h3>
         {pack.head_to_head.length === 0 && <p>시즌 공개 경기에서 맞대결 기록이 없습니다. 아래 시즌 성향으로 준비하세요.</p>}

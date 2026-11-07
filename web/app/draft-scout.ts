@@ -1,4 +1,4 @@
-import { isChampionLocked } from "./draft-agent";
+import { isChampionLocked, type DraftSelection } from "./draft-agent";
 import blgPack from "./scouting/t1-vs-blg.json";
 import dkPack from "./scouting/t1-vs-dk.json";
 import genPack from "./scouting/t1-vs-gen.json";
@@ -12,6 +12,12 @@ type Counted = { champion_id: string; game_count: number; rate: number | null };
 type Record_ = { game_count: number; win_count: number; win_rate: number | null };
 type ScoutDraft = { bans: string[]; picks: { sequence: number; champion_id: string; role: string; player_name: string | null }[] };
 type ScoutTeam = {
+  import_coverage?: { observed_games: number; accepted_games: number; excluded_games: number;
+    excluded_rate: number | null; exclusion_reasons: Record<string, number> };
+  season_tendencies?: { role: string; player_id: string | null; player_name: string | null;
+    year: number; season_games: number; recent_games: number; status: string;
+    champions: { champion_id: string; season_games: number; recent_games: number;
+      season_share: number | null; recent_share: number | null; evidence_ids: string[] }[] }[];
   team_name: string; team_ids: string[]; game_count: number; record: Record_; home_league: string | null;
   leagues: Record<string, number>; patches: string[]; window: { first_observed_at: string; last_observed_at: string };
   side_record: { BLUE: Record_; RED: Record_ }; first_selection: Record_ & { rate: number | null };
@@ -87,14 +93,21 @@ export function headToHeadStaples(pack: DraftScoutPack, team: "own" | "target") 
     .map(([champion_id, count]) => ({ champion_id, count }));
 }
 
-export function buildDraftScoutBrief(pack: DraftScoutPack, previousPicks: string[] = []) {
-  const locked = (championId: string) => isChampionLocked([], championId, previousPicks);
+export function buildDraftScoutBrief(pack: DraftScoutPack, previousPicks: string[] = [], selections: DraftSelection[] = []) {
+  const locked = (championId: string) => isChampionLocked(selections, championId, previousPicks);
   const presence = (group: string) => pack.league_meta.find((item) => item.group === group)?.presence ?? [];
   const homeLeague = pack.target.home_league;
   const ownLeague = pack.own.home_league;
   const ownTop = new Set(presence(ownLeague ?? "").map((item) => item.champion_id));
   const targetTop = new Set(presence(homeLeague ?? "").map((item) => item.champion_id));
   return {
+    season: (pack.target.season_tendencies ?? []).map((player) => ({ ...player,
+      champions: player.champions.map((champion) => ({ ...champion,
+        locked: locked(champion.champion_id),
+        change: champion.recent_share === null || champion.season_share === null ? null :
+          champion.recent_share - champion.season_share,
+      })),
+    })),
     deny: pack.levers.deny_comfort.map((item) => ({ ...item, locked: locked(item.champion_id) })),
     contested: pack.levers.contested_priority.map((item) => ({ ...item, locked: locked(item.champion_id) })),
     protect: pack.levers.protect_own.map((item) => ({ ...item, locked: locked(item.champion_id) })),

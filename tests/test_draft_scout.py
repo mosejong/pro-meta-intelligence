@@ -1,10 +1,13 @@
 from dataclasses import replace
 from datetime import timedelta
+from types import SimpleNamespace
 
 import pytest
 
 from pro_meta_intelligence.ingestion.oracles_elixir import OracleElixirCSVAdapter
+from pro_meta_intelligence.models import DraftAction
 from pro_meta_intelligence.opponent import DraftScoutBuilder, DraftScoutConfig
+from pro_meta_intelligence.opponent.draft_scout import _season_tendencies
 from pro_meta_intelligence.radar.models import LeagueRegionMap
 from pro_meta_intelligence.sources import SourceRegistry
 from tests.test_opponent import FIXTURE, RETRIEVED_AT
@@ -62,6 +65,38 @@ def test_draft_scout_separates_phases_rotations_and_last_pick() -> None:
         "SUPPORT",
     }
     assert all(pool["unique_champions"] == 1 for pool in target["player_pools"])
+
+
+def test_season_preferences_have_identity_denominators_and_evidence():
+    players = build()["target"]["season_tendencies"]
+    assert len(players) == 5
+    for player in players:
+        assert player["player_id"]
+        assert player["season_games"] == player["recent_games"] == 1
+        assert player["status"] == "OBSERVED"
+        champion = player["champions"][0]
+        assert champion["season_share"] == champion["recent_share"] == 1
+        assert champion["evidence_ids"]
+
+
+def test_season_identity_spans_teams_but_never_borrows_same_name():
+    imported = OracleElixirCSVAdapter(SourceRegistry.load_default()).import_file(
+        FIXTURE, retrieved_at=RETRIEVED_AT, source_timezone="+09:00"
+    )
+    match = imported.matches[0]
+    current = next(e for e in imported.draft_events if e.action is DraftAction.PICK)
+    older_match = replace(match, match_id="old-team", blue_team_id="different-team")
+    older = replace(current, event_id="transfer", match_id="old-team", champion_id="SeasonCard")
+    imposter = replace(older, event_id="imposter", player_id="another-id", champion_id="WrongCard")
+    game = SimpleNamespace(match=match, own_events=(current,))
+    config = DraftScoutConfig(cutoff=RETRIEVED_AT, target_team_name="Red Team")
+    result = _season_tendencies((game,), (match, older_match), (current, older, imposter), config)
+    assert {c["champion_id"] for c in result[0]["champions"]} == {current.champion_id, "SeasonCard"}
+    assert result[0]["season_games"] == 2
+    missing = SimpleNamespace(match=match, own_events=(replace(current, player_id=None),))
+    result = _season_tendencies((missing,), (match,), (current,), config)
+    assert result[0]["champions"] == []
+    assert result[0]["status"] == "MISSING_PLAYER_ID_OR_HISTORY"
 
 
 def test_draft_scout_records_head_to_head_and_league_groups() -> None:

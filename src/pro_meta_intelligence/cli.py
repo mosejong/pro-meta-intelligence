@@ -37,6 +37,7 @@ from pro_meta_intelligence.ingestion.oe_download import (
     OracleElixirPublishedDownloadAdapter,
 )
 from pro_meta_intelligence.ingestion.oracles_elixir import (
+    MAX_ISSUE_DETAILS,
     OracleElixirCSVAdapter,
     OracleElixirImport,
 )
@@ -71,6 +72,7 @@ from pro_meta_intelligence.quality import (
     audit_oe_coverage,
     audit_oe_history,
 )
+from pro_meta_intelligence.quality.team_coverage import audit_team_coverage
 from pro_meta_intelligence.radar import LeagueRegionMap, MetaRadar, MetaRadarConfig
 from pro_meta_intelligence.sources import (
     SnapshotArchive,
@@ -775,7 +777,7 @@ def _audit_oe(args: argparse.Namespace) -> int:
 
 def _scout_opponent_draft(args: argparse.Namespace) -> int:
     retrieved_at = parse_datetime(args.retrieved_at) if args.retrieved_at else datetime.now(UTC)
-    imported = _load_oe_import(args, retrieved_at=retrieved_at)
+    imported = _load_oe_import(args, retrieved_at=retrieved_at, retain_all_issues=True)
     report = DraftScoutBuilder().build(
         imported.matches,
         imported.draft_events,
@@ -787,7 +789,16 @@ def _scout_opponent_draft(args: argparse.Namespace) -> int:
             maximum_games_per_team=args.maximum_games,
         ),
     )
-    _emit(report.to_json(), args.output)
+    payload = report.to_dict()
+    coverage = audit_team_coverage(args.input, imported, (args.target_team, args.own_team))
+    # Publish aggregate coverage only; rejected per-game provider details remain local.
+    for key, name in (("target", args.target_team), ("own", args.own_team)):
+        payload[key]["import_coverage"] = {
+            field: value
+            for field, value in coverage["teams"][name].items()
+            if field != "excluded_game_details"
+        }
+    _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
     return 0
 
 
@@ -1606,6 +1617,7 @@ def _load_oe_import(
     args: argparse.Namespace,
     *,
     retrieved_at: datetime | None = None,
+    retain_all_issues: bool = False,
 ) -> OracleElixirImport:
     retrieved_at = retrieved_at or (
         parse_datetime(args.retrieved_at) if args.retrieved_at else datetime.now(UTC)
@@ -1615,6 +1627,7 @@ def _load_oe_import(
         retrieved_at=retrieved_at,
         source_timezone=args.source_timezone,
         source_uri=args.source_uri,
+        issue_detail_limit=None if retain_all_issues else MAX_ISSUE_DETAILS,
     )
 
 

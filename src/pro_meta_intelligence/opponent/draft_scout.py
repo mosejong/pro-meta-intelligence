@@ -89,6 +89,9 @@ class DraftScoutBuilder:
         head_to_head = _head_to_head(own_ids, target_ids, available_matches, events_by_match)
         target_profile = target.profile(regions, config)
         own_profile = own.profile(regions, config)
+        target_profile["season_tendencies"] = _season_tendencies(
+            target.games, available_matches, available_events, config
+        )
         international = tuple(
             league for league, region in regions.mappings if region == INTERNATIONAL
         )
@@ -276,6 +279,58 @@ class _TeamWindow:
                 _player_pool(role, games, players.get(role, Counter()), config) for role in ROLES
             ],
         }
+
+
+def _season_tendencies(games, matches, events, config):
+    """Current players by stable ID; same-year history can span previous teams."""
+    latest = max(games, key=lambda game: game.match.observed_at)
+    match_map = {match.match_id: match for match in matches}
+    recent_ids = {game.match.match_id for game in games}
+    result = []
+    for current in sorted(latest.own_events, key=lambda event: event.role):
+        if current.action is not DraftAction.PICK:
+            continue
+        history = [
+            event
+            for event in events
+            if current.player_id
+            and event.player_id == current.player_id
+            and event.role == current.role
+            and event.action is DraftAction.PICK
+            and event.match_id in match_map
+            and match_map[event.match_id].observed_at.year == config.cutoff.year
+        ]
+        champions = []
+        season_games = {event.match_id for event in history}
+        recent_games = season_games & recent_ids
+        for champion in sorted({event.champion_id for event in history}):
+            selected = [event for event in history if event.champion_id == champion]
+            count = len({event.match_id for event in selected})
+            recent = len({event.match_id for event in selected} & recent_ids)
+            champions.append(
+                {
+                    "champion_id": champion,
+                    "season_games": count,
+                    "recent_games": recent,
+                    "season_share": _rate(count, len(season_games)),
+                    "recent_share": _rate(recent, len(recent_games)),
+                    "evidence_ids": sorted({event.event_id for event in selected}),
+                }
+            )
+        champions.sort(key=lambda item: (-item["season_games"], item["champion_id"]))
+        result.append(
+            {
+                "role": current.role,
+                "player_id": current.player_id,
+                "player_name": current.player_name,
+                "year": config.cutoff.year,
+                "season_games": len(season_games),
+                "recent_games": len(recent_games),
+                "status": "OBSERVED" if history else "MISSING_PLAYER_ID_OR_HISTORY",
+                "champions": champions,
+            }
+        )
+    return result
 
 
 def _game_for(
