@@ -27,20 +27,20 @@
   "schema_version": "1",
   "source_snapshot": {
     "analysis_window": {
-      "availability_cutoff": "2026-11-05T00:20:31.725775+00:00",
-      "end_inclusive": "2026-11-05T00:20:31.725775+00:00",
+      "availability_cutoff": "2026-11-07T22:41:37.410186+00:00",
+      "end_inclusive": "2026-11-07T22:41:37.410186+00:00",
       "historical": false,
       "mode": "ROLLING"
     },
-    "cutoff": "2026-11-05T00:20:31.725775+00:00",
+    "cutoff": "2026-11-07T22:41:37.410186+00:00",
     "fixture_only": false,
     "patch_id": "16.20",
     "radar_schema_version": "1",
     "source_versions": [
       {
-        "content_hash": "sha256:6c299a342dfb02248b641e0b41513b909e682a859e071bbf93b089fbd2e3093e",
+        "content_hash": "sha256:64eb70c6ec487d31c9905954e594e818e97de6b1c65f2ee2fa6ff0934a8bdebe",
         "source_id": "oracles-elixir-match-data",
-        "source_version": "sha256:6c299a342dfb02248b641e0b41513b909e682a859e071bbf93b089fbd2e3093e"
+        "source_version": "sha256:64eb70c6ec487d31c9905954e594e818e97de6b1c65f2ee2fa6ff0934a8bdebe"
       }
     ]
   },
@@ -49,45 +49,45 @@
     {
       "approved_claims": [
         {
-          "claim_id": "Gnar:TOP:pick-presence",
+          "claim_id": "Leona:SUPPORT:pick-presence",
           "metric": "pick_presence_delta",
-          "text": "최근 7일 Gnar TOP 픽 점유율은 21.1%이며 이전 구간 대비 +13.2pp 변했다.",
-          "value": 0.132401
+          "text": "최근 7일 Leona SUPPORT 픽 점유율은 15.2%이며 이전 구간 대비 +11.4pp 변했다.",
+          "value": 0.113779
         },
         {
-          "claim_id": "Gnar:TOP:team-demand",
+          "claim_id": "Leona:SUPPORT:team-demand",
           "metric": "demand_velocity",
-          "text": "최근 채택 팀은 7개이며 팀 수요는 이전 구간 대비 +26.4pp 변했다.",
-          "value": 0.263617
+          "text": "최근 채택 팀은 5개이며 팀 수요는 이전 구간 대비 +30.1pp 변했다.",
+          "value": 0.301282
         },
         {
-          "claim_id": "Gnar:TOP:regional-divergence",
+          "claim_id": "Leona:SUPPORT:regional-divergence",
           "metric": "most_divergent_region_delta",
-          "text": "KOREA의 최근 픽 점유율은 글로벌 점유율과 -3.4pp 차이가 난다.",
-          "value": -0.034056
+          "text": "INTERNATIONAL의 최근 픽 점유율은 글로벌 점유율과 +4.8pp 차이가 난다.",
+          "value": 0.048485
         }
       ],
-      "candidate_id": "Gnar:TOP",
-      "champion_id": "Gnar",
+      "candidate_id": "Leona:SUPPORT",
+      "champion_id": "Leona",
       "chapter_outline": [
         {
           "chapter": "HOOK",
           "uses": [
-            "Gnar:TOP:pick-presence"
+            "Leona:SUPPORT:pick-presence"
           ]
         },
         {
           "chapter": "WHAT CHANGED",
           "uses": [
-            "Gnar:TOP:pick-presence",
-            "Gnar:TOP:team-demand",
-            "Gnar:TOP:regional-divergence"
+            "Leona:SUPPORT:pick-presence",
+            "Leona:SUPPORT:team-demand",
+            "Leona:SUPPORT:regional-divergence"
           ]
         },
         {
           "chapter": "WHY IT MAY MATTER",
           "uses": [
-            "Gnar:TOP:team-demand"
+            "Leona:SUPPORT:team-demand"
           ]
         },
         {
@@ -103,30 +103,30 @@
       "data_cards": [
         {
           "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.210526,
-          "prior": 0.078125
+          "current": 0.151515,
+          "prior": 0.037736
         },
         {
           "card": "TEAM_DEMAND_COMPARISON",
-          "current": 0.411765,
-          "prior": 0.148148
+          "current": 0.384615,
+          "prior": 0.083333
         },
         {
           "card": "REGIONAL_PRESENCE",
           "values": [
             {
-              "delta_from_global": 0.027569,
-              "match_count": 21,
-              "pick_count": 5,
-              "pick_presence": 0.238095,
+              "delta_from_global": 0.048485,
+              "match_count": 15,
+              "pick_count": 3,
+              "pick_presence": 0.2,
               "region": "INTERNATIONAL",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.034056,
-              "match_count": 17,
-              "pick_count": 3,
-              "pick_presence": 0.176471,
+              "delta_from_global": -0.040404,
+              "match_count": 18,
+              "pick_count": 2,
+              "pick_presence": 0.111111,
               "region": "KOREA",
               "sample_eligible": true
             }
@@ -134,19 +134,13 @@
         }
       ],
       "evidence_event_ids": [
-        "oe:EM:LOLTMNT05_232032:pick:10",
-        "oe:LAS:LOLTMNT02_483442:pick:9",
-        "oe:LAS:LOLTMNT02_486510:pick:9",
-        "oe:LAS:LOLTMNT02_486616:pick:10",
-        "oe:LAS:LOLTMNT02_486621:pick:8",
-        "oe:WLDs:LOLTMNT02_483716:pick:8",
-        "oe:WLDs:LOLTMNT02_483861:pick:10",
-        "oe:WLDs:LOLTMNT02_485371:pick:9",
-        "oe:WLDs:LOLTMNT02_485488:pick:10",
-        "oe:WLDs:LOLTMNT02_485703:pick:10",
-        "oe:WLDs:LOLTMNT02_486159:pick:9",
-        "oe:WLDs:LOLTMNT02_486325:pick:9",
-        "oe:WLDs:LOLTMNT02_486564:pick:10"
+        "oe:LAS:LOLTMNT02_482693:pick:9",
+        "oe:LAS:LOLTMNT02_485433:pick:6",
+        "oe:LAS:LOLTMNT02_486610:pick:8",
+        "oe:LAS:LOLTMNT02_488169:pick:6",
+        "oe:WLDs:LOLTMNT02_488030:pick:6",
+        "oe:WLDs:LOLTMNT02_488087:pick:10",
+        "oe:WLDs:LOLTMNT02_488135:pick:5"
       ],
       "falsifiers": [
         {
@@ -158,64 +152,64 @@
           "metric": "current_distinct_team_count"
         }
       ],
-      "hook": "Gnar TOP의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "hook": "Leona SUPPORT의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
       "quality_flags": [],
       "radar_rank": 1,
       "review_state": "HUMAN_REVIEW_REQUIRED",
-      "role": "TOP",
-      "short_summary": "Gnar TOP의 최근 픽 점유율은 21.1%로, 이전 구간 대비 +13.2pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "role": "SUPPORT",
+      "short_summary": "Leona SUPPORT의 최근 픽 점유율은 15.2%로, 이전 구간 대비 +11.4pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
       "thumbnail_copy": [
-        "Gnar TOP",
-        "+13.2pp"
+        "Leona SUPPORT",
+        "+11.4pp"
       ],
       "title_candidates": [
-        "왜 지금 Gnar TOP인가: +13.2pp 변화의 근거",
-        "KOREA에서 먼저 보인 Gnar TOP, 글로벌과 -3.4pp 차이",
-        "Gnar TOP은 진짜 신호일까? 데이터와 반론"
+        "왜 지금 Leona SUPPORT인가: +11.4pp 변화의 근거",
+        "INTERNATIONAL에서 먼저 보인 Leona SUPPORT, 글로벌과 +4.8pp 차이",
+        "Leona SUPPORT은 진짜 신호일까? 데이터와 반론"
       ]
     },
     {
       "approved_claims": [
         {
-          "claim_id": "Pantheon:JUNGLE:pick-presence",
+          "claim_id": "Aphelios:BOTTOM:pick-presence",
           "metric": "pick_presence_delta",
-          "text": "최근 7일 Pantheon JUNGLE 픽 점유율은 23.7%이며 이전 구간 대비 +12.7pp 변했다.",
-          "value": 0.127467
+          "text": "최근 7일 Aphelios BOTTOM 픽 점유율은 12.1%이며 이전 구간 대비 +10.2pp 변했다.",
+          "value": 0.102344
         },
         {
-          "claim_id": "Pantheon:JUNGLE:team-demand",
+          "claim_id": "Aphelios:BOTTOM:team-demand",
           "metric": "demand_velocity",
-          "text": "최근 채택 팀은 8개이며 팀 수요는 이전 구간 대비 +24.8pp 변했다.",
-          "value": 0.248366
+          "text": "최근 채택 팀은 4개이며 팀 수요는 이전 구간 대비 +26.6pp 변했다.",
+          "value": 0.266026
         },
         {
-          "claim_id": "Pantheon:JUNGLE:regional-divergence",
+          "claim_id": "Aphelios:BOTTOM:regional-divergence",
           "metric": "most_divergent_region_delta",
-          "text": "KOREA의 최근 픽 점유율은 글로벌 점유율과 -11.9pp 차이가 난다.",
-          "value": -0.119195
+          "text": "INTERNATIONAL의 최근 픽 점유율은 글로벌 점유율과 -5.5pp 차이가 난다.",
+          "value": -0.054545
         }
       ],
-      "candidate_id": "Pantheon:JUNGLE",
-      "champion_id": "Pantheon",
+      "candidate_id": "Aphelios:BOTTOM",
+      "champion_id": "Aphelios",
       "chapter_outline": [
         {
           "chapter": "HOOK",
           "uses": [
-            "Pantheon:JUNGLE:pick-presence"
+            "Aphelios:BOTTOM:pick-presence"
           ]
         },
         {
           "chapter": "WHAT CHANGED",
           "uses": [
-            "Pantheon:JUNGLE:pick-presence",
-            "Pantheon:JUNGLE:team-demand",
-            "Pantheon:JUNGLE:regional-divergence"
+            "Aphelios:BOTTOM:pick-presence",
+            "Aphelios:BOTTOM:team-demand",
+            "Aphelios:BOTTOM:regional-divergence"
           ]
         },
         {
           "chapter": "WHY IT MAY MATTER",
           "uses": [
-            "Pantheon:JUNGLE:team-demand"
+            "Aphelios:BOTTOM:team-demand"
           ]
         },
         {
@@ -231,30 +225,30 @@
       "data_cards": [
         {
           "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.236842,
-          "prior": 0.109375
+          "current": 0.121212,
+          "prior": 0.018868
         },
         {
           "card": "TEAM_DEMAND_COMPARISON",
-          "current": 0.470588,
-          "prior": 0.222222
+          "current": 0.307692,
+          "prior": 0.041667
         },
         {
           "card": "REGIONAL_PRESENCE",
           "values": [
             {
-              "delta_from_global": 0.096491,
-              "match_count": 21,
-              "pick_count": 7,
-              "pick_presence": 0.333333,
+              "delta_from_global": -0.054545,
+              "match_count": 15,
+              "pick_count": 1,
+              "pick_presence": 0.066667,
               "region": "INTERNATIONAL",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.119195,
-              "match_count": 17,
-              "pick_count": 2,
-              "pick_presence": 0.117647,
+              "delta_from_global": 0.045455,
+              "match_count": 18,
+              "pick_count": 3,
+              "pick_presence": 0.166667,
               "region": "KOREA",
               "sample_eligible": true
             }
@@ -262,22 +256,11 @@
         }
       ],
       "evidence_event_ids": [
-        "oe:LAS:LOLTMNT02_482418:pick:1",
-        "oe:LAS:LOLTMNT02_483651:pick:8",
-        "oe:LAS:LOLTMNT02_483657:pick:6",
-        "oe:LAS:LOLTMNT02_485422:pick:7",
-        "oe:LAS:LOLTMNT02_486508:pick:7",
-        "oe:WLDs:LOLTMNT02_482325:pick:3",
-        "oe:WLDs:LOLTMNT02_482599:pick:3",
-        "oe:WLDs:LOLTMNT02_483342:pick:8",
-        "oe:WLDs:LOLTMNT02_483885:pick:7",
-        "oe:WLDs:LOLTMNT02_485371:pick:6",
-        "oe:WLDs:LOLTMNT02_485476:pick:2",
-        "oe:WLDs:LOLTMNT02_485482:pick:5",
-        "oe:WLDs:LOLTMNT02_486309:pick:6",
-        "oe:WLDs:LOLTMNT02_486341:pick:7",
-        "oe:WLDs:LOLTMNT02_486479:pick:2",
-        "oe:WLDs:LOLTMNT02_486571:pick:7"
+        "oe:LAS:LOLTMNT02_485419:pick:7",
+        "oe:LAS:LOLTMNT02_485527:pick:4",
+        "oe:LAS:LOLTMNT02_486623:pick:4",
+        "oe:LAS:LOLTMNT02_488194:pick:5",
+        "oe:WLDs:LOLTMNT02_488090:pick:8"
       ],
       "falsifiers": [
         {
@@ -289,64 +272,64 @@
           "metric": "current_distinct_team_count"
         }
       ],
-      "hook": "Pantheon JUNGLE의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "hook": "Aphelios BOTTOM의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
       "quality_flags": [],
       "radar_rank": 2,
       "review_state": "HUMAN_REVIEW_REQUIRED",
-      "role": "JUNGLE",
-      "short_summary": "Pantheon JUNGLE의 최근 픽 점유율은 23.7%로, 이전 구간 대비 +12.7pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "role": "BOTTOM",
+      "short_summary": "Aphelios BOTTOM의 최근 픽 점유율은 12.1%로, 이전 구간 대비 +10.2pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
       "thumbnail_copy": [
-        "Pantheon JUNGLE",
-        "+12.7pp"
+        "Aphelios BOTTOM",
+        "+10.2pp"
       ],
       "title_candidates": [
-        "왜 지금 Pantheon JUNGLE인가: +12.7pp 변화의 근거",
-        "KOREA에서 먼저 보인 Pantheon JUNGLE, 글로벌과 -11.9pp 차이",
-        "Pantheon JUNGLE은 진짜 신호일까? 데이터와 반론"
+        "왜 지금 Aphelios BOTTOM인가: +10.2pp 변화의 근거",
+        "INTERNATIONAL에서 먼저 보인 Aphelios BOTTOM, 글로벌과 -5.5pp 차이",
+        "Aphelios BOTTOM은 진짜 신호일까? 데이터와 반론"
       ]
     },
     {
       "approved_claims": [
         {
-          "claim_id": "Cassiopeia:MID:pick-presence",
+          "claim_id": "Trundle:JUNGLE:pick-presence",
           "metric": "pick_presence_delta",
-          "text": "최근 7일 Cassiopeia MID 픽 점유율은 26.3%이며 이전 구간 대비 +10.7pp 변했다.",
-          "value": 0.106908
+          "text": "최근 7일 Trundle JUNGLE 픽 점유율은 15.2%이며 이전 구간 대비 +7.6pp 변했다.",
+          "value": 0.076043
         },
         {
-          "claim_id": "Cassiopeia:MID:team-demand",
+          "claim_id": "Trundle:JUNGLE:team-demand",
           "metric": "demand_velocity",
-          "text": "최근 채택 팀은 9개이며 팀 수요는 이전 구간 대비 +23.3pp 변했다.",
-          "value": 0.233115
+          "text": "최근 채택 팀은 5개이며 팀 수요는 이전 구간 대비 +26.0pp 변했다.",
+          "value": 0.259615
         },
         {
-          "claim_id": "Cassiopeia:MID:regional-divergence",
+          "claim_id": "Trundle:JUNGLE:regional-divergence",
           "metric": "most_divergent_region_delta",
-          "text": "KOREA의 최근 픽 점유율은 글로벌 점유율과 -2.8pp 차이가 난다.",
-          "value": -0.027864
+          "text": "INTERNATIONAL의 최근 픽 점유율은 글로벌 점유율과 +4.8pp 차이가 난다.",
+          "value": 0.048485
         }
       ],
-      "candidate_id": "Cassiopeia:MID",
-      "champion_id": "Cassiopeia",
+      "candidate_id": "Trundle:JUNGLE",
+      "champion_id": "Trundle",
       "chapter_outline": [
         {
           "chapter": "HOOK",
           "uses": [
-            "Cassiopeia:MID:pick-presence"
+            "Trundle:JUNGLE:pick-presence"
           ]
         },
         {
           "chapter": "WHAT CHANGED",
           "uses": [
-            "Cassiopeia:MID:pick-presence",
-            "Cassiopeia:MID:team-demand",
-            "Cassiopeia:MID:regional-divergence"
+            "Trundle:JUNGLE:pick-presence",
+            "Trundle:JUNGLE:team-demand",
+            "Trundle:JUNGLE:regional-divergence"
           ]
         },
         {
           "chapter": "WHY IT MAY MATTER",
           "uses": [
-            "Cassiopeia:MID:team-demand"
+            "Trundle:JUNGLE:team-demand"
           ]
         },
         {
@@ -362,30 +345,30 @@
       "data_cards": [
         {
           "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.263158,
-          "prior": 0.15625
+          "current": 0.151515,
+          "prior": 0.075472
         },
         {
           "card": "TEAM_DEMAND_COMPARISON",
-          "current": 0.529412,
-          "prior": 0.296296
+          "current": 0.384615,
+          "prior": 0.125
         },
         {
           "card": "REGIONAL_PRESENCE",
           "values": [
             {
-              "delta_from_global": 0.022556,
-              "match_count": 21,
-              "pick_count": 6,
-              "pick_presence": 0.285714,
+              "delta_from_global": 0.048485,
+              "match_count": 15,
+              "pick_count": 3,
+              "pick_presence": 0.2,
               "region": "INTERNATIONAL",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.027864,
-              "match_count": 17,
-              "pick_count": 4,
-              "pick_presence": 0.235294,
+              "delta_from_global": -0.040404,
+              "match_count": 18,
+              "pick_count": 2,
+              "pick_presence": 0.111111,
               "region": "KOREA",
               "sample_eligible": true
             }
@@ -393,26 +376,15 @@
         }
       ],
       "evidence_event_ids": [
-        "oe:EM:LOLTMNT05_231009:pick:1",
-        "oe:LAS:LOLTMNT02_482430:pick:2",
-        "oe:LAS:LOLTMNT02_482693:pick:1",
-        "oe:LAS:LOLTMNT02_482696:pick:1",
-        "oe:LAS:LOLTMNT02_483457:pick:1",
-        "oe:LAS:LOLTMNT02_483459:pick:8",
-        "oe:LAS:LOLTMNT02_483657:pick:1",
-        "oe:LAS:LOLTMNT02_485419:pick:6",
-        "oe:LAS:LOLTMNT02_486508:pick:2",
-        "oe:LAS:LOLTMNT02_486602:pick:3",
-        "oe:LAS:LOLTMNT02_486621:pick:2",
-        "oe:WLDs:LOLTMNT02_482559:pick:1",
-        "oe:WLDs:LOLTMNT02_483571:pick:6",
-        "oe:WLDs:LOLTMNT02_483708:pick:1",
-        "oe:WLDs:LOLTMNT02_485482:pick:2",
-        "oe:WLDs:LOLTMNT02_485703:pick:4",
-        "oe:WLDs:LOLTMNT02_486299:pick:3",
-        "oe:WLDs:LOLTMNT02_486479:pick:7",
-        "oe:WLDs:LOLTMNT02_486541:pick:1",
-        "oe:WLDs:LOLTMNT02_486564:pick:1"
+        "oe:LAS:LOLTMNT02_486623:pick:6",
+        "oe:LAS:LOLTMNT02_487197:pick:2",
+        "oe:WLDs:LOLTMNT02_482893:pick:7",
+        "oe:WLDs:LOLTMNT02_483708:pick:10",
+        "oe:WLDs:LOLTMNT02_485366:pick:7",
+        "oe:WLDs:LOLTMNT02_486192:pick:8",
+        "oe:WLDs:LOLTMNT02_487158:pick:9",
+        "oe:WLDs:LOLTMNT02_488039:pick:3",
+        "oe:WLDs:LOLTMNT02_488090:pick:7"
       ],
       "falsifiers": [
         {
@@ -424,20 +396,20 @@
           "metric": "current_distinct_team_count"
         }
       ],
-      "hook": "Cassiopeia MID의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "hook": "Trundle JUNGLE의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
       "quality_flags": [],
       "radar_rank": 3,
       "review_state": "HUMAN_REVIEW_REQUIRED",
-      "role": "MID",
-      "short_summary": "Cassiopeia MID의 최근 픽 점유율은 26.3%로, 이전 구간 대비 +10.7pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "role": "JUNGLE",
+      "short_summary": "Trundle JUNGLE의 최근 픽 점유율은 15.2%로, 이전 구간 대비 +7.6pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
       "thumbnail_copy": [
-        "Cassiopeia MID",
-        "+10.7pp"
+        "Trundle JUNGLE",
+        "+7.6pp"
       ],
       "title_candidates": [
-        "왜 지금 Cassiopeia MID인가: +10.7pp 변화의 근거",
-        "KOREA에서 먼저 보인 Cassiopeia MID, 글로벌과 -2.8pp 차이",
-        "Cassiopeia MID은 진짜 신호일까? 데이터와 반론"
+        "왜 지금 Trundle JUNGLE인가: +7.6pp 변화의 근거",
+        "INTERNATIONAL에서 먼저 보인 Trundle JUNGLE, 글로벌과 +4.8pp 차이",
+        "Trundle JUNGLE은 진짜 신호일까? 데이터와 반론"
       ]
     }
   ],
