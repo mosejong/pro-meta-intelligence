@@ -7,10 +7,10 @@
   "boundary": "Collection availability only; excludes raw rows, local paths, provider URLs, and predictive-quality claims.",
   "last_attempt": {
     "exit_code": 0,
-    "finished_at": "2026-11-07T22:43:25.822490+00:00",
+    "finished_at": "2026-11-08T14:18:41.694023+00:00",
     "job_status": "SUCCEEDED",
-    "network_request_performed": true,
-    "started_at": "2026-11-07T22:41:33.512740+00:00"
+    "network_request_performed": false,
+    "started_at": "2026-11-08T14:16:18.664621+00:00"
   },
   "publication": {
     "head_accepted": true,
@@ -20,11 +20,11 @@
   "reason_code": "NONE",
   "schema_version": "1",
   "source": {
-    "acquisition_status": "DOWNLOADED",
+    "acquisition_status": "REUSED_DAILY_CACHE",
     "last_verified_at": "2026-11-07T22:41:37.410186+00:00",
-    "next_attempt_at": null,
+    "next_attempt_at": "2026-11-08T22:41:37.410186+00:00",
     "source_id": "oracles-elixir-match-data"
   },
   "state": "CURRENT",
-  "updated_at": "2026-11-07T22:43:25.822490+00:00"
+  "updated_at": "2026-11-08T14:18:41.694023+00:00"
 }
