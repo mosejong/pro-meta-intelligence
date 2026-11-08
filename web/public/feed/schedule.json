@@ -1,39 +1,22 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-11-08T05:56:33.130945+00:00",
+  "available_at": "2026-11-08T15:09:10.103442+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:2f0303b3908fde18a414c37954100217c40a40865910b39d221e2193733fcb77",
+  "content_hash": "sha256:4cd4b9e14bd5da4bd2424cdd6e8864c8063bbdd551b58485348903f15f0b4aa8",
   "events": [
     {
       "best_of": 5,
       "block": "Semifinals",
-      "event_id": "lolesports:035a646b40511abdbbc2",
+      "event_id": "lolesports:9980bc3a8a64693b0e8e",
       "league": "Worlds",
       "participants": [
         {
-          "code": "T1",
-          "name": "T1"
+          "code": "GEN",
+          "name": "Gen.G Esports"
         },
         {
-          "code": "BLG",
-          "name": "BILIBILI GAMING"
-        }
-      ],
-      "start_at": "2026-11-08T22:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Finals",
-      "event_id": "lolesports:5e095f6f89aa78c4eb7f",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "TBD",
-          "name": "TBD"
-        },
-        {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "IG",
+          "name": "Invictus Gaming"
         }
       ],
       "start_at": "2026-11-14T19:00:00+00:00"
@@ -49,10 +32,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 2,
-    "tbd_participant_count": 2
+    "event_count": 1,
+    "tbd_participant_count": 0
   },
-  "retrieved_at": "2026-11-08T05:56:33.130945+00:00",
+  "retrieved_at": "2026-11-08T15:09:10.103442+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"

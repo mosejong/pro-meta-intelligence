@@ -2,11 +2,40 @@
   "artifact_type": "pro-schedule-change-log",
   "boundary": "Tracks exact normalized schedule differences for the watched team. SAME_SLOT links events only when start time, league, and block match; SAME_CONFIRMED_OPPONENT links time changes only when the confirmed opponent and league match. Correlation is not an official provider series ID, and bracket participants are never inferred.",
   "current_snapshot": {
-    "content_hash": "sha256:2f0303b3908fde18a414c37954100217c40a40865910b39d221e2193733fcb77",
-    "retrieved_at": "2026-11-08T05:56:33.130945+00:00"
+    "content_hash": "sha256:4cd4b9e14bd5da4bd2424cdd6e8864c8063bbdd551b58485348903f15f0b4aa8",
+    "retrieved_at": "2026-11-08T15:09:10.103442+00:00"
   },
-  "generated_at": "2026-11-08T05:56:33.130945+00:00",
+  "generated_at": "2026-11-08T15:09:10.103442+00:00",
   "history": [
+    {
+      "change_id": "schedule-change:fb6fca8497644bed38c9",
+      "correlation_method": "UNMATCHED",
+      "current_event": null,
+      "detected_at": "2026-11-08T15:09:10.103442+00:00",
+      "fields_changed": [
+        "event"
+      ],
+      "previous_event": {
+        "best_of": 5,
+        "block": "Semifinals",
+        "event_id": "lolesports:035a646b40511abdbbc2",
+        "league": "Worlds",
+        "participants": [
+          {
+            "code": "T1",
+            "name": "T1"
+          },
+          {
+            "code": "BLG",
+            "name": "BILIBILI GAMING"
+          }
+        ],
+        "start_at": "2026-11-08T22:00:00+00:00"
+      },
+      "severity": "REVIEW",
+      "summary": "T1 fixture left the future schedule",
+      "type": "EVENT_REMOVED"
+    },
     {
       "change_id": "schedule-change:72b814d7822e4a0d159d",
       "correlation_method": "UNMATCHED",
@@ -576,13 +605,43 @@
     }
   ],
   "latest_run": {
-    "change_count": 0,
-    "changes": [],
-    "status": "UNCHANGED"
+    "change_count": 1,
+    "changes": [
+      {
+        "change_id": "schedule-change:fb6fca8497644bed38c9",
+        "correlation_method": "UNMATCHED",
+        "current_event": null,
+        "detected_at": "2026-11-08T15:09:10.103442+00:00",
+        "fields_changed": [
+          "event"
+        ],
+        "previous_event": {
+          "best_of": 5,
+          "block": "Semifinals",
+          "event_id": "lolesports:035a646b40511abdbbc2",
+          "league": "Worlds",
+          "participants": [
+            {
+              "code": "T1",
+              "name": "T1"
+            },
+            {
+              "code": "BLG",
+              "name": "BILIBILI GAMING"
+            }
+          ],
+          "start_at": "2026-11-08T22:00:00+00:00"
+        },
+        "severity": "REVIEW",
+        "summary": "T1 fixture left the future schedule",
+        "type": "EVENT_REMOVED"
+      }
+    ],
+    "status": "CHANGED"
   },
   "previous_snapshot": {
-    "content_hash": "sha256:ce98202f8f5ab64e6657017a508e6e735cb89190020ba9f5f99686bd3bf1c9a0",
-    "retrieved_at": "2026-11-07T14:53:04.039909+00:00"
+    "content_hash": "sha256:2f0303b3908fde18a414c37954100217c40a40865910b39d221e2193733fcb77",
+    "retrieved_at": "2026-11-08T05:56:33.130945+00:00"
   },
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
