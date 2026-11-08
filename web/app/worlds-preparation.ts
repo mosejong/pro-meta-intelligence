@@ -42,6 +42,11 @@ export const WORLDS_2026 = {
     { start_at: "2026-11-06T22:00:00Z", teams: ["T1", "KC"] },
   ],
   semifinal_dates: ["2026-11-07", "2026-11-08"],
+  // T1's semifinal from the official lolesports schedule feed retrieved 2026-11-08; the other pairing is not tracked.
+  semifinals_checked_on: "2026-11-08",
+  semifinals: [
+    { start_at: "2026-11-08T22:00:00Z", teams: ["T1", "BLG"] },
+  ],
   final_date: "2026-11-14",
 } as const;
 
@@ -58,6 +63,16 @@ export function worldsQuarterfinalFor(code: string) {
   const match = WORLDS_2026.quarterfinals.find((item) => (item.teams as readonly string[]).includes(code));
   if (!match) return null;
   return { start_at: match.start_at, opponent: match.teams[0] === code ? match.teams[1] : match.teams[0] };
+}
+
+// The latest known knockout match: a semifinal replaces the quarterfinal once its pairing is published.
+export function worldsNextMatchFor(code: string) {
+  const stages = [["4강", WORLDS_2026.semifinals], ["8강", WORLDS_2026.quarterfinals]] as const;
+  for (const [label, matches] of stages) {
+    const match = matches.find((item) => (item.teams as readonly string[]).includes(code));
+    if (match) return { label, start_at: match.start_at, opponent: match.teams[0] === code ? match.teams[1] : match.teams[0] };
+  }
+  return null;
 }
 
 const roles = [
@@ -110,8 +125,9 @@ export function buildWorldsPreparation(report: RadarReport) {
     // An ambiguous identity never silently picks one feed row or an academy team.
     const team: OpponentTeam | null = matches.length === 1 ? matches[0] : null;
     const quarterfinal = worldsQuarterfinalFor(qualified.code);
+    const next_match = worldsNextMatchFor(qualified.code);
     const stage: WorldsStage = quarterfinal ? "QUARTERFINAL" : "OUT_OF_KNOCKOUTS";
-    return { ...qualified, team, sample: team?.game_count ?? 0, stage, quarterfinal,
+    return { ...qualified, team, sample: team?.game_count ?? 0, stage, quarterfinal, next_match,
       first_picks: team?.priority_picks.slice(0, 3).map((pick) => pick.champion_id) ?? [],
       role_coverage: worldsRoleCoverage(team),
     };

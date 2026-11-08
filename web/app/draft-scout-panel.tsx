@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { DraftSelection, DraftSide } from "./draft-agent";
 import { DraftExchangePanel } from "./draft-exchange-panel";
 import { DRAFT_SCOUT_PACKS, DRAFT_SCOUT_VALIDATION, buildDraftScoutBrief, draftScoutFor, formatRate, headToHeadSeries, headToHeadStaples } from "./draft-scout";
-import { formatKst, worldsQuarterfinalFor } from "./worlds-preparation";
+import { formatKst, worldsNextMatchFor } from "./worlds-preparation";
 import "./draft-scout.css";
 
 const roleLabels: Record<string, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
@@ -13,12 +13,12 @@ export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], b
   blueTeamId?: string; redTeamId?: string;
   firstPickSide?: DraftSide;
 }) {
-  const quarterfinal = worldsQuarterfinalFor("T1");
+  const next = worldsNextMatchFor("T1");
   const [chosen, setChosen] = useState<string | null>(null);
-  const code = chosen ?? quarterfinal?.opponent ?? null;
+  const code = chosen ?? next?.opponent ?? null;
   const pack = draftScoutFor(code);
-  if (!quarterfinal || !code || !pack) return null;
-  const isNext = code === quarterfinal.opponent;
+  if (!next || !code || !pack) return null;
+  const isNext = code === next.opponent;
   const connected = Boolean(blueTeamId && redTeamId && (
     (pack.own.team_ids.includes(blueTeamId) && pack.target.team_ids.includes(redTeamId)) ||
     (pack.own.team_ids.includes(redTeamId) && pack.target.team_ids.includes(blueTeamId))));
@@ -29,7 +29,7 @@ export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], b
   const teamCheck = check.teams[code];
   const leagues = (counts: Record<string, number>) => Object.entries(counts).map(([league, count]) => `${league} ${count}`).join(" · ");
   return <details className="draft-scout" id="draft-scout" open>
-    <summary><strong>T1 vs {code} · 밴픽 스카우팅</strong><span>{isNext ? `8강 ${formatKst(quarterfinal.start_at)}` : "4강 이후 후보 미리보기"} · 밴픽 단계에서 주도권을 가져오기 위한 근거</span></summary>
+    <summary><strong>T1 vs {code} · 밴픽 스카우팅</strong><span>{isNext ? `${next.label} ${formatKst(next.start_at)}` : "다른 결선 후보 미리보기"} · 밴픽 단계에서 주도권을 가져오기 위한 근거</span></summary>
     <div className="draft-scout-content">
       <p role="status">{connected ? `현재 연습 대진 연결 · 확정 밴픽 ${selections.length}개와 이전 세트 픽을 후보에서 제외합니다.` :
         "독립 스카우팅 보기 · 현재 연습 대진과 달라 밴픽 잠금을 적용하지 않습니다."}</p>
@@ -37,7 +37,7 @@ export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], b
       <label className="draft-scout-picker">상대 선택
         <select value={code} onChange={(event) => setChosen(event.target.value)}>
           {Object.keys(DRAFT_SCOUT_PACKS).map((option) => <option key={option} value={option}>
-            {option} · {option === quarterfinal.opponent ? "8강 상대" : "8강 진출 · 4강 이후 후보"}
+            {option} · {option === next.opponent ? `${next.label} 상대` : "8강 진출 · 다른 후보"}
           </option>)}
         </select>
       </label>

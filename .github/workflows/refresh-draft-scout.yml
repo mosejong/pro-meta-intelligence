@@ -1,0 +1,121 @@
+name: Refresh draft scouting packs
+
+# Manual only. Rebuilds the Worlds scouting packs from the newest encrypted OE snapshot that the
+# hosted collector already stored. It never contacts the provider, never repacks or uploads private
+# state, and only proposes the regenerated aggregate packs as a pull request for review.
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: refresh-draft-scout
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OE_ARCHIVE_KEY: ${{ secrets.OE_ARCHIVE_KEY }}
+      PRIVATE_STATE_DIR: outputs/hosted-oe-state
+      PRIVATE_ARCHIVE_DIR: outputs/oracles-elixir/raw
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install archive dependencies
+        run: python -m pip install -e ".[hosted-ops]"
+      - name: Restore the newest authenticated private history state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$OE_ARCHIVE_KEY" ]]; then
+            echo "Required repository secret OE_ARCHIVE_KEY is not configured." >&2
+            exit 1
+          fi
+          mkdir -p "$PRIVATE_STATE_DIR"
+          artifact_id=$(gh api \
+            "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" \
+            --jq '[.artifacts[] | select(.expired == false and (.name | startswith("oe-private-history-state-")))] | sort_by(.created_at) | reverse | .[0].id // empty')
+          if [[ -z "$artifact_id" ]]; then
+            echo "No hosted private history state exists." >&2
+            exit 1
+          fi
+          gh api -H "Accept: application/vnd.github+json" \
+            "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > "$PRIVATE_STATE_DIR/state.zip"
+          unzip -q "$PRIVATE_STATE_DIR/state.zip" -d "$PRIVATE_STATE_DIR/restored-artifact"
+          python -m pro_meta_intelligence restore-private-oe-archive \
+            --input "$PRIVATE_STATE_DIR/restored-artifact/oe-private-history-state.pmi" \
+            --archive-dir "$PRIVATE_ARCHIVE_DIR" \
+            --report "$PRIVATE_STATE_DIR/restore-report.json"
+      - name: Rebuild scouting packs and the walk-forward validation
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          read -r csv retrieved_at < <(python - <<'EOF'
+          import json
+          from pathlib import Path
+
+          root = Path("outputs/oracles-elixir/raw/oracles-elixir-match-data")
+          newest = max(
+              (json.loads(path.read_text(encoding="utf-8")) for path in root.glob("*.meta.json")),
+              key=lambda meta: meta["retrieved_at"],
+          )
+          print(root / newest["data_file"], newest["retrieved_at"])
+          EOF
+          )
+          retrieved_at=$(printf %s "$retrieved_at" | tr -d "[:space:]")
+          echo "Newest snapshot retrieved at $retrieved_at"
+          echo "retrieved_at=$retrieved_at" >> "$GITHUB_OUTPUT"
+          declare -A teams=(
+            [kc]="Karmine Corp" [tes]="Top Esports" [ig]="Invictus Gaming" [gen]="Gen.G"
+            [lyon]="LYON" [dk]="Dplus Kia" [blg]="Bilibili Gaming"
+          )
+          backtest_targets=()
+          for code in "${!teams[@]}"; do
+            python -m pro_meta_intelligence scout-opponent-draft \
+              --input "$csv" --source-timezone UTC --retrieved-at "$retrieved_at" \
+              --target-team "${teams[$code]}" --own-team T1 \
+              --output "web/app/scouting/t1-vs-$code.json"
+            backtest_targets+=(--target-team "${code^^}=${teams[$code]}")
+          done
+          python -m pro_meta_intelligence backtest-draft-scout \
+            --input "$csv" --source-timezone UTC --retrieved-at "$retrieved_at" --league WLDs \
+            "${backtest_targets[@]}" --output web/app/scouting/validation.json
+      - name: Propose only the regenerated aggregate packs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RETRIEVED_AT: ${{ steps.build.outputs.retrieved_at }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          unexpected=$(git status --porcelain | grep -Ev '^ M web/app/scouting/[a-z0-9-]+\.json$' || true)
+          if [[ -n "$unexpected" ]]; then
+            echo "Unexpected changes: $unexpected" >&2
+            exit 1
+          fi
+          if git diff --quiet -- web/app/scouting; then
+            echo "Scouting packs are already current for $RETRIEVED_AT."
+            exit 0
+          fi
+          branch="data/refresh-draft-scout-${GITHUB_RUN_ID}"
+          git config user.name "Pro Meta Intelligence Hosted Collector"
+          git config user.email "hosted-collector@pro-meta-intelligence.local"
+          git switch -c "$branch"
+          git add -- web/app/scouting
+          git commit -m "chore(data): refresh draft scouting packs from the $RETRIEVED_AT snapshot"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "chore(data): refresh draft scouting packs ($RETRIEVED_AT)" \
+            --body "Regenerated by the manual refresh workflow from the newest encrypted OE snapshot (retrieved $RETRIEVED_AT). No provider request was made. Review the hit rates in validation.json and run the web tests before merging."
