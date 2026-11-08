@@ -7,7 +7,7 @@
     "minimum_comfort_games": 3,
     "top_champions": 6
   },
-  "cutoff": "2026-11-04T03:03:22.056760+00:00",
+  "cutoff": "2026-11-07T22:41:37.410186+00:00",
   "head_to_head": [
     {
       "league": "MSI",
@@ -554,6 +554,370 @@
           }
         ]
       }
+    },
+    {
+      "league": "WLDs",
+      "match_id": "oe:WLDs:LOLTMNT02_488135",
+      "observed_at": "2026-11-06T22:13:16+00:00",
+      "own": {
+        "bans": [
+          "Cassiopeia",
+          "Vi",
+          "Qiyana",
+          "Wukong",
+          "Pantheon"
+        ],
+        "picks": [
+          {
+            "champion_id": "Lulu",
+            "player_name": "Keria",
+            "role": "SUPPORT",
+            "sequence": 2
+          },
+          {
+            "champion_id": "Jarvan IV",
+            "player_name": "Oner",
+            "role": "JUNGLE",
+            "sequence": 3
+          },
+          {
+            "champion_id": "Yunara",
+            "player_name": "Peyz",
+            "role": "BOTTOM",
+            "sequence": 6
+          },
+          {
+            "champion_id": "Ornn",
+            "player_name": "Doran",
+            "role": "TOP",
+            "sequence": 7
+          },
+          {
+            "champion_id": "Viktor",
+            "player_name": "Faker",
+            "role": "MID",
+            "sequence": 10
+          }
+        ]
+      },
+      "own_first_selection": false,
+      "own_side": "BLUE",
+      "own_won": true,
+      "patch_id": "16.20",
+      "target": {
+        "bans": [
+          "Nocturne",
+          "Renata Glasc",
+          "Galio",
+          "Locke",
+          "Orianna"
+        ],
+        "picks": [
+          {
+            "champion_id": "Rumble",
+            "player_name": "Canna",
+            "role": "TOP",
+            "sequence": 1
+          },
+          {
+            "champion_id": "Ezreal",
+            "player_name": "Caliste",
+            "role": "BOTTOM",
+            "sequence": 4
+          },
+          {
+            "champion_id": "Leona",
+            "player_name": "Busio",
+            "role": "SUPPORT",
+            "sequence": 5
+          },
+          {
+            "champion_id": "Syndra",
+            "player_name": "kyeahoo",
+            "role": "MID",
+            "sequence": 8
+          },
+          {
+            "champion_id": "Lee Sin",
+            "player_name": "Yike",
+            "role": "JUNGLE",
+            "sequence": 9
+          }
+        ]
+      }
+    },
+    {
+      "league": "WLDs",
+      "match_id": "oe:WLDs:LOLTMNT02_487158",
+      "observed_at": "2026-11-06T23:15:40+00:00",
+      "own": {
+        "bans": [
+          "Locke",
+          "Akali",
+          "Renata Glasc",
+          "Alistar",
+          "Xayah"
+        ],
+        "picks": [
+          {
+            "champion_id": "Cassiopeia",
+            "player_name": "Faker",
+            "role": "MID",
+            "sequence": 1
+          },
+          {
+            "champion_id": "Olaf",
+            "player_name": "Doran",
+            "role": "TOP",
+            "sequence": 4
+          },
+          {
+            "champion_id": "Nautilus",
+            "player_name": "Keria",
+            "role": "SUPPORT",
+            "sequence": 5
+          },
+          {
+            "champion_id": "Kai'Sa",
+            "player_name": "Peyz",
+            "role": "BOTTOM",
+            "sequence": 8
+          },
+          {
+            "champion_id": "Trundle",
+            "player_name": "Oner",
+            "role": "JUNGLE",
+            "sequence": 9
+          }
+        ]
+      },
+      "own_first_selection": true,
+      "own_side": "RED",
+      "own_won": true,
+      "patch_id": "16.20",
+      "target": {
+        "bans": [
+          "Vi",
+          "Qiyana",
+          "Nocturne",
+          "Xin Zhao",
+          "Wukong"
+        ],
+        "picks": [
+          {
+            "champion_id": "Orianna",
+            "player_name": "kyeahoo",
+            "role": "MID",
+            "sequence": 2
+          },
+          {
+            "champion_id": "Pantheon",
+            "player_name": "Yike",
+            "role": "JUNGLE",
+            "sequence": 3
+          },
+          {
+            "champion_id": "Ambessa",
+            "player_name": "Canna",
+            "role": "TOP",
+            "sequence": 6
+          },
+          {
+            "champion_id": "Rell",
+            "player_name": "Busio",
+            "role": "SUPPORT",
+            "sequence": 7
+          },
+          {
+            "champion_id": "Tristana",
+            "player_name": "Caliste",
+            "role": "BOTTOM",
+            "sequence": 10
+          }
+        ]
+      }
+    },
+    {
+      "league": "WLDs",
+      "match_id": "oe:WLDs:LOLTMNT02_487168",
+      "observed_at": "2026-11-07T00:03:15+00:00",
+      "own": {
+        "bans": [
+          "Renata Glasc",
+          "Locke",
+          "Wukong",
+          "Camille",
+          "Akali"
+        ],
+        "picks": [
+          {
+            "champion_id": "Jayce",
+            "player_name": "Doran",
+            "role": "TOP",
+            "sequence": 1
+          },
+          {
+            "champion_id": "Zeri",
+            "player_name": "Peyz",
+            "role": "BOTTOM",
+            "sequence": 4
+          },
+          {
+            "champion_id": "Yuumi",
+            "player_name": "Keria",
+            "role": "SUPPORT",
+            "sequence": 5
+          },
+          {
+            "champion_id": "Sejuani",
+            "player_name": "Oner",
+            "role": "JUNGLE",
+            "sequence": 8
+          },
+          {
+            "champion_id": "Taliyah",
+            "player_name": "Faker",
+            "role": "MID",
+            "sequence": 9
+          }
+        ]
+      },
+      "own_first_selection": true,
+      "own_side": "RED",
+      "own_won": false,
+      "patch_id": "16.20",
+      "target": {
+        "bans": [
+          "Vi",
+          "Qiyana",
+          "Nocturne",
+          "Sylas",
+          "Galio"
+        ],
+        "picks": [
+          {
+            "champion_id": "Ashe",
+            "player_name": "Caliste",
+            "role": "BOTTOM",
+            "sequence": 2
+          },
+          {
+            "champion_id": "Seraphine",
+            "player_name": "Busio",
+            "role": "SUPPORT",
+            "sequence": 3
+          },
+          {
+            "champion_id": "Xin Zhao",
+            "player_name": "Yike",
+            "role": "JUNGLE",
+            "sequence": 6
+          },
+          {
+            "champion_id": "Anivia",
+            "player_name": "kyeahoo",
+            "role": "MID",
+            "sequence": 7
+          },
+          {
+            "champion_id": "K'Sante",
+            "player_name": "Canna",
+            "role": "TOP",
+            "sequence": 10
+          }
+        ]
+      }
+    },
+    {
+      "league": "WLDs",
+      "match_id": "oe:WLDs:LOLTMNT02_487172",
+      "observed_at": "2026-11-07T01:06:38+00:00",
+      "own": {
+        "bans": [
+          "Renata Glasc",
+          "Akali",
+          "Maokai",
+          "Jax",
+          "Galio"
+        ],
+        "picks": [
+          {
+            "champion_id": "Nocturne",
+            "player_name": "Oner",
+            "role": "JUNGLE",
+            "sequence": 1
+          },
+          {
+            "champion_id": "Neeko",
+            "player_name": "Keria",
+            "role": "SUPPORT",
+            "sequence": 4
+          },
+          {
+            "champion_id": "Miss Fortune",
+            "player_name": "Peyz",
+            "role": "BOTTOM",
+            "sequence": 5
+          },
+          {
+            "champion_id": "Annie",
+            "player_name": "Faker",
+            "role": "MID",
+            "sequence": 8
+          },
+          {
+            "champion_id": "Camille",
+            "player_name": "Doran",
+            "role": "TOP",
+            "sequence": 9
+          }
+        ]
+      },
+      "own_first_selection": true,
+      "own_side": "RED",
+      "own_won": true,
+      "patch_id": "16.20",
+      "target": {
+        "bans": [
+          "Vi",
+          "Qiyana",
+          "Caitlyn",
+          "Ryze",
+          "Sylas"
+        ],
+        "picks": [
+          {
+            "champion_id": "Xayah",
+            "player_name": "Caliste",
+            "role": "BOTTOM",
+            "sequence": 2
+          },
+          {
+            "champion_id": "Rakan",
+            "player_name": "Busio",
+            "role": "SUPPORT",
+            "sequence": 3
+          },
+          {
+            "champion_id": "Wukong",
+            "player_name": "Yike",
+            "role": "JUNGLE",
+            "sequence": 6
+          },
+          {
+            "champion_id": "Ahri",
+            "player_name": "kyeahoo",
+            "role": "MID",
+            "sequence": 7
+          },
+          {
+            "champion_id": "Renekton",
+            "player_name": "Canna",
+            "role": "TOP",
+            "sequence": 10
+          }
+        ]
+      }
     }
   ],
   "league_meta": [
@@ -706,7 +1070,7 @@
       "role_picks": {}
     },
     {
-      "game_count": 85,
+      "game_count": 99,
       "group": "INTERNATIONAL",
       "leagues": [
         "WLDs"
@@ -717,107 +1081,107 @@
       ],
       "presence": [
         {
-          "ban_count": 63,
+          "ban_count": 76,
           "champion_id": "Nocturne",
-          "pick_count": 14,
-          "presence_rate": 0.906
+          "pick_count": 15,
+          "presence_rate": 0.919
         },
         {
-          "ban_count": 48,
+          "ban_count": 58,
           "champion_id": "Vi",
-          "pick_count": 17,
-          "presence_rate": 0.765
+          "pick_count": 18,
+          "presence_rate": 0.768
         },
         {
           "ban_count": 50,
+          "champion_id": "Renata Glasc",
+          "pick_count": 19,
+          "presence_rate": 0.697
+        },
+        {
+          "ban_count": 52,
           "champion_id": "Cassiopeia",
-          "pick_count": 12,
-          "presence_rate": 0.729
+          "pick_count": 16,
+          "presence_rate": 0.687
+        },
+        {
+          "ban_count": 44,
+          "champion_id": "Olaf",
+          "pick_count": 18,
+          "presence_rate": 0.626
+        },
+        {
+          "ban_count": 35,
+          "champion_id": "Qiyana",
+          "pick_count": 23,
+          "presence_rate": 0.586
+        },
+        {
+          "ban_count": 32,
+          "champion_id": "Syndra",
+          "pick_count": 23,
+          "presence_rate": 0.556
+        },
+        {
+          "ban_count": 28,
+          "champion_id": "Jarvan IV",
+          "pick_count": 26,
+          "presence_rate": 0.545
         },
         {
           "ban_count": 39,
-          "champion_id": "Renata Glasc",
-          "pick_count": 18,
-          "presence_rate": 0.671
-        },
-        {
-          "ban_count": 38,
-          "champion_id": "Olaf",
-          "pick_count": 15,
-          "presence_rate": 0.624
-        },
-        {
-          "ban_count": 31,
-          "champion_id": "Qiyana",
-          "pick_count": 20,
-          "presence_rate": 0.6
-        },
-        {
-          "ban_count": 26,
-          "champion_id": "Syndra",
-          "pick_count": 21,
-          "presence_rate": 0.553
+          "champion_id": "Akali",
+          "pick_count": 14,
+          "presence_rate": 0.535
         },
         {
           "ban_count": 23,
-          "champion_id": "Jarvan IV",
-          "pick_count": 23,
-          "presence_rate": 0.541
-        },
-        {
-          "ban_count": 31,
-          "champion_id": "Akali",
-          "pick_count": 13,
-          "presence_rate": 0.518
-        },
-        {
-          "ban_count": 19,
-          "champion_id": "Ezreal",
-          "pick_count": 25,
-          "presence_rate": 0.518
+          "champion_id": "Lee Sin",
+          "pick_count": 28,
+          "presence_rate": 0.515
         }
       ],
       "role_picks": {
         "BOTTOM": [
           {
             "champion_id": "Ezreal",
-            "pick_share": 0.147
+            "pick_share": 0.146
           },
           {
             "champion_id": "Jhin",
-            "pick_share": 0.112
-          },
-          {
-            "champion_id": "Kalista",
-            "pick_share": 0.1
+            "pick_share": 0.106
           },
           {
             "champion_id": "Yunara",
-            "pick_share": 0.1
+            "pick_share": 0.101
+          },
+          {
+            "champion_id": "Kalista",
+            "pick_share": 0.091
           },
           {
             "champion_id": "Lucian",
-            "pick_share": 0.094
+            "pick_share": 0.091
           },
           {
             "champion_id": "Ashe",
-            "pick_share": 0.071
+            "pick_share": 0.076
           },
           {
             "champion_id": "Kai'Sa",
-            "pick_share": 0.053
-          },
-          {
-            "champion_id": "Caitlyn",
-            "pick_share": 0.047
+            "pick_share": 0.056
           },
           {
             "champion_id": "Xayah",
-            "pick_share": 0.047
+            "pick_share": 0.051
+          },
+          {
+            "champion_id": "Caitlyn",
+            "pick_share": 0.04
           },
           {
             "champion_id": "Corki",
-            "pick_share": 0.035
+            "pick_share": 0.04
           },
           {
             "champion_id": "Tristana",
@@ -825,76 +1189,80 @@
           },
           {
             "champion_id": "Miss Fortune",
-            "pick_share": 0.029
+            "pick_share": 0.03
           },
           {
             "champion_id": "Sivir",
-            "pick_share": 0.029
+            "pick_share": 0.025
           },
           {
             "champion_id": "Ziggs",
-            "pick_share": 0.029
+            "pick_share": 0.025
           },
           {
             "champion_id": "Aphelios",
-            "pick_share": 0.018
-          },
-          {
-            "champion_id": "Jinx",
-            "pick_share": 0.018
-          },
-          {
-            "champion_id": "Varus",
-            "pick_share": 0.012
+            "pick_share": 0.02
           },
           {
             "champion_id": "Zeri",
-            "pick_share": 0.012
+            "pick_share": 0.02
+          },
+          {
+            "champion_id": "Jinx",
+            "pick_share": 0.015
+          },
+          {
+            "champion_id": "Varus",
+            "pick_share": 0.01
+          },
+          {
+            "champion_id": "Cassiopeia",
+            "pick_share": 0.005
           },
           {
             "champion_id": "Draven",
-            "pick_share": 0.006
-          },
-          {
-            "champion_id": "Twitch",
-            "pick_share": 0.006
+            "pick_share": 0.005
           }
         ],
         "JUNGLE": [
           {
             "champion_id": "Lee Sin",
-            "pick_share": 0.147
+            "pick_share": 0.141
           },
           {
             "champion_id": "Jarvan IV",
-            "pick_share": 0.135
+            "pick_share": 0.131
           },
           {
             "champion_id": "Qiyana",
-            "pick_share": 0.118
+            "pick_share": 0.116
           },
           {
             "champion_id": "Vi",
-            "pick_share": 0.1
-          },
-          {
-            "champion_id": "Nocturne",
-            "pick_share": 0.082
+            "pick_share": 0.091
           },
           {
             "champion_id": "Pantheon",
-            "pick_share": 0.082
+            "pick_share": 0.086
+          },
+          {
+            "champion_id": "Nocturne",
+            "pick_share": 0.076
           },
           {
             "champion_id": "Wukong",
-            "pick_share": 0.059
+            "pick_share": 0.066
           },
           {
             "champion_id": "Trundle",
-            "pick_share": 0.053
+            "pick_share": 0.061
           },
           {
             "champion_id": "Maokai",
+            "pick_share": 0.035
+          },
+          {
+            "champion_id": "Naafiri",
             "pick_share": 0.035
           },
           {
@@ -902,148 +1270,144 @@
             "pick_share": 0.035
           },
           {
-            "champion_id": "Cho'Gath",
-            "pick_share": 0.029
-          },
-          {
-            "champion_id": "Naafiri",
-            "pick_share": 0.029
+            "champion_id": "Xin Zhao",
+            "pick_share": 0.035
           },
           {
             "champion_id": "Sejuani",
-            "pick_share": 0.029
+            "pick_share": 0.03
           },
           {
-            "champion_id": "Xin Zhao",
-            "pick_share": 0.029
+            "champion_id": "Cho'Gath",
+            "pick_share": 0.025
           },
           {
             "champion_id": "Jayce",
-            "pick_share": 0.012
+            "pick_share": 0.015
           },
           {
             "champion_id": "Aatrox",
-            "pick_share": 0.006
+            "pick_share": 0.005
           },
           {
             "champion_id": "Lillia",
-            "pick_share": 0.006
+            "pick_share": 0.005
           },
           {
             "champion_id": "Malphite",
-            "pick_share": 0.006
+            "pick_share": 0.005
           },
           {
             "champion_id": "Nasus",
-            "pick_share": 0.006
+            "pick_share": 0.005
           }
         ],
         "MID": [
           {
-            "champion_id": "Syndra",
-            "pick_share": 0.124
+            "champion_id": "Orianna",
+            "pick_share": 0.121
           },
           {
-            "champion_id": "Orianna",
-            "pick_share": 0.118
+            "champion_id": "Syndra",
+            "pick_share": 0.116
           },
           {
             "champion_id": "Viktor",
-            "pick_share": 0.1
-          },
-          {
-            "champion_id": "Akali",
-            "pick_share": 0.076
+            "pick_share": 0.106
           },
           {
             "champion_id": "Cassiopeia",
+            "pick_share": 0.076
+          },
+          {
+            "champion_id": "Akali",
             "pick_share": 0.071
           },
           {
             "champion_id": "Locke",
-            "pick_share": 0.071
+            "pick_share": 0.061
           },
           {
             "champion_id": "Ryze",
-            "pick_share": 0.059
+            "pick_share": 0.056
           },
           {
             "champion_id": "Galio",
-            "pick_share": 0.047
+            "pick_share": 0.051
           },
           {
             "champion_id": "Ahri",
-            "pick_share": 0.035
+            "pick_share": 0.04
           },
           {
             "champion_id": "Anivia",
-            "pick_share": 0.035
+            "pick_share": 0.04
           },
           {
             "champion_id": "Annie",
-            "pick_share": 0.035
-          },
-          {
-            "champion_id": "Sylas",
-            "pick_share": 0.035
+            "pick_share": 0.04
           },
           {
             "champion_id": "Taliyah",
-            "pick_share": 0.029
+            "pick_share": 0.04
+          },
+          {
+            "champion_id": "Sylas",
+            "pick_share": 0.03
           },
           {
             "champion_id": "Aurora",
-            "pick_share": 0.024
+            "pick_share": 0.025
           },
           {
             "champion_id": "LeBlanc",
-            "pick_share": 0.024
+            "pick_share": 0.02
           },
           {
             "champion_id": "Twisted Fate",
-            "pick_share": 0.024
-          },
-          {
-            "champion_id": "Kog'Maw",
-            "pick_share": 0.018
+            "pick_share": 0.02
           },
           {
             "champion_id": "Yone",
-            "pick_share": 0.018
+            "pick_share": 0.02
+          },
+          {
+            "champion_id": "Kog'Maw",
+            "pick_share": 0.015
           },
           {
             "champion_id": "Lissandra",
-            "pick_share": 0.012
+            "pick_share": 0.01
           },
           {
             "champion_id": "Corki",
-            "pick_share": 0.006
+            "pick_share": 0.005
           }
         ],
         "SUPPORT": [
           {
-            "champion_id": "Alistar",
-            "pick_share": 0.129
-          },
-          {
             "champion_id": "Lulu",
-            "pick_share": 0.129
+            "pick_share": 0.126
           },
           {
             "champion_id": "Nautilus",
-            "pick_share": 0.124
+            "pick_share": 0.126
+          },
+          {
+            "champion_id": "Alistar",
+            "pick_share": 0.121
           },
           {
             "champion_id": "Renata Glasc",
-            "pick_share": 0.106
-          },
-          {
-            "champion_id": "Karma",
-            "pick_share": 0.094
+            "pick_share": 0.096
           },
           {
             "champion_id": "Seraphine",
-            "pick_share": 0.088
+            "pick_share": 0.091
+          },
+          {
+            "champion_id": "Karma",
+            "pick_share": 0.081
           },
           {
             "champion_id": "Milio",
@@ -1051,73 +1415,73 @@
           },
           {
             "champion_id": "Rakan",
-            "pick_share": 0.065
+            "pick_share": 0.066
           },
           {
             "champion_id": "Leona",
-            "pick_share": 0.029
-          },
-          {
-            "champion_id": "Bard",
-            "pick_share": 0.018
-          },
-          {
-            "champion_id": "Nami",
-            "pick_share": 0.018
+            "pick_share": 0.04
           },
           {
             "champion_id": "Rell",
-            "pick_share": 0.018
-          },
-          {
-            "champion_id": "Shen",
-            "pick_share": 0.018
-          },
-          {
-            "champion_id": "Camille",
-            "pick_share": 0.012
-          },
-          {
-            "champion_id": "Neeko",
-            "pick_share": 0.012
-          },
-          {
-            "champion_id": "Thresh",
-            "pick_share": 0.012
+            "pick_share": 0.03
           },
           {
             "champion_id": "Yuumi",
-            "pick_share": 0.012
+            "pick_share": 0.02
+          },
+          {
+            "champion_id": "Bard",
+            "pick_share": 0.015
+          },
+          {
+            "champion_id": "Nami",
+            "pick_share": 0.015
+          },
+          {
+            "champion_id": "Neeko",
+            "pick_share": 0.015
+          },
+          {
+            "champion_id": "Shen",
+            "pick_share": 0.015
+          },
+          {
+            "champion_id": "Thresh",
+            "pick_share": 0.015
+          },
+          {
+            "champion_id": "Camille",
+            "pick_share": 0.01
+          },
+          {
+            "champion_id": "Pyke",
+            "pick_share": 0.01
           },
           {
             "champion_id": "Braum",
-            "pick_share": 0.006
+            "pick_share": 0.005
           },
           {
             "champion_id": "Elise",
-            "pick_share": 0.006
-          },
-          {
-            "champion_id": "Lux",
-            "pick_share": 0.006
+            "pick_share": 0.005
           }
         ],
         "TOP": [
           {
             "champion_id": "Rumble",
-            "pick_share": 0.135
+            "pick_share": 0.131
           },
           {
             "champion_id": "Ambessa",
-            "pick_share": 0.129
+            "pick_share": 0.126
           },
           {
             "champion_id": "K'Sante",
-            "pick_share": 0.118
+            "pick_share": 0.111
           },
           {
             "champion_id": "Olaf",
-            "pick_share": 0.088
+            "pick_share": 0.091
           },
           {
             "champion_id": "Gnar",
@@ -1128,60 +1492,60 @@
             "pick_share": 0.071
           },
           {
-            "champion_id": "Camille",
-            "pick_share": 0.053
+            "champion_id": "Renekton",
+            "pick_share": 0.056
           },
           {
-            "champion_id": "Renekton",
-            "pick_share": 0.053
+            "champion_id": "Camille",
+            "pick_share": 0.051
           },
           {
             "champion_id": "Ornn",
-            "pick_share": 0.041
-          },
-          {
-            "champion_id": "Galio",
-            "pick_share": 0.035
+            "pick_share": 0.045
           },
           {
             "champion_id": "Jax",
-            "pick_share": 0.035
+            "pick_share": 0.04
+          },
+          {
+            "champion_id": "Galio",
+            "pick_share": 0.03
           },
           {
             "champion_id": "Zaahen",
-            "pick_share": 0.029
+            "pick_share": 0.025
           },
           {
             "champion_id": "Shen",
-            "pick_share": 0.024
-          },
-          {
-            "champion_id": "Kled",
-            "pick_share": 0.018
-          },
-          {
-            "champion_id": "Yorick",
-            "pick_share": 0.018
+            "pick_share": 0.02
           },
           {
             "champion_id": "Aatrox",
-            "pick_share": 0.012
+            "pick_share": 0.015
           },
           {
             "champion_id": "Kennen",
-            "pick_share": 0.012
+            "pick_share": 0.015
+          },
+          {
+            "champion_id": "Kled",
+            "pick_share": 0.015
+          },
+          {
+            "champion_id": "Yorick",
+            "pick_share": 0.015
           },
           {
             "champion_id": "Aurora",
-            "pick_share": 0.006
+            "pick_share": 0.01
+          },
+          {
+            "champion_id": "Sion",
+            "pick_share": 0.01
           },
           {
             "champion_id": "Dr. Mundo",
-            "pick_share": 0.006
-          },
-          {
-            "champion_id": "Gwen",
-            "pick_share": 0.006
+            "pick_share": 0.005
           }
         ]
       }
@@ -1191,47 +1555,42 @@
     "contested_priority": [
       {
         "champion_id": "Vi",
-        "own_game_count": 7,
-        "target_game_count": 6
-      },
-      {
-        "champion_id": "Lee Sin",
-        "own_game_count": 4,
-        "target_game_count": 8
+        "own_game_count": 6,
+        "target_game_count": 5
       }
     ],
     "counterpick_role": {
       "champion_id": "TOP",
-      "game_count": 8,
-      "rate": 0.4
+      "game_count": 10,
+      "rate": 0.455
     },
     "deny_comfort": [
       {
         "also_own_priority": false,
         "champion_id": "Rumble",
-        "game_count": 10,
+        "game_count": 9,
         "player_name": "Canna",
         "role": "TOP",
-        "share": 0.25,
-        "win_count": 6
+        "share": 0.225,
+        "win_count": 4
       },
       {
-        "also_own_priority": true,
+        "also_own_priority": false,
         "champion_id": "Lee Sin",
         "game_count": 8,
         "player_name": "Yike",
         "role": "JUNGLE",
         "share": 0.2,
-        "win_count": 4
+        "win_count": 3
       },
       {
         "also_own_priority": false,
         "champion_id": "Viktor",
-        "game_count": 8,
+        "game_count": 7,
         "player_name": "kyeahoo",
         "role": "MID",
-        "share": 0.2,
-        "win_count": 6
+        "share": 0.175,
+        "win_count": 5
       },
       {
         "also_own_priority": false,
@@ -1240,67 +1599,67 @@
         "player_name": "Canna",
         "role": "TOP",
         "share": 0.15,
-        "win_count": 4
+        "win_count": 3
       },
       {
         "also_own_priority": false,
-        "champion_id": "Syndra",
+        "champion_id": "Ezreal",
         "game_count": 6,
-        "player_name": "kyeahoo",
-        "role": "MID",
+        "player_name": "Caliste",
+        "role": "BOTTOM",
         "share": 0.15,
-        "win_count": 5
+        "win_count": 3
       },
       {
-        "also_own_priority": true,
-        "champion_id": "Vi",
-        "game_count": 6,
-        "player_name": "Yike",
-        "role": "JUNGLE",
-        "share": 0.15,
+        "also_own_priority": false,
+        "champion_id": "Ashe",
+        "game_count": 5,
+        "player_name": "Caliste",
+        "role": "BOTTOM",
+        "share": 0.125,
         "win_count": 4
       }
     ],
     "expected_phase_one_bans": [
       {
         "champion_id": "Nocturne",
-        "presence_rate": 0.906
+        "presence_rate": 0.919
       },
       {
         "champion_id": "Vi",
-        "presence_rate": 0.765
-      },
-      {
-        "champion_id": "Cassiopeia",
-        "presence_rate": 0.729
+        "presence_rate": 0.768
       },
       {
         "champion_id": "Renata Glasc",
-        "presence_rate": 0.671
+        "presence_rate": 0.697
+      },
+      {
+        "champion_id": "Cassiopeia",
+        "presence_rate": 0.687
       },
       {
         "champion_id": "Olaf",
-        "presence_rate": 0.624
+        "presence_rate": 0.626
       },
       {
         "champion_id": "Qiyana",
-        "presence_rate": 0.6
+        "presence_rate": 0.586
       },
       {
         "champion_id": "Syndra",
-        "presence_rate": 0.553
+        "presence_rate": 0.556
       },
       {
         "champion_id": "Jarvan IV",
-        "presence_rate": 0.541
+        "presence_rate": 0.545
       },
       {
         "champion_id": "Akali",
-        "presence_rate": 0.518
+        "presence_rate": 0.535
       },
       {
-        "champion_id": "Ezreal",
-        "presence_rate": 0.518
+        "champion_id": "Lee Sin",
+        "presence_rate": 0.515
       }
     ],
     "expected_picks": [
@@ -1308,15 +1667,15 @@
         "champions": [
           {
             "champion_id": "Rumble",
-            "meta_pick_share": 0.135,
-            "player_game_count": 10,
-            "score": 0.221
+            "meta_pick_share": 0.131,
+            "player_game_count": 9,
+            "score": 0.202
           },
           {
             "champion_id": "Ambessa",
-            "meta_pick_share": 0.129,
+            "meta_pick_share": 0.126,
             "player_game_count": 6,
-            "score": 0.145
+            "score": 0.144
           },
           {
             "champion_id": "Jayce",
@@ -1325,14 +1684,20 @@
             "score": 0.112
           },
           {
-            "champion_id": "Galio",
-            "meta_pick_share": 0.035,
+            "champion_id": "Renekton",
+            "meta_pick_share": 0.056,
             "player_game_count": 3,
-            "score": 0.065
+            "score": 0.07
+          },
+          {
+            "champion_id": "Galio",
+            "meta_pick_share": 0.03,
+            "player_game_count": 3,
+            "score": 0.064
           },
           {
             "champion_id": "Olaf",
-            "meta_pick_share": 0.088,
+            "meta_pick_share": 0.091,
             "player_game_count": 2,
             "score": 0.06
           },
@@ -1343,10 +1708,10 @@
             "score": 0.055
           },
           {
-            "champion_id": "Renekton",
-            "meta_pick_share": 0.053,
-            "player_game_count": 2,
-            "score": 0.051
+            "champion_id": "K'Sante",
+            "meta_pick_share": 0.111,
+            "player_game_count": 1,
+            "score": 0.046
           },
           {
             "champion_id": "Twisted Fate",
@@ -1356,45 +1721,39 @@
           },
           {
             "champion_id": "Camille",
-            "meta_pick_share": 0.053,
+            "meta_pick_share": 0.051,
             "player_game_count": 1,
             "score": 0.032
           },
           {
-            "champion_id": "K'Sante",
-            "meta_pick_share": 0.118,
-            "player_game_count": 0,
+            "champion_id": "Jax",
+            "meta_pick_share": 0.04,
+            "player_game_count": 1,
             "score": 0.029
           },
           {
-            "champion_id": "Jax",
-            "meta_pick_share": 0.035,
-            "player_game_count": 1,
-            "score": 0.028
-          },
-          {
             "champion_id": "Zaahen",
-            "meta_pick_share": 0.029,
+            "meta_pick_share": 0.025,
             "player_game_count": 1,
-            "score": 0.026
-          },
-          {
-            "champion_id": "Kled",
-            "meta_pick_share": 0.018,
-            "player_game_count": 1,
-            "score": 0.023
-          },
-          {
-            "champion_id": "Yorick",
-            "meta_pick_share": 0.018,
-            "player_game_count": 1,
-            "score": 0.023
+            "score": 0.025
           },
           {
             "champion_id": "Kennen",
-            "meta_pick_share": 0.012,
+            "meta_pick_share": 0.015,
             "player_game_count": 1,
-            "score": 0.022
+            "score": 0.023
+          },
+          {
+            "champion_id": "Kled",
+            "meta_pick_share": 0.015,
+            "player_game_count": 1,
+            "score": 0.023
+          },
+          {
+            "champion_id": "Akali",
+            "meta_pick_share": null,
+            "player_game_count": 1,
+            "score": 0.019
           }
         ],
         "player_name": "Canna",
@@ -1404,51 +1763,57 @@
         "champions": [
           {
             "champion_id": "Lee Sin",
-            "meta_pick_share": 0.147,
+            "meta_pick_share": 0.141,
             "player_game_count": 8,
-            "score": 0.187
+            "score": 0.185
           },
           {
             "champion_id": "Vi",
-            "meta_pick_share": 0.1,
-            "player_game_count": 6,
-            "score": 0.137
-          },
-          {
-            "champion_id": "Jarvan IV",
-            "meta_pick_share": 0.135,
+            "meta_pick_share": 0.091,
             "player_game_count": 5,
-            "score": 0.128
-          },
-          {
-            "champion_id": "Qiyana",
-            "meta_pick_share": 0.118,
-            "player_game_count": 4,
-            "score": 0.105
+            "score": 0.116
           },
           {
             "champion_id": "Wukong",
-            "meta_pick_share": 0.059,
-            "player_game_count": 4,
-            "score": 0.09
+            "meta_pick_share": 0.066,
+            "player_game_count": 5,
+            "score": 0.11
           },
           {
-            "champion_id": "Naafiri",
-            "meta_pick_share": 0.029,
+            "champion_id": "Jarvan IV",
+            "meta_pick_share": 0.131,
             "player_game_count": 4,
-            "score": 0.082
+            "score": 0.108
+          },
+          {
+            "champion_id": "Qiyana",
+            "meta_pick_share": 0.116,
+            "player_game_count": 4,
+            "score": 0.104
           },
           {
             "champion_id": "Pantheon",
-            "meta_pick_share": 0.082,
-            "player_game_count": 3,
-            "score": 0.077
+            "meta_pick_share": 0.086,
+            "player_game_count": 4,
+            "score": 0.097
+          },
+          {
+            "champion_id": "Naafiri",
+            "meta_pick_share": 0.035,
+            "player_game_count": 4,
+            "score": 0.084
           },
           {
             "champion_id": "Trundle",
-            "meta_pick_share": 0.053,
+            "meta_pick_share": 0.061,
             "player_game_count": 2,
-            "score": 0.051
+            "score": 0.053
+          },
+          {
+            "champion_id": "Xin Zhao",
+            "meta_pick_share": 0.035,
+            "player_game_count": 2,
+            "score": 0.046
           },
           {
             "champion_id": "Skarner",
@@ -1457,25 +1822,13 @@
             "score": 0.028
           },
           {
-            "champion_id": "Xin Zhao",
-            "meta_pick_share": 0.029,
-            "player_game_count": 1,
-            "score": 0.026
-          },
-          {
             "champion_id": "Nocturne",
-            "meta_pick_share": 0.082,
+            "meta_pick_share": 0.076,
             "player_game_count": 0,
-            "score": 0.021
-          },
-          {
-            "champion_id": "Dr. Mundo",
-            "meta_pick_share": null,
-            "player_game_count": 1,
             "score": 0.019
           },
           {
-            "champion_id": "Poppy",
+            "champion_id": "Dr. Mundo",
             "meta_pick_share": null,
             "player_game_count": 1,
             "score": 0.019
@@ -1487,10 +1840,16 @@
             "score": 0.009
           },
           {
-            "champion_id": "Cho'Gath",
-            "meta_pick_share": 0.029,
+            "champion_id": "Sejuani",
+            "meta_pick_share": 0.03,
             "player_game_count": 0,
             "score": 0.007
+          },
+          {
+            "champion_id": "Cho'Gath",
+            "meta_pick_share": 0.025,
+            "player_game_count": 0,
+            "score": 0.006
           }
         ],
         "player_name": "Yike",
@@ -1500,91 +1859,91 @@
         "champions": [
           {
             "champion_id": "Viktor",
-            "meta_pick_share": 0.1,
-            "player_game_count": 8,
-            "score": 0.175
+            "meta_pick_share": 0.106,
+            "player_game_count": 7,
+            "score": 0.158
+          },
+          {
+            "champion_id": "Orianna",
+            "meta_pick_share": 0.121,
+            "player_game_count": 5,
+            "score": 0.124
           },
           {
             "champion_id": "Syndra",
-            "meta_pick_share": 0.124,
-            "player_game_count": 6,
-            "score": 0.143
+            "meta_pick_share": 0.116,
+            "player_game_count": 5,
+            "score": 0.123
           },
           {
             "champion_id": "Cassiopeia",
-            "meta_pick_share": 0.071,
+            "meta_pick_share": 0.076,
             "player_game_count": 5,
-            "score": 0.112
+            "score": 0.113
           },
           {
             "champion_id": "Ryze",
-            "meta_pick_share": 0.059,
+            "meta_pick_share": 0.056,
             "player_game_count": 5,
             "score": 0.108
           },
           {
-            "champion_id": "Orianna",
-            "meta_pick_share": 0.118,
-            "player_game_count": 4,
-            "score": 0.105
-          },
-          {
             "champion_id": "Ahri",
-            "meta_pick_share": 0.035,
-            "player_game_count": 3,
-            "score": 0.065
+            "meta_pick_share": 0.04,
+            "player_game_count": 4,
+            "score": 0.085
           },
           {
             "champion_id": "Anivia",
-            "meta_pick_share": 0.035,
+            "meta_pick_share": 0.04,
             "player_game_count": 3,
-            "score": 0.065
+            "score": 0.066
           },
           {
             "champion_id": "Sylas",
-            "meta_pick_share": 0.035,
+            "meta_pick_share": 0.03,
             "player_game_count": 3,
-            "score": 0.065
+            "score": 0.064
           },
           {
             "champion_id": "Akali",
-            "meta_pick_share": 0.076,
+            "meta_pick_share": 0.071,
             "player_game_count": 1,
-            "score": 0.038
+            "score": 0.037
           },
           {
             "champion_id": "Taliyah",
-            "meta_pick_share": 0.029,
+            "meta_pick_share": 0.04,
             "player_game_count": 1,
-            "score": 0.026
+            "score": 0.029
           },
           {
             "champion_id": "LeBlanc",
-            "meta_pick_share": 0.024,
+            "meta_pick_share": 0.02,
             "player_game_count": 1,
-            "score": 0.025
+            "score": 0.024
           },
           {
             "champion_id": "Locke",
-            "meta_pick_share": 0.071,
+            "meta_pick_share": 0.061,
             "player_game_count": 0,
-            "score": 0.018
+            "score": 0.015
           },
           {
             "champion_id": "Galio",
-            "meta_pick_share": 0.047,
+            "meta_pick_share": 0.051,
             "player_game_count": 0,
-            "score": 0.012
+            "score": 0.013
           },
           {
             "champion_id": "Annie",
-            "meta_pick_share": 0.035,
+            "meta_pick_share": 0.04,
             "player_game_count": 0,
-            "score": 0.009
+            "score": 0.01
           },
           {
             "champion_id": "Aurora",
-            "meta_pick_share": 0.024,
+            "meta_pick_share": 0.025,
             "player_game_count": 0,
             "score": 0.006
           }
@@ -1596,91 +1955,91 @@
         "champions": [
           {
             "champion_id": "Ezreal",
-            "meta_pick_share": 0.147,
-            "player_game_count": 5,
-            "score": 0.131
+            "meta_pick_share": 0.146,
+            "player_game_count": 6,
+            "score": 0.149
           },
           {
             "champion_id": "Ashe",
-            "meta_pick_share": 0.071,
+            "meta_pick_share": 0.076,
             "player_game_count": 5,
-            "score": 0.112
+            "score": 0.113
+          },
+          {
+            "champion_id": "Xayah",
+            "meta_pick_share": 0.051,
+            "player_game_count": 4,
+            "score": 0.088
           },
           {
             "champion_id": "Caitlyn",
-            "meta_pick_share": 0.047,
-            "player_game_count": 5,
-            "score": 0.105
-          },
-          {
-            "champion_id": "Kalista",
-            "meta_pick_share": 0.1,
-            "player_game_count": 3,
-            "score": 0.081
+            "meta_pick_share": 0.04,
+            "player_game_count": 4,
+            "score": 0.085
           },
           {
             "champion_id": "Yunara",
-            "meta_pick_share": 0.1,
+            "meta_pick_share": 0.101,
             "player_game_count": 3,
             "score": 0.081
           },
           {
             "champion_id": "Lucian",
-            "meta_pick_share": 0.094,
+            "meta_pick_share": 0.091,
             "player_game_count": 3,
-            "score": 0.08
-          },
-          {
-            "champion_id": "Xayah",
-            "meta_pick_share": 0.047,
-            "player_game_count": 3,
-            "score": 0.068
+            "score": 0.079
           },
           {
             "champion_id": "Jhin",
-            "meta_pick_share": 0.112,
+            "meta_pick_share": 0.106,
             "player_game_count": 2,
-            "score": 0.066
+            "score": 0.064
+          },
+          {
+            "champion_id": "Kalista",
+            "meta_pick_share": 0.091,
+            "player_game_count": 2,
+            "score": 0.06
           },
           {
             "champion_id": "Varus",
-            "meta_pick_share": 0.012,
+            "meta_pick_share": 0.01,
             "player_game_count": 3,
             "score": 0.059
           },
           {
-            "champion_id": "Zeri",
-            "meta_pick_share": 0.012,
+            "champion_id": "Tristana",
+            "meta_pick_share": 0.035,
             "player_game_count": 2,
-            "score": 0.041
+            "score": 0.046
+          },
+          {
+            "champion_id": "Zeri",
+            "meta_pick_share": 0.02,
+            "player_game_count": 2,
+            "score": 0.043
           },
           {
             "champion_id": "Kai'Sa",
-            "meta_pick_share": 0.053,
+            "meta_pick_share": 0.056,
             "player_game_count": 1,
-            "score": 0.032
-          },
-          {
-            "champion_id": "Tristana",
-            "meta_pick_share": 0.035,
-            "player_game_count": 1,
-            "score": 0.028
+            "score": 0.033
           },
           {
             "champion_id": "Miss Fortune",
-            "meta_pick_share": 0.029,
+            "meta_pick_share": 0.03,
             "player_game_count": 1,
             "score": 0.026
           },
           {
             "champion_id": "Sivir",
-            "meta_pick_share": 0.029,
+            "meta_pick_share": 0.025,
             "player_game_count": 1,
-            "score": 0.026
+            "score": 0.025
           },
           {
             "champion_id": "Draven",
-            "meta_pick_share": 0.006,
+            "meta_pick_share": 0.005,
             "player_game_count": 1,
             "score": 0.02
           }
@@ -1692,51 +2051,57 @@
         "champions": [
           {
             "champion_id": "Seraphine",
-            "meta_pick_share": 0.088,
+            "meta_pick_share": 0.091,
             "player_game_count": 5,
             "score": 0.116
           },
           {
             "champion_id": "Lulu",
-            "meta_pick_share": 0.129,
+            "meta_pick_share": 0.126,
             "player_game_count": 4,
             "score": 0.107
           },
           {
             "champion_id": "Nautilus",
-            "meta_pick_share": 0.124,
+            "meta_pick_share": 0.126,
             "player_game_count": 4,
-            "score": 0.106
-          },
-          {
-            "champion_id": "Renata Glasc",
-            "meta_pick_share": 0.106,
-            "player_game_count": 3,
-            "score": 0.083
-          },
-          {
-            "champion_id": "Bard",
-            "meta_pick_share": 0.018,
-            "player_game_count": 4,
-            "score": 0.08
+            "score": 0.107
           },
           {
             "champion_id": "Rakan",
-            "meta_pick_share": 0.065,
-            "player_game_count": 3,
-            "score": 0.072
-          },
-          {
-            "champion_id": "Alistar",
-            "meta_pick_share": 0.129,
-            "player_game_count": 2,
-            "score": 0.07
+            "meta_pick_share": 0.066,
+            "player_game_count": 4,
+            "score": 0.092
           },
           {
             "champion_id": "Leona",
-            "meta_pick_share": 0.029,
+            "meta_pick_share": 0.04,
+            "player_game_count": 4,
+            "score": 0.085
+          },
+          {
+            "champion_id": "Alistar",
+            "meta_pick_share": 0.121,
+            "player_game_count": 2,
+            "score": 0.068
+          },
+          {
+            "champion_id": "Rell",
+            "meta_pick_share": 0.03,
             "player_game_count": 3,
             "score": 0.064
+          },
+          {
+            "champion_id": "Renata Glasc",
+            "meta_pick_share": 0.096,
+            "player_game_count": 2,
+            "score": 0.062
+          },
+          {
+            "champion_id": "Bard",
+            "meta_pick_share": 0.015,
+            "player_game_count": 3,
+            "score": 0.06
           },
           {
             "champion_id": "Milio",
@@ -1745,22 +2110,16 @@
             "score": 0.057
           },
           {
-            "champion_id": "Karma",
-            "meta_pick_share": 0.094,
-            "player_game_count": 1,
-            "score": 0.042
-          },
-          {
-            "champion_id": "Rell",
-            "meta_pick_share": 0.018,
-            "player_game_count": 2,
-            "score": 0.042
-          },
-          {
             "champion_id": "Yuumi",
-            "meta_pick_share": 0.012,
+            "meta_pick_share": 0.02,
             "player_game_count": 2,
-            "score": 0.041
+            "score": 0.043
+          },
+          {
+            "champion_id": "Karma",
+            "meta_pick_share": 0.081,
+            "player_game_count": 1,
+            "score": 0.039
           },
           {
             "champion_id": "Vel'Koz",
@@ -1770,15 +2129,15 @@
           },
           {
             "champion_id": "Nami",
-            "meta_pick_share": 0.018,
+            "meta_pick_share": 0.015,
             "player_game_count": 1,
             "score": 0.023
           },
           {
-            "champion_id": "Shen",
-            "meta_pick_share": 0.018,
+            "champion_id": "Lux",
+            "meta_pick_share": null,
             "player_game_count": 1,
-            "score": 0.023
+            "score": 0.019
           }
         ],
         "player_name": "Busio",
@@ -1787,94 +2146,94 @@
     ],
     "fearless_pressure": [
       {
-        "comfort_champions": 4,
+        "comfort_champions": 5,
         "player_name": "Canna",
         "role": "TOP",
-        "top_three_share": 0.525,
+        "top_three_share": 0.5,
         "unique_champions": 16
       },
       {
         "comfort_champions": 7,
         "player_name": "Yike",
         "role": "JUNGLE",
-        "top_three_share": 0.475,
-        "unique_champions": 12
+        "top_three_share": 0.45,
+        "unique_champions": 11
+      },
+      {
+        "comfort_champions": 7,
+        "player_name": "Caliste",
+        "role": "BOTTOM",
+        "top_three_share": 0.375,
+        "unique_champions": 15
       },
       {
         "comfort_champions": 7,
         "player_name": "Busio",
         "role": "SUPPORT",
         "top_three_share": 0.325,
-        "unique_champions": 16
+        "unique_champions": 15
       },
       {
         "comfort_champions": 8,
         "player_name": "kyeahoo",
         "role": "MID",
-        "top_three_share": 0.475,
+        "top_three_share": 0.425,
         "unique_champions": 11
-      },
-      {
-        "comfort_champions": 8,
-        "player_name": "Caliste",
-        "role": "BOTTOM",
-        "top_three_share": 0.375,
-        "unique_champions": 16
       }
     ],
     "protect_own": [
       {
-        "banned_by_target_head_to_head": 1,
-        "champion_id": "Bard",
-        "own_game_count": 3,
-        "received_phase_one_ban_count": 27
-      },
-      {
-        "banned_by_target_head_to_head": 3,
+        "banned_by_target_head_to_head": 6,
         "champion_id": "Nocturne",
         "own_game_count": 3,
-        "received_phase_one_ban_count": 25
+        "received_phase_one_ban_count": 26
+      },
+      {
+        "banned_by_target_head_to_head": 1,
+        "champion_id": "Bard",
+        "own_game_count": 2,
+        "received_phase_one_ban_count": 24
       },
       {
         "banned_by_target_head_to_head": 1,
         "champion_id": "Lucian",
         "own_game_count": 3,
-        "received_phase_one_ban_count": 14
+        "received_phase_one_ban_count": 12
+      },
+      {
+        "banned_by_target_head_to_head": 6,
+        "champion_id": "Vi",
+        "own_game_count": 6,
+        "received_phase_one_ban_count": 6
       },
       {
         "banned_by_target_head_to_head": 0,
         "champion_id": "Cassiopeia",
-        "own_game_count": 1,
-        "received_phase_one_ban_count": 10
+        "own_game_count": 2,
+        "received_phase_one_ban_count": 9
       },
       {
-        "banned_by_target_head_to_head": 3,
-        "champion_id": "Orianna",
-        "own_game_count": 6,
+        "banned_by_target_head_to_head": 2,
+        "champion_id": "Caitlyn",
+        "own_game_count": 4,
         "received_phase_one_ban_count": 4
-      },
-      {
-        "banned_by_target_head_to_head": 1,
-        "champion_id": "Poppy",
-        "own_game_count": 1,
-        "received_phase_one_ban_count": 6
       }
     ],
     "target_spends_phase_one_bans": [
       {
         "champion_id": "Nocturne",
-        "game_count": 28,
-        "rate": 0.7
+        "game_count": 29,
+        "rate": 0.725
       },
       {
         "champion_id": "Vi",
-        "game_count": 14,
-        "rate": 0.35
+        "game_count": 16,
+        "rate": 0.4
       },
       {
-        "champion_id": "Akali",
-        "game_count": 10,
-        "rate": 0.25
+        "champion_id": "Qiyana",
+        "game_count": 9,
+        "rate": 0.225
       }
     ]
   },
@@ -1886,22 +2245,17 @@
         "rate": 0.15
       },
       {
+        "champion_id": "Jayce",
+        "game_count": 4,
+        "rate": 0.1
+      },
+      {
         "champion_id": "Karma",
         "game_count": 4,
         "rate": 0.1
       },
       {
-        "champion_id": "Jayce",
-        "game_count": 3,
-        "rate": 0.075
-      },
-      {
-        "champion_id": "Jhin",
-        "game_count": 3,
-        "rate": 0.075
-      },
-      {
-        "champion_id": "Lee Sin",
+        "champion_id": "Nocturne",
         "game_count": 3,
         "rate": 0.075
       },
@@ -1909,18 +2263,23 @@
         "champion_id": "Orianna",
         "game_count": 3,
         "rate": 0.075
+      },
+      {
+        "champion_id": "Caitlyn",
+        "game_count": 2,
+        "rate": 0.05
       }
     ],
     "first_selection": {
-      "game_count": 22,
-      "rate": 0.55,
-      "win_count": 11,
-      "win_rate": 0.5
+      "game_count": 23,
+      "rate": 0.575,
+      "win_count": 12,
+      "win_rate": 0.522
     },
     "game_count": 40,
     "home_league": "LCK",
     "import_coverage": {
-      "accepted_games": 170,
+      "accepted_games": 174,
       "excluded_games": 0,
       "excluded_rate": 0.0,
       "exclusion_reasons": {},
@@ -1942,78 +2301,78 @@
           "observed": 21
         },
         "WLDs": {
-          "accepted": 5,
-          "observed": 5
+          "accepted": 9,
+          "observed": 9
         }
       },
-      "observed_games": 170
+      "observed_games": 174
     },
     "last_pick": {
       "champions": [
         {
           "champion_id": "Gwen",
           "game_count": 3,
-          "rate": 0.167
+          "rate": 0.176
         },
         {
           "champion_id": "Ambessa",
           "game_count": 2,
-          "rate": 0.111
-        },
-        {
-          "champion_id": "Lux",
-          "game_count": 2,
-          "rate": 0.111
+          "rate": 0.118
         },
         {
           "champion_id": "Aatrox",
           "game_count": 1,
-          "rate": 0.056
+          "rate": 0.059
         },
         {
           "champion_id": "Ahri",
           "game_count": 1,
-          "rate": 0.056
+          "rate": 0.059
         },
         {
           "champion_id": "Camille",
           "game_count": 1,
-          "rate": 0.056
+          "rate": 0.059
+        },
+        {
+          "champion_id": "Ezreal",
+          "game_count": 1,
+          "rate": 0.059
         }
       ],
-      "game_count": 18,
+      "game_count": 17,
       "roles": [
         {
           "champion_id": "TOP",
           "game_count": 7,
-          "rate": 0.389
+          "rate": 0.412
         },
         {
           "champion_id": "SUPPORT",
-          "game_count": 5,
-          "rate": 0.278
+          "game_count": 4,
+          "rate": 0.235
         },
         {
           "champion_id": "MID",
           "game_count": 3,
-          "rate": 0.167
+          "rate": 0.176
         },
         {
           "champion_id": "BOTTOM",
           "game_count": 2,
-          "rate": 0.111
+          "rate": 0.118
         },
         {
           "champion_id": "JUNGLE",
           "game_count": 1,
-          "rate": 0.056
+          "rate": 0.059
         }
       ]
     },
     "leagues": {
       "KeSPA Cup": 4,
-      "LCK": 31,
-      "WLDs": 5
+      "LCK": 27,
+      "WLDs": 9
     },
     "patches": [
       "16.15",
@@ -2023,23 +2382,23 @@
     "phase_one_bans": [
       {
         "champion_id": "Cassiopeia",
-        "game_count": 18,
-        "rate": 0.45
+        "game_count": 16,
+        "rate": 0.4
       },
       {
         "champion_id": "Orianna",
-        "game_count": 14,
-        "rate": 0.35
-      },
-      {
-        "champion_id": "Poppy",
-        "game_count": 12,
-        "rate": 0.3
+        "game_count": 13,
+        "rate": 0.325
       },
       {
         "champion_id": "Vi",
-        "game_count": 12,
-        "rate": 0.3
+        "game_count": 13,
+        "rate": 0.325
+      },
+      {
+        "champion_id": "Poppy",
+        "game_count": 11,
+        "rate": 0.275
       },
       {
         "champion_id": "Karma",
@@ -2064,12 +2423,12 @@
         "rate": 0.15
       },
       {
-        "champion_id": "Vayne",
-        "game_count": 6,
-        "rate": 0.15
+        "champion_id": "Akali",
+        "game_count": 5,
+        "rate": 0.125
       },
       {
-        "champion_id": "Akali",
+        "champion_id": "Vayne",
         "game_count": 5,
         "rate": 0.125
       },
@@ -2091,22 +2450,23 @@
       "Alistar": 4,
       "Ambessa": 4,
       "Anivia": 5,
+      "Annie": 1,
       "Azir": 1,
-      "Bard": 3,
+      "Bard": 2,
       "Blitzcrank": 1,
-      "Caitlyn": 5,
-      "Camille": 5,
-      "Cassiopeia": 1,
+      "Caitlyn": 4,
+      "Camille": 4,
+      "Cassiopeia": 2,
       "Corki": 1,
       "Ezreal": 2,
-      "Galio": 4,
-      "Gnar": 3,
+      "Galio": 3,
+      "Gnar": 2,
       "Gragas": 1,
       "Gwen": 4,
-      "Jarvan IV": 2,
+      "Jarvan IV": 3,
       "Jax": 2,
-      "Jayce": 6,
-      "Jhin": 7,
+      "Jayce": 7,
+      "Jhin": 6,
       "Jinx": 2,
       "K'Sante": 2,
       "Kai'Sa": 3,
@@ -2115,52 +2475,53 @@
       "Kennen": 2,
       "Kindred": 1,
       "LeBlanc": 1,
-      "Lee Sin": 4,
+      "Lee Sin": 3,
       "Lissandra": 1,
-      "Locke": 4,
+      "Locke": 2,
       "Lucian": 3,
-      "Lulu": 3,
-      "Lux": 3,
+      "Lulu": 4,
+      "Lux": 2,
       "Maokai": 1,
       "Mel": 2,
       "Milio": 3,
-      "Miss Fortune": 1,
+      "Miss Fortune": 2,
       "Naafiri": 5,
       "Nasus": 1,
-      "Nautilus": 2,
-      "Neeko": 2,
+      "Nautilus": 3,
+      "Neeko": 3,
       "Nocturne": 3,
-      "Olaf": 5,
+      "Olaf": 4,
       "Orianna": 6,
-      "Ornn": 1,
-      "Pantheon": 5,
+      "Ornn": 2,
+      "Pantheon": 4,
       "Poppy": 1,
       "Pyke": 1,
       "Qiyana": 2,
       "Rakan": 2,
       "Renata Glasc": 3,
-      "Rumble": 5,
+      "Rumble": 4,
       "Ryze": 3,
+      "Sejuani": 1,
       "Seraphine": 1,
       "Shen": 2,
       "Sivir": 1,
       "Skarner": 5,
       "Syndra": 3,
       "Tahm Kench": 1,
-      "Taliyah": 2,
-      "Trundle": 1,
+      "Taliyah": 3,
+      "Trundle": 2,
       "Twisted Fate": 1,
-      "Varus": 3,
+      "Varus": 2,
       "Vayne": 2,
-      "Vi": 7,
+      "Vi": 6,
       "Viktor": 3,
       "Wukong": 1,
       "Xayah": 2,
       "Xin Zhao": 2,
       "Yone": 2,
-      "Yunara": 3,
-      "Yuumi": 1,
-      "Zeri": 1,
+      "Yunara": 4,
+      "Yuumi": 2,
+      "Zeri": 2,
       "Ziggs": 2
     },
     "player_pools": [
@@ -2168,8 +2529,8 @@
         "champions": [
           {
             "champion_id": "Jayce",
-            "game_count": 6,
-            "share": 0.167,
+            "game_count": 7,
+            "share": 0.194,
             "win_count": 3
           },
           {
@@ -2186,81 +2547,81 @@
           },
           {
             "champion_id": "Olaf",
-            "game_count": 4,
-            "share": 0.111,
-            "win_count": 3
-          },
-          {
-            "champion_id": "Rumble",
             "game_count": 3,
             "share": 0.083,
-            "win_count": 1
+            "win_count": 2
           },
           {
-            "champion_id": "Gnar",
+            "champion_id": "Camille",
+            "game_count": 2,
+            "share": 0.056,
+            "win_count": 2
+          },
+          {
+            "champion_id": "Jax",
             "game_count": 2,
             "share": 0.056,
             "win_count": 0
           }
         ],
-        "comfort_champions": 5,
+        "comfort_champions": 4,
         "game_count": 36,
         "other_players": [
           "Haetae"
         ],
         "player_name": "Doran",
         "role": "TOP",
-        "top_three_share": 0.389,
+        "top_three_share": 0.417,
         "unique_champions": 15
       },
       {
         "champions": [
           {
             "champion_id": "Vi",
-            "game_count": 6,
-            "share": 0.182,
-            "win_count": 5
+            "game_count": 5,
+            "share": 0.139,
+            "win_count": 4
           },
           {
             "champion_id": "Naafiri",
             "game_count": 4,
-            "share": 0.121,
+            "share": 0.111,
             "win_count": 1
           },
           {
             "champion_id": "Pantheon",
             "game_count": 4,
-            "share": 0.121,
+            "share": 0.111,
             "win_count": 1
           },
           {
             "champion_id": "Skarner",
             "game_count": 4,
-            "share": 0.121,
-            "win_count": 3
-          },
-          {
-            "champion_id": "Lee Sin",
-            "game_count": 3,
-            "share": 0.091,
+            "share": 0.111,
             "win_count": 3
           },
           {
             "champion_id": "Jarvan IV",
-            "game_count": 2,
-            "share": 0.061,
-            "win_count": 1
+            "game_count": 3,
+            "share": 0.083,
+            "win_count": 2
+          },
+          {
+            "champion_id": "Lee Sin",
+            "game_count": 3,
+            "share": 0.083,
+            "win_count": 3
           }
         ],
-        "comfort_champions": 5,
-        "game_count": 33,
+        "comfort_champions": 7,
+        "game_count": 36,
         "other_players": [
           "Painter"
         ],
         "player_name": "Oner",
         "role": "JUNGLE",
-        "top_three_share": 0.424,
-        "unique_champions": 13
+        "top_three_share": 0.361,
+        "unique_champions": 14
       },
       {
         "champions": [
@@ -2278,12 +2639,6 @@
           },
           {
             "champion_id": "Galio",
-            "game_count": 4,
-            "share": 0.111,
-            "win_count": 3
-          },
-          {
-            "champion_id": "Locke",
             "game_count": 3,
             "share": 0.083,
             "win_count": 2
@@ -2299,43 +2654,49 @@
             "game_count": 2,
             "share": 0.056,
             "win_count": 1
+          },
+          {
+            "champion_id": "Cassiopeia",
+            "game_count": 2,
+            "share": 0.056,
+            "win_count": 2
           }
         ],
-        "comfort_champions": 5,
+        "comfort_champions": 4,
         "game_count": 36,
         "other_players": [
           "Guti"
         ],
         "player_name": "Faker",
         "role": "MID",
-        "top_three_share": 0.389,
-        "unique_champions": 17
+        "top_three_share": 0.361,
+        "unique_champions": 18
       },
       {
         "champions": [
           {
             "champion_id": "Jhin",
-            "game_count": 7,
-            "share": 0.194,
-            "win_count": 5
+            "game_count": 6,
+            "share": 0.167,
+            "win_count": 4
           },
           {
             "champion_id": "Caitlyn",
-            "game_count": 5,
-            "share": 0.139,
+            "game_count": 4,
+            "share": 0.111,
             "win_count": 1
+          },
+          {
+            "champion_id": "Yunara",
+            "game_count": 4,
+            "share": 0.111,
+            "win_count": 2
           },
           {
             "champion_id": "Lucian",
             "game_count": 3,
             "share": 0.083,
             "win_count": 0
-          },
-          {
-            "champion_id": "Yunara",
-            "game_count": 3,
-            "share": 0.083,
-            "win_count": 1
           },
           {
             "champion_id": "Ezreal",
@@ -2357,7 +2718,7 @@
         ],
         "player_name": "Peyz",
         "role": "BOTTOM",
-        "top_three_share": 0.417,
+        "top_three_share": 0.389,
         "unique_champions": 16
       },
       {
@@ -2375,69 +2736,69 @@
             "win_count": 2
           },
           {
-            "champion_id": "Bard",
+            "champion_id": "Lulu",
+            "game_count": 4,
+            "share": 0.111,
+            "win_count": 2
+          },
+          {
+            "champion_id": "Milio",
             "game_count": 3,
             "share": 0.083,
             "win_count": 0
           },
           {
-            "champion_id": "Camille",
+            "champion_id": "Neeko",
             "game_count": 3,
             "share": 0.083,
             "win_count": 2
           },
           {
-            "champion_id": "Lulu",
+            "champion_id": "Renata Glasc",
             "game_count": 3,
             "share": 0.083,
-            "win_count": 1
-          },
-          {
-            "champion_id": "Lux",
-            "game_count": 3,
-            "share": 0.083,
-            "win_count": 1
+            "win_count": 3
           }
         ],
-        "comfort_champions": 8,
+        "comfort_champions": 6,
         "game_count": 36,
         "other_players": [
           "Cloud"
         ],
         "player_name": "Keria",
         "role": "SUPPORT",
-        "top_three_share": 0.306,
+        "top_three_share": 0.333,
         "unique_champions": 16
       }
     ],
     "received_phase_one_bans": [
       {
-        "champion_id": "Bard",
-        "game_count": 27,
-        "rate": 0.675
+        "champion_id": "Nocturne",
+        "game_count": 26,
+        "rate": 0.65
       },
       {
-        "champion_id": "Nocturne",
-        "game_count": 25,
-        "rate": 0.625
+        "champion_id": "Bard",
+        "game_count": 24,
+        "rate": 0.6
       },
       {
         "champion_id": "Lucian",
-        "game_count": 14,
-        "rate": 0.35
+        "game_count": 12,
+        "rate": 0.3
       },
       {
         "champion_id": "Cassiopeia",
-        "game_count": 10,
-        "rate": 0.25
+        "game_count": 9,
+        "rate": 0.225
       },
       {
-        "champion_id": "Poppy",
+        "champion_id": "Vi",
         "game_count": 6,
         "rate": 0.15
       },
       {
-        "champion_id": "Orianna",
+        "champion_id": "Caitlyn",
         "game_count": 4,
         "rate": 0.1
       }
@@ -2449,12 +2810,17 @@
         "rate": 0.125
       },
       {
+        "champion_id": "Locke",
+        "game_count": 5,
+        "rate": 0.125
+      },
+      {
         "champion_id": "Akali",
         "game_count": 4,
         "rate": 0.1
       },
       {
-        "champion_id": "Locke",
+        "champion_id": "Sylas",
         "game_count": 4,
         "rate": 0.1
       },
@@ -2467,28 +2833,23 @@
         "champion_id": "Nautilus",
         "game_count": 3,
         "rate": 0.075
-      },
-      {
-        "champion_id": "Olaf",
-        "game_count": 3,
-        "rate": 0.075
       }
     ],
     "record": {
       "game_count": 40,
-      "win_count": 18,
-      "win_rate": 0.45
+      "win_count": 19,
+      "win_rate": 0.475
     },
     "side_record": {
       "BLUE": {
-        "game_count": 20,
+        "game_count": 19,
         "win_count": 8,
-        "win_rate": 0.4
+        "win_rate": 0.421
       },
       "RED": {
-        "game_count": 20,
-        "win_count": 10,
-        "win_rate": 0.5
+        "game_count": 21,
+        "win_count": 11,
+        "win_rate": 0.524
       }
     },
     "team_ids": [
@@ -2497,25 +2858,18 @@
     "team_name": "T1",
     "top_picks": [
       {
-        "champion_id": "Jhin",
-        "game_count": 7,
-        "rate": 0.175,
-        "role": "BOTTOM",
-        "win_count": 5
-      },
-      {
-        "champion_id": "Vi",
-        "game_count": 7,
-        "rate": 0.175,
-        "role": "JUNGLE",
-        "win_count": 6
-      },
-      {
         "champion_id": "Jayce",
-        "game_count": 6,
-        "rate": 0.15,
+        "game_count": 7,
+        "rate": 0.175,
         "role": "TOP",
         "win_count": 3
+      },
+      {
+        "champion_id": "Jhin",
+        "game_count": 6,
+        "rate": 0.15,
+        "role": "BOTTOM",
+        "win_count": 4
       },
       {
         "champion_id": "Orianna",
@@ -2525,6 +2879,13 @@
         "win_count": 1
       },
       {
+        "champion_id": "Vi",
+        "game_count": 6,
+        "rate": 0.15,
+        "role": "JUNGLE",
+        "win_count": 5
+      },
+      {
         "champion_id": "Anivia",
         "game_count": 5,
         "rate": 0.125,
@@ -2532,16 +2893,16 @@
         "win_count": 3
       },
       {
-        "champion_id": "Caitlyn",
+        "champion_id": "Naafiri",
         "game_count": 5,
         "rate": 0.125,
-        "role": "BOTTOM",
+        "role": "JUNGLE",
         "win_count": 1
       }
     ],
     "window": {
-      "first_observed_at": "2026-08-08T08:08:11+00:00",
-      "last_observed_at": "2026-10-28T21:12:07+00:00"
+      "first_observed_at": "2026-08-14T09:03:22+00:00",
+      "last_observed_at": "2026-11-07T01:06:38+00:00"
     }
   },
   "quality_flags": [
@@ -2551,14 +2912,19 @@
   "target": {
     "first_rotation_picks": [
       {
-        "champion_id": "Vi",
-        "game_count": 6,
-        "rate": 0.15
-      },
-      {
-        "champion_id": "Jarvan IV",
+        "champion_id": "Seraphine",
         "game_count": 5,
         "rate": 0.125
+      },
+      {
+        "champion_id": "Vi",
+        "game_count": 5,
+        "rate": 0.125
+      },
+      {
+        "champion_id": "Ashe",
+        "game_count": 4,
+        "rate": 0.1
       },
       {
         "champion_id": "Ezreal",
@@ -2566,31 +2932,26 @@
         "rate": 0.1
       },
       {
+        "champion_id": "Jarvan IV",
+        "game_count": 4,
+        "rate": 0.1
+      },
+      {
         "champion_id": "Lee Sin",
         "game_count": 4,
         "rate": 0.1
-      },
-      {
-        "champion_id": "Seraphine",
-        "game_count": 4,
-        "rate": 0.1
-      },
-      {
-        "champion_id": "Ashe",
-        "game_count": 3,
-        "rate": 0.075
       }
     ],
     "first_selection": {
-      "game_count": 20,
-      "rate": 0.5,
-      "win_count": 14,
-      "win_rate": 0.7
+      "game_count": 18,
+      "rate": 0.45,
+      "win_count": 11,
+      "win_rate": 0.611
     },
     "game_count": 40,
     "home_league": "LEC",
     "import_coverage": {
-      "accepted_games": 156,
+      "accepted_games": 160,
       "excluded_games": 0,
       "excluded_rate": 0.0,
       "exclusion_reasons": {},
@@ -2608,75 +2969,74 @@
           "observed": 9
         },
         "WLDs": {
-          "accepted": 18,
-          "observed": 18
+          "accepted": 22,
+          "observed": 22
         }
       },
-      "observed_games": 156
+      "observed_games": 160
     },
     "last_pick": {
       "champions": [
         {
           "champion_id": "Kalista",
           "game_count": 2,
-          "rate": 0.1
+          "rate": 0.091
+        },
+        {
+          "champion_id": "Renekton",
+          "game_count": 2,
+          "rate": 0.091
         },
         {
           "champion_id": "Sylas",
           "game_count": 2,
-          "rate": 0.1
+          "rate": 0.091
+        },
+        {
+          "champion_id": "Tristana",
+          "game_count": 2,
+          "rate": 0.091
         },
         {
           "champion_id": "Twisted Fate",
           "game_count": 2,
-          "rate": 0.1
+          "rate": 0.091
         },
         {
           "champion_id": "Ahri",
           "game_count": 1,
-          "rate": 0.05
-        },
-        {
-          "champion_id": "Anivia",
-          "game_count": 1,
-          "rate": 0.05
-        },
-        {
-          "champion_id": "Ashe",
-          "game_count": 1,
-          "rate": 0.05
+          "rate": 0.045
         }
       ],
-      "game_count": 20,
+      "game_count": 22,
       "roles": [
         {
           "champion_id": "TOP",
-          "game_count": 8,
-          "rate": 0.4
+          "game_count": 10,
+          "rate": 0.455
         },
         {
           "champion_id": "BOTTOM",
           "game_count": 6,
-          "rate": 0.3
+          "rate": 0.273
         },
         {
           "champion_id": "MID",
           "game_count": 5,
-          "rate": 0.25
+          "rate": 0.227
         },
         {
           "champion_id": "SUPPORT",
           "game_count": 1,
-          "rate": 0.05
+          "rate": 0.045
         }
       ]
     },
     "leagues": {
-      "LEC": 22,
-      "WLDs": 18
+      "LEC": 18,
+      "WLDs": 22
     },
     "patches": [
-      "16.15",
       "16.16",
       "16.17",
       "16.20"
@@ -2684,26 +3044,26 @@
     "phase_one_bans": [
       {
         "champion_id": "Nocturne",
-        "game_count": 28,
-        "rate": 0.7
+        "game_count": 29,
+        "rate": 0.725
       },
       {
         "champion_id": "Vi",
-        "game_count": 14,
-        "rate": 0.35
-      },
-      {
-        "champion_id": "Akali",
-        "game_count": 10,
-        "rate": 0.25
-      },
-      {
-        "champion_id": "Olaf",
-        "game_count": 6,
-        "rate": 0.15
+        "game_count": 16,
+        "rate": 0.4
       },
       {
         "champion_id": "Qiyana",
+        "game_count": 9,
+        "rate": 0.225
+      },
+      {
+        "champion_id": "Akali",
+        "game_count": 8,
+        "rate": 0.2
+      },
+      {
+        "champion_id": "Olaf",
         "game_count": 6,
         "rate": 0.15
       },
@@ -2715,12 +3075,12 @@
     ],
     "phase_two_bans": [
       {
-        "champion_id": "Vayne",
+        "champion_id": "Wukong",
         "game_count": 5,
         "rate": 0.125
       },
       {
-        "champion_id": "Olaf",
+        "champion_id": "Orianna",
         "game_count": 4,
         "rate": 0.1
       },
@@ -2730,50 +3090,51 @@
         "rate": 0.1
       },
       {
-        "champion_id": "Wukong",
+        "champion_id": "Ryze",
         "game_count": 4,
         "rate": 0.1
       },
       {
-        "champion_id": "Yone",
+        "champion_id": "Sylas",
         "game_count": 4,
         "rate": 0.1
       },
       {
-        "champion_id": "K'Sante",
-        "game_count": 3,
-        "rate": 0.075
+        "champion_id": "Vayne",
+        "game_count": 4,
+        "rate": 0.1
       }
     ],
     "pick_counts": {
-      "Ahri": 3,
+      "Ahri": 4,
       "Akali": 2,
       "Alistar": 2,
       "Ambessa": 6,
       "Anivia": 3,
       "Ashe": 5,
-      "Bard": 4,
-      "Caitlyn": 5,
+      "Bard": 3,
+      "Caitlyn": 4,
       "Camille": 1,
       "Cassiopeia": 5,
       "Dr. Mundo": 1,
       "Draven": 1,
-      "Ezreal": 5,
+      "Ezreal": 6,
       "Galio": 3,
       "Gnar": 2,
       "Gragas": 1,
-      "Jarvan IV": 5,
+      "Jarvan IV": 4,
       "Jax": 1,
       "Jayce": 5,
       "Jhin": 2,
+      "K'Sante": 1,
       "Kai'Sa": 1,
-      "Kalista": 3,
+      "Kalista": 2,
       "Karma": 1,
       "Kennen": 1,
       "Kled": 1,
       "LeBlanc": 1,
       "Lee Sin": 8,
-      "Leona": 3,
+      "Leona": 4,
       "Lucian": 3,
       "Lulu": 4,
       "Lux": 1,
@@ -2783,34 +3144,31 @@
       "Nami": 1,
       "Nautilus": 4,
       "Olaf": 2,
-      "Orianna": 4,
-      "Pantheon": 3,
-      "Poppy": 1,
+      "Orianna": 5,
+      "Pantheon": 4,
       "Qiyana": 4,
-      "Rakan": 3,
-      "Rell": 2,
-      "Renata Glasc": 3,
-      "Renekton": 2,
-      "Rumble": 10,
+      "Rakan": 4,
+      "Rell": 3,
+      "Renata Glasc": 2,
+      "Renekton": 3,
+      "Rumble": 9,
       "Ryze": 5,
       "Seraphine": 5,
-      "Shen": 1,
       "Sivir": 1,
       "Skarner": 1,
       "Sylas": 3,
-      "Syndra": 6,
+      "Syndra": 5,
       "Taliyah": 1,
-      "Tristana": 1,
+      "Tristana": 2,
       "Trundle": 2,
       "Twisted Fate": 2,
       "Varus": 3,
       "Vel'Koz": 2,
-      "Vi": 6,
-      "Viktor": 9,
-      "Wukong": 4,
-      "Xayah": 3,
-      "Xin Zhao": 1,
-      "Yorick": 1,
+      "Vi": 5,
+      "Viktor": 7,
+      "Wukong": 5,
+      "Xayah": 4,
+      "Xin Zhao": 2,
       "Yunara": 3,
       "Yuumi": 2,
       "Zaahen": 1,
@@ -2821,15 +3179,15 @@
         "champions": [
           {
             "champion_id": "Rumble",
-            "game_count": 10,
-            "share": 0.25,
-            "win_count": 6
+            "game_count": 9,
+            "share": 0.225,
+            "win_count": 4
           },
           {
             "champion_id": "Ambessa",
             "game_count": 6,
             "share": 0.15,
-            "win_count": 4
+            "win_count": 3
           },
           {
             "champion_id": "Jayce",
@@ -2844,24 +3202,24 @@
             "win_count": 3
           },
           {
+            "champion_id": "Renekton",
+            "game_count": 3,
+            "share": 0.075,
+            "win_count": 2
+          },
+          {
             "champion_id": "Gnar",
             "game_count": 2,
             "share": 0.05,
             "win_count": 0
-          },
-          {
-            "champion_id": "Olaf",
-            "game_count": 2,
-            "share": 0.05,
-            "win_count": 1
           }
         ],
-        "comfort_champions": 4,
+        "comfort_champions": 5,
         "game_count": 40,
         "other_players": [],
         "player_name": "Canna",
         "role": "TOP",
-        "top_three_share": 0.525,
+        "top_three_share": 0.5,
         "unique_champions": 16
       },
       {
@@ -2870,19 +3228,25 @@
             "champion_id": "Lee Sin",
             "game_count": 8,
             "share": 0.2,
-            "win_count": 4
+            "win_count": 3
           },
           {
             "champion_id": "Vi",
-            "game_count": 6,
-            "share": 0.15,
-            "win_count": 4
+            "game_count": 5,
+            "share": 0.125,
+            "win_count": 3
+          },
+          {
+            "champion_id": "Wukong",
+            "game_count": 5,
+            "share": 0.125,
+            "win_count": 3
           },
           {
             "champion_id": "Jarvan IV",
-            "game_count": 5,
-            "share": 0.125,
-            "win_count": 5
+            "game_count": 4,
+            "share": 0.1,
+            "win_count": 4
           },
           {
             "champion_id": "Naafiri",
@@ -2891,13 +3255,7 @@
             "win_count": 3
           },
           {
-            "champion_id": "Qiyana",
-            "game_count": 4,
-            "share": 0.1,
-            "win_count": 4
-          },
-          {
-            "champion_id": "Wukong",
+            "champion_id": "Pantheon",
             "game_count": 4,
             "share": 0.1,
             "win_count": 3
@@ -2908,25 +3266,25 @@
         "other_players": [],
         "player_name": "Yike",
         "role": "JUNGLE",
-        "top_three_share": 0.475,
-        "unique_champions": 12
+        "top_three_share": 0.45,
+        "unique_champions": 11
       },
       {
         "champions": [
           {
             "champion_id": "Viktor",
-            "game_count": 8,
-            "share": 0.2,
-            "win_count": 6
-          },
-          {
-            "champion_id": "Syndra",
-            "game_count": 6,
-            "share": 0.15,
+            "game_count": 7,
+            "share": 0.175,
             "win_count": 5
           },
           {
             "champion_id": "Cassiopeia",
+            "game_count": 5,
+            "share": 0.125,
+            "win_count": 3
+          },
+          {
+            "champion_id": "Orianna",
             "game_count": 5,
             "share": 0.125,
             "win_count": 3
@@ -2938,15 +3296,15 @@
             "win_count": 4
           },
           {
-            "champion_id": "Orianna",
-            "game_count": 4,
-            "share": 0.1,
+            "champion_id": "Syndra",
+            "game_count": 5,
+            "share": 0.125,
             "win_count": 3
           },
           {
             "champion_id": "Ahri",
-            "game_count": 3,
-            "share": 0.075,
+            "game_count": 4,
+            "share": 0.1,
             "win_count": 2
           }
         ],
@@ -2955,11 +3313,17 @@
         "other_players": [],
         "player_name": "kyeahoo",
         "role": "MID",
-        "top_three_share": 0.475,
+        "top_three_share": 0.425,
         "unique_champions": 11
       },
       {
         "champions": [
+          {
+            "champion_id": "Ezreal",
+            "game_count": 6,
+            "share": 0.15,
+            "win_count": 3
+          },
           {
             "champion_id": "Ashe",
             "game_count": 5,
@@ -2968,21 +3332,15 @@
           },
           {
             "champion_id": "Caitlyn",
-            "game_count": 5,
-            "share": 0.125,
-            "win_count": 3
-          },
-          {
-            "champion_id": "Ezreal",
-            "game_count": 5,
-            "share": 0.125,
-            "win_count": 3
-          },
-          {
-            "champion_id": "Kalista",
-            "game_count": 3,
-            "share": 0.075,
+            "game_count": 4,
+            "share": 0.1,
             "win_count": 2
+          },
+          {
+            "champion_id": "Xayah",
+            "game_count": 4,
+            "share": 0.1,
+            "win_count": 3
           },
           {
             "champion_id": "Lucian",
@@ -2997,13 +3355,13 @@
             "win_count": 3
           }
         ],
-        "comfort_champions": 8,
+        "comfort_champions": 7,
         "game_count": 40,
         "other_players": [],
         "player_name": "Caliste",
         "role": "BOTTOM",
         "top_three_share": 0.375,
-        "unique_champions": 16
+        "unique_champions": 15
       },
       {
         "champions": [
@@ -3014,10 +3372,10 @@
             "win_count": 4
           },
           {
-            "champion_id": "Bard",
+            "champion_id": "Leona",
             "game_count": 4,
             "share": 0.1,
-            "win_count": 2
+            "win_count": 3
           },
           {
             "champion_id": "Lulu",
@@ -3032,16 +3390,16 @@
             "win_count": 2
           },
           {
-            "champion_id": "Leona",
-            "game_count": 3,
-            "share": 0.075,
+            "champion_id": "Rakan",
+            "game_count": 4,
+            "share": 0.1,
             "win_count": 3
           },
           {
-            "champion_id": "Rakan",
+            "champion_id": "Bard",
             "game_count": 3,
             "share": 0.075,
-            "win_count": 3
+            "win_count": 1
           }
         ],
         "comfort_champions": 7,
@@ -3050,12 +3408,12 @@
         "player_name": "Busio",
         "role": "SUPPORT",
         "top_three_share": 0.325,
-        "unique_champions": 16
+        "unique_champions": 15
       }
     ],
     "received_phase_one_bans": [
       {
-        "champion_id": "Jayce",
+        "champion_id": "Renata Glasc",
         "game_count": 10,
         "rate": 0.25
       },
@@ -3065,12 +3423,12 @@
         "rate": 0.25
       },
       {
-        "champion_id": "Orianna",
+        "champion_id": "Cassiopeia",
         "game_count": 9,
         "rate": 0.225
       },
       {
-        "champion_id": "Cassiopeia",
+        "champion_id": "Jayce",
         "game_count": 8,
         "rate": 0.2
       },
@@ -3087,11 +3445,6 @@
     ],
     "received_phase_two_bans": [
       {
-        "champion_id": "Lulu",
-        "game_count": 5,
-        "rate": 0.125
-      },
-      {
         "champion_id": "Olaf",
         "game_count": 5,
         "rate": 0.125
@@ -3102,7 +3455,7 @@
         "rate": 0.1
       },
       {
-        "champion_id": "Nautilus",
+        "champion_id": "Lulu",
         "game_count": 4,
         "rate": 0.1
       },
@@ -3115,12 +3468,17 @@
         "champion_id": "Vayne",
         "game_count": 4,
         "rate": 0.1
+      },
+      {
+        "champion_id": "Akali",
+        "game_count": 3,
+        "rate": 0.075
       }
     ],
     "record": {
       "game_count": 40,
-      "win_count": 28,
-      "win_rate": 0.7
+      "win_count": 25,
+      "win_rate": 0.625
     },
     "season_tendencies": [
       {
@@ -3148,12 +3506,13 @@
               "oe:LEC:LOLTMNT06_163258:pick:9",
               "oe:MSI:LOLTMNT01_414165:pick:5",
               "oe:MSI:LOLTMNT01_414558:pick:5",
-              "oe:WLDs:LOLTMNT02_480511:pick:3"
+              "oe:WLDs:LOLTMNT02_480511:pick:3",
+              "oe:WLDs:LOLTMNT02_488135:pick:4"
             ],
-            "recent_games": 5,
-            "recent_share": 0.125,
-            "season_games": 21,
-            "season_share": 0.135
+            "recent_games": 6,
+            "recent_share": 0.15,
+            "season_games": 22,
+            "season_share": 0.138
           },
           {
             "champion_id": "Ashe",
@@ -3174,12 +3533,13 @@
               "oe:LEC:LOLTMNT05_196548:pick:2",
               "oe:MSI:LOLTMNT01_413227:pick:4",
               "oe:WLDs:LOLTMNT02_480014:pick:2",
-              "oe:WLDs:LOLTMNT02_486541:pick:2"
+              "oe:WLDs:LOLTMNT02_486541:pick:2",
+              "oe:WLDs:LOLTMNT02_487168:pick:2"
             ],
             "recent_games": 5,
             "recent_share": 0.125,
-            "season_games": 17,
-            "season_share": 0.109
+            "season_games": 18,
+            "season_share": 0.113
           },
           {
             "champion_id": "Caitlyn",
@@ -3200,10 +3560,10 @@
               "oe:LEC:LOLTMNT06_164335:pick:10",
               "oe:MSI:LOLTMNT01_411913:pick:8"
             ],
-            "recent_games": 5,
-            "recent_share": 0.125,
+            "recent_games": 4,
+            "recent_share": 0.1,
             "season_games": 15,
-            "season_share": 0.096
+            "season_share": 0.094
           },
           {
             "champion_id": "Yunara",
@@ -3226,7 +3586,7 @@
             "recent_games": 3,
             "recent_share": 0.075,
             "season_games": 14,
-            "season_share": 0.09
+            "season_share": 0.087
           },
           {
             "champion_id": "Corki",
@@ -3248,7 +3608,7 @@
             "recent_games": 0,
             "recent_share": 0.0,
             "season_games": 13,
-            "season_share": 0.083
+            "season_share": 0.081
           },
           {
             "champion_id": "Jhin",
@@ -3269,7 +3629,7 @@
             "recent_games": 2,
             "recent_share": 0.05,
             "season_games": 12,
-            "season_share": 0.077
+            "season_share": 0.075
           },
           {
             "champion_id": "Varus",
@@ -3287,7 +3647,25 @@
             "recent_games": 3,
             "recent_share": 0.075,
             "season_games": 9,
-            "season_share": 0.058
+            "season_share": 0.056
+          },
+          {
+            "champion_id": "Xayah",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_429417:pick:8",
+              "oe:LEC:LOLTMNT05_178032:pick:8",
+              "oe:LEC:LOLTMNT05_179080:pick:2",
+              "oe:LEC:LOLTMNT05_179124:pick:6",
+              "oe:LEC:LOLTMNT05_195513:pick:2",
+              "oe:LEC:LOLTMNT05_218323:pick:4",
+              "oe:WLDs:LOLTMNT02_479642:pick:8",
+              "oe:WLDs:LOLTMNT02_480033:pick:4",
+              "oe:WLDs:LOLTMNT02_487172:pick:2"
+            ],
+            "recent_games": 4,
+            "recent_share": 0.1,
+            "season_games": 9,
+            "season_share": 0.056
           },
           {
             "champion_id": "Lucian",
@@ -3304,24 +3682,7 @@
             "recent_games": 3,
             "recent_share": 0.075,
             "season_games": 8,
-            "season_share": 0.051
-          },
-          {
-            "champion_id": "Xayah",
-            "evidence_ids": [
-              "oe:EWC:LOLTMNT01_429417:pick:8",
-              "oe:LEC:LOLTMNT05_178032:pick:8",
-              "oe:LEC:LOLTMNT05_179080:pick:2",
-              "oe:LEC:LOLTMNT05_179124:pick:6",
-              "oe:LEC:LOLTMNT05_195513:pick:2",
-              "oe:LEC:LOLTMNT05_218323:pick:4",
-              "oe:WLDs:LOLTMNT02_479642:pick:8",
-              "oe:WLDs:LOLTMNT02_480033:pick:4"
-            ],
-            "recent_games": 3,
-            "recent_share": 0.075,
-            "season_games": 8,
-            "season_share": 0.051
+            "season_share": 0.05
           },
           {
             "champion_id": "Sivir",
@@ -3337,7 +3698,7 @@
             "recent_games": 1,
             "recent_share": 0.025,
             "season_games": 7,
-            "season_share": 0.045
+            "season_share": 0.044
           },
           {
             "champion_id": "Zeri",
@@ -3353,7 +3714,7 @@
             "recent_games": 2,
             "recent_share": 0.05,
             "season_games": 7,
-            "season_share": 0.045
+            "season_share": 0.044
           },
           {
             "champion_id": "Viktor",
@@ -3364,10 +3725,10 @@
               "oe:LEC:LOLTMNT05_213152:pick:2",
               "oe:LEC:LOLTMNT05_214361:pick:3"
             ],
-            "recent_games": 1,
-            "recent_share": 0.025,
+            "recent_games": 0,
+            "recent_share": 0.0,
             "season_games": 5,
-            "season_share": 0.032
+            "season_share": 0.031
           },
           {
             "champion_id": "Kai'Sa",
@@ -3380,7 +3741,7 @@
             "recent_games": 1,
             "recent_share": 0.025,
             "season_games": 4,
-            "season_share": 0.026
+            "season_share": 0.025
           },
           {
             "champion_id": "Kalista",
@@ -3390,10 +3751,10 @@
               "oe:WLDs:LOLTMNT02_482292:pick:10",
               "oe:WLDs:LOLTMNT02_483571:pick:10"
             ],
-            "recent_games": 3,
-            "recent_share": 0.075,
+            "recent_games": 2,
+            "recent_share": 0.05,
             "season_games": 4,
-            "season_share": 0.026
+            "season_share": 0.025
           },
           {
             "champion_id": "Ziggs",
@@ -3406,24 +3767,25 @@
             "recent_games": 0,
             "recent_share": 0.0,
             "season_games": 4,
-            "season_share": 0.026
+            "season_share": 0.025
+          },
+          {
+            "champion_id": "Tristana",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT04_164344:pick:10",
+              "oe:WLDs:LOLTMNT02_486299:pick:10",
+              "oe:WLDs:LOLTMNT02_487158:pick:10"
+            ],
+            "recent_games": 2,
+            "recent_share": 0.05,
+            "season_games": 3,
+            "season_share": 0.019
           },
           {
             "champion_id": "Miss Fortune",
             "evidence_ids": [
               "oe:LEC:LOLTMNT05_195065:pick:9",
               "oe:WLDs:LOLTMNT02_479621:pick:10"
-            ],
-            "recent_games": 1,
-            "recent_share": 0.025,
-            "season_games": 2,
-            "season_share": 0.013
-          },
-          {
-            "champion_id": "Tristana",
-            "evidence_ids": [
-              "oe:EWC:LOLTMNT04_164344:pick:10",
-              "oe:WLDs:LOLTMNT02_486299:pick:10"
             ],
             "recent_games": 1,
             "recent_share": 0.025,
@@ -3475,7 +3837,7 @@
         "player_name": "Caliste",
         "recent_games": 40,
         "role": "BOTTOM",
-        "season_games": 156,
+        "season_games": 160,
         "status": "OBSERVED",
         "year": 2026
       },
@@ -3510,10 +3872,10 @@
               "oe:WLDs:LOLTMNT02_479631:pick:1",
               "oe:WLDs:LOLTMNT02_479982:pick:1"
             ],
-            "recent_games": 6,
-            "recent_share": 0.15,
+            "recent_games": 5,
+            "recent_share": 0.125,
             "season_games": 25,
-            "season_share": 0.16
+            "season_share": 0.156
           },
           {
             "champion_id": "Wukong",
@@ -3535,12 +3897,13 @@
               "oe:MSI:LOLTMNT01_411931:pick:10",
               "oe:MSI:LOLTMNT01_413634:pick:6",
               "oe:WLDs:LOLTMNT02_486299:pick:2",
-              "oe:WLDs:LOLTMNT02_486541:pick:7"
+              "oe:WLDs:LOLTMNT02_486541:pick:7",
+              "oe:WLDs:LOLTMNT02_487172:pick:6"
             ],
-            "recent_games": 4,
-            "recent_share": 0.1,
-            "season_games": 18,
-            "season_share": 0.115
+            "recent_games": 5,
+            "recent_share": 0.125,
+            "season_games": 19,
+            "season_share": 0.119
           },
           {
             "champion_id": "Jarvan IV",
@@ -3562,10 +3925,10 @@
               "oe:WLDs:LOLTMNT02_480033:pick:1",
               "oe:WLDs:LOLTMNT02_482292:pick:2"
             ],
-            "recent_games": 5,
-            "recent_share": 0.125,
+            "recent_games": 4,
+            "recent_share": 0.1,
             "season_games": 16,
-            "season_share": 0.103
+            "season_share": 0.1
           },
           {
             "champion_id": "Naafiri",
@@ -3589,7 +3952,7 @@
             "recent_games": 4,
             "recent_share": 0.1,
             "season_games": 15,
-            "season_share": 0.096
+            "season_share": 0.094
           },
           {
             "champion_id": "Pantheon",
@@ -3607,12 +3970,13 @@
               "oe:LEC:LOLTMNT05_185468:pick:8",
               "oe:LEC:LOLTMNT05_196552:pick:9",
               "oe:WLDs:LOLTMNT02_485476:pick:2",
-              "oe:WLDs:LOLTMNT02_486309:pick:6"
+              "oe:WLDs:LOLTMNT02_486309:pick:6",
+              "oe:WLDs:LOLTMNT02_487158:pick:3"
             ],
-            "recent_games": 3,
-            "recent_share": 0.075,
-            "season_games": 14,
-            "season_share": 0.09
+            "recent_games": 4,
+            "recent_share": 0.1,
+            "season_games": 15,
+            "season_share": 0.094
           },
           {
             "champion_id": "Lee Sin",
@@ -3629,12 +3993,13 @@
               "oe:WLDs:LOLTMNT02_480014:pick:7",
               "oe:WLDs:LOLTMNT02_480507:pick:1",
               "oe:WLDs:LOLTMNT02_483571:pick:2",
-              "oe:WLDs:LOLTMNT02_483840:pick:1"
+              "oe:WLDs:LOLTMNT02_483840:pick:1",
+              "oe:WLDs:LOLTMNT02_488135:pick:9"
             ],
             "recent_games": 8,
             "recent_share": 0.2,
-            "season_games": 13,
-            "season_share": 0.083
+            "season_games": 14,
+            "season_share": 0.087
           },
           {
             "champion_id": "Xin Zhao",
@@ -3651,12 +4016,13 @@
               "oe:LEC:LOLTMNT05_220147:pick:9",
               "oe:LEC:LOLTMNT06_163258:pick:8",
               "oe:LEC:LOLTMNT06_164335:pick:3",
-              "oe:MSI:LOLTMNT01_414172:pick:4"
+              "oe:MSI:LOLTMNT01_414172:pick:4",
+              "oe:WLDs:LOLTMNT02_487168:pick:6"
             ],
-            "recent_games": 1,
-            "recent_share": 0.025,
-            "season_games": 13,
-            "season_share": 0.083
+            "recent_games": 2,
+            "recent_share": 0.05,
+            "season_games": 14,
+            "season_share": 0.087
           },
           {
             "champion_id": "Qiyana",
@@ -3675,7 +4041,7 @@
             "recent_games": 4,
             "recent_share": 0.1,
             "season_games": 10,
-            "season_share": 0.064
+            "season_share": 0.062
           },
           {
             "champion_id": "Skarner",
@@ -3689,7 +4055,7 @@
             "recent_games": 1,
             "recent_share": 0.025,
             "season_games": 5,
-            "season_share": 0.032
+            "season_share": 0.031
           },
           {
             "champion_id": "Trundle",
@@ -3703,7 +4069,7 @@
             "recent_games": 2,
             "recent_share": 0.05,
             "season_games": 5,
-            "season_share": 0.032
+            "season_share": 0.031
           },
           {
             "champion_id": "Dr. Mundo",
@@ -3809,8 +4175,8 @@
             "evidence_ids": [
               "oe:LEC:LOLTMNT04_182197:pick:3"
             ],
-            "recent_games": 1,
-            "recent_share": 0.025,
+            "recent_games": 0,
+            "recent_share": 0.0,
             "season_games": 1,
             "season_share": 0.006
           },
@@ -3849,7 +4215,7 @@
         "player_name": "Yike",
         "recent_games": 40,
         "role": "JUNGLE",
-        "season_games": 156,
+        "season_games": 160,
         "status": "OBSERVED",
         "year": 2026
       },
@@ -3879,7 +4245,32 @@
             "recent_games": 0,
             "recent_share": 0.0,
             "season_games": 17,
-            "season_share": 0.109
+            "season_share": 0.106
+          },
+          {
+            "champion_id": "Orianna",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_387340:pick:1",
+              "oe:EWC:LOLTMNT01_426964:pick:1",
+              "oe:EWC:LOLTMNT01_427240:pick:1",
+              "oe:LEC:LOLTMNT04_151435:pick:2",
+              "oe:LEC:LOLTMNT04_161471:pick:1",
+              "oe:LEC:LOLTMNT04_188367:pick:1",
+              "oe:LEC:LOLTMNT05_179108:pick:6",
+              "oe:LEC:LOLTMNT05_185539:pick:1",
+              "oe:LEC:LOLTMNT05_196602:pick:1",
+              "oe:LEC:LOLTMNT05_214365:pick:1",
+              "oe:LEC:LOLTMNT05_218317:pick:4",
+              "oe:MSI:LOLTMNT01_411913:pick:5",
+              "oe:MSI:LOLTMNT01_413227:pick:1",
+              "oe:WLDs:LOLTMNT02_479642:pick:4",
+              "oe:WLDs:LOLTMNT02_482292:pick:3",
+              "oe:WLDs:LOLTMNT02_487158:pick:2"
+            ],
+            "recent_games": 5,
+            "recent_share": 0.125,
+            "season_games": 16,
+            "season_share": 0.1
           },
           {
             "champion_id": "Ryze",
@@ -3904,31 +4295,7 @@
             "recent_games": 5,
             "recent_share": 0.125,
             "season_games": 16,
-            "season_share": 0.103
-          },
-          {
-            "champion_id": "Orianna",
-            "evidence_ids": [
-              "oe:EWC:LOLTMNT01_387340:pick:1",
-              "oe:EWC:LOLTMNT01_426964:pick:1",
-              "oe:EWC:LOLTMNT01_427240:pick:1",
-              "oe:LEC:LOLTMNT04_151435:pick:2",
-              "oe:LEC:LOLTMNT04_161471:pick:1",
-              "oe:LEC:LOLTMNT04_188367:pick:1",
-              "oe:LEC:LOLTMNT05_179108:pick:6",
-              "oe:LEC:LOLTMNT05_185539:pick:1",
-              "oe:LEC:LOLTMNT05_196602:pick:1",
-              "oe:LEC:LOLTMNT05_214365:pick:1",
-              "oe:LEC:LOLTMNT05_218317:pick:4",
-              "oe:MSI:LOLTMNT01_411913:pick:5",
-              "oe:MSI:LOLTMNT01_413227:pick:1",
-              "oe:WLDs:LOLTMNT02_479642:pick:4",
-              "oe:WLDs:LOLTMNT02_482292:pick:3"
-            ],
-            "recent_games": 4,
-            "recent_share": 0.1,
-            "season_games": 15,
-            "season_share": 0.096
+            "season_share": 0.1
           },
           {
             "champion_id": "Viktor",
@@ -3949,10 +4316,33 @@
               "oe:WLDs:LOLTMNT02_485476:pick:10",
               "oe:WLDs:LOLTMNT02_486309:pick:7"
             ],
-            "recent_games": 8,
-            "recent_share": 0.2,
+            "recent_games": 7,
+            "recent_share": 0.175,
             "season_games": 15,
-            "season_share": 0.096
+            "season_share": 0.094
+          },
+          {
+            "champion_id": "Anivia",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_388295:pick:5",
+              "oe:EWC:LOLTMNT01_428587:pick:6",
+              "oe:EWC:LOLTMNT01_428766:pick:2",
+              "oe:EWC:LOLTMNT01_428882:pick:3",
+              "oe:LEC:LOLTMNT04_162485:pick:10",
+              "oe:LEC:LOLTMNT04_181081:pick:1",
+              "oe:LEC:LOLTMNT04_182197:pick:2",
+              "oe:LEC:LOLTMNT04_189331:pick:10",
+              "oe:LEC:LOLTMNT05_175986:pick:5",
+              "oe:LEC:LOLTMNT05_195507:pick:2",
+              "oe:LEC:LOLTMNT05_196556:pick:5",
+              "oe:MSI:LOLTMNT01_414558:pick:8",
+              "oe:WLDs:LOLTMNT02_479637:pick:7",
+              "oe:WLDs:LOLTMNT02_487168:pick:7"
+            ],
+            "recent_games": 3,
+            "recent_share": 0.075,
+            "season_games": 14,
+            "season_share": 0.087
           },
           {
             "champion_id": "Cassiopeia",
@@ -3975,29 +4365,48 @@
             "recent_games": 5,
             "recent_share": 0.125,
             "season_games": 14,
-            "season_share": 0.09
+            "season_share": 0.087
           },
           {
-            "champion_id": "Anivia",
+            "champion_id": "Syndra",
             "evidence_ids": [
-              "oe:EWC:LOLTMNT01_388295:pick:5",
-              "oe:EWC:LOLTMNT01_428587:pick:6",
-              "oe:EWC:LOLTMNT01_428766:pick:2",
-              "oe:EWC:LOLTMNT01_428882:pick:3",
-              "oe:LEC:LOLTMNT04_162485:pick:10",
-              "oe:LEC:LOLTMNT04_181081:pick:1",
-              "oe:LEC:LOLTMNT04_182197:pick:2",
-              "oe:LEC:LOLTMNT04_189331:pick:10",
-              "oe:LEC:LOLTMNT05_175986:pick:5",
-              "oe:LEC:LOLTMNT05_195507:pick:2",
-              "oe:LEC:LOLTMNT05_196556:pick:5",
-              "oe:MSI:LOLTMNT01_414558:pick:8",
-              "oe:WLDs:LOLTMNT02_479637:pick:7"
+              "oe:EWC:LOLTMNT01_426998:pick:2",
+              "oe:EWC:LOLTMNT01_429137:pick:10",
+              "oe:LEC:LOLTMNT04_181079:pick:9",
+              "oe:LEC:LOLTMNT04_181671:pick:5",
+              "oe:LEC:LOLTMNT04_182188:pick:8",
+              "oe:LEC:LOLTMNT04_189070:pick:3",
+              "oe:LEC:LOLTMNT05_180086:pick:3",
+              "oe:LEC:LOLTMNT05_213152:pick:7",
+              "oe:WLDs:LOLTMNT02_479621:pick:7",
+              "oe:WLDs:LOLTMNT02_479982:pick:4",
+              "oe:WLDs:LOLTMNT02_486541:pick:6",
+              "oe:WLDs:LOLTMNT02_488135:pick:8"
             ],
-            "recent_games": 3,
-            "recent_share": 0.075,
-            "season_games": 13,
-            "season_share": 0.083
+            "recent_games": 5,
+            "recent_share": 0.125,
+            "season_games": 12,
+            "season_share": 0.075
+          },
+          {
+            "champion_id": "Ahri",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT04_163357:pick:10",
+              "oe:LEC:LOLTMNT04_156641:pick:8",
+              "oe:LEC:LOLTMNT04_188363:pick:5",
+              "oe:LEC:LOLTMNT05_177061:pick:5",
+              "oe:LEC:LOLTMNT05_179080:pick:6",
+              "oe:LEC:LOLTMNT05_179123:pick:5",
+              "oe:LEC:LOLTMNT05_184096:pick:10",
+              "oe:LEC:LOLTMNT05_195513:pick:6",
+              "oe:WLDs:LOLTMNT02_479649:pick:8",
+              "oe:WLDs:LOLTMNT02_480014:pick:10",
+              "oe:WLDs:LOLTMNT02_487172:pick:7"
+            ],
+            "recent_games": 4,
+            "recent_share": 0.1,
+            "season_games": 11,
+            "season_share": 0.069
           },
           {
             "champion_id": "Annie",
@@ -4017,46 +4426,7 @@
             "recent_games": 0,
             "recent_share": 0.0,
             "season_games": 11,
-            "season_share": 0.071
-          },
-          {
-            "champion_id": "Syndra",
-            "evidence_ids": [
-              "oe:EWC:LOLTMNT01_426998:pick:2",
-              "oe:EWC:LOLTMNT01_429137:pick:10",
-              "oe:LEC:LOLTMNT04_181079:pick:9",
-              "oe:LEC:LOLTMNT04_181671:pick:5",
-              "oe:LEC:LOLTMNT04_182188:pick:8",
-              "oe:LEC:LOLTMNT04_189070:pick:3",
-              "oe:LEC:LOLTMNT05_180086:pick:3",
-              "oe:LEC:LOLTMNT05_213152:pick:7",
-              "oe:WLDs:LOLTMNT02_479621:pick:7",
-              "oe:WLDs:LOLTMNT02_479982:pick:4",
-              "oe:WLDs:LOLTMNT02_486541:pick:6"
-            ],
-            "recent_games": 6,
-            "recent_share": 0.15,
-            "season_games": 11,
-            "season_share": 0.071
-          },
-          {
-            "champion_id": "Ahri",
-            "evidence_ids": [
-              "oe:EWC:LOLTMNT04_163357:pick:10",
-              "oe:LEC:LOLTMNT04_156641:pick:8",
-              "oe:LEC:LOLTMNT04_188363:pick:5",
-              "oe:LEC:LOLTMNT05_177061:pick:5",
-              "oe:LEC:LOLTMNT05_179080:pick:6",
-              "oe:LEC:LOLTMNT05_179123:pick:5",
-              "oe:LEC:LOLTMNT05_184096:pick:10",
-              "oe:LEC:LOLTMNT05_195513:pick:6",
-              "oe:WLDs:LOLTMNT02_479649:pick:8",
-              "oe:WLDs:LOLTMNT02_480014:pick:10"
-            ],
-            "recent_games": 3,
-            "recent_share": 0.075,
-            "season_games": 10,
-            "season_share": 0.064
+            "season_share": 0.069
           },
           {
             "champion_id": "Taliyah",
@@ -4075,7 +4445,7 @@
             "recent_games": 1,
             "recent_share": 0.025,
             "season_games": 10,
-            "season_share": 0.064
+            "season_share": 0.062
           },
           {
             "champion_id": "Aurora",
@@ -4090,7 +4460,7 @@
             "recent_games": 0,
             "recent_share": 0.0,
             "season_games": 6,
-            "season_share": 0.038
+            "season_share": 0.037
           },
           {
             "champion_id": "Galio",
@@ -4105,7 +4475,7 @@
             "recent_games": 0,
             "recent_share": 0.0,
             "season_games": 6,
-            "season_share": 0.038
+            "season_share": 0.037
           },
           {
             "champion_id": "Sylas",
@@ -4119,7 +4489,7 @@
             "recent_games": 3,
             "recent_share": 0.075,
             "season_games": 5,
-            "season_share": 0.032
+            "season_share": 0.031
           },
           {
             "champion_id": "Akali",
@@ -4169,7 +4539,7 @@
         "player_name": "kyeahoo",
         "recent_games": 40,
         "role": "MID",
-        "season_games": 156,
+        "season_games": 160,
         "status": "OBSERVED",
         "year": 2026
       },
@@ -4196,12 +4566,13 @@
               "oe:MSI:LOLTMNT01_413227:pick:5",
               "oe:MSI:LOLTMNT01_414558:pick:1",
               "oe:WLDs:LOLTMNT02_480014:pick:3",
-              "oe:WLDs:LOLTMNT02_486541:pick:3"
+              "oe:WLDs:LOLTMNT02_486541:pick:3",
+              "oe:WLDs:LOLTMNT02_487168:pick:3"
             ],
             "recent_games": 5,
             "recent_share": 0.125,
-            "season_games": 19,
-            "season_share": 0.122
+            "season_games": 20,
+            "season_share": 0.125
           },
           {
             "champion_id": "Bard",
@@ -4224,10 +4595,10 @@
               "oe:LEC:LOLTMNT06_163258:pick:5",
               "oe:MSI:LOLTMNT01_411913:pick:9"
             ],
-            "recent_games": 4,
-            "recent_share": 0.1,
+            "recent_games": 3,
+            "recent_share": 0.075,
             "season_games": 17,
-            "season_share": 0.109
+            "season_share": 0.106
           },
           {
             "champion_id": "Nami",
@@ -4251,7 +4622,7 @@
             "recent_games": 1,
             "recent_share": 0.025,
             "season_games": 15,
-            "season_share": 0.096
+            "season_share": 0.094
           },
           {
             "champion_id": "Lulu",
@@ -4274,7 +4645,7 @@
             "recent_games": 4,
             "recent_share": 0.1,
             "season_games": 14,
-            "season_share": 0.09
+            "season_share": 0.087
           },
           {
             "champion_id": "Alistar",
@@ -4294,7 +4665,7 @@
             "recent_games": 2,
             "recent_share": 0.05,
             "season_games": 11,
-            "season_share": 0.071
+            "season_share": 0.069
           },
           {
             "champion_id": "Leona",
@@ -4308,12 +4679,33 @@
               "oe:LEC:LOLTMNT05_183066:pick:9",
               "oe:LEC:LOLTMNT05_214296:pick:6",
               "oe:LEC:LOLTMNT05_220148:pick:7",
-              "oe:WLDs:LOLTMNT02_480511:pick:6"
+              "oe:WLDs:LOLTMNT02_480511:pick:6",
+              "oe:WLDs:LOLTMNT02_488135:pick:5"
             ],
-            "recent_games": 3,
-            "recent_share": 0.075,
-            "season_games": 10,
-            "season_share": 0.064
+            "recent_games": 4,
+            "recent_share": 0.1,
+            "season_games": 11,
+            "season_share": 0.069
+          },
+          {
+            "champion_id": "Rakan",
+            "evidence_ids": [
+              "oe:LEC:LOLTMNT05_175753:pick:9",
+              "oe:LEC:LOLTMNT05_178032:pick:9",
+              "oe:LEC:LOLTMNT05_179080:pick:3",
+              "oe:LEC:LOLTMNT05_179124:pick:3",
+              "oe:LEC:LOLTMNT05_195074:pick:6",
+              "oe:LEC:LOLTMNT05_195513:pick:3",
+              "oe:LEC:LOLTMNT05_196637:pick:2",
+              "oe:LEC:LOLTMNT05_218323:pick:5",
+              "oe:WLDs:LOLTMNT02_479642:pick:9",
+              "oe:WLDs:LOLTMNT02_480033:pick:5",
+              "oe:WLDs:LOLTMNT02_487172:pick:3"
+            ],
+            "recent_games": 4,
+            "recent_share": 0.1,
+            "season_games": 11,
+            "season_share": 0.069
           },
           {
             "champion_id": "Nautilus",
@@ -4332,26 +4724,7 @@
             "recent_games": 4,
             "recent_share": 0.1,
             "season_games": 10,
-            "season_share": 0.064
-          },
-          {
-            "champion_id": "Rakan",
-            "evidence_ids": [
-              "oe:LEC:LOLTMNT05_175753:pick:9",
-              "oe:LEC:LOLTMNT05_178032:pick:9",
-              "oe:LEC:LOLTMNT05_179080:pick:3",
-              "oe:LEC:LOLTMNT05_179124:pick:3",
-              "oe:LEC:LOLTMNT05_195074:pick:6",
-              "oe:LEC:LOLTMNT05_195513:pick:3",
-              "oe:LEC:LOLTMNT05_196637:pick:2",
-              "oe:LEC:LOLTMNT05_218323:pick:5",
-              "oe:WLDs:LOLTMNT02_479642:pick:9",
-              "oe:WLDs:LOLTMNT02_480033:pick:5"
-            ],
-            "recent_games": 3,
-            "recent_share": 0.075,
-            "season_games": 10,
-            "season_share": 0.064
+            "season_share": 0.062
           },
           {
             "champion_id": "Rell",
@@ -4364,12 +4737,13 @@
               "oe:LEC:LOLTMNT05_180086:pick:6",
               "oe:LEC:LOLTMNT05_214361:pick:7",
               "oe:MSI:LOLTMNT01_412905:pick:6",
-              "oe:WLDs:LOLTMNT02_479649:pick:5"
+              "oe:WLDs:LOLTMNT02_479649:pick:5",
+              "oe:WLDs:LOLTMNT02_487158:pick:7"
             ],
-            "recent_games": 2,
-            "recent_share": 0.05,
-            "season_games": 9,
-            "season_share": 0.058
+            "recent_games": 3,
+            "recent_share": 0.075,
+            "season_games": 10,
+            "season_share": 0.062
           },
           {
             "champion_id": "Neeko",
@@ -4385,7 +4759,7 @@
             "recent_games": 0,
             "recent_share": 0.0,
             "season_games": 7,
-            "season_share": 0.045
+            "season_share": 0.044
           },
           {
             "champion_id": "Camille",
@@ -4400,7 +4774,7 @@
             "recent_games": 0,
             "recent_share": 0.0,
             "season_games": 6,
-            "season_share": 0.038
+            "season_share": 0.037
           },
           {
             "champion_id": "Karma",
@@ -4414,7 +4788,7 @@
             "recent_games": 1,
             "recent_share": 0.025,
             "season_games": 5,
-            "season_share": 0.032
+            "season_share": 0.031
           },
           {
             "champion_id": "Milio",
@@ -4428,7 +4802,7 @@
             "recent_games": 2,
             "recent_share": 0.05,
             "season_games": 5,
-            "season_share": 0.032
+            "season_share": 0.031
           },
           {
             "champion_id": "Renata Glasc",
@@ -4438,10 +4812,10 @@
               "oe:WLDs:LOLTMNT02_482292:pick:7",
               "oe:WLDs:LOLTMNT02_483571:pick:7"
             ],
-            "recent_games": 3,
-            "recent_share": 0.075,
+            "recent_games": 2,
+            "recent_share": 0.05,
             "season_games": 4,
-            "season_share": 0.026
+            "season_share": 0.025
           },
           {
             "champion_id": "Shen",
@@ -4451,10 +4825,10 @@
               "oe:LEC:LOLTMNT04_182188:pick:5",
               "oe:LEC:LOLTMNT05_214298:pick:3"
             ],
-            "recent_games": 1,
-            "recent_share": 0.025,
+            "recent_games": 0,
+            "recent_share": 0.0,
             "season_games": 4,
-            "season_share": 0.026
+            "season_share": 0.025
           },
           {
             "champion_id": "Vel'Koz",
@@ -4525,7 +4899,7 @@
         "player_name": "Busio",
         "recent_games": 40,
         "role": "SUPPORT",
-        "season_games": 156,
+        "season_games": 160,
         "status": "OBSERVED",
         "year": 2026
       },
@@ -4568,12 +4942,13 @@
               "oe:WLDs:LOLTMNT02_479621:pick:2",
               "oe:WLDs:LOLTMNT02_483571:pick:3",
               "oe:WLDs:LOLTMNT02_483840:pick:4",
-              "oe:WLDs:LOLTMNT02_485476:pick:7"
+              "oe:WLDs:LOLTMNT02_485476:pick:7",
+              "oe:WLDs:LOLTMNT02_488135:pick:1"
             ],
-            "recent_games": 10,
-            "recent_share": 0.25,
-            "season_games": 35,
-            "season_share": 0.224
+            "recent_games": 9,
+            "recent_share": 0.225,
+            "season_games": 36,
+            "season_share": 0.225
           },
           {
             "champion_id": "Gnar",
@@ -4600,7 +4975,7 @@
             "recent_games": 2,
             "recent_share": 0.05,
             "season_games": 18,
-            "season_share": 0.115
+            "season_share": 0.113
           },
           {
             "champion_id": "Sion",
@@ -4623,7 +4998,50 @@
             "recent_games": 0,
             "recent_share": 0.0,
             "season_games": 14,
-            "season_share": 0.09
+            "season_share": 0.087
+          },
+          {
+            "champion_id": "Renekton",
+            "evidence_ids": [
+              "oe:EWC:LOLTMNT01_426964:pick:5",
+              "oe:EWC:LOLTMNT05_186818:pick:8",
+              "oe:LEC:LOLTMNT04_155609:pick:10",
+              "oe:LEC:LOLTMNT04_161471:pick:9",
+              "oe:LEC:LOLTMNT05_185612:pick:9",
+              "oe:LEC:LOLTMNT05_195513:pick:7",
+              "oe:LEC:LOLTMNT05_196635:pick:8",
+              "oe:LEC:LOLTMNT05_214365:pick:8",
+              "oe:MSI:LOLTMNT01_411931:pick:7",
+              "oe:MSI:LOLTMNT01_414165:pick:9",
+              "oe:WLDs:LOLTMNT02_479642:pick:5",
+              "oe:WLDs:LOLTMNT02_486541:pick:10",
+              "oe:WLDs:LOLTMNT02_487172:pick:10"
+            ],
+            "recent_games": 3,
+            "recent_share": 0.075,
+            "season_games": 13,
+            "season_share": 0.081
+          },
+          {
+            "champion_id": "Ambessa",
+            "evidence_ids": [
+              "oe:LEC:LOLTMNT04_150332:pick:4",
+              "oe:LEC:LOLTMNT04_181081:pick:8",
+              "oe:LEC:LOLTMNT04_182188:pick:9",
+              "oe:LEC:LOLTMNT04_188372:pick:9",
+              "oe:LEC:LOLTMNT04_190160:pick:9",
+              "oe:LEC:LOLTMNT05_180114:pick:6",
+              "oe:LEC:LOLTMNT05_183066:pick:5",
+              "oe:LEC:LOLTMNT05_195074:pick:10",
+              "oe:LEC:LOLTMNT05_218323:pick:9",
+              "oe:LEC:LOLTMNT05_220147:pick:8",
+              "oe:WLDs:LOLTMNT02_479649:pick:1",
+              "oe:WLDs:LOLTMNT02_487158:pick:6"
+            ],
+            "recent_games": 6,
+            "recent_share": 0.15,
+            "season_games": 12,
+            "season_share": 0.075
           },
           {
             "champion_id": "Jayce",
@@ -4644,48 +5062,7 @@
             "recent_games": 5,
             "recent_share": 0.125,
             "season_games": 12,
-            "season_share": 0.077
-          },
-          {
-            "champion_id": "Renekton",
-            "evidence_ids": [
-              "oe:EWC:LOLTMNT01_426964:pick:5",
-              "oe:EWC:LOLTMNT05_186818:pick:8",
-              "oe:LEC:LOLTMNT04_155609:pick:10",
-              "oe:LEC:LOLTMNT04_161471:pick:9",
-              "oe:LEC:LOLTMNT05_185612:pick:9",
-              "oe:LEC:LOLTMNT05_195513:pick:7",
-              "oe:LEC:LOLTMNT05_196635:pick:8",
-              "oe:LEC:LOLTMNT05_214365:pick:8",
-              "oe:MSI:LOLTMNT01_411931:pick:7",
-              "oe:MSI:LOLTMNT01_414165:pick:9",
-              "oe:WLDs:LOLTMNT02_479642:pick:5",
-              "oe:WLDs:LOLTMNT02_486541:pick:10"
-            ],
-            "recent_games": 2,
-            "recent_share": 0.05,
-            "season_games": 12,
-            "season_share": 0.077
-          },
-          {
-            "champion_id": "Ambessa",
-            "evidence_ids": [
-              "oe:LEC:LOLTMNT04_150332:pick:4",
-              "oe:LEC:LOLTMNT04_181081:pick:8",
-              "oe:LEC:LOLTMNT04_182188:pick:9",
-              "oe:LEC:LOLTMNT04_188372:pick:9",
-              "oe:LEC:LOLTMNT04_190160:pick:9",
-              "oe:LEC:LOLTMNT05_180114:pick:6",
-              "oe:LEC:LOLTMNT05_183066:pick:5",
-              "oe:LEC:LOLTMNT05_195074:pick:10",
-              "oe:LEC:LOLTMNT05_218323:pick:9",
-              "oe:LEC:LOLTMNT05_220147:pick:8",
-              "oe:WLDs:LOLTMNT02_479649:pick:1"
-            ],
-            "recent_games": 6,
-            "recent_share": 0.15,
-            "season_games": 11,
-            "season_share": 0.071
+            "season_share": 0.075
           },
           {
             "champion_id": "Aurora",
@@ -4700,7 +5077,7 @@
             "recent_games": 0,
             "recent_share": 0.0,
             "season_games": 6,
-            "season_share": 0.038
+            "season_share": 0.037
           },
           {
             "champion_id": "Galio",
@@ -4715,7 +5092,7 @@
             "recent_games": 3,
             "recent_share": 0.075,
             "season_games": 6,
-            "season_share": 0.038
+            "season_share": 0.037
           },
           {
             "champion_id": "Twisted Fate",
@@ -4729,7 +5106,7 @@
             "recent_games": 2,
             "recent_share": 0.05,
             "season_games": 5,
-            "season_share": 0.032
+            "season_share": 0.031
           },
           {
             "champion_id": "Vayne",
@@ -4743,7 +5120,7 @@
             "recent_games": 0,
             "recent_share": 0.0,
             "season_games": 5,
-            "season_share": 0.032
+            "season_share": 0.031
           },
           {
             "champion_id": "Yone",
@@ -4756,7 +5133,7 @@
             "recent_games": 0,
             "recent_share": 0.0,
             "season_games": 4,
-            "season_share": 0.026
+            "season_share": 0.025
           },
           {
             "champion_id": "Kennen",
@@ -4813,6 +5190,17 @@
             ],
             "recent_games": 0,
             "recent_share": 0.0,
+            "season_games": 2,
+            "season_share": 0.013
+          },
+          {
+            "champion_id": "K'Sante",
+            "evidence_ids": [
+              "oe:LEC:LOLTMNT05_175206:pick:8",
+              "oe:WLDs:LOLTMNT02_487168:pick:10"
+            ],
+            "recent_games": 1,
+            "recent_share": 0.025,
             "season_games": 2,
             "season_share": 0.013
           },
@@ -4889,16 +5277,6 @@
             "season_share": 0.006
           },
           {
-            "champion_id": "K'Sante",
-            "evidence_ids": [
-              "oe:LEC:LOLTMNT05_175206:pick:8"
-            ],
-            "recent_games": 0,
-            "recent_share": 0.0,
-            "season_games": 1,
-            "season_share": 0.006
-          },
-          {
             "champion_id": "Kled",
             "evidence_ids": [
               "oe:WLDs:LOLTMNT02_479637:pick:10"
@@ -4943,8 +5321,8 @@
             "evidence_ids": [
               "oe:LEC:LOLTMNT04_181675:pick:4"
             ],
-            "recent_games": 1,
-            "recent_share": 0.025,
+            "recent_games": 0,
+            "recent_share": 0.0,
             "season_games": 1,
             "season_share": 0.006
           }
@@ -4953,21 +5331,21 @@
         "player_name": "Canna",
         "recent_games": 40,
         "role": "TOP",
-        "season_games": 156,
+        "season_games": 160,
         "status": "OBSERVED",
         "year": 2026
       }
     ],
     "side_record": {
       "BLUE": {
-        "game_count": 27,
-        "win_count": 20,
-        "win_rate": 0.741
+        "game_count": 26,
+        "win_count": 17,
+        "win_rate": 0.654
       },
       "RED": {
-        "game_count": 13,
+        "game_count": 14,
         "win_count": 8,
-        "win_rate": 0.615
+        "win_rate": 0.571
       }
     },
     "team_ids": [
@@ -4977,50 +5355,50 @@
     "top_picks": [
       {
         "champion_id": "Rumble",
-        "game_count": 10,
-        "rate": 0.25,
-        "role": "TOP",
-        "win_count": 6
-      },
-      {
-        "champion_id": "Viktor",
         "game_count": 9,
         "rate": 0.225,
-        "role": "MID",
-        "win_count": 7
+        "role": "TOP",
+        "win_count": 4
       },
       {
         "champion_id": "Lee Sin",
         "game_count": 8,
         "rate": 0.2,
         "role": "JUNGLE",
-        "win_count": 4
+        "win_count": 3
+      },
+      {
+        "champion_id": "Viktor",
+        "game_count": 7,
+        "rate": 0.175,
+        "role": "MID",
+        "win_count": 5
       },
       {
         "champion_id": "Ambessa",
         "game_count": 6,
         "rate": 0.15,
         "role": "TOP",
-        "win_count": 4
+        "win_count": 3
       },
       {
-        "champion_id": "Syndra",
+        "champion_id": "Ezreal",
         "game_count": 6,
         "rate": 0.15,
-        "role": "MID",
-        "win_count": 5
+        "role": "BOTTOM",
+        "win_count": 3
       },
       {
-        "champion_id": "Vi",
-        "game_count": 6,
-        "rate": 0.15,
-        "role": "JUNGLE",
+        "champion_id": "Ashe",
+        "game_count": 5,
+        "rate": 0.125,
+        "role": "BOTTOM",
         "win_count": 4
       }
     ],
     "window": {
-      "first_observed_at": "2026-08-03T17:12:09+00:00",
-      "last_observed_at": "2026-10-31T18:08:54+00:00"
+      "first_observed_at": "2026-08-17T16:46:47+00:00",
+      "last_observed_at": "2026-11-07T01:06:38+00:00"
     }
   }
 }
