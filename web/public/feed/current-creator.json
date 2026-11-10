@@ -27,20 +27,20 @@
   "schema_version": "1",
   "source_snapshot": {
     "analysis_window": {
-      "availability_cutoff": "2026-11-08T22:51:22.059284+00:00",
-      "end_inclusive": "2026-11-08T22:51:22.059284+00:00",
+      "availability_cutoff": "2026-11-10T02:02:04.296335+00:00",
+      "end_inclusive": "2026-11-10T02:02:04.296335+00:00",
       "historical": false,
       "mode": "ROLLING"
     },
-    "cutoff": "2026-11-08T22:51:22.059284+00:00",
+    "cutoff": "2026-11-10T02:02:04.296335+00:00",
     "fixture_only": false,
     "patch_id": "16.20",
     "radar_schema_version": "1",
     "source_versions": [
       {
-        "content_hash": "sha256:61ac0798b01a33bfa0bc6e1c66b24b34f80f21846689a409f4f294c53b8d1aaa",
+        "content_hash": "sha256:322a855540b63ca3ec373f2b0e426e91fdccb2a2cd8a0e5a15d608a87ea5ae2e",
         "source_id": "oracles-elixir-match-data",
-        "source_version": "sha256:61ac0798b01a33bfa0bc6e1c66b24b34f80f21846689a409f4f294c53b8d1aaa"
+        "source_version": "sha256:322a855540b63ca3ec373f2b0e426e91fdccb2a2cd8a0e5a15d608a87ea5ae2e"
       }
     ]
   },
@@ -49,146 +49,22 @@
     {
       "approved_claims": [
         {
-          "claim_id": "Leona:SUPPORT:pick-presence",
-          "metric": "pick_presence_delta",
-          "text": "최근 7일 Leona SUPPORT 픽 점유율은 20.0%이며 이전 구간 대비 +15.6pp 변했다.",
-          "value": 0.155556
-        },
-        {
-          "claim_id": "Leona:SUPPORT:team-demand",
-          "metric": "demand_velocity",
-          "text": "최근 채택 팀은 5개이며 팀 수요는 이전 구간 대비 +36.7pp 변했다.",
-          "value": 0.366667
-        },
-        {
-          "claim_id": "Leona:SUPPORT:regional-divergence",
-          "metric": "most_divergent_region_delta",
-          "text": "INTERNATIONAL의 최근 픽 점유율은 글로벌 점유율과 +3.5pp 차이가 난다.",
-          "value": 0.035294
-        }
-      ],
-      "candidate_id": "Leona:SUPPORT",
-      "champion_id": "Leona",
-      "chapter_outline": [
-        {
-          "chapter": "HOOK",
-          "uses": [
-            "Leona:SUPPORT:pick-presence"
-          ]
-        },
-        {
-          "chapter": "WHAT CHANGED",
-          "uses": [
-            "Leona:SUPPORT:pick-presence",
-            "Leona:SUPPORT:team-demand",
-            "Leona:SUPPORT:regional-divergence"
-          ]
-        },
-        {
-          "chapter": "WHY IT MAY MATTER",
-          "uses": [
-            "Leona:SUPPORT:team-demand"
-          ]
-        },
-        {
-          "chapter": "COUNTERPOINT",
-          "uses": []
-        },
-        {
-          "chapter": "TAKEAWAY AND NEXT CHECK",
-          "uses": []
-        }
-      ],
-      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
-      "data_cards": [
-        {
-          "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.2,
-          "prior": 0.044444
-        },
-        {
-          "card": "TEAM_DEMAND_COMPARISON",
-          "current": 0.416667,
-          "prior": 0.05
-        },
-        {
-          "card": "REGIONAL_PRESENCE",
-          "values": [
-            {
-              "delta_from_global": 0.035294,
-              "match_count": 17,
-              "pick_count": 4,
-              "pick_presence": 0.235294,
-              "region": "INTERNATIONAL",
-              "sample_eligible": true
-            },
-            {
-              "delta_from_global": -0.033333,
-              "match_count": 18,
-              "pick_count": 3,
-              "pick_presence": 0.166667,
-              "region": "KOREA",
-              "sample_eligible": true
-            }
-          ]
-        }
-      ],
-      "evidence_event_ids": [
-        "oe:LAS:LOLTMNT02_485433:pick:6",
-        "oe:LAS:LOLTMNT02_486610:pick:8",
-        "oe:LAS:LOLTMNT02_488169:pick:6",
-        "oe:LAS:LOLTMNT02_488254:pick:7",
-        "oe:LAS:LOLTMNT02_488268:pick:9",
-        "oe:WLDs:LOLTMNT02_487213:pick:10",
-        "oe:WLDs:LOLTMNT02_488030:pick:6",
-        "oe:WLDs:LOLTMNT02_488087:pick:10",
-        "oe:WLDs:LOLTMNT02_488135:pick:5"
-      ],
-      "falsifiers": [
-        {
-          "condition": "next comparable snapshot is less than or equal to zero",
-          "metric": "demand_velocity"
-        },
-        {
-          "condition": "adoption does not expand beyond the currently observed teams",
-          "metric": "current_distinct_team_count"
-        }
-      ],
-      "hook": "Leona SUPPORT의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
-      "quality_flags": [],
-      "radar_rank": 1,
-      "review_state": "HUMAN_REVIEW_REQUIRED",
-      "role": "SUPPORT",
-      "short_summary": "Leona SUPPORT의 최근 픽 점유율은 20.0%로, 이전 구간 대비 +15.6pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
-      "thumbnail_copy": [
-        "Leona SUPPORT",
-        "+15.6pp"
-      ],
-      "title_candidates": [
-        "왜 지금 Leona SUPPORT인가: +15.6pp 변화의 근거",
-        "INTERNATIONAL에서 먼저 보인 Leona SUPPORT, 글로벌과 +3.5pp 차이",
-        "Leona SUPPORT은 진짜 신호일까? 데이터와 반론"
-      ]
-    },
-    {
-      "approved_claims": [
-        {
           "claim_id": "Ahri:MID:pick-presence",
           "metric": "pick_presence_delta",
-          "text": "최근 7일 Ahri MID 픽 점유율은 14.3%이며 이전 구간 대비 +9.8pp 변했다.",
-          "value": 0.098413
+          "text": "최근 7일 Ahri MID 픽 점유율은 15.4%이며 이전 구간 대비 +10.3pp 변했다.",
+          "value": 0.102564
         },
         {
           "claim_id": "Ahri:MID:team-demand",
           "metric": "demand_velocity",
-          "text": "최근 채택 팀은 5개이며 팀 수요는 이전 구간 대비 +31.7pp 변했다.",
-          "value": 0.316667
+          "text": "최근 채택 팀은 6개이며 팀 수요는 이전 구간 대비 +38.9pp 변했다.",
+          "value": 0.388889
         },
         {
           "claim_id": "Ahri:MID:regional-divergence",
           "metric": "most_divergent_region_delta",
-          "text": "INTERNATIONAL의 최근 픽 점유율은 글로벌 점유율과 +3.4pp 차이가 난다.",
-          "value": 0.033613
+          "text": "KOREA의 최근 픽 점유율은 글로벌 점유율과 -4.3pp 차이가 난다.",
+          "value": -0.042735
         }
       ],
       "candidate_id": "Ahri:MID",
@@ -227,27 +103,27 @@
       "data_cards": [
         {
           "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.142857,
-          "prior": 0.044444
+          "current": 0.153846,
+          "prior": 0.051282
         },
         {
           "card": "TEAM_DEMAND_COMPARISON",
-          "current": 0.416667,
-          "prior": 0.1
+          "current": 0.5,
+          "prior": 0.111111
         },
         {
           "card": "REGIONAL_PRESENCE",
           "values": [
             {
-              "delta_from_global": 0.033613,
-              "match_count": 17,
-              "pick_count": 3,
-              "pick_presence": 0.176471,
+              "delta_from_global": 0.03663,
+              "match_count": 21,
+              "pick_count": 4,
+              "pick_presence": 0.190476,
               "region": "INTERNATIONAL",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.031746,
+              "delta_from_global": -0.042735,
               "match_count": 18,
               "pick_count": 2,
               "pick_presence": 0.111111,
@@ -264,7 +140,8 @@
         "oe:LAS:LOLTMNT02_488276:pick:9",
         "oe:WLDs:LOLTMNT02_487172:pick:7",
         "oe:WLDs:LOLTMNT02_488090:pick:10",
-        "oe:WLDs:LOLTMNT02_488209:pick:7"
+        "oe:WLDs:LOLTMNT02_488209:pick:7",
+        "oe:WLDs:LOLTMNT02_488296:pick:10"
       ],
       "falsifiers": [
         {
@@ -278,62 +155,62 @@
       ],
       "hook": "Ahri MID의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
       "quality_flags": [],
-      "radar_rank": 2,
+      "radar_rank": 1,
       "review_state": "HUMAN_REVIEW_REQUIRED",
       "role": "MID",
-      "short_summary": "Ahri MID의 최근 픽 점유율은 14.3%로, 이전 구간 대비 +9.8pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "short_summary": "Ahri MID의 최근 픽 점유율은 15.4%로, 이전 구간 대비 +10.3pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
       "thumbnail_copy": [
         "Ahri MID",
-        "+9.8pp"
+        "+10.3pp"
       ],
       "title_candidates": [
-        "왜 지금 Ahri MID인가: +9.8pp 변화의 근거",
-        "INTERNATIONAL에서 먼저 보인 Ahri MID, 글로벌과 +3.4pp 차이",
+        "왜 지금 Ahri MID인가: +10.3pp 변화의 근거",
+        "KOREA에서 먼저 보인 Ahri MID, 글로벌과 -4.3pp 차이",
         "Ahri MID은 진짜 신호일까? 데이터와 반론"
       ]
     },
     {
       "approved_claims": [
         {
-          "claim_id": "Rell:SUPPORT:pick-presence",
+          "claim_id": "Leona:SUPPORT:pick-presence",
           "metric": "pick_presence_delta",
-          "text": "최근 7일 Rell SUPPORT 픽 점유율은 17.1%이며 이전 구간 대비 +14.9pp 변했다.",
-          "value": 0.149206
+          "text": "최근 7일 Leona SUPPORT 픽 점유율은 17.9%이며 이전 구간 대비 +12.8pp 변했다.",
+          "value": 0.128205
         },
         {
-          "claim_id": "Rell:SUPPORT:team-demand",
+          "claim_id": "Leona:SUPPORT:team-demand",
           "metric": "demand_velocity",
-          "text": "최근 채택 팀은 4개이며 팀 수요는 이전 구간 대비 +28.3pp 변했다.",
-          "value": 0.283333
+          "text": "최근 채택 팀은 5개이며 팀 수요는 이전 구간 대비 +36.1pp 변했다.",
+          "value": 0.361111
         },
         {
-          "claim_id": "Rell:SUPPORT:regional-divergence",
+          "claim_id": "Leona:SUPPORT:regional-divergence",
           "metric": "most_divergent_region_delta",
-          "text": "INTERNATIONAL의 최근 픽 점유율은 글로벌 점유율과 +0.5pp 차이가 난다.",
-          "value": 0.005042
+          "text": "KOREA의 최근 픽 점유율은 글로벌 점유율과 -1.3pp 차이가 난다.",
+          "value": -0.012821
         }
       ],
-      "candidate_id": "Rell:SUPPORT",
-      "champion_id": "Rell",
+      "candidate_id": "Leona:SUPPORT",
+      "champion_id": "Leona",
       "chapter_outline": [
         {
           "chapter": "HOOK",
           "uses": [
-            "Rell:SUPPORT:pick-presence"
+            "Leona:SUPPORT:pick-presence"
           ]
         },
         {
           "chapter": "WHAT CHANGED",
           "uses": [
-            "Rell:SUPPORT:pick-presence",
-            "Rell:SUPPORT:team-demand",
-            "Rell:SUPPORT:regional-divergence"
+            "Leona:SUPPORT:pick-presence",
+            "Leona:SUPPORT:team-demand",
+            "Leona:SUPPORT:regional-divergence"
           ]
         },
         {
           "chapter": "WHY IT MAY MATTER",
           "uses": [
-            "Rell:SUPPORT:team-demand"
+            "Leona:SUPPORT:team-demand"
           ]
         },
         {
@@ -349,27 +226,27 @@
       "data_cards": [
         {
           "card": "PICK_PRESENCE_COMPARISON",
-          "current": 0.171429,
-          "prior": 0.022222
+          "current": 0.179487,
+          "prior": 0.051282
         },
         {
           "card": "TEAM_DEMAND_COMPARISON",
-          "current": 0.333333,
-          "prior": 0.05
+          "current": 0.416667,
+          "prior": 0.055556
         },
         {
           "card": "REGIONAL_PRESENCE",
           "values": [
             {
-              "delta_from_global": 0.005042,
-              "match_count": 17,
-              "pick_count": 3,
-              "pick_presence": 0.176471,
+              "delta_from_global": 0.010989,
+              "match_count": 21,
+              "pick_count": 4,
+              "pick_presence": 0.190476,
               "region": "INTERNATIONAL",
               "sample_eligible": true
             },
             {
-              "delta_from_global": -0.004762,
+              "delta_from_global": -0.012821,
               "match_count": 18,
               "pick_count": 3,
               "pick_presence": 0.166667,
@@ -380,13 +257,15 @@
         }
       ],
       "evidence_event_ids": [
-        "oe:LAS:LOLTMNT02_485440:pick:7",
-        "oe:LAS:LOLTMNT02_488181:pick:7",
-        "oe:LAS:LOLTMNT02_488254:pick:8",
-        "oe:LAS:LOLTMNT02_488269:pick:5",
-        "oe:WLDs:LOLTMNT02_485703:pick:9",
-        "oe:WLDs:LOLTMNT02_487095:pick:4",
-        "oe:WLDs:LOLTMNT02_487158:pick:7"
+        "oe:LAS:LOLTMNT02_485433:pick:6",
+        "oe:LAS:LOLTMNT02_486610:pick:8",
+        "oe:LAS:LOLTMNT02_488169:pick:6",
+        "oe:LAS:LOLTMNT02_488254:pick:7",
+        "oe:LAS:LOLTMNT02_488268:pick:9",
+        "oe:WLDs:LOLTMNT02_487213:pick:10",
+        "oe:WLDs:LOLTMNT02_488030:pick:6",
+        "oe:WLDs:LOLTMNT02_488087:pick:10",
+        "oe:WLDs:LOLTMNT02_488135:pick:5"
       ],
       "falsifiers": [
         {
@@ -398,20 +277,151 @@
           "metric": "current_distinct_team_count"
         }
       ],
-      "hook": "Rell SUPPORT의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "hook": "Leona SUPPORT의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "quality_flags": [],
+      "radar_rank": 2,
+      "review_state": "HUMAN_REVIEW_REQUIRED",
+      "role": "SUPPORT",
+      "short_summary": "Leona SUPPORT의 최근 픽 점유율은 17.9%로, 이전 구간 대비 +12.8pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "thumbnail_copy": [
+        "Leona SUPPORT",
+        "+12.8pp"
+      ],
+      "title_candidates": [
+        "왜 지금 Leona SUPPORT인가: +12.8pp 변화의 근거",
+        "KOREA에서 먼저 보인 Leona SUPPORT, 글로벌과 -1.3pp 차이",
+        "Leona SUPPORT은 진짜 신호일까? 데이터와 반론"
+      ]
+    },
+    {
+      "approved_claims": [
+        {
+          "claim_id": "Wukong:JUNGLE:pick-presence",
+          "metric": "pick_presence_delta",
+          "text": "최근 7일 Wukong JUNGLE 픽 점유율은 23.1%이며 이전 구간 대비 +5.1pp 변했다.",
+          "value": 0.051282
+        },
+        {
+          "claim_id": "Wukong:JUNGLE:team-demand",
+          "metric": "demand_velocity",
+          "text": "최근 채택 팀은 7개이며 팀 수요는 이전 구간 대비 +36.1pp 변했다.",
+          "value": 0.361111
+        },
+        {
+          "claim_id": "Wukong:JUNGLE:regional-divergence",
+          "metric": "most_divergent_region_delta",
+          "text": "KOREA의 최근 픽 점유율은 글로벌 점유율과 -0.9pp 차이가 난다.",
+          "value": -0.008547
+        }
+      ],
+      "candidate_id": "Wukong:JUNGLE",
+      "champion_id": "Wukong",
+      "chapter_outline": [
+        {
+          "chapter": "HOOK",
+          "uses": [
+            "Wukong:JUNGLE:pick-presence"
+          ]
+        },
+        {
+          "chapter": "WHAT CHANGED",
+          "uses": [
+            "Wukong:JUNGLE:pick-presence",
+            "Wukong:JUNGLE:team-demand",
+            "Wukong:JUNGLE:regional-divergence"
+          ]
+        },
+        {
+          "chapter": "WHY IT MAY MATTER",
+          "uses": [
+            "Wukong:JUNGLE:team-demand"
+          ]
+        },
+        {
+          "chapter": "COUNTERPOINT",
+          "uses": []
+        },
+        {
+          "chapter": "TAKEAWAY AND NEXT CHECK",
+          "uses": []
+        }
+      ],
+      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "data_cards": [
+        {
+          "card": "PICK_PRESENCE_COMPARISON",
+          "current": 0.230769,
+          "prior": 0.179487
+        },
+        {
+          "card": "TEAM_DEMAND_COMPARISON",
+          "current": 0.583333,
+          "prior": 0.222222
+        },
+        {
+          "card": "REGIONAL_PRESENCE",
+          "values": [
+            {
+              "delta_from_global": 0.007326,
+              "match_count": 21,
+              "pick_count": 5,
+              "pick_presence": 0.238095,
+              "region": "INTERNATIONAL",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.008547,
+              "match_count": 18,
+              "pick_count": 4,
+              "pick_presence": 0.222222,
+              "region": "KOREA",
+              "sample_eligible": true
+            }
+          ]
+        }
+      ],
+      "evidence_event_ids": [
+        "oe:LAS:LOLTMNT02_485419:pick:10",
+        "oe:LAS:LOLTMNT02_485530:pick:3",
+        "oe:LAS:LOLTMNT02_486508:pick:1",
+        "oe:LAS:LOLTMNT02_486602:pick:6",
+        "oe:LAS:LOLTMNT02_488181:pick:2",
+        "oe:LAS:LOLTMNT02_488193:pick:1",
+        "oe:LAS:LOLTMNT02_488237:pick:4",
+        "oe:LAS:LOLTMNT02_488273:pick:2",
+        "oe:WLDs:LOLTMNT02_485267:pick:6",
+        "oe:WLDs:LOLTMNT02_485705:pick:7",
+        "oe:WLDs:LOLTMNT02_486299:pick:2",
+        "oe:WLDs:LOLTMNT02_486541:pick:7",
+        "oe:WLDs:LOLTMNT02_487172:pick:6",
+        "oe:WLDs:LOLTMNT02_487214:pick:4",
+        "oe:WLDs:LOLTMNT02_488033:pick:4",
+        "oe:WLDs:LOLTMNT02_488304:pick:7"
+      ],
+      "falsifiers": [
+        {
+          "condition": "next comparable snapshot is less than or equal to zero",
+          "metric": "demand_velocity"
+        },
+        {
+          "condition": "adoption does not expand beyond the currently observed teams",
+          "metric": "current_distinct_team_count"
+        }
+      ],
+      "hook": "Wukong JUNGLE의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
       "quality_flags": [],
       "radar_rank": 3,
       "review_state": "HUMAN_REVIEW_REQUIRED",
-      "role": "SUPPORT",
-      "short_summary": "Rell SUPPORT의 최근 픽 점유율은 17.1%로, 이전 구간 대비 +14.9pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "role": "JUNGLE",
+      "short_summary": "Wukong JUNGLE의 최근 픽 점유율은 23.1%로, 이전 구간 대비 +5.1pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
       "thumbnail_copy": [
-        "Rell SUPPORT",
-        "+14.9pp"
+        "Wukong JUNGLE",
+        "+5.1pp"
       ],
       "title_candidates": [
-        "왜 지금 Rell SUPPORT인가: +14.9pp 변화의 근거",
-        "INTERNATIONAL에서 먼저 보인 Rell SUPPORT, 글로벌과 +0.5pp 차이",
-        "Rell SUPPORT은 진짜 신호일까? 데이터와 반론"
+        "왜 지금 Wukong JUNGLE인가: +5.1pp 변화의 근거",
+        "KOREA에서 먼저 보인 Wukong JUNGLE, 글로벌과 -0.9pp 차이",
+        "Wukong JUNGLE은 진짜 신호일까? 데이터와 반론"
       ]
     }
   ],
