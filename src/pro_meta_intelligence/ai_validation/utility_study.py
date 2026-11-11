@@ -7,6 +7,11 @@ Protocol v2 (audit fixes):
   text naming aid fields are rejected, so the blind packet cannot reveal the arm.
 - The blind packet freezes a hash of every response (including elapsed time); evaluation refuses
   responses that no longer match it and records the ratings hash in the report.
+
+Protocol v3 adds a common draft state to every case (current bans, committed picks, previous-game
+fearless locks and the role's confirmed readiness). Responses list structured BAN/PICK
+recommendations; any that conflicts with that state is counted as a critical error automatically,
+in both arms, whatever the raters marked. Aids are filtered by the same state, like the product.
 """
 
 from __future__ import annotations
@@ -16,16 +21,114 @@ import json
 import random
 from statistics import mean, median
 
-PROTOCOL_KIND = "retrospective-utility-pilot-v2"
+PROTOCOL_KIND = "retrospective-utility-pilot-v3"
 PARTICIPANTS = 4
 MIN_CASES = 30
 MIN_GROUPS = 6
+DRAFT_ACTIONS = ("BAN", "PICK")
+# Display names and Data Dragon asset IDs that denote the same champion.
+_CHAMPION_ALIASES = {"wukong": "monkeyking", "renataglasc": "renata", "nunuwillump": "nunu"}
 
 
 def fingerprint(value: object) -> str:
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, ensure_ascii=False).encode("utf-8")
     ).hexdigest()
+
+
+def champion_key(name: object) -> str:
+    key = "".join(ch for ch in str(name).lower() if ch.isalnum())
+    return _CHAMPION_ALIASES.get(key, key)
+
+
+def unavailable_champions(state: dict) -> set[str]:
+    """Champions nobody can pick now: banned, already picked, or locked by an earlier game."""
+    names = [*state["bans"], *state["picks"]["own"], *state["picks"]["target"]]
+    return {champion_key(name) for name in [*names, *state["fearless_locked"]]}
+
+
+def _names(item: object, blocked: set[str]) -> bool:
+    return (
+        isinstance(item, dict)
+        and "champion_id" in item
+        and champion_key(item["champion_id"]) in blocked
+    )
+
+
+def _mentions(value: object, blocked: set[str]) -> bool:
+    if _names(value, blocked):
+        return True
+    if isinstance(value, dict):
+        return any(_mentions(item, blocked) for item in value.values())
+    if isinstance(value, list):
+        return any(_mentions(item, blocked) for item in value)
+    return False
+
+
+def without_champions(value: object, blocked: set[str]) -> object:
+    """Drop every entry naming a blocked champion (what the product hides), keeping the rest."""
+    if isinstance(value, list):
+        return [without_champions(item, blocked) for item in value if not _names(item, blocked)]
+    if isinstance(value, dict):
+        return {
+            key: without_champions(item, blocked)
+            for key, item in value.items()
+            if not _names(item, blocked)
+        }
+    return value
+
+
+def _check_draft_state(case: dict) -> dict:
+    state = case["evidence"].get("draft_state")
+    if not isinstance(state, dict) or not case.get("role"):
+        raise ValueError("every case needs a role and a common evidence draft_state")
+    picks, prepared = state.get("picks"), state.get("own_prepared")
+    if (
+        not isinstance(state.get("bans"), list)
+        or not isinstance(state.get("fearless_locked"), list)
+        or not isinstance(picks, dict)
+        or any(not isinstance(picks.get(side), list) for side in ("own", "target"))
+        or not isinstance(prepared, dict)
+        or not isinstance(prepared.get(case["role"]), list)
+    ):
+        raise ValueError("draft_state needs bans, picks.own/target, fearless_locked, own_prepared")
+    blocked = unavailable_champions(state)
+    if any(champion_key(c) in blocked for c in prepared[case["role"]]):
+        raise ValueError("a prepared champion is already unavailable in the draft state")
+    if _mentions(case["aids"], blocked):
+        raise ValueError("aids must be filtered by the draft state, as the product filters them")
+    return state
+
+
+def draft_violations(case: dict, recommendations: list[dict]) -> list[dict]:
+    """Recommendations the current draft state makes impossible or unverified."""
+    state = case["evidence"]["draft_state"]
+    blocked = unavailable_champions(state)
+    prepared = {champion_key(c) for c in state["own_prepared"][case["role"]]}
+    found = []
+    for item in recommendations:
+        key = champion_key(item["champion_id"])
+        if key in blocked:
+            found.append({**item, "reason": "UNAVAILABLE_IN_CURRENT_DRAFT"})
+        elif item["action"] == "PICK" and key not in prepared:
+            found.append({**item, "reason": "READINESS_UNCONFIRMED"})
+    return found
+
+
+def _recommendations(row: dict) -> list[dict]:
+    items = row.get("recommendations")
+    if not isinstance(items, list) or not items:
+        raise ValueError("structured BAN/PICK recommendations required")
+    for item in items:
+        if (
+            not isinstance(item, dict)
+            or set(item) != {"action", "champion_id"}
+            or item["action"] not in DRAFT_ACTIONS
+            or not isinstance(item["champion_id"], str)
+            or not item["champion_id"]
+        ):
+            raise ValueError("each recommendation is exactly {action: BAN|PICK, champion_id}")
+    return [dict(item) for item in items]
 
 
 def freeze_study(
@@ -42,6 +145,8 @@ def freeze_study(
         raise ValueError("version, common evidence and aids required")
     if any(not c.get("group") for c in cases):
         raise ValueError("every case needs the group (evidence pack) it shares material with")
+    for case in cases:
+        _check_draft_state(case)
     groups = sorted({c["group"] for c in cases})
     if len(groups) < MIN_GROUPS:
         raise ValueError(f"at least {MIN_GROUPS} independent groups required")
@@ -177,6 +282,7 @@ def blind_packet(study: dict, responses: list[dict]) -> dict:
         seen.add(key)
         if not row.get("decision") or not row.get("evidence_refs"):
             raise ValueError("decision and evidence references required")
+        recommendations = _recommendations(row)
         if not isinstance(row.get("elapsed_seconds"), (int, float)) or not (
             0 < row["elapsed_seconds"] < 86400
         ):
@@ -196,7 +302,10 @@ def blind_packet(study: dict, responses: list[dict]) -> dict:
                 "response_id": _response_id(study, responses_sha256, key),
                 "case_id": case["id"],
                 "decision": row["decision"],
+                "recommendations": recommendations,
                 "evidence_refs": refs,
+                # Arm-neutral and computed, so raters and the report share one definition.
+                "draft_violations": draft_violations(case, recommendations),
             }
         )
     return {
@@ -251,6 +360,9 @@ def evaluate_study(study: dict, responses: list[dict], blind: dict, ratings: lis
         }
     cells: dict[tuple[str, str], dict] = {}
     critical = {"aided": 0, "control": 0}
+    automatic = {"aided": 0, "control": 0}
+    violations = {p["response_id"]: p["draft_violations"] for p in packet["responses"]}
+    missed_by_raters = 0
     rater_gaps, critical_disagreements = [], 0
     for row in responses:
         assignment = assignments[row["assignment_id"]]
@@ -260,7 +372,10 @@ def evaluate_study(study: dict, responses: list[dict], blind: dict, ratings: lis
         rater_gaps.append(abs(per_rater[0] - per_rater[1]))
         flags = [g["critical_error"] for g in grades]
         critical_disagreements += flags[0] != flags[1]
-        critical[assignment["arm"]] += any(flags)
+        detected = bool(violations[response_id])
+        automatic[assignment["arm"]] += detected
+        missed_by_raters += detected and not any(flags)
+        critical[assignment["arm"]] += any(flags) or detected
         cell = cells.setdefault(
             (assignment["group"], assignment["participant"]),
             {"arm": assignment["arm"], "times": [], "qualities": []},
@@ -301,6 +416,8 @@ def evaluate_study(study: dict, responses: list[dict], blind: dict, ratings: lis
         "quality_delta_range": [min(deltas), max(deltas)],
         "aided_critical_errors": critical["aided"],
         "control_critical_errors": critical["control"],
+        "automatic_draft_violations": automatic,
+        "violations_missed_by_raters": missed_by_raters,
         "mean_rater_gap": mean(rater_gaps),
         "critical_error_disagreements": critical_disagreements,
         "group_results": group_results,

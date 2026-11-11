@@ -45,9 +45,17 @@ export const WORLDS_2026 = {
   // T1's semifinal from the official lolesports schedule feed retrieved 2026-11-08; the other pairing is not tracked.
   semifinals_checked_on: "2026-11-08",
   semifinals: [
-    { start_at: "2026-11-08T22:00:00Z", teams: ["T1", "BLG"] },
+    // score follows the teams order. Reviewed by a person against published match reports, never inferred.
+    { start_at: "2026-11-08T22:00:00Z", teams: ["T1", "BLG"], result: { winner: "BLG", score: [1, 3] } },
+  ],
+  results_checked_on: "2026-11-11",
+  results_sources: [
+    "https://dotesports.com/league-of-legends/news/worlds-2026-semifinals-day-2-results",
+    "https://www.fragster.com/blg-t1-worlds-2026-semifinal/",
   ],
   final_date: "2026-11-14",
+  // Only the pairing and the local date are confirmed; the start time is not shown.
+  final: { teams: ["GEN", "BLG"], source: "https://en.wikipedia.org/wiki/2026_League_of_Legends_World_Championship_final" },
 } as const;
 
 export type WorldsStage = "QUARTERFINAL" | "OUT_OF_KNOCKOUTS";
@@ -65,14 +73,32 @@ export function worldsQuarterfinalFor(code: string) {
   return { start_at: match.start_at, opponent: match.teams[0] === code ? match.teams[1] : match.teams[0] };
 }
 
-// The latest known knockout match: a semifinal replaces the quarterfinal once its pairing is published.
-export function worldsNextMatchFor(code: string) {
-  const stages = [["4강", WORLDS_2026.semifinals], ["8강", WORLDS_2026.quarterfinals]] as const;
+type KnockoutMatch = { start_at: string; teams: readonly string[]; result?: { winner: string; score: readonly number[] } };
+
+// The team's latest known knockout pairing: a semifinal replaces the quarterfinal once published.
+function latestKnockoutFor(code: string) {
+  const stages: [string, readonly KnockoutMatch[]][] = [["4강", WORLDS_2026.semifinals], ["8강", WORLDS_2026.quarterfinals]];
   for (const [label, matches] of stages) {
-    const match = matches.find((item) => (item.teams as readonly string[]).includes(code));
-    if (match) return { label, start_at: match.start_at, opponent: match.teams[0] === code ? match.teams[1] : match.teams[0] };
+    const match = matches.find((item) => item.teams.includes(code));
+    if (!match) continue;
+    const own = match.teams.indexOf(code);
+    return { label, start_at: match.start_at, opponent: match.teams[1 - own], result: match.result
+      ? { won: match.result.winner === code, own_score: match.result.score[own], opponent_score: match.result.score[1 - own] } : null };
   }
   return null;
+}
+
+// The next match to prepare for. A match with a reviewed result is finished and never shown as next.
+export function worldsNextMatchFor(code: string) {
+  const match = latestKnockoutFor(code);
+  if (!match || match.result) return null;
+  return { label: match.label, start_at: match.start_at, opponent: match.opponent };
+}
+
+// The latest finished match with a reviewed official result.
+export function worldsLastResultFor(code: string) {
+  const match = latestKnockoutFor(code);
+  return match?.result ? { label: match.label, start_at: match.start_at, opponent: match.opponent, ...match.result } : null;
 }
 
 const roles = [
@@ -126,8 +152,9 @@ export function buildWorldsPreparation(report: RadarReport) {
     const team: OpponentTeam | null = matches.length === 1 ? matches[0] : null;
     const quarterfinal = worldsQuarterfinalFor(qualified.code);
     const next_match = worldsNextMatchFor(qualified.code);
+    const last_result = worldsLastResultFor(qualified.code);
     const stage: WorldsStage = quarterfinal ? "QUARTERFINAL" : "OUT_OF_KNOCKOUTS";
-    return { ...qualified, team, sample: team?.game_count ?? 0, stage, quarterfinal, next_match,
+    return { ...qualified, team, sample: team?.game_count ?? 0, stage, quarterfinal, next_match, last_result,
       first_picks: team?.priority_picks.slice(0, 3).map((pick) => pick.champion_id) ?? [],
       role_coverage: worldsRoleCoverage(team),
     };

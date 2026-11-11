@@ -36,3 +36,9 @@
 @media (max-width: 540px) { .draft-scout-leagues, .draft-scout-levers section:first-child ol { grid-template-columns: 1fr; } }
 .draft-scout-picker { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: 1rem; font-size: .875rem; }
 .draft-scout-picker select { min-height: 44px; padding: .5rem; font-size: 1rem; background: white; color: var(--ink); border: 1px solid var(--ink); }
+.draft-scout-content .draft-scout-freshness { padding: .5rem .75rem; border-left: 4px solid #1f7a4d; background: #eef7f1; }
+.draft-scout-content .draft-scout-freshness.is-behind_feed,
+.draft-scout-content .draft-scout-freshness.is-aged,
+.draft-scout-content .draft-scout-freshness.is-unknown { border-left-color: #b42318; background: #fdecea; }
+.draft-scout-content .draft-scout-freshness strong { color: #8a1c13; }
+.draft-scout-content .draft-scout-result { padding: .5rem .75rem; border-left: 4px solid var(--ink); background: #f6f6f2; }

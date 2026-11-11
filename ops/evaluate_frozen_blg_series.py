@@ -1,5 +1,10 @@
-"""Outcome-only replay: never rebuild or fit the pre-match scouting pack."""
+"""Outcome-only replay: never rebuild or fit the pre-match scouting pack.
 
+The pre-match pack is an explicit, hash-pinned input. The current web pack is never used
+implicitly, because a refreshed pack contains the very games being scored.
+"""
+
+import argparse
 import hashlib
 import json
 from collections import defaultdict
@@ -13,18 +18,41 @@ from pro_meta_intelligence.sources import SourceRegistry
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def main():
-    fetched = json.loads(
-        (ROOT / "outputs/matchday-fetch-20261111.json").read_text(encoding="utf-8")
+def load_frozen_pack(path: Path, expected_sha256: str) -> tuple[bytes, dict]:
+    raw = path.read_bytes()
+    actual = hashlib.sha256(raw).hexdigest()
+    if actual != expected_sha256.lower():
+        raise ValueError(f"frozen pack hash mismatch: {actual}")
+    return raw, json.loads(raw)
+
+
+def require_pre_match(pack: dict, first_game_at: datetime) -> None:
+    if datetime.fromisoformat(pack["cutoff"]) >= first_game_at:
+        raise ValueError("pack cutoff is not before the first scored game; not a pre-match pack")
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--frozen-pack", type=Path, required=True, help="pre-match BLG pack")
+    parser.add_argument("--pack-sha256", required=True, help="hash recorded when it was frozen")
+    parser.add_argument(
+        "--fetch-record", type=Path, default=ROOT / "outputs/matchday-fetch-20261111.json"
     )
+    parser.add_argument("--output", type=Path, required=True)
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
+    if args.output.exists():
+        raise SystemExit("output exists; evaluation results are not overwritten")
+    raw, pack = load_frozen_pack(args.frozen_pack, args.pack_sha256)
+    fetched = json.loads(args.fetch_record.read_text(encoding="utf-8"))
     imported = OracleElixirCSVAdapter(SourceRegistry.load_default()).import_file(
         Path(fetched["raw_data_path"]),
         retrieved_at=datetime.fromisoformat(fetched["retrieved_at"]),
         source_timezone="UTC",
     )
-    pack_path = ROOT / "web/app/scouting/t1-vs-blg.json"
-    raw = pack_path.read_bytes()
-    pack = json.loads(raw)
     games = sorted(
         [
             m
@@ -35,7 +63,7 @@ def main():
         key=lambda m: (m.observed_at, m.match_id),
     )
     assert len(games) == 4, f"Expected four provider games, found {len(games)}"
-    assert datetime.fromisoformat(pack["cutoff"]) < games[0].observed_at
+    require_pre_match(pack, games[0].observed_at)
     events = defaultdict(list)
     for event in imported.draft_events:
         events[event.match_id].append(event)
@@ -108,6 +136,7 @@ def main():
     report = {
         "artifact_type": "frozen-pack-series-evaluation",
         "provider_source_hash": fetched["content_hash"],
+        "pack_path": args.frozen_pack.as_posix(),
         "pack_sha256": hashlib.sha256(raw).hexdigest(),
         "pack_cutoff": pack["cutoff"],
         "games": rows,
@@ -124,8 +153,10 @@ def main():
         "current-game bans not used. No outcome fitting or causal draft-win claim. "
         "The frozen pack predates the T1 and BLG quarterfinals.",
     }
-    out = ROOT / "outputs/t1-blg-frozen-evaluation.json"
-    out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     print(json.dumps({"totals": dict(total), "games": [row["hits"] for row in rows]}))
 
 

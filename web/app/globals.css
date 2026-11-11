@@ -284,6 +284,7 @@ h1 em { font-style: normal; color: var(--violet); }
 .schedule-state { display: inline-flex; align-items: center; gap: 5px; margin-top: 7px; color: #4f544f; font: 800 8px var(--font-geist-mono); font-style: normal; }
 .schedule-state::before { content: ""; width: 7px; height: 7px; border: 1px solid var(--ink); background: #aaa9a2; }
 .schedule-state.connected::before { background: var(--violet); }
+.schedule-review-note { margin: 6px 0 0; max-width: 46ch; font-size: 12px; line-height: 1.5; color: #8a1c13; }
 .schedule-state.connecting::before { background: #e2a63b; }
 .team-lens label { display: grid; gap: 4px; color: #4f544f; font-size: 10px; font-weight: 800; }
 .team-picker { display: grid; gap: 4px; min-width: 0; }

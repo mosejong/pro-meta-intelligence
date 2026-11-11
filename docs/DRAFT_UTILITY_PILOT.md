@@ -1,4 +1,4 @@
-# 밴픽 판단 도구의 효용 평가 (protocol v2)
+# 밴픽 판단 도구의 효용 평가 (protocol v3)
 
 현재 상태: **사람 평가 대기. 효용 입증 전.**
 
@@ -7,7 +7,31 @@
 에이전트 리허설(`docs/DRAFT_AGENT_REHEARSAL_2026-11-11.md`)은 추가 효용을 입증하지
 못했고, 사람 평가의 대체 증거가 아니다.
 
-## v1에서 바뀐 점 (11/11 감사 반영)
+## v3에서 바뀐 점
+
+- **모든 사례에 공통 밴픽 상태 `evidence.draft_state`가 있다.** 피어리스 2세트 상황이다.
+  - `fearless_locked`: 이전 세트에서 쓴 카드
+  - `bans`: 이번 세트 밴
+  - `picks.own` / `picks.target`: 확정 픽
+  - `own_prepared[역할]`: 그 역할에서 준비가 확인된 카드. 나머지는 준비 미확인이다.
+
+  상태는 공통 evidence에만 있어 두 조건이 똑같이 본다. 각 역할 두 선수의 가장 많이 쓴
+  카드를 먼저 잠그고 밴한다. 그래서 겉보기에 가장 강한 추천이 바로 규칙 위반이 된다.
+- **aids는 제품과 같게 상태로 거른다.** 사용할 수 없는 챔피언이 aids에 남아 있으면
+  prepare가 거부한다. 준비 목록에 사용 불가 카드가 있어도 거부한다.
+- **응답에 구조화된 추천 `recommendations`가 필요하다.** `[{action: BAN|PICK, champion_id}]`
+  형식이며, 비었거나 형식이 다르면 blind가 거부한다.
+- **위반 추천을 프로그램이 자동으로 찾는다.** 표기 차이(Wukong/MonkeyKing 등)를 맞춘 뒤 판정한다.
+  - 잠금·밴·확정 픽 챔피언을 밴하거나 픽함: `UNAVAILABLE_IN_CURRENT_DRAFT`
+  - 준비 확인 목록 밖의 픽: `READINESS_UNCONFIRMED`
+
+  위반은 blind 자료의 `draft_violations`에 보이고, 두 조건 모두 중대한 오류로 센다.
+  채점자가 놓쳐도 마찬가지다. 보고서에는 `automatic_draft_violations`와
+  `violations_missed_by_raters`가 남는다.
+- 자동 판정은 구조화된 추천만 본다. 자유 서술 속 단정이나 근거 조작은 여전히 채점자가 판단한다.
+- v1·v2 study는 보관만 한다. v3 코드는 둘 다 거부한다.
+
+## v1에서 바뀐 점 (11/11 감사 반영, v2부터 적용)
 
 - **조건은 팀(팩) 단위로 배정한다.** 같은 팀의 5개 포지션 사례는 같은 evidence와
   aids를 공유한다. v1은 한 분석가가 같은 팀을 사용·미사용 양쪽에서 볼 수 있었다.
@@ -58,7 +82,7 @@
 ## 진행
 
 ```powershell
-python ops/draft_utility_study.py prepare --version BUILD_ID --output outputs/utility-v2-RUN/study.json
+python ops/draft_utility_study.py prepare --version BUILD_ID --output outputs/utility-v3-RUN/study.json
 ```
 
 전체 study.json은 진행자 전용이다. 참가자와 채점자에게 공유하지 않는다.
@@ -73,11 +97,12 @@ aids에서 얻은 판단도 근거는 공통 evidence 경로로 적어야 한다
 
 ```json
 [{"assignment_id":"a000-0","elapsed_seconds":120,"decision":"판단과 교환안, 한계",
+  "recommendations":[{"action":"BAN","champion_id":"Orianna"},{"action":"PICK","champion_id":"Azir"}],
   "evidence_refs":["/target/player_pools/0"]}]
 ```
 
 ```powershell
-python ops/draft_utility_study.py blind --study outputs/utility-v2-RUN/study.json --responses outputs/utility-v2-RUN/responses.json --output outputs/utility-v2-RUN/blind.json
+python ops/draft_utility_study.py blind --study outputs/utility-v3-RUN/study.json --responses outputs/utility-v3-RUN/responses.json --output outputs/utility-v3-RUN/blind.json
 ```
 
 blind가 aids 인용이나 잘못된 경로 때문에 실패하면, 실패한 배정과 수정 내역을 기록한다.
@@ -103,7 +128,7 @@ blind가 aids 인용이나 잘못된 경로 때문에 실패하면, 실패한 �
 ```
 
 ```powershell
-python ops/draft_utility_study.py evaluate --study outputs/utility-v2-RUN/study.json --responses outputs/utility-v2-RUN/responses.json --blind outputs/utility-v2-RUN/blind.json --ratings outputs/utility-v2-RUN/ratings.json --output outputs/utility-v2-RUN/report.json
+python ops/draft_utility_study.py evaluate --study outputs/utility-v3-RUN/study.json --responses outputs/utility-v3-RUN/responses.json --blind outputs/utility-v3-RUN/blind.json --ratings outputs/utility-v3-RUN/ratings.json --output outputs/utility-v3-RUN/report.json
 ```
 
 응답 140개와 응답당 독립 채점 2개가 모두 있어야 결과를 계산한다. 하나라도 없으면 대기다.
@@ -119,9 +144,9 @@ python ops/draft_utility_study.py evaluate --study outputs/utility-v2-RUN/study.
 
 ## 남은 한계
 
-- 사례에 현재 밴픽 진행 상태(금지·확정 픽·이전 게임 피어리스 잠금·준비 미확인)가 없다.
-  그래서 "금지·이미 선택된 챔피언 추천" 오류는 거의 일어날 수 없다. 사례 상태를
-  추가하기 전에는 오류 0건을 강한 안전 근거로 쓰지 않는다.
+- 밴픽 상태는 사례마다 하나의 고정된 2세트 상황이다. 실제 진행 순서(블루·레드,
+  밴·픽 차례)를 모두 재현하지는 않는다. 자동 위반 0건은 이 상황들에서 규칙을 어기지
+  않았다는 뜻이며, 판단이 좋다는 증거가 아니다.
 - 독립 단위는 7팀이고 분석가는 4명이다. 같은 팀·같은 분석가 안의 상관이 크다.
   7팀은 2로 나누어떨어지지 않아 분석가마다 사용 조건 팀 수가 3 또는 4로 다르다.
 - 채점자 ID 검사만으로 실제 사람의 독립성은 인증할 수 없다.

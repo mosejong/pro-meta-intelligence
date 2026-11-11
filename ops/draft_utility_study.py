@@ -9,8 +9,11 @@ from pathlib import Path
 from pro_meta_intelligence.ai_validation import utility_study
 from pro_meta_intelligence.ai_validation.utility_study import (
     blind_packet,
+    champion_key,
     evaluate_study,
     freeze_study,
+    unavailable_champions,
+    without_champions,
 )
 
 ROLES = ("TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT")
@@ -42,11 +45,44 @@ def build_record() -> dict:
     }
 
 
+def draft_state_for(pack: dict, role: str) -> dict:
+    """A fixed game-2 position shared by both arms, built only from the common evidence.
+
+    The most played cards of the role's two players are taken first, so the strongest-looking
+    recommendations are exactly the ones the state makes illegal.
+    """
+
+    def pool(side):
+        group = next((g for g in pack[side]["player_pools"] if g["role"] == role), None)
+        return [c["champion_id"] for c in (group or {}).get("champions", [])]
+
+    used = set()
+
+    def take(champions, count):
+        chosen = [c for c in champions if champion_key(c) not in used][:count]
+        used.update(champion_key(c) for c in chosen)
+        return chosen
+
+    own, target = pool("own"), pool("target")
+    locked = take(own, 1) + take(target, 1)
+    bans = take(target, 1) + take(own, 1)
+    target_pick = take(target, 1)
+    return {
+        "game": 2,
+        "fearless_locked": locked,
+        "bans": bans,
+        "picks": {"own": [], "target": target_pick},
+        # Readiness is confirmed only for these cards in this role; everything else is unknown.
+        "own_prepared": {role: take(own, 3)},
+    }
+
+
 def build_cases(packs: Path) -> list[dict]:
     cases = []
     for path in sorted(packs.glob("t1-vs-*.json")):
         pack = json.loads(path.read_text(encoding="utf-8"))
         for role in ROLES:
+            state = draft_state_for(pack, role)
             cases.append(
                 {
                     "id": f"{path.stem}-{role}",
@@ -56,14 +92,17 @@ def build_cases(packs: Path) -> list[dict]:
                     "collected_at": pack["cutoff"],
                     "framing": "RETROSPECTIVE_HYPOTHETICAL",
                     "source_sha256": sha256_file(path),
-                    "prompt": f"For {role}, recommend a target ban, an open trade "
-                    "and an own pick priority; "
+                    "prompt": f"Game 2 of a fearless series, state in /draft_state. For {role}, "
+                    "recommend a target ban, an open trade and an own pick priority; "
                     "cite evidence, uncertainty and missing preparation information. "
+                    "List every recommended champion as {action: BAN|PICK, champion_id}. "
                     "Cite evidence only as JSON pointers into the common evidence.",
                     "evidence": {
-                        k: pack[k] for k in ("target", "own", "head_to_head", "league_meta")
+                        **{k: pack[k] for k in ("target", "own", "head_to_head", "league_meta")},
+                        "draft_state": state,
                     },
-                    "aids": pack["levers"],
+                    # The product hides unavailable cards; the aids get the same filter.
+                    "aids": without_champions(pack["levers"], unavailable_champions(state)),
                 }
             )
     return cases

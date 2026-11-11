@@ -135,3 +135,27 @@ export function buildDraftScoutBrief(pack: DraftScoutPack, previousPicks: string
 export function formatRate(rate: number | null | undefined) {
   return rate === null || rate === undefined ? "—" : `${Math.round(rate * 100)}%`;
 }
+
+// Packs are only replaced by a successful refresh, so a failed refresh shows up here as an old cutoff.
+export const SCOUT_STALE_AFTER_HOURS = 72;
+export const SCOUT_FEED_LAG_TOLERANCE_HOURS = 6;
+
+export type ScoutFreshness = {
+  status: "CURRENT" | "BEHIND_FEED" | "AGED" | "UNKNOWN";
+  pack_cutoff: string; feed_cutoff: string | null;
+  age_hours: number | null; feed_lead_hours: number | null;
+};
+
+// Compares the pack with the published feed it should follow and with the viewer's clock.
+// The clock is optional so server and first client render agree; age is filled in after mount.
+export function scoutFreshness(packCutoff: string, feedCutoff: string | null | undefined, now?: number): ScoutFreshness {
+  const hours = (from: string, to: number) => (to - Date.parse(from)) / 3_600_000;
+  const pack = Date.parse(packCutoff);
+  const feed = feedCutoff && Number.isFinite(Date.parse(feedCutoff)) ? feedCutoff : null;
+  const feed_lead_hours = feed && Number.isFinite(pack) ? hours(packCutoff, Date.parse(feed)) : null;
+  const age_hours = now !== undefined && Number.isFinite(pack) ? Math.max(0, hours(packCutoff, now)) : null;
+  const status = !Number.isFinite(pack) ? "UNKNOWN"
+    : feed_lead_hours !== null && feed_lead_hours > SCOUT_FEED_LAG_TOLERANCE_HOURS ? "BEHIND_FEED"
+      : age_hours !== null && age_hours > SCOUT_STALE_AFTER_HOURS ? "AGED" : "CURRENT";
+  return { status, pack_cutoff: packCutoff, feed_cutoff: feed, age_hours, feed_lead_hours };
+}

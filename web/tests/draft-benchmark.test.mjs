@@ -13,13 +13,13 @@ test("historical draft evaluation measures the production preview and rejects le
     const { applyDraftSelection, previewOpponentPick, STANDARD_DRAFT_SEQUENCE, draftSequence, completeFearlessGame, fearlessLocks, serializeDraftScenario } = await vite.ssrLoadModule("/app/draft-agent.ts");
     const { parseDraftSession } = await vite.ssrLoadModule("/app/draft-session.ts");
     const { canAssignDistinctRoles, observedChampionRoles, previewRoleExperiment } = await vite.ssrLoadModule("/app/draft-role-experiment.ts");
-    const { buildWorldsPreparation, formatKst, worldsQuarterfinalFor, worldsNextMatchFor, worldsRoleCoverage, WORLDS_2026 } = await vite.ssrLoadModule("/app/worlds-preparation.ts");
+    const { buildWorldsPreparation, formatKst, worldsQuarterfinalFor, worldsNextMatchFor, worldsLastResultFor, worldsRoleCoverage, WORLDS_2026 } = await vite.ssrLoadModule("/app/worlds-preparation.ts");
     const report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
     report.fixture_only = true;
-    const { DRAFT_SCOUT_PACKS, DRAFT_SCOUT_VALIDATION, buildDraftScoutBrief, draftScoutFor, headToHeadSeries, headToHeadStaples } = await vite.ssrLoadModule("/app/draft-scout.ts");
+    const { DRAFT_SCOUT_PACKS, DRAFT_SCOUT_VALIDATION, buildDraftScoutBrief, draftScoutFor, headToHeadSeries, headToHeadStaples, scoutFreshness } = await vite.ssrLoadModule("/app/draft-scout.ts");
     const { DraftScoutPanel } = await vite.ssrLoadModule("/app/draft-scout-panel.tsx");
     await t.test("scouting applies current locks only to the matching matchup, on either side", () => {
-      const pack = draftScoutFor(worldsNextMatchFor("T1").opponent);
+      const pack = draftScoutFor(worldsLastResultFor("T1").opponent);
       const selections = applyDraftSelection([], "Leona");
       const props = { nameOf: (id) => id, selections, previousPicks: [] };
       for (const [blueTeamId, redTeamId] of [[pack.own.team_ids[0], pack.target.team_ids[0]], [pack.target.team_ids[0], pack.own.team_ids[0]]]) {
@@ -31,9 +31,51 @@ test("historical draft evaluation measures the production preview and rejects le
       assert.match(unrelated, /독립 스카우팅 보기/);
       assert.doesNotMatch(unrelated, /<em>사용 불가/);
     });
+    await t.test("a reviewed schedule correction withholds only the exact conflicting event", async () => {
+      const { applyScheduleReview, WITHHELD_SCHEDULE_EVENTS } = await vite.ssrLoadModule("/app/schedule-review.ts");
+      const schedule = JSON.parse(await readFile(new URL("../public/feed/schedule.json", import.meta.url), "utf8"));
+      const [review] = WITHHELD_SCHEDULE_EVENTS;
+      const reviewed = applyScheduleReview(schedule);
+      const stale = schedule.events.some((event) => event.event_id === review.event_id);
+      assert.equal(reviewed.withheld.length, stale ? 1 : 0);
+      assert.ok(!reviewed.schedule.events.some((event) => event.event_id === review.event_id));
+      assert.equal(reviewed.schedule.events.length, schedule.events.length - reviewed.withheld.length);
+      const conflict = { event_id: review.event_id, start_at: review.start_at, league: "Worlds", block: "Semifinals", best_of: 5,
+        participants: [{ code: "BLG", name: "BILIBILI GAMING" }, { code: "T1", name: "T1" }] };
+      const fixture = { ...schedule, events: [conflict] };
+      assert.equal(applyScheduleReview(fixture).schedule.events.length, 0);
+      // If the feed is corrected (new teams or time), the event is shown again: nothing is inferred.
+      const corrected = { ...conflict, participants: [{ code: "GEN", name: "GEN.G" }, { code: "BLG", name: "BILIBILI GAMING" }] };
+      assert.equal(applyScheduleReview({ ...schedule, events: [corrected] }).schedule.events.length, 1);
+      assert.equal(applyScheduleReview({ ...schedule, events: [{ ...conflict, start_at: "2026-11-15T19:00:00+00:00" }] }).withheld.length, 0);
+      assert.equal(applyScheduleReview(null).schedule, null);
+    });
+    await t.test("finished matches are labelled with their result and packs show their freshness", () => {
+      const html = renderToStaticMarkup(createElement(DraftScoutPanel, { nameOf: (id) => id, feedCutoff: "2026-11-10T02:02:04+00:00" }));
+      assert.match(html, /T1 vs BLG · 밴픽 스카우팅/);
+      assert.match(html, /4강 종료 · T1 1:3 패 · 다음 T1 경기 없음/);
+      assert.doesNotMatch(html, /4강 상대/);
+      assert.match(html, /BLG · 4강 종료 · 지난 상대/);
+      assert.match(html, /결승은 GEN vs BLG/);
+      assert.match(html, /스카우팅 자료 갱신 11\.11 11:19 KST/);
+      assert.match(html, /공개 피드 11\.10 11:02 KST/);
+      assert.match(html, /data-freshness="CURRENT"/);
+      // A refresh that failed after a newer feed was published leaves an older pack behind.
+      const behind = renderToStaticMarkup(createElement(DraftScoutPanel, { nameOf: (id) => id, feedCutoff: "2026-11-13T02:00:00+00:00" }));
+      assert.match(behind, /data-freshness="BEHIND_FEED"/);
+      assert.match(behind, /갱신 지연: 공개 피드보다 2\.0일 오래된 자료/);
+      const cutoff = draftScoutFor("BLG").cutoff;
+      assert.equal(scoutFreshness(cutoff, null, Date.parse(cutoff) + 80 * 3_600_000).status, "AGED");
+      assert.equal(scoutFreshness(cutoff, null, Date.parse(cutoff) + 10 * 3_600_000).status, "CURRENT");
+      assert.equal(scoutFreshness(cutoff, "2026-11-11T05:00:00+00:00").status, "CURRENT");
+      assert.equal(scoutFreshness("not a date", null).status, "UNKNOWN");
+    });
     await t.test("draft scouting pack follows T1's quarterfinal opponent and respects fearless locks", () => {
       assert.equal(draftScoutFor(worldsQuarterfinalFor("T1").opponent), draftScoutFor("KC"));
-      assert.deepEqual(worldsNextMatchFor("T1"), { label: "4강", start_at: "2026-11-08T22:00:00Z", opponent: "BLG" });
+      // T1's semifinal has a reviewed result, so it is never shown as the next match.
+      assert.equal(worldsNextMatchFor("T1"), null);
+      assert.deepEqual(worldsLastResultFor("T1"), { label: "4강", start_at: "2026-11-08T22:00:00Z", opponent: "BLG", won: false, own_score: 1, opponent_score: 3 });
+      assert.deepEqual(worldsLastResultFor("BLG"), { label: "4강", start_at: "2026-11-08T22:00:00Z", opponent: "T1", won: true, own_score: 3, opponent_score: 1 });
       assert.equal(worldsNextMatchFor("KC").label, "8강");
       assert.equal(worldsNextMatchFor("HLE"), null);
       assert.deepEqual(Object.keys(DRAFT_SCOUT_PACKS).sort(), ["BLG", "DK", "GEN", "IG", "KC", "LYON", "TES"]);

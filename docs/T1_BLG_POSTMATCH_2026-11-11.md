@@ -41,6 +41,7 @@ BLG는 룰루를 1페이즈에 네 번 밴했다. 국제대회 일반 메타 기
 다음 검증은 같은 경기 결과에 맞춰 가중치를 바꾸는 대신, 상대 팀이 우리 팀을 상대로
 밴한 기록·현재 세트 밴·봇 듀오·조합 조건을 추가하고 다른 경기에서 확인해야 한다.
 
-재실행: `python ops/evaluate_frozen_blg_series.py`
+재실행: `python ops/evaluate_frozen_blg_series.py --frozen-pack outputs/frozen-scouting-before-20261111/t1-vs-blg.json-4811241b….json --pack-sha256 4811241b6d992a4146f84f5f5e1affe2d420eeae151502c6732478e2be570761 --output outputs/<새 경로>.json`
+(경기 전 동결 팩 경로와 해시를 반드시 지정한다. 컷오프가 첫 경기 이후인 팩과 기존 결과 덮어쓰기는 거부한다.)
 로컬 결과: `outputs/t1-blg-frozen-evaluation.json`.
 원본 CSV는 공개 저장소·사이트에 올리지 않는다.
