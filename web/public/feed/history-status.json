@@ -1,69 +1,68 @@
 {
   "aggregate": null,
   "archive": {
-    "active_cohort": 12,
-    "cohort_count": 12,
-    "collection_span_days": 73.863,
-    "last_retrieved_at": "2026-11-05T00:20:31.725775+00:00",
-    "matured_cutoff_count": 17,
-    "retrieval_count": 21,
-    "unique_normalized_state_count": 20
+    "active_cohort": 13,
+    "cohort_count": 13,
+    "collection_span_days": 78.934,
+    "last_retrieved_at": "2026-11-10T02:02:04.296335+00:00",
+    "matured_cutoff_count": 18,
+    "retrieval_count": 24,
+    "unique_normalized_state_count": 23
   },
   "artifact_type": "oe-history-status",
-  "as_of": "2026-11-05T00:20:31.725775+00:00",
+  "as_of": "2026-11-10T02:02:04.296335+00:00",
   "benchmark_ready": false,
   "blocking_reasons": [
     "RETRIEVAL_COUNT_BELOW_MINIMUM",
-    "NORMALIZED_STATE_COUNT_BELOW_MINIMUM",
     "COLLECTION_SPAN_BELOW_MINIMUM",
     "MATURED_CUTOFF_COUNT_BELOW_MINIMUM"
   ],
   "boundary": "Operational collection readiness only; not evidence that the Radar predicts adoption.",
   "collection": {
-    "collection_span_days": 1.016,
-    "first_retrieved_at": "2026-11-03T23:57:41.082880+00:00",
-    "last_retrieved_at": "2026-11-05T00:20:31.725775+00:00",
+    "collection_span_days": 2.139,
+    "first_retrieved_at": "2026-11-07T22:41:37.410186+00:00",
+    "last_retrieved_at": "2026-11-10T02:02:04.296335+00:00",
     "matured_cutoff_count": 0,
-    "retrieval_count": 2,
-    "unique_normalized_state_count": 2
+    "retrieval_count": 3,
+    "unique_normalized_state_count": 3
   },
   "continuity": {
-    "continuity_deadline_at": "2026-11-07T00:20:31.725775+00:00",
+    "continuity_deadline_at": "2026-11-12T02:02:04.296335+00:00",
     "maximum_gap_hours": 48,
-    "next_collection_due_at": "2026-11-06T00:20:31.725775+00:00",
+    "next_collection_due_at": "2026-11-11T02:02:04.296335+00:00",
     "status": "ON_TRACK"
   },
   "forecast": {
     "assumption": "UNINTERRUPTED_DAILY_COLLECTION_WITH_REQUIRED_DISTINCT_STATES",
-    "continuity_deadline_at": "2026-11-07T00:20:31.725775+00:00",
-    "earliest_possible_ready_at": "2026-11-17T23:57:41.082880+00:00",
+    "continuity_deadline_at": "2026-11-12T02:02:04.296335+00:00",
+    "earliest_possible_ready_at": "2026-11-21T22:41:37.410186+00:00",
     "guaranteed": false,
-    "next_collection_due_at": "2026-11-06T00:20:31.725775+00:00",
+    "next_collection_due_at": "2026-11-11T02:02:04.296335+00:00",
     "remaining": {
-      "collection_span_days": 12.984,
+      "collection_span_days": 11.861,
       "matured_cutoffs": 2,
-      "retrievals": 12,
-      "unique_states": 1
+      "retrievals": 11,
+      "unique_states": 0
     }
   },
-  "gate_progress_percent": 22,
+  "gate_progress_percent": 34,
   "gates": [
     {
-      "current": 2,
+      "current": 3,
       "id": "RETRIEVALS",
       "passed": false,
       "required": 14,
       "unit": "snapshots"
     },
     {
-      "current": 2,
+      "current": 3,
       "id": "UNIQUE_STATES",
-      "passed": false,
+      "passed": true,
       "required": 3,
       "unit": "states"
     },
     {
-      "current": 1.016,
+      "current": 2.139,
       "id": "COLLECTION_SPAN",
       "passed": false,
       "required": 14,

@@ -13,13 +13,13 @@ test("historical draft evaluation measures the production preview and rejects le
     const { applyDraftSelection, previewOpponentPick, STANDARD_DRAFT_SEQUENCE, draftSequence, completeFearlessGame, fearlessLocks, serializeDraftScenario } = await vite.ssrLoadModule("/app/draft-agent.ts");
     const { parseDraftSession } = await vite.ssrLoadModule("/app/draft-session.ts");
     const { canAssignDistinctRoles, observedChampionRoles, previewRoleExperiment } = await vite.ssrLoadModule("/app/draft-role-experiment.ts");
-    const { buildWorldsPreparation, formatKst, worldsQuarterfinalFor, worldsRoleCoverage, WORLDS_2026 } = await vite.ssrLoadModule("/app/worlds-preparation.ts");
+    const { buildWorldsPreparation, formatKst, worldsQuarterfinalFor, worldsNextMatchFor, worldsRoleCoverage, WORLDS_2026 } = await vite.ssrLoadModule("/app/worlds-preparation.ts");
     const report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
     report.fixture_only = true;
     const { DRAFT_SCOUT_PACKS, DRAFT_SCOUT_VALIDATION, buildDraftScoutBrief, draftScoutFor, headToHeadSeries, headToHeadStaples } = await vite.ssrLoadModule("/app/draft-scout.ts");
     const { DraftScoutPanel } = await vite.ssrLoadModule("/app/draft-scout-panel.tsx");
     await t.test("scouting applies current locks only to the matching matchup, on either side", () => {
-      const pack = draftScoutFor("KC");
+      const pack = draftScoutFor(worldsNextMatchFor("T1").opponent);
       const selections = applyDraftSelection([], "Leona");
       const props = { nameOf: (id) => id, selections, previousPicks: [] };
       for (const [blueTeamId, redTeamId] of [[pack.own.team_ids[0], pack.target.team_ids[0]], [pack.target.team_ids[0], pack.own.team_ids[0]]]) {
@@ -33,6 +33,9 @@ test("historical draft evaluation measures the production preview and rejects le
     });
     await t.test("draft scouting pack follows T1's quarterfinal opponent and respects fearless locks", () => {
       assert.equal(draftScoutFor(worldsQuarterfinalFor("T1").opponent), draftScoutFor("KC"));
+      assert.deepEqual(worldsNextMatchFor("T1"), { label: "4강", start_at: "2026-11-08T22:00:00Z", opponent: "BLG" });
+      assert.equal(worldsNextMatchFor("KC").label, "8강");
+      assert.equal(worldsNextMatchFor("HLE"), null);
       assert.deepEqual(Object.keys(DRAFT_SCOUT_PACKS).sort(), ["BLG", "DK", "GEN", "IG", "KC", "LYON", "TES"]);
       for (const entry of WORLDS_2026.quarterfinals.flatMap((match) => match.teams).filter((code) => code !== "T1")) {
         assert.equal(draftScoutFor(entry).target.team_name, WORLDS_2026.teams.find((team) => team.code === entry).names[0]);

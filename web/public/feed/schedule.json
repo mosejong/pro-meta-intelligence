@@ -1,39 +1,22 @@
 {
   "artifact_type": "pro-schedule-snapshot",
-  "available_at": "2026-11-07T05:54:21.586789+00:00",
+  "available_at": "2026-11-11T06:08:41.171094+00:00",
   "boundary": "Official public schedule facts only. Times and participants may change at the source; no match outcome, roster, or private team intent is inferred.",
-  "content_hash": "sha256:f6a157c3fba7491254e5c2c73e9fb8367cd769a44be7259d09c5164a28d1a057",
+  "content_hash": "sha256:d1521c5ad1033ea355dd5c29b33f04d49cf20507ad5c50105a2bd5c1da903872",
   "events": [
     {
       "best_of": 5,
       "block": "Semifinals",
-      "event_id": "lolesports:035a646b40511abdbbc2",
+      "event_id": "lolesports:67ea4f7ace5a2a294acb",
       "league": "Worlds",
       "participants": [
-        {
-          "code": "T1",
-          "name": "T1"
-        },
         {
           "code": "BLG",
           "name": "BILIBILI GAMING"
-        }
-      ],
-      "start_at": "2026-11-08T22:00:00+00:00"
-    },
-    {
-      "best_of": 5,
-      "block": "Finals",
-      "event_id": "lolesports:5e095f6f89aa78c4eb7f",
-      "league": "Worlds",
-      "participants": [
-        {
-          "code": "TBD",
-          "name": "TBD"
         },
         {
-          "code": "TBD",
-          "name": "TBD"
+          "code": "T1",
+          "name": "T1"
         }
       ],
       "start_at": "2026-11-14T19:00:00+00:00"
@@ -49,10 +32,10 @@
   ],
   "locale": "en-US",
   "quality": {
-    "event_count": 2,
-    "tbd_participant_count": 2
+    "event_count": 1,
+    "tbd_participant_count": 0
   },
-  "retrieved_at": "2026-11-07T05:54:21.586789+00:00",
+  "retrieved_at": "2026-11-11T06:08:41.171094+00:00",
   "schema_version": "1",
   "source_id": "lol-esports-schedule",
   "source_url": "https://lolesports.com/en-US/leagues/lck%2Clec%2Clpl%2Clcs%2Cmsi%2Cworlds"
