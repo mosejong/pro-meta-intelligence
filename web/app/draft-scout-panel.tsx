@@ -61,6 +61,13 @@ export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], b
           </li>)}</ul>
         </details>)}
       </section>
+      <section aria-label="상대의 T1전 밴 기록">
+        <h3>{code}의 T1전 1페이즈 밴 · 관측 기록</h3>
+        <p>일반 메타와 구분한 실제 상대전 기록입니다. 특정 선수에 대한 밴 의도나 다음 경기의 확정 밴을 뜻하지 않습니다.</p>
+        {pack.matchup_bans?.game_count ? <ul>{pack.matchup_bans.phase_one.map((ban) =>
+          <li key={ban.champion_id}>{nameOf(ban.champion_id)} · {ban.game_count}/{pack.matchup_bans?.game_count}경기 · {formatRate(ban.rate)}</li>)}</ul> :
+          <p>같은 팀을 상대로 한 밴 표본이 없습니다.</p>}
+      </section>
       {connected ? <DraftExchangePanel key={pack.target.team_ids.join(":")} pack={pack} selections={selections} previousPicks={previousPicks}
         ownSide={pack.own.team_ids.includes(blueTeamId ?? "") ? "BLUE" : "RED"} firstPickSide={firstPickSide} nameOf={nameOf} /> :
         <p>밴픽 교환 시나리오는 현재 연습 대진과 스카우팅 상대가 일치할 때 표시합니다.</p>}
@@ -145,6 +152,7 @@ export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], b
         예상 픽 {formatRate(check.overall.expected_picks.rate)} (선수 기록만 {formatRate(check.overall.player_pool_picks.rate)} · 포지션 메타만 {formatRate(check.overall.role_meta_picks.rate)}) ·
         주력 밴 목록이 실제 픽을 짚은 경기 {formatRate(check.overall.deny_hits_real_pick.rate)}
         {teamCheck && <b> · {code} {teamCheck.deny_hits_real_pick.of}경기: 예상 밴 {formatRate(teamCheck.expected_phase_one_bans.rate)} · 예상 픽 {formatRate(teamCheck.expected_picks.rate)}</b>}</p>
+      <p>위 검증 수치는 별도로 고정한 과거 스냅샷의 결과입니다. 새로 수집한 경기나 조합 표시 기능의 성능을 검증한 수치가 아닙니다.</p>
       <p className="draft-scout-boundary">공개 대회 기록의 횟수만 보여줍니다. 승률 예측이나 확정 밴픽이 아니며, 최종 판단과 인게임 실행은 코칭스태프와 선수의 몫입니다.</p>
     </div>
   </details>;

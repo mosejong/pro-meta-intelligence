@@ -51,7 +51,7 @@ test("historical draft evaluation measures the production preview and rejects le
       assert.ok(!("excluded_game_details" in incomplete));
       assert.ok(!pack.quality_flags.includes("CURRENT_EVENT_GAMES_MISSING"));
       assert.ok(pack.target.leagues.WLDs > 0 && pack.own.leagues.WLDs > 0);
-      assert.deepEqual(headToHeadSeries(pack).map((series) => [series.league, series.own_wins, series.target_wins]), [["MSI", 3, 0], ["EWC", 1, 2]]);
+      assert.deepEqual(headToHeadSeries(pack).filter((series) => ["MSI", "EWC"].includes(series.league)).map((series) => [series.league, series.own_wins, series.target_wins]), [["MSI", 3, 0], ["EWC", 1, 2]]);
       assert.ok(headToHeadStaples(pack, "own").some((item) => item.champion_id === "Rumble" && item.count === 3));
       assert.deepEqual(pack.league_meta.map((group) => group.group), ["LEC", "LCK", "INTERNATIONAL"]);
       const fresh = buildDraftScoutBrief(pack);

@@ -178,6 +178,24 @@ jobs:
               gh api --method DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id"
             done
           fi
+      - name: Refresh scouting packs from the accepted feed source
+        id: scout-refresh
+        if: steps.sync-health.outcome == 'success'
+        # A scouting failure must not block the accepted feed; the previous packs stay published.
+        continue-on-error: true
+        run: >-
+          python ops/refresh_draft_scouts.py
+          --feed web/public/feed/current.json
+          --archive-dir "$PRIVATE_ARCHIVE_DIR"
+          --output-dir web/app/scouting
+      - name: Keep the accepted scouting packs when their refresh failed
+        if: steps.scout-refresh.outcome == 'failure'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -- web/app/scouting
+          git clean -fdq -- web/app/scouting
+          echo "::warning::Scouting refresh failed; previously accepted packs were kept unchanged."
       - name: Validate and build the independent Pages artifact
         working-directory: web
         run: npm ci && npm run lint && npm run test:pages
@@ -190,7 +208,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          allowed_pattern='^(web/public/feed/current\.json|web/public/feed/current-creator\.json|web/public/feed/history-status\.json|web/public/feed/decision-outcomes\.json|web/public/feed/collection-status\.json)$'
+          allowed_pattern='^(web/public/feed/current\.json|web/public/feed/current-creator\.json|web/public/feed/history-status\.json|web/public/feed/decision-outcomes\.json|web/public/feed/collection-status\.json|web/app/scouting/t1-vs-(kc|tes|ig|gen|lyon|dk|blg)\.json)$'
           unexpected=$(git diff --name-only | grep -Ev "$allowed_pattern" || true)
           if [[ -n "$unexpected" ]]; then
             echo "Unexpected tracked changes from hosted sync:" >&2
@@ -202,7 +220,8 @@ jobs:
             web/public/feed/current-creator.json \
             web/public/feed/history-status.json \
             web/public/feed/decision-outcomes.json \
-            web/public/feed/collection-status.json; then
+            web/public/feed/collection-status.json \
+            web/app/scouting/t1-vs-{kc,tes,ig,gen,lyon,dk,blg}.json; then
             echo "Public OE feed heads are already current."
             exit 0
           fi
@@ -213,7 +232,8 @@ jobs:
             web/public/feed/current-creator.json \
             web/public/feed/history-status.json \
             web/public/feed/decision-outcomes.json \
-            web/public/feed/collection-status.json
+            web/public/feed/collection-status.json \
+            web/app/scouting/t1-vs-{kc,tes,ig,gen,lyon,dk,blg}.json
           staged=$(git diff --cached --name-only | grep -Ev "$allowed_pattern" || true)
           if [[ -n "$staged" ]]; then
             echo "Unexpected staged paths: $staged" >&2

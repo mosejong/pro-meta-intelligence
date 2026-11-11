@@ -11,6 +11,7 @@ import json
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime
+from itertools import combinations
 from typing import Any
 
 from pro_meta_intelligence.leakage import filter_available, reject_future
@@ -89,6 +90,8 @@ class DraftScoutBuilder:
         head_to_head = _head_to_head(own_ids, target_ids, available_matches, events_by_match)
         target_profile = target.profile(regions, config)
         own_profile = own.profile(regions, config)
+        target_profile["observed_pairs"] = _observed_pairs(target.games)
+        own_profile["observed_pairs"] = _observed_pairs(own.games)
         target_profile["season_tendencies"] = _season_tendencies(
             target.games, available_matches, available_events, config
         )
@@ -126,6 +129,21 @@ class DraftScoutBuilder:
                 "target": target_profile,
                 "own": own_profile,
                 "head_to_head": head_to_head,
+                "matchup_bans": {
+                    "game_count": len(head_to_head),
+                    "phase_one": _counted(
+                        Counter(
+                            event["champion_id"]
+                            for game in head_to_head
+                            for event in game["target"]["ban_events"]
+                            if event["sequence"] <= 6
+                        ),
+                        len(head_to_head),
+                        20,
+                    ),
+                    "boundary": "Observed bans against this own team; "
+                    "not inferred intent or a forecast.",
+                },
                 "league_meta": league_meta,
                 "levers": {
                     **_levers(target_profile, own_profile, head_to_head, league_meta, config),
@@ -279,6 +297,26 @@ class _TeamWindow:
                 _player_pool(role, games, players.get(role, Counter()), config) for role in ROLES
             ],
         }
+
+
+def _observed_pairs(games):
+    pairs = defaultdict(set)
+    for game in games:
+        picks = sorted(
+            (e.role, e.champion_id) for e in game.own_events if e.action is DraftAction.PICK
+        )
+        for left, right in combinations(picks, 2):
+            if left[0] != right[0]:
+                pairs[(left, right)].add(game.match.match_id)
+    return [
+        {
+            "left": {"role": left[0], "champion_id": left[1]},
+            "right": {"role": right[0], "champion_id": right[1]},
+            "game_count": len(ids),
+            "evidence_match_ids": sorted(ids),
+        }
+        for (left, right), ids in sorted(pairs.items(), key=lambda item: (-len(item[1]), item[0]))
+    ]
 
 
 def _season_tendencies(games, matches, events, config):
@@ -466,6 +504,15 @@ def _head_to_head(
 
         def draft(events: tuple[PickBanEvent, ...]) -> dict[str, Any]:
             return {
+                "ban_events": [
+                    {
+                        "champion_id": event.champion_id,
+                        "sequence": event.sequence,
+                        "event_id": event.event_id,
+                    }
+                    for event in events
+                    if event.action is DraftAction.BAN
+                ],
                 "bans": [event.champion_id for event in events if event.action is DraftAction.BAN],
                 "picks": [
                     {

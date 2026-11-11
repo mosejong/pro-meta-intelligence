@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { compareDraftExchange, type PreparedPick } from "./draft-exchange";
+import { compareDraftExchange, ownPreparationOptions, type PreparedPick } from "./draft-exchange";
 import type { DraftScoutPack } from "./draft-scout";
 import type { DraftSelection, DraftSide } from "./draft-agent";
 
@@ -17,28 +17,33 @@ export function DraftExchangePanel({ pack, selections, previousPicks, ownSide, f
   const focus = options.find((c) => token(c) === selected) ?? options[0];
   if (!focus) return null;
   const result = compareDraftExchange(pack, focus, { selections, previousPicks, ownSide, firstPickSide, prepared });
-  const ownPool = pack.own.player_pools.find((group) => group.role === focus.role);
+  const preparationOptions = ownPreparationOptions(pack);
+  const preparationRoles = [...new Set(preparationOptions.map((c) => c.role))];
+  const describeOwnCard = (card: PreparedPick & { committed: boolean; rolePrepared: boolean }) =>
+    `${nameOf(card.champion_id)} (${roleNames[card.role] ?? card.role} 기록 · ${card.committed ? "챔피언 픽 확정 · " : ""}${card.rolePrepared ? "해당 역할 준비 확인" : "해당 역할 준비 미확인"})`;
   return <section aria-label="밴픽 교환 시나리오">
     <h3>밴·오픈·선점 비교</h3>
     <p>상대 후속 후보와 우리가 준비한 카드를 비교합니다. 조합 상성이나 최종 확보를 예측하지 않으며 드래프트를 자동 확정하지 않습니다.</p>
     <label>검토할 상대 카드 <select value={token(focus)} onChange={(e) => setSelected(e.target.value)}>
       {options.map((c) => <option key={token(c)} value={token(c)}>{roleNames[c.role] ?? c.role} · {nameOf(c.champion_id)}</option>)}
     </select></label>
-    <fieldset><legend>우리 {roleNames[focus.role] ?? focus.role} 준비 확인 · {ownPool?.player_name ?? "선수 미상"}</legend>
+    {preparationRoles.map((role) => <fieldset key={role}><legend>우리 {roleNames[role] ?? role} 준비 확인 · {pack.own.player_pools.find((pool) => pool.role === role)?.player_name ?? "선수 미상"}</legend>
       <p>직접 준비됐다고 확인한 카드만 아래 대응 후보에 표시합니다. 페이지를 다시 열거나 상대를 바꾸면 입력은 초기화됩니다. 공개 기록만으로 준비도를 채우지 않습니다.</p>
-      {(ownPool?.champions ?? []).map((c) => {
-        const item = { role: focus.role, champion_id: c.champion_id };
+      <p>공개 선수 풀과 우리 팀의 실제 동시 사용 기록에 있는 역할별 카드입니다. 픽 확정만으로 해당 역할 준비를 확인하지 않습니다.</p>
+      {preparationOptions.filter((c) => c.role === role).map((item) => {
         const checked = prepared.some((p) => token(p) === token(item));
-        return <label key={c.champion_id} style={{ display: "inline-block", margin: "0.3rem" }}><input type="checkbox" checked={checked} onChange={() => setPrepared((rows) => checked ? rows.filter((p) => token(p) !== token(item)) : [...rows, item])} />{nameOf(c.champion_id)}</label>;
+        return <label key={token(item)} style={{ display: "inline-block", margin: "0.3rem" }}><input type="checkbox" checked={checked} onChange={() => setPrepared((rows) => checked ? rows.filter((p) => token(p) !== token(item)) : [...rows, item])} />{nameOf(item.champion_id)}</label>;
       })}
-    </fieldset>
+    </fieldset>)}
     {!result.available && <p role="status">이 카드는 이미 사용 불가하거나 현재 후보 근거가 없습니다. 다른 카드를 선택하세요.</p>}
     <div className="draft-scout-leagues">{result.branches.map((branch) => <article key={branch.action}>
       <h4>{labels[branch.action]}</h4><p>{branch.cost}</p>
       <p>{branch.legalNow ? "현재 우리 차례에 가능한 행동" : "가정 비교 · 현재 즉시 실행 가능한 행동으로 확인되지 않음"}</p>
       <p>{branch.action === "OPEN" ? "상대가 가져간다고 가정한 카드" : "상대에게 남는 같은 역할 후보"}: {branch.opponent.map((c) => nameOf(c.champion_id)).join(" · ") || "근거 없음"}</p>
       <p>우리 준비 카드: {branch.own.map((c) => nameOf(c.champion_id)).join(" · ") || "준비 확인된 가용 카드 없음"}</p>
+      <p>상대의 실제 동시 사용 조합: {branch.opponentPairs.map((pair) => `${nameOf(pair.left.champion_id)} + ${nameOf(pair.right.champion_id)} (${pair.game_count}경기)`).join(" · ") || "현재 조건에 맞는 근거 없음"}</p>
+      <p>우리 확정 픽·역할별 준비와 연결된 동시 사용 기록: {branch.ownPairs.map((pair) => `${describeOwnCard(pair.left)} + ${describeOwnCard(pair.right)} (${pair.game_count}경기)`).join(" · ") || "준비 확인 또는 조합 근거 부족"}</p>
     </article>)}</div>
-    <p>후보 순위와 준비 입력은 별개입니다. 이 비교에는 다른 역할과의 조합·역할 배정·이어지는 상대 밴이 반영되지 않습니다.</p>
+    <p>조합 표시는 최근 표본에서 함께 사용한 두 챔피언의 기록입니다. 상대 조합을 이기는 카운터나 전체 조합 완성을 뜻하지 않습니다. 역할 배정과 이어지는 상대 밴은 추론하지 않습니다.</p>
   </section>;
 }
