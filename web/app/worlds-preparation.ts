@@ -54,8 +54,12 @@ export const WORLDS_2026 = {
     "https://www.fragster.com/blg-t1-worlds-2026-semifinal/",
   ],
   final_date: "2026-11-14",
-  // Only the pairing and the local date are confirmed; the start time is not shown.
-  final: { teams: ["GEN", "BLG"], source: "https://en.wikipedia.org/wiki/2026_League_of_Legends_World_Championship_final" },
+  // Start time confirmed by the operator on 2026-11-12 (Sunday 04:00 KST). It matches the official feed's
+  // 11.14 19:00 UTC slot, whose listed participants (T1 vs BLG) are stale and stay withheld.
+  final: {
+    teams: ["GEN", "BLG"], start_at: "2026-11-14T19:00:00Z", start_checked_on: "2026-11-12",
+    source: "https://en.wikipedia.org/wiki/2026_League_of_Legends_World_Championship_final",
+  },
 } as const;
 
 export type WorldsStage = "QUARTERFINAL" | "OUT_OF_KNOCKOUTS";

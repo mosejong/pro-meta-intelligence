@@ -9,7 +9,7 @@ export const WITHHELD_SCHEDULE_EVENTS = [
     start_at: "2026-11-14T19:00:00+00:00",
     participants: ["BLG", "T1"],
     checked_on: "2026-11-11",
-    reason: "T1은 11.08 4강에서 BLG에 1:3으로 져 탈락했습니다. 11.14 결승은 GEN vs BLG입니다. 피드에 남은 'Semifinals T1 vs BLG' 11.14 일정은 표시하지 않습니다.",
+    reason: "T1은 11.08 4강에서 BLG에 1:3으로 져 탈락했습니다. 같은 시간(11.15 04:00 KST) 결승은 GEN vs BLG입니다. 피드에 남은 'Semifinals T1 vs BLG' 표기는 표시하지 않습니다.",
     sources: [
       "https://dotesports.com/league-of-legends/news/worlds-2026-semifinals-day-2-results",
       "https://www.fragster.com/blg-t1-worlds-2026-semifinal/",

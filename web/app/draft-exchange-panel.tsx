@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { compareDraftExchange, ownPreparationOptions, type PreparedPick } from "./draft-exchange";
 import type { DraftScoutPack } from "./draft-scout";
-import type { DraftSelection, DraftSide } from "./draft-agent";
+import { isChampionLocked, type DraftSelection, type DraftSide } from "./draft-agent";
 
 const labels = { BAN: "밴으로 제거", OPEN: "열고 교환 검토", SECURE: "우리가 먼저 확보" };
 const roleNames: Record<string, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
@@ -28,11 +28,12 @@ export function DraftExchangePanel({ pack, selections, previousPicks, ownSide, f
       {options.map((c) => <option key={token(c)} value={token(c)}>{roleNames[c.role] ?? c.role} · {nameOf(c.champion_id)}</option>)}
     </select></label>
     {preparationRoles.map((role) => <fieldset key={role}><legend>우리 {roleNames[role] ?? role} 준비 확인 · {pack.own.player_pools.find((pool) => pool.role === role)?.player_name ?? "선수 미상"}</legend>
-      <p>직접 준비됐다고 확인한 카드만 아래 대응 후보에 표시합니다. 페이지를 다시 열거나 상대를 바꾸면 입력은 초기화됩니다. 공개 기록만으로 준비도를 채우지 않습니다.</p>
+      <p>직접 준비됐다고 확인한 카드만 아래 대응 후보에 표시합니다. 페이지를 다시 열거나 상대를 바꾸면 입력은 초기화됩니다. 공개 기록만으로 준비도를 채우지 않습니다. 사용 불가 표시는 이번 세트에서 이미 밴·픽됐거나 이전 세트에서 쓴 카드입니다.</p>
       <p>공개 선수 풀과 우리 팀의 실제 동시 사용 기록에 있는 역할별 카드입니다. 픽 확정만으로 해당 역할 준비를 확인하지 않습니다.</p>
       {preparationOptions.filter((c) => c.role === role).map((item) => {
         const checked = prepared.some((p) => token(p) === token(item));
-        return <label key={token(item)} style={{ display: "inline-block", margin: "0.3rem" }}><input type="checkbox" checked={checked} onChange={() => setPrepared((rows) => checked ? rows.filter((p) => token(p) !== token(item)) : [...rows, item])} />{nameOf(item.champion_id)}</label>;
+        const locked = isChampionLocked(selections, item.champion_id, previousPicks);
+        return <label key={token(item)} data-locked={locked ? "true" : undefined} style={{ display: "inline-block", margin: "0.3rem" }}><input type="checkbox" checked={checked} onChange={() => setPrepared((rows) => checked ? rows.filter((p) => token(p) !== token(item)) : [...rows, item])} />{nameOf(item.champion_id)}{locked && <em> · 사용 불가 · 확정 밴픽/이전 픽</em>}</label>;
       })}
     </fieldset>)}
     {!result.available && <p role="status">이 카드는 이미 사용 불가하거나 현재 후보 근거가 없습니다. 다른 카드를 선택하세요.</p>}

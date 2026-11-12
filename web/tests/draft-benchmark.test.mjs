@@ -56,7 +56,7 @@ test("historical draft evaluation measures the production preview and rejects le
       assert.match(html, /4강 종료 · T1 1:3 패 · 다음 T1 경기 없음/);
       assert.doesNotMatch(html, /4강 상대/);
       assert.match(html, /BLG · 4강 종료 · 지난 상대/);
-      assert.match(html, /결승은 GEN vs BLG/);
+      assert.match(html, /결승은 GEN vs BLG \(11\.15 04:00 KST\)/);
       assert.match(html, /스카우팅 자료 갱신 11\.11 11:19 KST/);
       assert.match(html, /공개 피드 11\.10 11:02 KST/);
       assert.match(html, /data-freshness="CURRENT"/);
