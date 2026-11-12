@@ -264,9 +264,13 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   assert.match(html, /레드 선픽/);
   assert.match(html.replaceAll("<!-- -->", ""), /T1 vs KC 연습/);
   const text = html.replaceAll("<!-- -->", "");
-  assert.match(text, /T1 4강 · vs BLG/);
+  assert.match(text, /T1 4강 종료 · vs BLG 1:3 패/);
   assert.match(text, /11\.9 07:00 KST/);
-  assert.match(text, /T1 vs BLG 4강 대비/);
+  assert.doesNotMatch(text, /T1 4강 · vs BLG|4강 대비/);
+  assert.match(text, /T1 vs BLG 4강 복기/);
+  assert.match(text, /결승 GEN vs BLG/);
+  assert.match(text, /4강 종료 · T1 1:3 패 · 다음 T1 경기 없음/);
+  assert.match(text, /스카우팅 자료 갱신 \d+\.\d+ \d\d:\d\d KST/);
   assert.match(text, /T1 4강 조합은 2026-11-08 공식 일정 기준/);
   assert.match(text, /T1 vs BLG · 밴픽 스카우팅/);
   assert.match(text, /밴으로 지울 BLG 주력/);
@@ -279,9 +283,9 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   assert.doesNotMatch(text, /월즈 스위스 경기 미포함/);
   assert.match(text, /BLG 최근 40경기 \(LPL \d+ · WLDs \d+\)/);
   assert.match(text, /T1 \d : \d BLG/);
-  assert.match(text, /GEN · 8강 진출 · 다른 후보/);
+  assert.match(text, /GEN · 결선 진출팀 · 연습 상대/);
   assert.ok(text.indexOf("T1 vs BLG · 밴픽 스카우팅") < text.indexOf("WORLDS 2026 · 준비실"));
-  assert.ok(text.indexOf("T1 vs BLG 4강 대비") < text.indexOf("T1 vs KC 연습"));
+  assert.ok(text.indexOf("T1 vs BLG 4강 복기") < text.indexOf("T1 vs KC 연습"));
   assert.match(html, /진행 중인 밴픽은 유지됩니다/);
   assert.match(html, /DRAFT LAB · STANDARD 5 BAN \/ 5 PICK/);
   assert.match(html, /가상 밴픽/);

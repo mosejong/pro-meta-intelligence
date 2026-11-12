@@ -121,6 +121,14 @@ def test_production_watchdog_checks_live_publication_and_reconciles_one_incident
 def test_hosted_oe_collector_restores_private_state_and_publishes_only_safe_heads() -> None:
     workflow = (ROOT / ".github" / "workflows" / "hosted-oe-sync.yml").read_text(encoding="utf-8")
     assert "--patch-selection-league LCK" in workflow
+    assert "python ops/refresh_draft_scouts.py" in workflow
+    assert "--feed web/public/feed/current.json" in workflow
+    assert "if: steps.sync-health.outcome == 'success'" in workflow
+    assert "web/app/scouting/t1-vs-(kc|tes|ig|gen|lyon|dk|blg)" in workflow
+    refresh = workflow.split("name: Refresh scouting packs", 1)[1].split("- name:", 1)[0]
+    assert "continue-on-error: true" in refresh
+    assert "if: steps.scout-refresh.outcome == 'failure'" in workflow
+    assert "git checkout -- web/app/scouting" in workflow
     for international_event in ("WLDs", "MSI", "FST"):
         assert f"--patch-selection-league {international_event}" in workflow
 

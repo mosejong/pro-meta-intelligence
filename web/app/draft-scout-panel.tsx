@@ -1,24 +1,44 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DraftSelection, DraftSide } from "./draft-agent";
 import { DraftExchangePanel } from "./draft-exchange-panel";
-import { DRAFT_SCOUT_PACKS, DRAFT_SCOUT_VALIDATION, buildDraftScoutBrief, draftScoutFor, formatRate, headToHeadSeries, headToHeadStaples } from "./draft-scout";
-import { formatKst, worldsNextMatchFor } from "./worlds-preparation";
+import { DRAFT_SCOUT_PACKS, DRAFT_SCOUT_VALIDATION, buildDraftScoutBrief, draftScoutFor, formatRate, headToHeadSeries, headToHeadStaples, scoutFreshness, SCOUT_STALE_AFTER_HOURS } from "./draft-scout";
+import { formatKst, WORLDS_2026, worldsLastResultFor, worldsNextMatchFor } from "./worlds-preparation";
 import "./draft-scout.css";
 
 const roleLabels: Record<string, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
 const leagueLabels: Record<string, string> = { INTERNATIONAL: "국제대회" };
 
-export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], blueTeamId, redTeamId, firstPickSide = "BLUE" }: {
+const days = (hours: number) => hours < 24 ? `${Math.round(hours)}시간` : `${(hours / 24).toFixed(1)}일`;
+
+export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], blueTeamId, redTeamId, firstPickSide = "BLUE", feedCutoff }: {
   nameOf: (championId: string) => string; previousPicks?: string[]; selections?: DraftSelection[];
   blueTeamId?: string; redTeamId?: string;
   firstPickSide?: DraftSide;
+  // Cutoff of the published OE feed the packs are refreshed from; omitted for fixture data.
+  feedCutoff?: string | null;
 }) {
   const next = worldsNextMatchFor("T1");
+  const last = worldsLastResultFor("T1");
   const [chosen, setChosen] = useState<string | null>(null);
-  const code = chosen ?? next?.opponent ?? null;
+  const [now, setNow] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    // Age depends on the viewer's clock, so it is filled in after hydration and kept current.
+    const tick = () => setNow(Date.now());
+    const first = setTimeout(tick, 0);
+    const timer = setInterval(tick, 60_000);
+    return () => { clearTimeout(first); clearInterval(timer); };
+  }, []);
+  const code = chosen ?? next?.opponent ?? last?.opponent ?? null;
   const pack = draftScoutFor(code);
-  if (!next || !code || !pack) return null;
-  const isNext = code === next.opponent;
+  if (!code || !pack) return null;
+  const isNext = code === next?.opponent;
+  const isLast = !next && code === last?.opponent;
+  const optionLabel = (option: string) => option === next?.opponent ? `${next.label} 상대`
+    : option === last?.opponent ? `${last.label} 종료 · 지난 상대` : "결선 진출팀 · 연습 상대";
+  const stageText = isNext && next ? `${next.label} ${formatKst(next.start_at)}`
+    : isLast && last ? `${last.label} 종료 · T1 ${last.own_score}:${last.opponent_score} ${last.won ? "승" : "패"} · 다음 T1 경기 없음`
+      : "다른 결선 후보 미리보기";
+  const fresh = scoutFreshness(pack.cutoff, feedCutoff, now);
   const connected = Boolean(blueTeamId && redTeamId && (
     (pack.own.team_ids.includes(blueTeamId) && pack.target.team_ids.includes(redTeamId)) ||
     (pack.own.team_ids.includes(redTeamId) && pack.target.team_ids.includes(blueTeamId))));
@@ -29,7 +49,7 @@ export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], b
   const teamCheck = check.teams[code];
   const leagues = (counts: Record<string, number>) => Object.entries(counts).map(([league, count]) => `${league} ${count}`).join(" · ");
   return <details className="draft-scout" id="draft-scout" open>
-    <summary><strong>T1 vs {code} · 밴픽 스카우팅</strong><span>{isNext ? `${next.label} ${formatKst(next.start_at)}` : "다른 결선 후보 미리보기"} · 밴픽 단계에서 주도권을 가져오기 위한 근거</span></summary>
+    <summary><strong>T1 vs {code} · 밴픽 스카우팅</strong><span>{stageText} · 밴픽 단계에서 주도권을 가져오기 위한 근거</span></summary>
     <div className="draft-scout-content">
       <p role="status">{connected ? `현재 연습 대진 연결 · 확정 밴픽 ${selections.length}개와 이전 세트 픽을 후보에서 제외합니다.` :
         "독립 스카우팅 보기 · 현재 연습 대진과 달라 밴픽 잠금을 적용하지 않습니다."}</p>
@@ -37,10 +57,20 @@ export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], b
       <label className="draft-scout-picker">상대 선택
         <select value={code} onChange={(event) => setChosen(event.target.value)}>
           {Object.keys(DRAFT_SCOUT_PACKS).map((option) => <option key={option} value={option}>
-            {option} · {option === next.opponent ? `${next.label} 상대` : "8강 진출 · 다른 후보"}
+            {option} · {optionLabel(option)}
           </option>)}
         </select>
       </label>
+      {!next && last && <p className="draft-scout-result" role="note">T1은 {last.label}에서 {last.opponent}에 {last.won ? "이겼습니다" : "졌습니다"} ({last.own_score}:{last.opponent_score} · {WORLDS_2026.results_checked_on} 공식 결과 확인). 결승은 {WORLDS_2026.final.teams.join(" vs ")} ({WORLDS_2026.final_date.slice(5).replace("-", ".")} 미국 현지)입니다. 아래 자료는 복기·연습용입니다.</p>}
+      <p className={`draft-scout-freshness is-${fresh.status.toLowerCase()}`} role="status" data-freshness={fresh.status}>
+        <b>스카우팅 자료 갱신 {formatKst(pack.cutoff)}</b>
+        {fresh.age_hours !== null && ` · ${days(fresh.age_hours)} 전`}
+        {fresh.feed_cutoff && ` · 공개 피드 ${formatKst(fresh.feed_cutoff)}`}
+        {fresh.status === "BEHIND_FEED" && fresh.feed_lead_hours !== null && <strong> · 갱신 지연: 공개 피드보다 {days(fresh.feed_lead_hours)} 오래된 자료입니다. 자동 갱신이 실패했거나 아직 반영되지 않았습니다. 이후 경기는 빠져 있습니다.</strong>}
+        {fresh.status === "AGED" && <strong> · 갱신 지연: {SCOUT_STALE_AFTER_HOURS}시간 넘게 갱신되지 않았습니다. 최근 경기가 빠졌을 수 있습니다.</strong>}
+        {fresh.status === "UNKNOWN" && <strong> · 갱신 시점을 확인할 수 없습니다.</strong>}
+        {fresh.status === "CURRENT" && !fresh.feed_cutoff && " · 공개 피드 시점 미연결"}
+      </p>
       <p className="draft-scout-window">{pack.cutoff.slice(0, 10)} 기준 시즌 공개 경기 · {code} 최근 {target.game_count}경기 ({leagues(target.leagues)}) · T1 최근 {own.game_count}경기 ({leagues(own.leagues)}) · 패치 {target.patches[0]}–{target.patches.at(-1)}
         {pack.quality_flags.includes("CURRENT_EVENT_GAMES_MISSING") && <b> · 월즈 스위스 경기 미포함</b>}</p>
 
@@ -60,6 +90,13 @@ export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], b
             {lock(champion.locked)} · 근거 {champion.evidence_ids.length}건
           </li>)}</ul>
         </details>)}
+      </section>
+      <section aria-label="상대의 T1전 밴 기록">
+        <h3>{code}의 T1전 1페이즈 밴 · 관측 기록</h3>
+        <p>일반 메타와 구분한 실제 상대전 기록입니다. 특정 선수에 대한 밴 의도나 다음 경기의 확정 밴을 뜻하지 않습니다.</p>
+        {pack.matchup_bans?.game_count ? <ul>{pack.matchup_bans.phase_one.map((ban) =>
+          <li key={ban.champion_id}>{nameOf(ban.champion_id)} · {ban.game_count}/{pack.matchup_bans?.game_count}경기 · {formatRate(ban.rate)}</li>)}</ul> :
+          <p>같은 팀을 상대로 한 밴 표본이 없습니다.</p>}
       </section>
       {connected ? <DraftExchangePanel key={pack.target.team_ids.join(":")} pack={pack} selections={selections} previousPicks={previousPicks}
         ownSide={pack.own.team_ids.includes(blueTeamId ?? "") ? "BLUE" : "RED"} firstPickSide={firstPickSide} nameOf={nameOf} /> :
@@ -145,6 +182,7 @@ export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], b
         예상 픽 {formatRate(check.overall.expected_picks.rate)} (선수 기록만 {formatRate(check.overall.player_pool_picks.rate)} · 포지션 메타만 {formatRate(check.overall.role_meta_picks.rate)}) ·
         주력 밴 목록이 실제 픽을 짚은 경기 {formatRate(check.overall.deny_hits_real_pick.rate)}
         {teamCheck && <b> · {code} {teamCheck.deny_hits_real_pick.of}경기: 예상 밴 {formatRate(teamCheck.expected_phase_one_bans.rate)} · 예상 픽 {formatRate(teamCheck.expected_picks.rate)}</b>}</p>
+      <p>위 검증 수치는 별도로 고정한 과거 스냅샷의 결과입니다. 새로 수집한 경기나 조합 표시 기능의 성능을 검증한 수치가 아닙니다.</p>
       <p className="draft-scout-boundary">공개 대회 기록의 횟수만 보여줍니다. 승률 예측이나 확정 밴픽이 아니며, 최종 판단과 인게임 실행은 코칭스태프와 선수의 몫입니다.</p>
     </div>
   </details>;

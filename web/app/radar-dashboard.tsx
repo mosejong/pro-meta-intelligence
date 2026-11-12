@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- this dual vinext/Vite build uses stable Riot CDN and relative static assets */
 
+import { applyScheduleReview } from "./schedule-review";
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { championImageUrl } from "./champion-assets";
 import { ChampionNameProvider, useChampionNames } from "./champion-names";
@@ -318,7 +319,8 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   const teamBrief = useMemo(() => buildTeamBrief(report), [report]);
   const todayDecisions = teamBrief.slice(0, 3);
   const opponentTeams = useMemo(() => report.opponent_prep?.teams ?? [], [report.opponent_prep?.teams]);
-  const effectiveSchedule = scheduleState === "connected" ? schedule : null;
+  const scheduleReview = useMemo(() => applyScheduleReview(schedule), [schedule]);
+  const effectiveSchedule = scheduleState === "connected" ? scheduleReview.schedule : null;
   const teamContext = useMemo(
     () => buildTeamContext(report, myTeamId, effectiveSchedule, scheduleCheckedAt),
     [effectiveSchedule, myTeamId, report, scheduleCheckedAt],
@@ -988,7 +990,8 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
           <span>STEP 1 · MY TEAM LENS</span>
           <strong>{selectedMyTeam ? selectedMyTeam.team_name : "소속 팀을 먼저 선택하세요"}</strong>
           <p>{selectedMyTeam ? `${selectedMyTeam.leagues.join(" · ")} · 공개 경기 ${selectedMyTeam.game_count}개를 기준으로 상대 준비 순서를 다시 계산합니다.` : "선택 전에는 글로벌 메타만 표시합니다. 팀 선택값은 이 브라우저에만 저장됩니다."}</p>
-          <em className={`schedule-state ${scheduleState}`}>{scheduleState === "connected" ? `공식 일정 연결 · ${schedule?.events.length ?? 0}경기` : scheduleState === "stale" ? "공식 일정 36시간 경과 · 우선순위에서 제외" : scheduleState === "connecting" ? "공식 일정 연결 중" : "공식 일정 미연결 · 분석 점수만 사용"}</em>
+          <em className={`schedule-state ${scheduleState}`}>{scheduleState === "connected" ? `공식 일정 연결 · ${effectiveSchedule?.events.length ?? 0}경기${scheduleReview.withheld.length ? ` · 검토 보류 ${scheduleReview.withheld.length}` : ""}` : scheduleState === "stale" ? "공식 일정 36시간 경과 · 우선순위에서 제외" : scheduleState === "connecting" ? "공식 일정 연결 중" : "공식 일정 미연결 · 분석 점수만 사용"}</em>
+          {scheduleState === "connected" && scheduleReview.withheld.map((item) => <p key={item.event_id} className="schedule-review-note" role="note">일정 검토 · {item.reason} ({item.checked_on} 확인 · <a href={item.sources[0]} target="_blank" rel="noreferrer">경기 결과 보도</a>)</p>)}
         </div>
         <TeamChooser label="내 팀 선택" teams={opponentTeams} value={myTeamId} onChange={selectMyTeam} allowClear />
         <div className="team-lens-actions">

@@ -441,7 +441,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     </section>
 
     <div className="draft-preparation-library">
-      <DraftScoutPanel nameOf={nameOf} previousPicks={previousPicks} selections={selections} blueTeamId={blueTeamId} redTeamId={redTeamId} firstPickSide={firstPickSide} />
+      <DraftScoutPanel nameOf={nameOf} previousPicks={previousPicks} selections={selections} blueTeamId={blueTeamId} redTeamId={redTeamId} firstPickSide={firstPickSide} feedCutoff={liveReport.fixture_only ? null : liveReport.cutoff} />
       <WorldsPreparationPanel report={report} nameOf={nameOf} onChooseOpponent={chooseWorldsOpponent} previousPicks={previousPicks} canChangeMatchup={canSelect && games.length === 0 && !hasCurrentWork} />
       <NationalTeamPanel report={liveReport} nameOf={nameOf} />
       <a href="#draft-workspace">밴픽으로 돌아가기 ↑</a>

@@ -12,6 +12,8 @@ type Counted = { champion_id: string; game_count: number; rate: number | null };
 type Record_ = { game_count: number; win_count: number; win_rate: number | null };
 type ScoutDraft = { bans: string[]; picks: { sequence: number; champion_id: string; role: string; player_name: string | null }[] };
 type ScoutTeam = {
+  observed_pairs?: { left: { role: string; champion_id: string }; right: { role: string; champion_id: string };
+    game_count: number; evidence_match_ids: string[] }[];
   import_coverage?: { observed_games: number; accepted_games: number; excluded_games: number;
     excluded_rate: number | null; exclusion_reasons: Record<string, number> };
   season_tendencies?: { role: string; player_id: string | null; player_name: string | null;
@@ -30,6 +32,7 @@ type ScoutTeam = {
 
 // Mirrors `draft-scout-pack` schema 1 written by `scout-opponent-draft`.
 export type DraftScoutPack = {
+  matchup_bans?: { game_count: number; phase_one: Counted[]; boundary: string };
   schema_version: string; artifact_type: string; cutoff: string; boundary: string; quality_flags: string[];
   config: { maximum_games_per_team: number; meta_patches_per_region: number; minimum_comfort_games: number; top_champions: number };
   target: ScoutTeam; own: ScoutTeam;
@@ -131,4 +134,28 @@ export function buildDraftScoutBrief(pack: DraftScoutPack, previousPicks: string
 
 export function formatRate(rate: number | null | undefined) {
   return rate === null || rate === undefined ? "—" : `${Math.round(rate * 100)}%`;
+}
+
+// Packs are only replaced by a successful refresh, so a failed refresh shows up here as an old cutoff.
+export const SCOUT_STALE_AFTER_HOURS = 72;
+export const SCOUT_FEED_LAG_TOLERANCE_HOURS = 6;
+
+export type ScoutFreshness = {
+  status: "CURRENT" | "BEHIND_FEED" | "AGED" | "UNKNOWN";
+  pack_cutoff: string; feed_cutoff: string | null;
+  age_hours: number | null; feed_lead_hours: number | null;
+};
+
+// Compares the pack with the published feed it should follow and with the viewer's clock.
+// The clock is optional so server and first client render agree; age is filled in after mount.
+export function scoutFreshness(packCutoff: string, feedCutoff: string | null | undefined, now?: number): ScoutFreshness {
+  const hours = (from: string, to: number) => (to - Date.parse(from)) / 3_600_000;
+  const pack = Date.parse(packCutoff);
+  const feed = feedCutoff && Number.isFinite(Date.parse(feedCutoff)) ? feedCutoff : null;
+  const feed_lead_hours = feed && Number.isFinite(pack) ? hours(packCutoff, Date.parse(feed)) : null;
+  const age_hours = now !== undefined && Number.isFinite(pack) ? Math.max(0, hours(packCutoff, now)) : null;
+  const status = !Number.isFinite(pack) ? "UNKNOWN"
+    : feed_lead_hours !== null && feed_lead_hours > SCOUT_FEED_LAG_TOLERANCE_HOURS ? "BEHIND_FEED"
+      : age_hours !== null && age_hours > SCOUT_STALE_AFTER_HOURS ? "AGED" : "CURRENT";
+  return { status, pack_cutoff: packCutoff, feed_cutoff: feed, age_hours, feed_lead_hours };
 }
