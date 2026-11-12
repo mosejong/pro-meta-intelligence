@@ -107,7 +107,11 @@ test("exchange branches preserve legality, readiness, locks and the real draft",
       assert.ok(!options.some((c) => c.role === "MID" && c.champion_id === "Kai'Sa"));
       const bottomFieldset = html.match(/<fieldset><legend>우리 바텀 준비 확인[\s\S]*?<\/fieldset>/)?.[0];
       assert.match(bottomFieldset, /type="checkbox"[^>]*\/>Kai&#x27;Sa<\/label>/);
-      assert.doesNotMatch(bottomFieldset, /checked/);
+      assert.doesNotMatch(bottomFieldset, /checked|data-locked|<em>/);
+      const lockedHtml = renderToStaticMarkup(createElement(DraftExchangePanel, {
+        pack, ...context, previousPicks: [...context.previousPicks, "Kai'Sa"], nameOf: (id) => id }));
+      const lockedBottom = lockedHtml.match(/<fieldset><legend>우리 바텀 준비 확인[\s\S]*?<\/fieldset>/)?.[0];
+      assert.match(lockedBottom, /<label data-locked="true"[^>]*><input type="checkbox"[^>]*\/>Kai&#x27;Sa<em> · 사용 불가 · 확정 밴픽\/이전 픽<\/em><\/label>/);
 
       const offPool = structuredClone(pack);
       const offFocus = historical.left;

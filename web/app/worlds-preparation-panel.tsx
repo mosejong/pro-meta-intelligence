@@ -35,9 +35,9 @@ export function WorldsPreparationPanel({ report, canChangeMatchup, onChooseOppon
         {[...WORLDS_2026.semifinals, ...WORLDS_2026.quarterfinals].map((match) => <span key={match.start_at} className={(match.teams as readonly string[]).includes("T1") ? "is-own" : undefined}>
           <b>{match.teams[0]} vs {match.teams[1]}</b>{formatKst(match.start_at)}{"result" in match && ` · ${match.result.score.join(":")} ${match.result.winner} 승`}
         </span>)}
-        <span><b>결승 {WORLDS_2026.final.teams.join(" vs ")}</b>{WORLDS_2026.final_date.slice(5).replace("-", ".")} 미국 현지 · 시작 시각 미표시</span>
+        <span><b>결승 {WORLDS_2026.final.teams.join(" vs ")}</b>{formatKst(WORLDS_2026.final.start_at)} · {WORLDS_2026.final_date.slice(5).replace("-", ".")} 미국 현지</span>
       </div>
-      <p>대진 {WORLDS_2026.knockout_checked_on} 언론 보도 기준 · 4강 {WORLDS_2026.semifinal_dates.map((date) => date.slice(5).replace("-", ".")).join("·")} · 결승 {WORLDS_2026.final_date.slice(5).replace("-", ".")} (미국 현지) · T1 4강 조합은 {WORLDS_2026.semifinals_checked_on} 공식 일정 기준 · 4강 결과와 결승 조합은 {WORLDS_2026.results_checked_on} 경기 보도로 확인 · 다른 4강 조합은 표시하지 않습니다.</p>
+      <p>대진 {WORLDS_2026.knockout_checked_on} 언론 보도 기준 · 4강 {WORLDS_2026.semifinal_dates.map((date) => date.slice(5).replace("-", ".")).join("·")} · 결승 {formatKst(WORLDS_2026.final.start_at)} ({WORLDS_2026.final.start_checked_on} 운영자 확인) · T1 4강 조합은 {WORLDS_2026.semifinals_checked_on} 공식 일정 기준 · 4강 결과와 결승 조합은 {WORLDS_2026.results_checked_on} 경기 보도로 확인 · 다른 4강 조합은 표시하지 않습니다.</p>
       <p>{WORLDS_2026.qualification_checked_on} 공식 진출 명단 + 8강 진출팀 · 확인 팀 {entries.length}개 · 명단 순서는 시드나 전력 순위가 아닙니다.</p>
       <div className="worlds-preparation-status">
         <span><b>대회 패치</b>{WORLDS_2026.patch} · 규정집 {WORLDS_2026.rules_version} 확인</span>

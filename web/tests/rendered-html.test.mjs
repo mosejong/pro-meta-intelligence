@@ -268,7 +268,9 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   assert.match(text, /11\.9 07:00 KST/);
   assert.doesNotMatch(text, /T1 4강 · vs BLG|4강 대비/);
   assert.match(text, /T1 vs BLG 4강 복기/);
-  assert.match(text, /결승 GEN vs BLG/);
+  assert.match(text, /결승 GEN vs BLG<\/b>11\.15 04:00 KST · 11\.14 미국 현지/);
+  assert.match(text, /결승 11\.15 04:00 KST \(2026-11-12 운영자 확인\)/);
+  assert.doesNotMatch(text, /시작 시각 미표시/);
   assert.match(text, /4강 종료 · T1 1:3 패 · 다음 T1 경기 없음/);
   assert.match(text, /스카우팅 자료 갱신 \d+\.\d+ \d\d:\d\d KST/);
   assert.match(text, /T1 4강 조합은 2026-11-08 공식 일정 기준/);

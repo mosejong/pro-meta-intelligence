@@ -61,7 +61,7 @@ export function DraftScoutPanel({ nameOf, previousPicks = [], selections = [], b
           </option>)}
         </select>
       </label>
-      {!next && last && <p className="draft-scout-result" role="note">T1은 {last.label}에서 {last.opponent}에 {last.won ? "이겼습니다" : "졌습니다"} ({last.own_score}:{last.opponent_score} · {WORLDS_2026.results_checked_on} 공식 결과 확인). 결승은 {WORLDS_2026.final.teams.join(" vs ")} ({WORLDS_2026.final_date.slice(5).replace("-", ".")} 미국 현지)입니다. 아래 자료는 복기·연습용입니다.</p>}
+      {!next && last && <p className="draft-scout-result" role="note">T1은 {last.label}에서 {last.opponent}에 {last.won ? "이겼습니다" : "졌습니다"} ({last.own_score}:{last.opponent_score} · {WORLDS_2026.results_checked_on} 공식 결과 확인). 결승은 {WORLDS_2026.final.teams.join(" vs ")} ({formatKst(WORLDS_2026.final.start_at)})입니다. 아래 자료는 복기·연습용입니다.</p>}
       <p className={`draft-scout-freshness is-${fresh.status.toLowerCase()}`} role="status" data-freshness={fresh.status}>
         <b>스카우팅 자료 갱신 {formatKst(pack.cutoff)}</b>
         {fresh.age_hours !== null && ` · ${days(fresh.age_hours)} 전`}
