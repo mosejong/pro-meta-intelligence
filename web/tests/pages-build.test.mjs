@@ -158,3 +158,22 @@ test("copies the same-origin feed and social card", async () => {
   assert.ok(card.byteLength > 10_000);
   assert.ok(hero.byteLength > 1_000_000);
 });
+
+test("only the draft page downloads the bundled scouting packs", async () => {
+  const entryScript = async (page) => {
+    const html = await readFile(new URL(page, root), "utf8");
+    const src = html.match(/<script type="module"[^>]*src="\/pro-meta-intelligence\/(assets\/[^"]+\.js)"/)?.[1];
+    assert.ok(src, `${page} has a module entry script`);
+    return src;
+  };
+  const entries = new Set(await Promise.all(["index.html", "team/index.html", "t1/index.html", "draft/index.html"].map(entryScript)));
+  assert.equal(entries.size, 1);
+  const [entry] = entries;
+  const shared = await readFile(new URL(entry, root), "utf8");
+  // Scouting packs are ~2.6 MB of JSON; they must stay in the lazily loaded Draft Lab chunk.
+  assert.doesNotMatch(shared, /draft-scout-pack/);
+  const chunk = shared.match(/assets\/(draft-lab-[\w-]+\.js)/)?.[1];
+  assert.ok(chunk, "the entry imports Draft Lab lazily");
+  assert.match(await readFile(new URL(`assets/${chunk}`, root), "utf8"), /draft-scout-pack/);
+  assert.ok(Buffer.byteLength(shared) < 1_000_000, `shared entry is ${Buffer.byteLength(shared)} bytes`);
+});

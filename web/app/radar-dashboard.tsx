@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- this dual vinext/Vite build uses stable Riot CDN and relative static assets */
 
 import { applyScheduleReview } from "./schedule-review";
-import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { championImageUrl } from "./champion-assets";
 import { ChampionNameProvider, useChampionNames } from "./champion-names";
 import { collectionStatusMessage, isCollectionStatus, type CollectionStatus } from "./collection-status";
@@ -34,7 +34,6 @@ import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
 import { ProductHome } from "./product-home";
 import { SubmissionProof } from "./submission-proof";
-import { DraftLab } from "./draft-lab";
 import { TeamChooser } from "./team-chooser";
 import { AppNavigation } from "./app-navigation";
 import { PlayerPracticePanel } from "./player-practice-panel";
@@ -49,6 +48,9 @@ import { TargetMatchDayPanel } from "./target-match-day-panel";
 import { T1OnePageBrief } from "./t1-one-page-brief";
 import { buildWorkspaceUrl, parseWorkspaceSearch, type WorkspaceViewMode } from "./workspace-link";
 import "./bright-theme.css";
+
+// Draft Lab carries the bundled scouting packs (~2.6 MB of JSON); load it only on the draft page.
+const DraftLab = lazy(() => import("./draft-lab").then((module) => ({ default: module.DraftLab })));
 
 const MY_TEAM_STORAGE_KEY = "pmi:my-team-id";
 const VIEW_MODE_STORAGE_KEY = "pmi:view-mode";
@@ -881,7 +883,9 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   }
 
   if (initialSpace === "DRAFT") {
-    return <DraftLab currentSpace={initialSpace} report={report} feedLabel={feedState.label} />;
+    return <Suspense fallback={<main className="draft-lab-loading" role="status">밴픽 작업실을 불러오는 중입니다…</main>}>
+      <DraftLab currentSpace={initialSpace} report={report} feedLabel={feedState.label} />
+    </Suspense>;
   }
 
   const sectionCopy = {
@@ -1019,7 +1023,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
       <section className="decision-hero">
         <div className="decision-hero-copy">
           <div className="kicker-row"><p className="eyebrow">PATCH {report.patch_id} · {isHistoricalPublication ? "HISTORICAL REVIEW" : "TEAM MODE"}</p><span>{feedState.detail}</span></div>
-          <h1>{isHistoricalPublication ? <>마지막 발행본<br /><em>검토 전용.</em></> : <>오늘 팀이<br /><em>결정할 3가지.</em></>}</h1>
+          <h2 className="decision-hero-title">{isHistoricalPublication ? <>마지막 발행본<br /><em>검토 전용.</em></> : <>오늘 팀이<br /><em>결정할 3가지.</em></>}</h2>
           <p className="lede">{isHistoricalPublication ? "현재 의사결정용 데이터가 아닙니다. 당시 공개 경기 근거와 분석 구조를 확인할 때만 사용하세요." : "티어표가 아니라 회의 시작점입니다. 지금 테스트할 후보, 더 지켜볼 후보, 보류할 근거를 공개 경기 데이터로 압축했습니다."}</p>
           <div className="decision-hero-actions">
             <a href="#t1-brief">원페이지 브리프</a>
