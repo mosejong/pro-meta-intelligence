@@ -51,17 +51,20 @@ test("historical draft evaluation measures the production preview and rejects le
       assert.equal(applyScheduleReview(null).schedule, null);
     });
     await t.test("finished matches are labelled with their result and packs show their freshness", () => {
+      // The hosted collector refreshes the packs, so expectations follow the shipped cutoff, not a fixed date.
+      const packCutoff = draftScoutFor("BLG").cutoff;
       const html = renderToStaticMarkup(createElement(DraftScoutPanel, { nameOf: (id) => id, feedCutoff: "2026-11-10T02:02:04+00:00" }));
       assert.match(html, /T1 vs BLG · 밴픽 스카우팅/);
       assert.match(html, /4강 종료 · T1 1:3 패 · 다음 T1 경기 없음/);
       assert.doesNotMatch(html, /4강 상대/);
       assert.match(html, /BLG · 4강 종료 · 지난 상대/);
       assert.match(html, /결승은 GEN vs BLG \(11\.15 04:00 KST\)/);
-      assert.match(html, /스카우팅 자료 갱신 11\.11 11:19 KST/);
+      assert.ok(html.includes(`스카우팅 자료 갱신 ${formatKst(packCutoff)}`), formatKst(packCutoff));
       assert.match(html, /공개 피드 11\.10 11:02 KST/);
       assert.match(html, /data-freshness="CURRENT"/);
       // A refresh that failed after a newer feed was published leaves an older pack behind.
-      const behind = renderToStaticMarkup(createElement(DraftScoutPanel, { nameOf: (id) => id, feedCutoff: "2026-11-13T02:00:00+00:00" }));
+      const laterFeed = new Date(Date.parse(packCutoff) + 2 * 24 * 3_600_000).toISOString();
+      const behind = renderToStaticMarkup(createElement(DraftScoutPanel, { nameOf: (id) => id, feedCutoff: laterFeed }));
       assert.match(behind, /data-freshness="BEHIND_FEED"/);
       assert.match(behind, /갱신 지연: 공개 피드보다 2\.0일 오래된 자료/);
       const cutoff = draftScoutFor("BLG").cutoff;
