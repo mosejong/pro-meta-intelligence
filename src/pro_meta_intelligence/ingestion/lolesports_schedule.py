@@ -27,7 +27,11 @@ BEST_OF_PATTERN = re.compile(r"^best of ([1-9][0-9]?)$", re.IGNORECASE)
 
 
 class SchedulePayloadError(ValueError):
-    pass
+    """The schedule page could not be read; keeps the public page body when one arrived."""
+
+    def __init__(self, message: str, *, body: bytes | None = None) -> None:
+        super().__init__(message)
+        self.body = body
 
 
 class ScheduleFetchIntervalError(RuntimeError):
@@ -290,13 +294,18 @@ class LoLEsportsScheduleAdapter:
             retrieved_at=response.retrieved_at,
             body=response.body,
         )
-        future_events = tuple(
-            event
-            for event in parse_schedule_html(response.body)
-            if event.start_at >= response.retrieved_at
-        )
+        try:
+            future_events = tuple(
+                event
+                for event in parse_schedule_html(response.body)
+                if event.start_at >= response.retrieved_at
+            )
+        except SchedulePayloadError as error:
+            raise SchedulePayloadError(str(error), body=response.body) from error
         if not future_events:
-            raise SchedulePayloadError("schedule page contains no future events at retrieval time")
+            raise SchedulePayloadError(
+                "schedule page contains no future events at retrieval time", body=response.body
+            )
         return ScheduleSnapshot(
             locale=locale,
             league_slugs=normalized_slugs,
