@@ -96,6 +96,17 @@ def test_adapter_rejects_arbitrary_paths_wrong_media_and_empty_markup() -> None:
         parse_schedule_html(b"<html><body>No schedule</body></html>")
 
 
+def test_unreadable_page_keeps_its_body_for_diagnostics() -> None:
+    page = b"<html><body>Schedule moved</body></html>"
+    adapter, transport = build_adapter(FakeTransport(body=page))
+
+    with pytest.raises(SchedulePayloadError, match="no semantic upcoming events") as caught:
+        adapter.fetch(["lck"])
+
+    assert caught.value.body == page
+    assert len(transport.calls) == 1
+
+
 def test_adapter_excludes_events_that_are_already_past_at_retrieval() -> None:
     body = FIXTURE.read_bytes().replace(
         b"2026-08-26T08:00:00Z",

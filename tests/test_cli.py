@@ -318,6 +318,52 @@ def test_fetch_schedule_publishes_t1_change_log_with_the_new_snapshot(
     assert change_log["current_snapshot"]["content_hash"] == current["content_hash"]
 
 
+def test_fetch_schedule_keeps_an_unreadable_page_for_diagnostics(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    from pro_meta_intelligence.ingestion.lolesports_schedule import SchedulePayloadError
+
+    output = tmp_path / "schedule.json"
+    output.write_text('{"retrieved_at": "2026-08-25T00:00:00+00:00"}', encoding="utf-8")
+    page = b"<html><body>Schedule moved</body></html>"
+
+    class UnreadableScheduleAdapter:
+        source_id = "lol-esports-schedule"
+
+        def __init__(self, registry) -> None:
+            pass
+
+        def fetch(self, leagues, *, locale, last_retrieved_at=None):
+            raise SchedulePayloadError(
+                "schedule page contains no semantic upcoming events", body=page
+            )
+
+    monkeypatch.setattr(
+        "pro_meta_intelligence.cli.LoLEsportsScheduleAdapter", UnreadableScheduleAdapter
+    )
+    diagnostics = tmp_path / "diagnostics"
+    arguments = [
+        "fetch-schedule",
+        "--archive-dir",
+        str(tmp_path / "raw"),
+        "--output",
+        str(output),
+        "--changes-output",
+        str(tmp_path / "changes.json"),
+    ]
+
+    assert main([*arguments, "--diagnostics-dir", str(diagnostics)]) == 4
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "SOURCE_UNAVAILABLE"
+    assert result["existing_snapshot_preserved"] is True
+    assert result["source_page"]["bytes"] == len(page)
+    assert (diagnostics / "source-page.html").read_bytes() == page
+    assert output.read_text(encoding="utf-8").startswith('{"retrieved_at"')
+
+    assert main(arguments) == 4
+    assert "source_page" not in json.loads(capsys.readouterr().out)
+
+
 def test_import_oe_cli_writes_qa_and_normalization_summary(tmp_path) -> None:
     output = tmp_path / "oe-import.json"
 

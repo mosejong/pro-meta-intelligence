@@ -41,7 +41,8 @@ jobs:
             --archive-dir outputs/lolesports/raw \
             --output web/public/feed/schedule.json \
             --changes-output web/public/feed/schedule-changes.json \
-            --watch-team T1 | tee outputs/schedule-diagnostics/result.json
+            --watch-team T1 \
+            --diagnostics-dir outputs/schedule-diagnostics | tee outputs/schedule-diagnostics/result.json
           status=${PIPESTATUS[0]}
           set -e
           if [ "$status" -eq 5 ]; then
@@ -57,7 +58,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: schedule-diagnostics-${{ github.run_id }}
-          path: outputs/schedule-diagnostics/result.json
+          path: outputs/schedule-diagnostics/
           if-no-files-found: ignore
           retention-days: 7
       - name: Validate public schedule artifacts

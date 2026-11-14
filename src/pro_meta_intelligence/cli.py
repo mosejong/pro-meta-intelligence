@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import platform
 from collections import Counter
@@ -146,6 +147,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--watch-team",
         default="T1",
         help="exact team identity to monitor for schedule changes",
+    )
+    schedule.add_argument(
+        "--diagnostics-dir",
+        type=Path,
+        help="keep the public page here when it cannot be parsed, so no extra request is needed",
     )
 
     oe_import = subparsers.add_parser(
@@ -650,6 +656,16 @@ def _fetch_schedule(args: argparse.Namespace) -> int:
             "error": str(error),
             "existing_snapshot_preserved": args.output.is_file(),
         }
+        body = getattr(error, "body", None)
+        if body is not None and args.diagnostics_dir is not None:
+            args.diagnostics_dir.mkdir(parents=True, exist_ok=True)
+            page = args.diagnostics_dir / "source-page.html"
+            page.write_bytes(body)
+            payload["source_page"] = {
+                "path": page.as_posix(),
+                "bytes": len(body),
+                "content_hash": f"sha256:{hashlib.sha256(body).hexdigest()}",
+            }
         _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", None)
         return 4
     current = snapshot.to_dict()
