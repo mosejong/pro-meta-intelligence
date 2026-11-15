@@ -7,24 +7,24 @@
   "boundary": "Collection availability only; excludes raw rows, local paths, provider URLs, and predictive-quality claims.",
   "last_attempt": {
     "exit_code": 0,
-    "finished_at": "2026-11-14T22:58:44.646181+00:00",
+    "finished_at": "2026-11-15T14:44:39.624448+00:00",
     "job_status": "SUCCEEDED",
-    "network_request_performed": false,
-    "started_at": "2026-11-14T22:56:42.982267+00:00"
+    "network_request_performed": true,
+    "started_at": "2026-11-15T14:42:36.603907+00:00"
   },
   "publication": {
     "head_accepted": true,
     "history_status": "HISTORY_NOT_READY",
     "result_status": "PUBLISHED"
   },
-  "reason_code": "NONE",
+  "reason_code": "PROVIDER_QUOTA_OR_HTML_RESPONSE",
   "schema_version": "1",
   "source": {
-    "acquisition_status": "REUSED_DAILY_CACHE",
+    "acquisition_status": "REUSED_CACHE_AFTER_SOURCE_ERROR",
     "last_verified_at": "2026-11-14T00:19:10.467435+00:00",
-    "next_attempt_at": "2026-11-15T00:19:10.467435+00:00",
+    "next_attempt_at": "2026-11-16T14:42:38.566941+00:00",
     "source_id": "oracles-elixir-match-data"
   },
-  "state": "CURRENT",
-  "updated_at": "2026-11-14T22:58:44.646181+00:00"
+  "state": "SOURCE_DELAYED",
+  "updated_at": "2026-11-15T14:44:39.624448+00:00"
 }
