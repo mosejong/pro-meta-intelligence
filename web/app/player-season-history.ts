@@ -18,6 +18,7 @@ export const PLAYER_SEASON_VERSION = 1;
 export const PLAYER_SEASON_YEAR = 2026;
 export const PLAYER_SEASON_PATH = `history/player-season-${PLAYER_SEASON_YEAR}.json`;
 export const MAX_PLAYER_SEASON_BYTES = 3 * 1024 * 1024;
+export const PLAYER_SEASON_TIMEOUT_MS = 15_000;
 export const SEASON_SCOPES = ["season", "recent", "patch"] as const;
 export type SeasonScope = (typeof SEASON_SCOPES)[number];
 
@@ -51,7 +52,7 @@ export type SeasonHistory = {
 
 export type SeasonErrorCode =
   | "UNAVAILABLE" | "TOO_LARGE" | "INVALID_JSON" | "WRONG_TYPE" | "BAD_VERSION" | "FUTURE_VERSION" | "BAD_SHAPE"
-  | "SEASON_MISMATCH" | "BASIS_MISMATCH" | "FUTURE_SOURCE";
+  | "SEASON_MISMATCH" | "BASIS_MISMATCH" | "FUTURE_SOURCE" | "TIMEOUT";
 export type SeasonResult<T> = { ok: true; value: T } | { ok: false; code: SeasonErrorCode; error: string };
 const fail = (code: SeasonErrorCode, error: string) => ({ ok: false as const, code, error });
 
@@ -258,15 +259,34 @@ export function seasonSlot(input: {
  * Fetch and validate the season file. Rejects an oversized body before reading when the server
  * declares its length. Aborting (team/basis change, panel close) rejects with AbortError.
  */
-export async function loadPlayerSeasonHistory(url: string | URL, expected: { basis: RosterBasis; season?: number }, signal?: AbortSignal): Promise<SeasonResult<SeasonHistory>> {
-  let response: Response;
-  try { response = await fetch(url, { signal }); }
-  catch (error) { if (signal?.aborted) throw error; return fail("UNAVAILABLE", "연간 자료를 불러오지 못했습니다."); }
-  if (!response.ok) return fail("UNAVAILABLE", `연간 자료가 아직 배포되지 않았습니다 (HTTP ${response.status}).`);
-  const declared = Number(response.headers.get("content-length"));
-  if (Number.isFinite(declared) && declared > MAX_PLAYER_SEASON_BYTES) return fail("TOO_LARGE", "연간 자료 파일이 3MB를 넘습니다.");
-  let text: string;
-  try { text = await response.text(); }
-  catch (error) { if (signal?.aborted) throw error; return fail("UNAVAILABLE", "연간 자료를 읽지 못했습니다."); }
-  return parsePlayerSeasonHistory(text, expected);
+export async function loadPlayerSeasonHistory(url: string | URL, expected: { basis: RosterBasis; season?: number }, signal?: AbortSignal, timeoutMs = PLAYER_SEASON_TIMEOUT_MS): Promise<SeasonResult<SeasonHistory>> {
+  if (signal?.aborted) throw new DOMException("요청을 취소했습니다.", "AbortError");
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let onAbort: (() => void) | undefined;
+  const stopped = new Promise<never>((_, reject) => {
+    onAbort = () => { reject(new DOMException("요청을 취소했습니다.", "AbortError")); controller.abort(); };
+    signal?.addEventListener("abort", onAbort, { once: true });
+    timer = setTimeout(() => {
+      reject(new DOMException("연간 자료 요청 시간이 초과되었습니다.", "TimeoutError"));
+      controller.abort();
+    }, timeoutMs);
+  });
+  const read = async (): Promise<SeasonResult<SeasonHistory>> => {
+    const response = await fetch(url, { signal: controller.signal, cache: "no-store" });
+    if (!response.ok) return fail("UNAVAILABLE", `연간 자료가 아직 배포되지 않았습니다 (HTTP ${response.status}).`);
+    const declared = Number(response.headers.get("content-length"));
+    if (Number.isFinite(declared) && declared > MAX_PLAYER_SEASON_BYTES) return fail("TOO_LARGE", "연간 자료 파일이 3MB를 넘습니다.");
+    return parsePlayerSeasonHistory(await response.text(), expected);
+  };
+  try { return await Promise.race([read(), stopped]); }
+  catch (error) {
+    if (signal?.aborted) throw error;
+    if (error instanceof DOMException && error.name === "TimeoutError") return fail("TIMEOUT", "연간 자료 응답 시간(15초)을 초과했습니다. 밴픽은 유지되며 다시 불러올 수 있습니다.");
+    return fail("UNAVAILABLE", "연간 자료를 불러오지 못했습니다.");
+  } finally {
+    clearTimeout(timer);
+    if (onAbort) signal?.removeEventListener("abort", onAbort);
+    controller.abort();
+  }
 }

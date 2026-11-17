@@ -55,6 +55,34 @@ const seasonRow = (page, side, role) => page.locator(`.player-season-team.${side
 const poolRow = (page, side, role) => page.locator(`.player-pool-team.${side} > ul > li[data-role="${role}"]`);
 const confirm = (page) => page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ });
 
+test("a stalled history request times out and retries without changing the draft or roster", async ({ page }) => {
+  await page.clock.install();
+  let release;
+  const held = new Promise(resolve => { release = resolve; });
+  let requests = 0;
+  await page.route(HISTORY, async route => {
+    requests += 1;
+    if (requests === 1) { await held; await route.fulfill({ status: 200, contentType: "application/json", body: fixture() }).catch(() => {}); }
+    else await route.fulfill({ status: 200, contentType: "application/json", body: fixture() });
+  });
+  try {
+    await openPool(page);
+    const before = await slot(page, "blue", "TOP").inputValue();
+    await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
+    await confirm(page).click();
+    await expect(page.locator(".draft-turn-progress")).toHaveAttribute("value", "1");
+    await season(page).locator("> summary").click();
+    await expect(season(page).getByRole("status")).toContainText("불러오는 중");
+    await page.clock.fastForward(15001);
+    await expect(season(page).getByRole("alert")).toContainText("응답 시간");
+    await season(page).getByRole("button", { name: "연간 자료 다시 불러오기" }).click();
+    await expect(seasonRow(page, "blue", "TOP")).toHaveAttribute("data-status", "OBSERVED");
+    await expect(slot(page, "blue", "TOP")).toHaveValue(before);
+    await expect(page.locator(".draft-turn-progress")).toHaveAttribute("value", "1");
+    expect(requests).toBe(2);
+  } finally { release(); }
+});
+
 test("the actual derived file loads from the draft route and matches all displayed role counts", async ({ page }, testInfo) => {
   const real = JSON.parse(readFileSync(new URL("../../public/history/player-season-2026.json", import.meta.url), "utf8"));
   const state = watch(page);

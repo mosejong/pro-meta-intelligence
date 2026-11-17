@@ -191,6 +191,26 @@ test("loader reports unavailable, declared oversize and propagates aborts", asyn
 });
 
 const realPath = new URL("../public/history/player-season-2026.json", import.meta.url);
+
+test("history deadlines cover both fetch and body hangs, and external cancellation remains abort", async () => {
+  const original = globalThis.fetch;
+  const signals = [];
+  try {
+    globalThis.fetch = async (_url, init) => { signals.push(init.signal); return new Promise(() => {}); };
+    assert.equal((await S.loadPlayerSeasonHistory("http://x/h.json", { basis }, undefined, 5)).code, "TIMEOUT");
+    assert.equal(signals[0].aborted, true);
+    globalThis.fetch = async (_url, init) => { signals.push(init.signal); return { ok: true, headers: new Headers(), text: () => new Promise(() => {}) }; };
+    assert.equal((await S.loadPlayerSeasonHistory("http://x/h.json", { basis }, undefined, 5)).code, "TIMEOUT");
+    assert.equal(signals[1].aborted, true);
+    const controller = new AbortController();
+    const pending = S.loadPlayerSeasonHistory("http://x/h.json", { basis }, controller.signal, 1000);
+    controller.abort();
+    await assert.rejects(pending, { name: "AbortError" });
+    assert.equal(signals[2].aborted, true);
+    await assert.rejects(S.loadPlayerSeasonHistory("http://x/h.json", { basis }, controller.signal), { name: "AbortError" });
+    assert.equal(signals.length, 3, "already cancelled requests must not reach fetch");
+  } finally { globalThis.fetch = original; }
+});
 test("real derived file is valid and either matches the feed or is safely withheld", { skip: !existsSync(realPath) && "derived file not generated" }, async () => {
   const feed = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
   const text = await readFile(realPath, "utf8");
