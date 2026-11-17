@@ -123,7 +123,7 @@ export function buildTargetProfile(
     } : null,
     unknowns: [
       "공개 대회 기록은 현재 선수 컨디션이나 스크림 숙련도를 보여주지 않습니다.",
-      "픽·밴 빈도만으로 T1의 다음 경기 의도를 추정하지 않습니다.",
+      `픽·밴 빈도만으로 ${target.team_name}의 다음 경기 의도를 추정하지 않습니다.`,
       ...(series.provider_series_id_available ? [] : [noSeriesBoundary]),
     ],
     evidence: {
@@ -135,7 +135,7 @@ export function buildTargetProfile(
       ]),
       source_versions: report.opponent_prep?.evidence_index.source_versions ?? report.evidence_index.source_versions,
     },
-    boundary: "Public professional-match evidence for staff review; not a prediction of T1 draft intent or player readiness.",
+    boundary: "Public professional-match evidence for staff review; not a prediction of the selected team's draft intent or player readiness.",
   };
 }
 

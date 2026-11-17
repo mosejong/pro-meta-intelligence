@@ -164,7 +164,7 @@ function prepareNow(target: OpponentTeam, profile: TargetProfile | null) {
     items.push({
       type: "BAN",
       title: "밴 예산을 두 방향으로 분리",
-      detail: `T1이 자주 밴한 ${ban?.champion_id ?? "표본 없음"}와 T1이 자주 받은 ${received?.champion_id ?? "표본 없음"}를 같은 의도로 해석하지 않습니다.`,
+      detail: `${target.team_name}이(가) 자주 밴한 ${ban?.champion_id ?? "표본 없음"}와 ${target.team_name}이(가) 자주 받은 ${received?.champion_id ?? "표본 없음"}를 같은 의도로 해석하지 않습니다.`,
       evidence_ids: [...(ban?.evidence_event_ids ?? []), ...(received?.evidence_event_ids ?? [])],
     });
   }
@@ -247,7 +247,7 @@ export function buildTargetMatchDayBrief(
           id: "OFFICIAL_FIXTURE",
           status: fixture ? "PASS" : "WAIT",
           label: "공식 일정",
-          detail: fixture ? `${fixture.league} ${fixture.block} · ${fixture.event_id}` : "다음 T1 공식 일정이 확인되지 않았습니다.",
+          detail: fixture ? `${fixture.league} ${fixture.block} · ${fixture.event_id}` : `다음 ${target.team_name} 공식 일정이 확인되지 않았습니다.`,
         },
         {
           id: "OPPONENT_IDENTITY",
@@ -258,7 +258,7 @@ export function buildTargetMatchDayBrief(
         {
           id: "PUBLIC_DRAFT_SAMPLE",
           status: target.game_count >= (report.opponent_prep?.config.minimum_games_for_review ?? 3) ? "PASS" : "LIMIT",
-          label: "T1 공개 드래프트",
+          label: `${target.team_name} 공개 드래프트`,
           detail: `${target.game_count}경기 · ${target.evidence.draft_event_ids.length}개 이벤트`,
         },
         {
@@ -296,9 +296,9 @@ export function buildTargetMatchDayBrief(
     confirmed_matchup: confirmedMatchup,
     prepare_now: prepareNow(target, profile),
     unknowns: [
-      ...(relationship === "PARTICIPANT_TBD" ? ["공식 일정의 T1 상대가 아직 TBD입니다."] : []),
+      ...(relationship === "PARTICIPANT_TBD" ? [`공식 일정의 ${target.team_name} 상대가 아직 TBD입니다.`] : []),
       ...(relationship === "TARGET_FIXTURE_OTHER_OPPONENT"
-        ? [`이 일정은 ${ownTeam?.team_name ?? "선택한 팀"}과 T1의 직접 대진이 아닙니다.`]
+        ? [`이 일정은 ${ownTeam?.team_name ?? "선택한 팀"}과 ${target.team_name}의 직접 대진이 아닙니다.`]
         : []),
       "공개 일정은 변경될 수 있으며 선수 컨디션, 스크림, 내부 밴픽 계획은 알 수 없습니다.",
     ],

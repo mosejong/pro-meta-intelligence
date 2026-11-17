@@ -29,35 +29,96 @@ async function render(path = "/") {
   );
 }
 
-test("server-renders the onboarding home as a focused product entry", async () => {
+function studioTabState(html, panelId) {
+  const tab = html.match(new RegExp(`<button[^>]*id="${panelId}-tab"[^>]*>`))?.[0];
+  const panel = html.match(new RegExp(`<div[^>]*id="${panelId}"[^>]*>`))?.[0];
+  assert.ok(tab, `${panelId} tab is rendered`);
+  assert.ok(panel, `${panelId} panel is rendered`);
+  assert.match(tab, /role="tab"/);
+  assert.match(tab, new RegExp(`aria-controls="${panelId}"`));
+  assert.match(panel, /role="tabpanel"/);
+  assert.match(panel, new RegExp(`aria-labelledby="${panelId}-tab"`));
+  return { selected: /aria-selected="true"/.test(tab), hidden: /\shidden(=""|\s|>)/.test(panel), tab, panel };
+}
+
+test("server-renders the home page as the mock draft studio, not a long product intro", async () => {
   const response = await render();
   assert.equal(response.status, 200);
 
   const html = await response.text();
-  assert.match(html, /어떤 분석을 할까요/);
-  assert.ok(html.indexOf('id="home-spaces"') < html.indexOf('id="home-today"'));
-  assert.match(html, /오늘은 이것만 먼저 보세요/);
-  assert.match(html, /다음 공식 일정/);
-  assert.match(html, /T1 공개 경기 반복 픽/);
-  assert.match(html, /이번 패치 주목 후보/);
-  assert.match(html, /무엇이 궁금하세요/);
-  assert.match(html, /입력 내용은 저장하거나 서버로 보내지 않습니다/);
-  assert.match(html, /AI 검증 전 · 자동 판단 안 함/);
-  assert.match(html, /규칙 기반 분석/);
-  assert.match(html, /예측 검증 결과/);
-  assert.match(html, /데이터 최신성과 일정 신뢰 상태/);
-  assert.match(html, /데이터 확인 중/);
-  assert.match(html, /공식 일정 확인 중/);
-  assert.match(html, /미확정 상대·오래된 일정은 우선순위에서 자동 제외합니다/);
-  assert.match(html, /어떻게 판단했나요/);
+  const text = html.replaceAll("<!-- -->", "");
+  assert.match(html, /<main class="draft-lab draft-studio" lang="ko">/);
+  assert.match(html, /<h1 lang="ko">모의 밴픽<\/h1>/);
+  // The retired ProductHome intro must not come before (or replace) the draft workspace.
+  assert.doesNotMatch(html, /어떤 분석을 할까요|오늘은 이것만 먼저 보세요|id="home-today"|id="home-spaces"/);
+  assert.match(html, /role="tablist" aria-label="작업실 보기"/);
+  const draft = studioTabState(html, "studio-panel-draft");
+  const details = studioTabState(html, "studio-panel-details");
+  assert.equal(draft.selected, true);
+  assert.equal(draft.hidden, false);
+  assert.equal(details.selected, false);
+  assert.equal(details.hidden, true);
+  assert.match(draft.tab, /tabindex="0"/);
+  assert.match(details.tab, /tabindex="-1"/);
+  assert.match(text, />모의 밴픽<\/button>/);
+  assert.match(text, />상세 분석<\/button>/);
+  // Both team choosers, side swap and first-pick choice open on the home page.
+  assert.match(html, /aria-label="BLUE TEAM: /);
+  assert.match(html, /aria-label="RED TEAM: /);
+  assert.match(html, /블루와 레드 팀 교체/);
+  assert.match(html, /레드 선픽/);
+  assert.match(html, /TURN 1 \/ 20/);
+  assert.match(html, /챔피언 선택판/);
+  assert.ok(html.indexOf('class="draft-lock-in"') < html.indexOf('class="draft-champion-info'));
+  assert.match(html, /챔피언을 고르면 공개 표본의 역할과 근거가 여기에 표시됩니다/);
+  // The stage keeps BLUE column, control room, RED column in order.
+  const stage = html.indexOf('class="draft-stage"');
+  const blue = html.indexOf('class="draft-team-column blue', stage);
+  const control = html.indexOf('class="draft-control-room"', stage);
+  const red = html.indexOf('class="draft-team-column red', stage);
+  assert.ok(stage > 0 && stage < blue && blue < control && control < red);
+  // Long analysis lives in the hidden details tab, after the draft workspace.
+  const detailsStart = html.indexOf('id="studio-panel-details"');
+  assert.ok(html.indexOf('aria-label="실시간 가상 밴픽"') < detailsStart);
+  for (const marker of ['id="draft-preview"', "TURN-BY-TURN EVIDENCE AGENT", 'class="draft-lab-boundary"']) {
+    assert.ok(html.indexOf(marker) > detailsStart, `${marker} is in the details tab`);
+  }
+  assert.doesNotMatch(text, /시뮬레이션 완료|승률 \d+%/);
+  assertNoPinnedTeam(html);
   assert.match(html, /href="\.\/team\/"/);
-  assert.match(html, /href="\.\/t1\/"/);
   assert.match(html, /href="\.\/creator\/"/);
   assert.match(html, /href="\.\/radar\/"/);
-  assert.match(html, /href="\.\/draft\/"/);
   assert.match(html, /href="\.\/proof\/"/);
+  // Home is the draft studio: the "밴픽" entry stays on "./" and is the current page.
+  const nav = bottomNavigation(html);
+  assert.match(nav.html, /<a href="\.\/" aria-current="page">/);
+  assert.equal(nav.html.match(/aria-current="page"/g)?.length, 2, "밴픽 tab and its full-menu entry");
+  assert.deepEqual(nav.menu, [
+    ["./", "모의 밴픽"], ["./team/", "팀 분석"],
+    ["./radar/", "메타 레이더"], ["./creator/", "크리에이터"], ["./proof/", "검증 상태"],
+  ]);
   assert.doesNotMatch(html, /chatgpt|openai|gpt login|sign in/i);
 });
+
+// No current page may pin one team: no /t1/ link, T1 brief/desk/target header, or retired event library.
+function assertNoPinnedTeam(html) {
+  const text = html.replaceAll("<!-- -->", "");
+  assert.doesNotMatch(html, /href="(?:\.{1,2}\/)*t1\/"/);
+  assert.doesNotMatch(text, /T1 브리프|T1 DESK|T1 TARGET|T1 공략|T1 기본 타깃|T1 분석 바로가기|T1 오늘 준비|T1 MATCH-DAY|T1 프로필/);
+  assert.doesNotMatch(html, /id="draft-worlds"|class="t1-one-page"|id="t1-brief"/);
+}
+
+function bottomNavigation(html) {
+  const nav = html.match(/<nav class="app-bottom-navigation"[\s\S]*?<\/nav>/)?.[0];
+  assert.ok(nav, "the global bottom navigation is rendered");
+  // The retired home section is gone, so no menu entry may jump to it.
+  assert.doesNotMatch(nav, /#home-spaces/);
+  const more = nav.match(/<details class="app-nav-more">[\s\S]*?<\/details>/)?.[0];
+  assert.ok(more, "전체 메뉴 opens an in-place menu");
+  assert.match(more, /<summary>[\s\S]*전체 메뉴[\s\S]*<\/summary>/);
+  const menu = [...more.matchAll(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/g)].map((match) => [match[1], match[2]]);
+  return { html: nav, menu };
+}
 
 test("server-renders the team analyst surface", async () => {
   const response = await render("/team");
@@ -66,6 +127,7 @@ test("server-renders the team analyst surface", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
+  assertNoPinnedTeam(html);
   assert.match(html, /<title>팀 분석 · Pro Meta Intelligence<\/title>/i);
   assert.match(html, /TEAM ROOM/);
   assert.match(html, /내 팀 기준으로 결정하세요/);
@@ -91,10 +153,10 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /자동 보호/);
   assert.match(html, /10-SECOND START/);
   assert.match(html, /원하는 결과부터 고르세요/);
-  assert.match(html, /T1 다음 경기/);
-  assert.match(html, /내 팀 vs T1/);
+  assert.match(html, /선택한 상대 다음 경기/);
+  assert.match(html, /내 팀 vs 선택한 상대/);
   assert.match(html, /영상 아이템 만들기/);
-  assert.match(html, /3개 공개 팀 중 하나를 고르면/);
+  assert.match(html, /3개 공개 팀 중 내 팀과 상대를 고르면/);
   assert.match(html, /핵심만 표시 중/);
   assert.match(html, /전체 분석 보기/);
   assert.match(html, /분석 링크 복사/);
@@ -112,13 +174,7 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /T1 중심 안전·정확도 30개/);
   assert.match(html, /균형 과제/);
   assert.match(html, /기기 로컬 선수 성향 기준선을 확인하는 중/);
-  assert.match(html, /ONE-PAGE · STAFF REVIEW/);
-  assert.match(html, /T1 공개 데이터 원페이지 브리프/);
   assert.match(html, /NEXT VERIFIED FIXTURE/);
-  assert.match(html, /DECIDE IN MEETING/);
-  assert.match(html, /NO VERIFIED HEAD-TO-HEAD YET/);
-  assert.match(html, /상대 확정 전에는 라인 저격 자료를 만들지 않습니다/);
-  assert.match(html, /href="#t1-brief"/);
   assert.match(html, /전체 메타 신호 탐색/);
   assert.match(styles, /\.quick-view \.audit-notice[^\n]+\.quick-view \.method[^\n]+display: none/);
   assert.doesNotMatch(styles, /\.quick-view[^\n]+\.workspace/);
@@ -148,22 +204,20 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /WALK-FORWARD OUTCOME/);
   assert.match(html, /먼저 사람의 판단을 기록하세요/);
   assert.match(html, /사후 결과는 사람의 상태를 자동 변경하지 않습니다/);
-  assert.match(html, /T1 TARGET DESK/);
-  assert.match(html, /T1 공략 준비실/);
-  assert.match(html, /T1 분석 바로가기/);
-  assert.match(html, /T1 기본 타깃/);
-  assert.match(html, /T1 TARGET PROFILE/);
-  assert.match(html, /T1 MATCH-DAY CONTROL/);
-  assert.match(html, /다음 T1 일정과 준비 상태/);
+  assert.match(html, /MY TEAM → OPPONENT PRIORITY/);
+  assert.match(html, /내 팀 기준 상대 준비 순서/);
+  assert.match(html, /OPPONENT PROFILE/);
+  assert.match(html, /MATCH-DAY CONTROL/);
+  assert.match(html, /일정과 준비 상태/);
   assert.match(html, /MATCH-DAY JSON/);
   assert.match(html, /5-LANE REPORT ARMED/);
   assert.match(html, /상대 확정 시 라인별 충돌 보고서 자동 생성/);
   assert.match(html, /WAITING FOR VERIFIED OPPONENT/);
   assert.match(html, /CHANGE LOG UNAVAILABLE/);
-  assert.match(html, /T1의 이번 패치에서 바뀐 것/);
+  assert.match(html, /의 이번 패치에서 바뀐 것/);
   assert.match(html, /최근 관측 라인업의 챔피언 풀/);
   assert.match(html, /최근 경기 타임라인/);
-  assert.match(html, /T1 프로필 JSON/);
+  assert.match(html, /상대 프로필 JSON/);
   assert.match(html, /MY TEAM LENS/);
   assert.match(html, /STEP 1 · MY TEAM LENS/);
   assert.match(html, /팀 이름 검색/);
@@ -199,7 +253,7 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /PNG 저장/);
   assert.match(html, /CANVAS FALLBACK READY/);
   assert.match(html, /3분 브리프/);
-  assert.match(html, /T1 공략 준비실/);
+  assert.match(html, /내 팀 기준 상대 준비 순서/);
   assert.match(html, /상대가 한 밴/);
   assert.match(html, /상대가 받은 밴/);
   assert.match(html, /회의에서 확인할 질문/);
@@ -215,8 +269,6 @@ test("server-renders the team analyst surface", async () => {
   assert.ok(html.indexOf('class="decision-hero"') < html.indexOf('class="team-brief"'));
   assert.ok(html.indexOf('class="team-lens setup"') < html.indexOf('class="team-brief"'));
   assert.ok(html.indexOf('class="team-lens setup"') < html.indexOf('class="decision-flow"'));
-  assert.ok(html.indexOf('class="decision-flow"') < html.indexOf('class="t1-one-page"'));
-  assert.ok(html.indexOf('class="t1-one-page"') < html.indexOf('class="team-brief"'));
   assert.ok(html.indexOf('class="decision-flow"') < html.indexOf('class="team-brief"'));
   assert.ok(html.indexOf('class="team-brief"') < html.indexOf('class="history-readiness'));
   assert.ok(html.indexOf('class="history-readiness') < html.indexOf('class="opponent-prep"'));
@@ -226,7 +278,7 @@ test("server-renders the team analyst surface", async () => {
 
 test("server-renders every focused workspace route", async () => {
   const cases = [
-    ["/t1", "space-t1", "T1 DESK", "T1 한 장 요약 보기"],
+    ["/t1", "space-team", "TEAM ROOM", "내 팀 선택"],
     ["/creator", "space-creator", "CREATOR STUDIO", "영상 장면 만들기"],
     ["/radar", "space-radar", "META RADAR", "후보와 근거 보기"],
   ];
@@ -259,44 +311,26 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   const response = await render("/draft");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /WORLDS 2026 · 준비실/);
-  assert.match(html, /대회 패치/);
-  assert.match(html, /레드 선픽/);
-  assert.match(html.replaceAll("<!-- -->", ""), /T1 vs KC 연습/);
   const text = html.replaceAll("<!-- -->", "");
-  assert.match(text, /T1 4강 종료 · vs BLG 1:3 패/);
-  assert.match(text, /11\.9 07:00 KST/);
-  assert.doesNotMatch(text, /T1 4강 · vs BLG|4강 대비/);
-  assert.match(text, /T1 vs BLG 4강 복기/);
-  assert.match(text, /결승 GEN vs BLG<\/b>11\.15 04:00 KST · 11\.14 미국 현지/);
-  assert.match(text, /결승 11\.15 04:00 KST \(2026-11-12 운영자 확인\)/);
-  assert.doesNotMatch(text, /시작 시각 미표시/);
-  assert.match(text, /4강 종료 · T1 1:3 패 · 다음 T1 경기 없음/);
-  assert.match(text, /스카우팅 자료 갱신 \d+\.\d+ \d\d:\d\d KST/);
-  assert.match(text, /T1 4강 조합은 2026-11-08 공식 일정 기준/);
-  assert.match(text, /T1 vs BLG · 밴픽 스카우팅/);
-  assert.match(text, /밴으로 지울 BLG 주력/);
-  assert.match(text, /피어리스 5판 소진 압박/);
-  assert.match(text, /BLG 예상 1페이즈 밴 · 월즈 메타/);
-  assert.match(text, /BLG 시즌 밴 습관 · 참고/);
-  assert.match(text, /BLG 예상 픽 · 선수 성향 \+ 월즈 포지션 메타/);
-  assert.match(text, /예상 픽 \d+% \(선수 기록만 \d+% · 포지션 메타만 \d+%\)/);
-  assert.match(text, /사전 검증 · WLDs \d+경기/);
-  assert.doesNotMatch(text, /월즈 스위스 경기 미포함/);
-  assert.match(text, /BLG 최근 40경기 \(LPL \d+ · WLDs \d+\)/);
-  assert.match(text, /T1 \d : \d BLG/);
-  assert.match(text, /GEN · 결선 진출팀 · 연습 상대/);
-  assert.ok(text.indexOf("T1 vs BLG · 밴픽 스카우팅") < text.indexOf("WORLDS 2026 · 준비실"));
-  assert.ok(text.indexOf("T1 vs BLG 4강 복기") < text.indexOf("T1 vs KC 연습"));
-  assert.match(html, /진행 중인 밴픽은 유지됩니다/);
-  assert.match(html, /DRAFT LAB · STANDARD 5 BAN \/ 5 PICK/);
-  assert.match(html, /가상 밴픽/);
+  assertNoPinnedTeam(html);
+  assert.doesNotMatch(text, /WORLDS 2026 · 준비실|밴픽 스카우팅|국가대표 성향 관찰/);
+  assert.match(html, /<main class="draft-lab draft-studio" lang="ko">/);
+  assert.match(html, /<h1 lang="ko">모의 밴픽<\/h1>/);
+  assert.match(html, /표준 5밴 5픽 · 피어리스/);
+  assert.equal(studioTabState(html, "studio-panel-draft").selected, true);
+  assert.equal(studioTabState(html, "studio-panel-details").hidden, true);
+  assert.ok(text.indexOf('id="studio-panel-details"') >= 0);
+  assert.ok(text.indexOf('id="studio-panel-details"') < text.indexOf("TURN-BY-TURN EVIDENCE AGENT"));
+  for (const href of ["../team/", "../radar/", "../creator/", "../proof/"]) assert.match(html, new RegExp(`href="${href.replaceAll(".", "\\.")}"`));
   assert.match(html, /TURN 1 \/ 20/);
   assert.match(html, /챔피언 선택판/);
-  assert.ok(html.indexOf('aria-label="실시간 가상 밴픽"') < html.indexOf('id="draft-worlds"'));
+  assert.ok(html.indexOf('aria-label="실시간 가상 밴픽"') < html.indexOf('class="draft-comparison"'));
   assert.match(html, /선택 가능한 챔피언만/);
   assert.match(html, /aria-label="주요 메뉴"/);
   assert.match(html, /aria-current="page"/);
+  const draftNav = bottomNavigation(html);
+  assert.match(draftNav.html, /<a href="\.\.\/draft\/" aria-current="page">/);
+  assert.deepEqual(draftNav.menu.map(([href]) => href), ["../draft/", "../team/", "../radar/", "../creator/", "../proof/"]);
   assert.match(html, /aria-haspopup="dialog"/);
   assert.match(html, /밴 확정/);
   assert.match(html, /BLUE TEAM/);
@@ -305,7 +339,7 @@ test("server-renders an actual-turn-order Draft Lab with a bounded agent", async
   assert.match(html, /안전안/);
   assert.match(html, /압박안/);
   assert.match(html, /실험안/);
-  assert.match(html, /AI 자동판단 잠금/);
+  assert.match(html, /자동 승률과 최종 추천을 표시하지 않습니다/);
   assert.match(html, /승률 예측이 아닌/);
   assert.doesNotMatch(html, /chatgpt|openai|gpt login|sign in/i);
 });
@@ -1631,7 +1665,7 @@ test("builds a canonical share link that restores the analysis workspace", async
     assert.equal(url.searchParams.get("opponent"), "t1");
     assert.equal(url.searchParams.get("view"), "full");
     assert.equal(url.searchParams.has("utm_source"), false);
-    assert.equal(url.hash, "#t1-brief");
+    assert.equal(url.hash, "#opponent-prep");
     assert.deepEqual(parseWorkspaceSearch(url.search), {
       teamId: "gen-g",
       opponentId: "t1",
@@ -1661,15 +1695,15 @@ test("maps direct paths and relative navigation across product spaces", async ()
     const { productSpaceFromPath, productSpaceHref } = await vite.ssrLoadModule("/app/product-space.ts");
     assert.equal(productSpaceFromPath("/pro-meta-intelligence/"), "ONBOARDING");
     assert.equal(productSpaceFromPath("/pro-meta-intelligence/team/"), "TEAM");
-    assert.equal(productSpaceFromPath("/pro-meta-intelligence/t1/index.html"), "T1");
+    assert.equal(productSpaceFromPath("/pro-meta-intelligence/t1/index.html"), "TEAM");
     assert.equal(productSpaceFromPath("/creator/"), "CREATOR");
     assert.equal(productSpaceFromPath("/radar"), "RADAR");
     assert.equal(productSpaceFromPath("/pro-meta-intelligence/draft/"), "DRAFT");
     assert.equal(productSpaceFromPath("/pro-meta-intelligence/proof/"), "PROOF");
     assert.equal(productSpaceHref("ONBOARDING", "TEAM"), "./team/");
     assert.equal(productSpaceHref("TEAM", "ONBOARDING"), "../");
-    assert.equal(productSpaceHref("CREATOR", "T1"), "../t1/");
-    assert.equal(productSpaceHref("DRAFT", "T1"), "../t1/");
+    assert.equal(productSpaceHref("CREATOR", "T1"), "../team/");
+    assert.equal(productSpaceHref("DRAFT", "T1"), "../team/");
     assert.equal(productSpaceHref("PROOF", "ONBOARDING"), "../");
   } finally {
     await vite.close();
@@ -1688,12 +1722,12 @@ test("routes plain-language home questions without sending them to AI", async ()
 
   try {
     const { homeSpaceForQuestion } = await vite.ssrLoadModule("/app/home-intent.ts");
-    assert.equal(homeSpaceForQuestion("T1 다음 상대 핵심만 보고 싶어"), "T1");
+    assert.equal(homeSpaceForQuestion("T1 다음 상대 핵심만 보고 싶어"), "TEAM");
     assert.equal(homeSpaceForQuestion("정글 조커픽과 챔피언 메타"), "RADAR");
     assert.equal(homeSpaceForQuestion("유튜브 영상 소재를 만들고 싶어"), "CREATOR");
     assert.equal(homeSpaceForQuestion("내 팀 상대 우선순위 분석"), "TEAM");
     assert.equal(homeSpaceForQuestion("가상 밴픽 시뮬레이션"), "DRAFT");
-    assert.equal(homeSpaceForQuestion(""), "T1");
+    assert.equal(homeSpaceForQuestion(""), "DRAFT");
   } finally {
     await vite.close();
   }
@@ -1778,7 +1812,7 @@ test("classifies publication freshness at explicit safety boundaries", async () 
   }
 });
 
-test("locks the exact T1 organization as the default opponent target", async () => {
+test("chooses deterministic neutral teams without favoring T1", async () => {
   const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
   const vite = await createServer({
     root: fileURLToPath(templateRoot),
@@ -1790,13 +1824,20 @@ test("locks the exact T1 organization as the default opponent target", async () 
   });
 
   try {
-    const { DEFAULT_TARGET_TEAM_NAME, findDefaultTargetTeam } = await vite.ssrLoadModule("/app/radar-dashboard.tsx");
-    const target = findDefaultTargetTeam(feed.opponent_prep.teams);
-    assert.equal(DEFAULT_TARGET_TEAM_NAME, "T1");
-    assert.ok(target);
-    assert.equal(target.team_name, "T1");
-    assert.equal(findDefaultTargetTeam(feed.opponent_prep.teams.slice().reverse()).team_id, target.team_id);
-    assert.equal(findDefaultTargetTeam([{ ...target, team_name: "T1 Academy", team_name_aliases: [] }]), undefined);
+    const { defaultDraftMatchup, defaultOpponentFor } = await vite.ssrLoadModule("/app/team-defaults.ts");
+    const teams = feed.opponent_prep.teams;
+    const first = defaultDraftMatchup(teams);
+    assert.ok(first.blue && first.red);
+    assert.notEqual(first.blue.team_id, first.red.team_id);
+    assert.deepEqual(defaultDraftMatchup(teams.slice().reverse()), first);
+    const base = teams[0];
+    const neutral = { ...base, team_id: "neutral", team_name: "Neutral", game_count: 100 };
+    const t1 = { ...base, team_id: "t1-test", team_name: "T1", game_count: 1 };
+    assert.equal(defaultDraftMatchup([t1, neutral]).blue.team_id, neutral.team_id);
+    assert.equal(defaultOpponentFor([neutral, t1], neutral).team_id, t1.team_id);
+    assert.equal(defaultDraftMatchup([t1]).blue.team_id, t1.team_id, "T1 remains a valid ordinary selection");
+    assert.equal(defaultDraftMatchup([t1]).red, null);
+    assert.deepEqual(defaultDraftMatchup([]), { blue: null, red: null });
   } finally {
     await vite.close();
   }
@@ -2085,8 +2126,15 @@ test("national journal refuses stale-tab writes and preserves storage after fail
 });
 
 test("national review renders sourced observations and manual verification without accuracy claims", async () => {
-  const response = await render("/draft");
-  const html = await response.text();
+  // The archive still validates its evidence, but it is no longer part of the evergreen studio.
+  const vite = await createServer({ root: fileURLToPath(templateRoot), configFile: false, publicDir: false,
+    server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  let html;
+  try {
+    const { NationalTeamPanel } = await vite.ssrLoadModule("/app/national-team-panel.tsx");
+    const { sampleReport } = await vite.ssrLoadModule("/app/sample-report.ts");
+    html = renderToStaticMarkup(createElement(NationalTeamPanel, { report: sampleReport, nameOf: id => id }));
+  } finally { await vite.close(); }
   assert.match(html, /국가대표 · 성향 관찰실/);
   assert.match(html, /소속팀에서 관찰된 선택/);
   assert.match(html, /대표팀 표본과 합산하지 않습니다/);

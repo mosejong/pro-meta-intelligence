@@ -54,7 +54,7 @@ test("builds direct-loadable onboarding and field pages", async () => {
   const pages = [
     ["index.html", "Pro Meta Intelligence · 공개 팀 분석 플랫폼"],
     ["team/index.html", "팀 분석 · Pro Meta Intelligence"],
-    ["t1/index.html", "T1 브리프 · Pro Meta Intelligence"],
+    ["t1/index.html", "팀 분석 · Pro Meta Intelligence"],
     ["creator/index.html", "Creator Studio · Pro Meta Intelligence"],
     ["radar/index.html", "Meta Radar · Pro Meta Intelligence"],
     ["draft/index.html", "Draft Lab · Pro Meta Intelligence"],
@@ -68,6 +68,13 @@ test("builds direct-loadable onboarding and field pages", async () => {
     assert.match(html, /\/pro-meta-intelligence\/assets\/main-[^"']+\.js/);
     assert.doesNotMatch(html, /chatgpt|openai|gpt login|sign in/i);
   }
+  // The static home opens the mock draft studio, so its share/search description says so.
+  const home = await readFile(new URL("index.html", root), "utf8");
+  const homeDescription = "양 팀을 골라 표준 5밴 5픽 모의 밴픽을 바로 진행하고, 선택한 챔피언의 공개 경기 표본과 상세 분석을 확인합니다.";
+  for (const name of ['name="description"', 'property="og:description"', 'name="twitter:description"']) {
+    assert.match(home, new RegExp(`<meta\\s+${name}\\s+content="${homeDescription}"`));
+  }
+  assert.doesNotMatch(home, /팀 결정, T1 브리프, 분석 콘텐츠와 메타 탐색으로 연결하는 플랫폼/);
 });
 
 test("copies the same-origin feed and social card", async () => {
@@ -159,7 +166,7 @@ test("copies the same-origin feed and social card", async () => {
   assert.ok(hero.byteLength > 1_000_000);
 });
 
-test("only the draft page downloads the bundled scouting packs", async () => {
+test("no current workspace downloads the retired team-specific scouting packs", async () => {
   const entryScript = async (page) => {
     const html = await readFile(new URL(page, root), "utf8");
     const src = html.match(/<script type="module"[^>]*src="\/pro-meta-intelligence\/(assets\/[^"]+\.js)"/)?.[1];
@@ -170,10 +177,10 @@ test("only the draft page downloads the bundled scouting packs", async () => {
   assert.equal(entries.size, 1);
   const [entry] = entries;
   const shared = await readFile(new URL(entry, root), "utf8");
-  // Scouting packs are ~2.6 MB of JSON; they must stay in the lazily loaded Draft Lab chunk.
+  // Archived team-specific packs remain in source/tests, not in the current application bundles.
   assert.doesNotMatch(shared, /draft-scout-pack/);
   const chunk = shared.match(/assets\/(draft-lab-[\w-]+\.js)/)?.[1];
   assert.ok(chunk, "the entry imports Draft Lab lazily");
-  assert.match(await readFile(new URL(`assets/${chunk}`, root), "utf8"), /draft-scout-pack/);
+  assert.doesNotMatch(await readFile(new URL(`assets/${chunk}`, root), "utf8"), /draft-scout-pack/);
   assert.ok(Buffer.byteLength(shared) < 1_000_000, `shared entry is ${Buffer.byteLength(shared)} bytes`);
 });

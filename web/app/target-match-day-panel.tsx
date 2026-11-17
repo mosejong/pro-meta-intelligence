@@ -13,10 +13,10 @@ const statusLabels: Record<TargetMatchDayBrief["readiness"]["status"], string> =
 };
 
 const relationshipLabels: Record<TargetMatchDayBrief["fixture"]["relationship"], string> = {
-  CONFIRMED_HEAD_TO_HEAD: "내 팀과 T1 직접 대진 확인",
-  TARGET_AS_OWN_TEAM: "T1 관점 다음 상대 확인",
-  TARGET_FIXTURE_OTHER_OPPONENT: "T1 일정 · 내 팀 직접 대진 아님",
-  PARTICIPANT_TBD: "T1 상대 TBD",
+  CONFIRMED_HEAD_TO_HEAD: "내 팀과 선택한 상대 직접 대진 확인",
+  TARGET_AS_OWN_TEAM: "선택한 팀 관점 다음 상대 확인",
+  TARGET_FIXTURE_OTHER_OPPONENT: "선택한 상대 일정 · 내 팀 직접 대진 아님",
+  PARTICIPANT_TBD: "선택한 상대의 상대 TBD",
   PERSPECTIVE_UNSET: "내 팀 선택 전",
   NO_UPCOMING_FIXTURE: "예정 경기 없음",
   SCHEDULE_UNAVAILABLE: "일정 미연결",
@@ -96,16 +96,16 @@ export function TargetMatchDayPanel({
   const confirmedMatchup = brief.confirmed_matchup;
   const participants = brief.fixture.participants.length
     ? brief.fixture.participants.map((participant) => participant.code || participant.name).join(" vs ")
-    : "T1 vs 미정";
-  return <section className="target-match-day" id="target-match-day" aria-label="T1 경기 당일 준비 브리프">
+    : `${brief.target.team_name} vs 미정`;
+  return <section className="target-match-day" id="target-match-day" aria-label={`${brief.target.team_name} 경기 당일 준비 브리프`}>
     <header className="target-match-day-head">
-      <div><span>T1 MATCH-DAY CONTROL · OFFICIAL SCHEDULE</span><h3>다음 T1 일정과 준비 상태</h3><p>상대가 미정이면 추정하지 않고, 확정되는 순간 같은 브리프가 자동으로 내 팀 대진 여부를 다시 판정합니다.</p></div>
+      <div><span>MATCH-DAY CONTROL · OFFICIAL SCHEDULE</span><h3>다음 {brief.target.team_name} 일정과 준비 상태</h3><p>상대가 미정이면 추정하지 않고, 확정되는 순간 같은 브리프가 자동으로 내 팀 대진 여부를 다시 판정합니다.</p></div>
       <div><b className={`match-day-status ${brief.readiness.status.toLowerCase()}`}>{statusLabels[brief.readiness.status]}</b><button type="button" onClick={onDownload}>MATCH-DAY JSON</button></div>
     </header>
 
     <div className={`target-change-strip ${brief.monitoring.status.toLowerCase()}`}>
       <b>{brief.monitoring.status === "CHANGE_DETECTED" ? "CHANGE DETECTED" : brief.monitoring.status === "WATCHING" ? "SCHEDULE WATCH ACTIVE" : "CHANGE LOG UNAVAILABLE"}</b>
-      <p>{brief.monitoring.latest_change ? `${brief.monitoring.latest_change.type} · ${brief.monitoring.latest_change.summary}` : "기준 스냅샷이 등록됐습니다. T1 상대·시간·Bo 형식 변경을 감시합니다."}</p>
+      <p>{brief.monitoring.latest_change ? `${brief.monitoring.latest_change.type} · ${brief.monitoring.latest_change.summary}` : "기준 스냅샷이 등록됐습니다. 상대·시간·Bo 형식 변경을 감시합니다."}</p>
       <span>{checkedTime(brief.monitoring.checked_at)} KST · 최근 실행 {brief.monitoring.latest_run_change_count}건 · 보관 {brief.monitoring.retained_change_count}건</span>
     </div>
 

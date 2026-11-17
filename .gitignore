@@ -24,3 +24,6 @@ web/public/feed/*
 !web/public/feed/schedule.json
 !web/public/feed/schedule-changes.json
 web/.site-public/
+web/test-results/
+web/test-results-*/
+web/playwright-report/

@@ -32,10 +32,10 @@ import { isHistoryStatus, isRadarReport, isScheduleChangeLog, isScheduleSnapshot
 import { PUBLICATION_FRESHNESS_POLICY, snapshotFreshness } from "./freshness";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
-import { ProductHome } from "./product-home";
 import { SubmissionProof } from "./submission-proof";
 import { TeamChooser } from "./team-chooser";
 import { AppNavigation } from "./app-navigation";
+import { LocaleProvider } from "./locale";
 import { PlayerPracticePanel } from "./player-practice-panel";
 import { productRootHref, productSpaceHref, type ProductSpace } from "./product-space";
 import { sampleReport } from "./sample-report";
@@ -45,16 +45,15 @@ import { buildTargetProfile, serializeTargetProfile } from "./target-profile";
 import { TargetProfilePanel } from "./target-profile-panel";
 import { buildTargetMatchDayBrief, serializeTargetMatchDayBrief } from "./target-match-day";
 import { TargetMatchDayPanel } from "./target-match-day-panel";
-import { T1OnePageBrief } from "./t1-one-page-brief";
+import { compareTeamsForDefault } from "./team-defaults";
 import { buildWorkspaceUrl, parseWorkspaceSearch, type WorkspaceViewMode } from "./workspace-link";
 import "./bright-theme.css";
 
-// Draft Lab carries the bundled scouting packs (~2.6 MB of JSON); load it only on the draft page.
+// The draft studio is the heaviest client module; load it only on the draft/home page.
 const DraftLab = lazy(() => import("./draft-lab").then((module) => ({ default: module.DraftLab })));
 
 const MY_TEAM_STORAGE_KEY = "pmi:my-team-id";
 const VIEW_MODE_STORAGE_KEY = "pmi:view-mode";
-export const DEFAULT_TARGET_TEAM_NAME = "T1";
 
 const flagLabels: Record<string, string> = {
   INSUFFICIENT_RECENT_MATCHES: "최근 경기 표본 부족",
@@ -122,21 +121,6 @@ type FeedState = {
 
 function keyOf(entry: RadarEntry) {
   return `${entry.champion_id}::${entry.role}`;
-}
-
-function normalizedTeamIdentity(value: string) {
-  return value.normalize("NFKD").toLocaleLowerCase("en-US").replace(/[^\p{L}\p{N}]/gu, "");
-}
-
-export function findDefaultTargetTeam(teams: OpponentTeam[]) {
-  const target = normalizedTeamIdentity(DEFAULT_TARGET_TEAM_NAME);
-  return teams
-    .filter((team) => [team.team_name, ...team.team_name_aliases].some((name) => normalizedTeamIdentity(name) === target))
-    .sort((left, right) => (
-      Number(normalizedTeamIdentity(right.team_name) === target) - Number(normalizedTeamIdentity(left.team_name) === target) ||
-      right.game_count - left.game_count ||
-      left.team_name.localeCompare(right.team_name)
-    ))[0];
 }
 
 function percent(value: number | null, digits = 0) {
@@ -272,7 +256,9 @@ function BattlecardSignalList({ items, emptyLabel }: { items: BattlecardSignal[]
   </article>)}</div>;
 }
 
-function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?: ProductSpace }) {
+type ActiveProductSpace = Exclude<ProductSpace, "T1">;
+
+function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?: ActiveProductSpace }) {
   const { matches: matchesChampion, nameOf } = useChampionNames();
   const [report, setReport] = useState<RadarReport>(sampleReport);
   const [selectedKey, setSelectedKey] = useState(keyOf(sampleReport.entries[0]));
@@ -297,7 +283,8 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   const [scheduleCheckedAt, setScheduleCheckedAt] = useState<string | null>(null);
   const [feedCheckedAt, setFeedCheckedAt] = useState<string | null>(null);
   const [scheduleState, setScheduleState] = useState<"connecting" | "connected" | "stale" | "unavailable">("connecting");
-  const [opponentId, setOpponentId] = useState(findDefaultTargetTeam(sampleReport.opponent_prep?.teams ?? [])?.team_id ?? sampleReport.opponent_prep?.teams[0]?.team_id ?? "");
+  // "" = no explicit choice: the neutral ranking below supplies the opponent (never the user's own team).
+  const [opponentId, setOpponentId] = useState("");
   const [feedState, setFeedState] = useState<FeedState>({
     kind: "connecting",
     label: "FEED CONNECTING",
@@ -329,11 +316,11 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   );
   const selectedMyTeam = teamContext?.my_team;
   const opponentPriorities = useMemo(() => teamContext?.opponent_priorities ?? [], [teamContext]);
+  // With a selected own team: score-ranked opponents (own team excluded). Without one: a
+  // deterministic, team-neutral order (largest public sample first). No team is pinned.
   const rankedOpponentTeams = useMemo(() => teamContext
     ? opponentPriorities.map((priority) => priority.team)
-    : opponentTeams, [opponentPriorities, opponentTeams, teamContext]);
-  const defaultTargetTeam = useMemo(() => findDefaultTargetTeam(opponentTeams), [opponentTeams]);
-  const defaultOpponentTarget = useMemo(() => findDefaultTargetTeam(rankedOpponentTeams), [rankedOpponentTeams]);
+    : opponentTeams.slice().sort(compareTeamsForDefault), [opponentPriorities, opponentTeams, teamContext]);
   const displayedEntries = visibleEntries.slice(0, visibleLimit);
   const selected = visibleEntries.find((entry) => keyOf(entry) === selectedKey) ?? visibleEntries[0] ?? report.entries[0];
   const selectedBrief = teamBrief.find((card) => keyOf(card.entry) === selectedKey) ?? teamBrief[0];
@@ -343,49 +330,39 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
     () => reconcileDecisionOutcome(selectedDecisionJournalEntry, decisionOutcomes),
     [decisionOutcomes, selectedDecisionJournalEntry],
   );
-  const selectedOpponent = rankedOpponentTeams.find((team) => team.team_id === opponentId) ?? defaultOpponentTarget ?? rankedOpponentTeams[0];
+  const selectedOpponent = rankedOpponentTeams.find((team) => team.team_id === opponentId) ?? rankedOpponentTeams[0];
   const selectedPriority = opponentPriorities.find((priority) => priority.team.team_id === selectedOpponent?.team_id);
-  const defaultTargetPriority = opponentPriorities.find((priority) => priority.team.team_id === defaultOpponentTarget?.team_id);
-  const priorityQueueItems = useMemo(() => [defaultTargetPriority, selectedPriority, ...opponentPriorities]
+  // Score order only; the user's explicitly selected opponent is kept visible, nothing else is pinned.
+  const priorityQueueItems = useMemo(() => [selectedPriority, ...opponentPriorities]
     .flatMap((priority) => priority ? [priority] : [])
     .filter((priority, index, items) => items.findIndex((item) => item.team.team_id === priority.team.team_id) === index)
-    .slice(0, 4), [defaultTargetPriority, opponentPriorities, selectedPriority]);
-  const isDefaultTargetSelected = Boolean(selectedOpponent && defaultTargetTeam && selectedOpponent.team_id === defaultTargetTeam.team_id);
-  const isOwnTeamDefaultTarget = Boolean(selectedMyTeam && defaultTargetTeam && selectedMyTeam.team_id === defaultTargetTeam.team_id);
+    .slice(0, 4), [opponentPriorities, selectedPriority]);
   const emergencyBrief = selectedOpponent ? buildEmergencyBrief(report, selectedOpponent, selectedMyTeam, effectiveSchedule, scheduleCheckedAt) : null;
   const matchupBattlecard = useMemo(() => (
     selectedMyTeam && selectedOpponent && selectedMyTeam.team_id !== selectedOpponent.team_id
       ? buildMatchupBattlecard(report, selectedMyTeam, selectedOpponent, selectedPriority)
       : null
   ), [report, selectedMyTeam, selectedOpponent, selectedPriority]);
-  const defaultTargetBattlecard = useMemo(() => (
-    selectedMyTeam && defaultTargetTeam && selectedMyTeam.team_id !== defaultTargetTeam.team_id
-      ? buildMatchupBattlecard(report, selectedMyTeam, defaultTargetTeam, defaultTargetPriority)
-      : null
-  ), [defaultTargetPriority, defaultTargetTeam, report, selectedMyTeam]);
+  // Profile and match-day brief follow the SELECTED opponent (and own team), not a hidden pinned team.
   const targetProfile = useMemo(() => (
-    selectedOpponent && isDefaultTargetSelected
+    selectedOpponent
       ? buildTargetProfile(report, selectedOpponent, matchupBattlecard)
       : null
-  ), [isDefaultTargetSelected, matchupBattlecard, report, selectedOpponent]);
-  const pinnedTargetProfile = useMemo(() => (
-    defaultTargetTeam
-      ? buildTargetProfile(report, defaultTargetTeam, defaultTargetBattlecard)
-      : null
-  ), [defaultTargetBattlecard, defaultTargetTeam, report]);
+  ), [matchupBattlecard, report, selectedOpponent]);
   const targetMatchDayBrief = useMemo(() => (
-    defaultTargetTeam
+    selectedOpponent
       ? buildTargetMatchDayBrief(
         report,
-        defaultTargetTeam,
-        pinnedTargetProfile,
+        selectedOpponent,
+        targetProfile,
         effectiveSchedule,
         scheduleCheckedAt,
         selectedMyTeam,
         scheduleChanges,
       )
       : null
-  ), [defaultTargetTeam, effectiveSchedule, pinnedTargetProfile, report, scheduleChanges, scheduleCheckedAt, selectedMyTeam]);
+  ), [selectedOpponent, effectiveSchedule, targetProfile, report, scheduleChanges, scheduleCheckedAt, selectedMyTeam]);
+  const targetName = selectedOpponent?.team_name ?? "상대 팀";
   const nextOwnEvent = teamContext?.own_upcoming_events[0];
   const quality = qualityState(report);
   const eligibleCount = report.entries.filter((entry) => entry.eligible_for_review).length;
@@ -395,9 +372,9 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
     ? "공식 일정 연결 중"
     : targetMatchDayBrief?.fixture.event_id
       ? fixtureIsTbd
-        ? "T1 상대 확정 대기"
-        : `${fixtureParticipant?.name ?? "상대"} vs T1`
-      : "다음 T1 일정 대기";
+        ? `${targetName} 상대 확정 대기`
+        : `${fixtureParticipant?.name ?? "상대"} vs ${targetName}`
+      : `다음 ${targetName} 일정 대기`;
   const quickFixtureDetail = targetMatchDayBrief?.fixture.start_at
     ? `${formatScheduleTime(targetMatchDayBrief.fixture.start_at)} KST · ${targetMatchDayBrief.fixture.league ?? "리그 미정"} ${targetMatchDayBrief.fixture.block ?? ""} · ${targetMatchDayBrief.fixture.best_of ? `Bo${targetMatchDayBrief.fixture.best_of}` : "형식 미정"}`
     : "공식 일정이 들어오면 상대와 준비 상태를 자동 연결합니다.";
@@ -520,7 +497,10 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         setMyTeamId(sharedTeam?.team_id ?? "");
       }
       const sharedOpponent = publishedTeams.find((team) => team.team_id === requestedOpponentId.current);
-      setOpponentId(sharedOpponent?.team_id ?? findDefaultTargetTeam(publishedTeams)?.team_id ?? publishedTeams[0]?.team_id ?? "");
+      // Keep a still-valid explicit choice; otherwise the shared link's opponent, else "" (neutral ranking default).
+      setOpponentId((current) => publishedTeams.some((team) => team.team_id === current)
+        ? current
+        : sharedOpponent?.team_id ?? "");
       const publishedFreshness = snapshotFreshness(
         publishedReport.cutoff,
         checkedAt,
@@ -651,7 +631,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
       setCollectionStatus(null);
       requestedTeamId.current = "";
       requestedOpponentId.current = "";
-      setOpponentId(findDefaultTargetTeam(parsed.opponent_prep?.teams ?? [])?.team_id ?? parsed.opponent_prep?.teams[0]?.team_id ?? "");
+      setOpponentId("");
       manualOverride.current = true;
       setFeedCheckedAt(new Date().toISOString());
       setFeedState({ kind: "uploaded", label: "LOCAL FILE", detail: file.name.toUpperCase() });
@@ -684,10 +664,10 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
 
   async function copyAnalysisLink() {
     if (!selectedMyTeam) return;
-    const t1WorkspaceUrl = new URL(productSpaceHref(initialSpace, "T1"), window.location.href).toString();
-    const shareUrl = buildWorkspaceUrl(t1WorkspaceUrl, {
+    const teamWorkspaceUrl = new URL(productSpaceHref(initialSpace, "TEAM"), window.location.href).toString();
+    const shareUrl = buildWorkspaceUrl(teamWorkspaceUrl, {
       teamId: selectedMyTeam.team_id,
-      opponentId: selectedOpponent?.team_id ?? defaultTargetTeam?.team_id ?? null,
+      opponentId: selectedOpponent?.team_id ?? null,
       viewMode,
     });
     try {
@@ -799,7 +779,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `t1-target-profile-${report.patch_id}.json`;
+    anchor.download = `target-profile-${targetProfile.target.team_name.replace(/[^A-Za-z0-9가-힣_-]+/g, "-")}-${report.patch_id}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -810,7 +790,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `t1-match-day-${report.patch_id}.json`;
+    anchor.download = `match-day-${targetName.replace(/[^A-Za-z0-9가-힣_-]+/g, "-")}-${report.patch_id}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   }
@@ -821,56 +801,16 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
     window.setTimeout(() => document.body.classList.remove("print-emergency"), 0);
   }
 
-  function printT1OnePageBrief() {
-    document.body.classList.add("print-t1-one-page");
-    window.print();
-    window.setTimeout(() => document.body.classList.remove("print-t1-one-page"), 0);
-  }
-
   const regions = selected ? [
     { region: "GLOBAL", pick_presence: selected.metrics.current_pick_presence, sample_eligible: true },
     ...selected.region_presence,
   ] : [];
 
-  const t1Focus = defaultTargetTeam?.priority_picks[0] ?? null;
-  const metaFocus = report.entries.find((entry) => entry.eligible_for_review) ?? null;
   const isHistoricalPublication = feedState.kind === "published" && snapshotFreshness(
     report.cutoff,
     feedCheckedAt,
     PUBLICATION_FRESHNESS_POLICY,
   ).level === "STALE";
-
-  if (initialSpace === "ONBOARDING") {
-    return <ProductHome
-      currentSpace={initialSpace}
-      patchId={report.patch_id}
-      teamCount={opponentTeams.length}
-      reviewCount={eligibleCount}
-      fixtureTitle={quickFixtureTitle}
-      fixtureDetail={quickFixtureDetail}
-      feedLabel={feedState.label}
-      aiValidation={aiValidation}
-      feedKind={feedState.kind}
-      dataCutoff={report.cutoff}
-      checkedAt={feedCheckedAt}
-      scheduleRetrievedAt={schedule?.retrieved_at ?? null}
-      scheduleState={scheduleState}
-      scheduleSourceUrl={schedule?.source_url ?? null}
-      collectionStatus={collectionStatus}
-      t1Focus={t1Focus ? {
-        championId: t1Focus.champion_id,
-        role: t1Focus.role ?? null,
-        gameCount: t1Focus.game_count,
-        gameRate: t1Focus.game_rate,
-      } : null}
-      metaFocus={metaFocus ? {
-        championId: metaFocus.champion_id,
-        role: metaFocus.role,
-        teamCount: metaFocus.metrics.current_distinct_team_count,
-        pickPresenceDelta: metaFocus.metrics.pick_presence_delta,
-      } : null}
-    />;
-  }
 
   if (initialSpace === "PROOF") {
     return <SubmissionProof
@@ -882,7 +822,8 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
     />;
   }
 
-  if (initialSpace === "DRAFT") {
+  // The home page is the mock draft studio itself; /draft/ keeps the same studio for existing links.
+  if (initialSpace === "ONBOARDING" || initialSpace === "DRAFT") {
     return <Suspense fallback={<main className="draft-lab-loading" role="status">밴픽 작업실을 불러오는 중입니다…</main>}>
       <DraftLab currentSpace={initialSpace} report={report} feedLabel={feedState.label} />
     </Suspense>;
@@ -890,7 +831,6 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
 
   const sectionCopy = {
     TEAM: { index: "01", eyebrow: "TEAM ROOM", title: "내 팀 기준으로 결정하세요.", detail: "오늘 검토 후보, 상대 우선순위와 드래프트 충돌을 한 작업실에서 봅니다.", action: "내 팀 선택", target: "#team-setup" },
-    T1: { index: "02", eyebrow: "T1 DESK", title: "T1 준비 자료만 모았습니다.", detail: "공식 일정과 공개 픽·밴, 상대 확정 시 5라인 충돌까지 추정 없이 연결합니다.", action: "원페이지 열기", target: "#t1-brief" },
     CREATOR: { index: "03", eyebrow: "CREATOR STUDIO", title: "근거를 콘텐츠 장면으로.", detail: "같은 검증 데이터를 유튜브·쇼츠 카드와 편집 JSON으로 변환합니다.", action: "장면 만들기", target: "#creator-export" },
     RADAR: { index: "04", eyebrow: "META RADAR", title: "전체 신호와 경계를 탐색하세요.", detail: "지역 차이, 수요 변화, 표본 경고와 원본 이벤트를 분석가 관점으로 확인합니다.", action: "신호 탐색", target: "#radar" },
   }[initialSpace];
@@ -902,21 +842,10 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         : "먼저 내 팀을 선택하세요.",
       reason: selectedMyTeam
         ? "같은 상대라도 우리 팀의 공개 픽과 겹치는 지점부터 봐야 실제 준비 순서가 달라집니다."
-        : "내 팀이 정해져야 T1 고정 시점이 아닌 우리 팀 관점의 상대 우선순위와 드래프트 충돌을 계산할 수 있습니다.",
+        : "내 팀이 정해져야 우리 팀 관점의 상대 우선순위와 드래프트 충돌을 계산할 수 있습니다.",
       evidence: `패치 ${report.patch_id} · 공개 팀 ${opponentTeams.length}개 · 검토 후보 ${eligibleCount}개`,
       action: selectedMyTeam ? "상대 우선순위 보기" : "내 팀 고르기",
       target: selectedMyTeam ? "#opponent-prep" : "#team-setup",
-    },
-    T1: {
-      conclusion: quickFixtureTitle,
-      reason: fixtureIsTbd
-        ? "상대가 확정되기 전에는 라인별 맞대결을 만들지 않고, T1의 반복 픽과 공통 준비만 확인합니다."
-        : "공식 일정과 공개 픽·밴을 먼저 확인하면 추측 없이 다음 경기 준비 범위를 좁힐 수 있습니다.",
-      evidence: defaultTargetTeam
-        ? `T1 공개 경기 ${defaultTargetTeam.game_count}개 · 근거 기록 ${defaultTargetTeam.evidence.draft_event_ids.length}개`
-        : "T1 공개 경기 표본을 확인하는 중입니다.",
-      action: "T1 한 장 요약 보기",
-      target: "#t1-brief",
     },
     CREATOR: {
       conclusion: todayDecisions[0]
@@ -958,7 +887,6 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         </a>
         <nav aria-label="주요 메뉴">
           <a className={initialSpace === "TEAM" ? "active" : ""} href={productSpaceHref(initialSpace, "TEAM")}>팀 분석</a>
-          <a className={initialSpace === "T1" ? "active" : ""} href={productSpaceHref(initialSpace, "T1")}>T1 브리프</a>
           <a className={initialSpace === "CREATOR" ? "active" : ""} href={productSpaceHref(initialSpace, "CREATOR")}>콘텐츠</a>
           <a className={initialSpace === "RADAR" ? "active" : ""} href={productSpaceHref(initialSpace, "RADAR")}>메타 레이더</a>
           <a href={productSpaceHref(initialSpace, "DRAFT")}>Draft Lab</a>
@@ -1026,8 +954,8 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
           <h2 className="decision-hero-title">{isHistoricalPublication ? <>마지막 발행본<br /><em>검토 전용.</em></> : <>오늘 팀이<br /><em>결정할 3가지.</em></>}</h2>
           <p className="lede">{isHistoricalPublication ? "현재 의사결정용 데이터가 아닙니다. 당시 공개 경기 근거와 분석 구조를 확인할 때만 사용하세요." : "티어표가 아니라 회의 시작점입니다. 지금 테스트할 후보, 더 지켜볼 후보, 보류할 근거를 공개 경기 데이터로 압축했습니다."}</p>
           <div className="decision-hero-actions">
-            <a href="#t1-brief">원페이지 브리프</a>
-            <a href="#opponent-prep">T1 분석 바로가기</a>
+            <a href="#team-setup">두 팀 선택</a>
+            <a href="#opponent-prep">상대 분석 바로가기</a>
           </div>
           <div className="hero-points" aria-label="분석 기준">
             <span>최근 {report.windows.recent.days}일 vs 이전 {report.windows.prior.days}일</span>
@@ -1055,16 +983,16 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
           <b>{viewMode === "QUICK" ? "핵심만 표시 중" : "전체 근거 표시 중"}</b>
         </header>
         <div className="quick-start-grid">
-          <a className="match" href="#t1-brief">
-            <span><b>01</b>T1 다음 경기</span>
+          <a className="match" href="#target-match-day">
+            <span><b>01</b>선택한 상대 다음 경기</span>
             <strong>{quickFixtureTitle}</strong>
             <p>{quickFixtureDetail}</p>
             <small>일정·상대·라인 준비 보기 <b>→</b></small>
           </a>
           <a className="versus" href="#team-setup">
-            <span><b>02</b>내 팀 vs T1</span>
+            <span><b>02</b>내 팀 vs 선택한 상대</span>
             <strong>{selectedMyTeam ? `${selectedMyTeam.team_name} 기준 준비됨` : "내 팀을 한 번만 선택"}</strong>
-            <p>{selectedMyTeam ? "상대 우선순위와 드래프트 충돌을 내 팀 관점으로 계산했습니다." : `${opponentTeams.length}개 공개 팀 중 하나를 고르면 T1 상대 준비 자료가 즉시 열립니다.`}</p>
+            <p>{selectedMyTeam ? "상대 우선순위와 드래프트 충돌을 내 팀 관점으로 계산했습니다." : `${opponentTeams.length}개 공개 팀 중 내 팀과 상대를 고르면 준비 자료가 열립니다.`}</p>
             <small>{selectedMyTeam ? "상대 준비실로 이동" : "분석 기준 설정"} <b>→</b></small>
           </a>
           <a className="creator" href="#creator-export">
@@ -1087,18 +1015,11 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
 
       <nav className="decision-flow" aria-label="팀 분석 진행 단계">
         <a className={selectedMyTeam ? "complete" : "active"} href="#team-setup"><b>1</b><span><small>내 팀</small><strong>{selectedMyTeam?.team_name ?? "선택 필요"}</strong></span></a>
-        <a className={selectedMyTeam ? "complete" : "locked"} href="#opponent-prep"><b>2</b><span><small>준비할 상대</small><strong>{selectedMyTeam ? `${selectedOpponent?.team_name ?? "순위 계산 중"}${isDefaultTargetSelected ? " · 기본 타깃" : ""}` : `${DEFAULT_TARGET_TEAM_NAME} 기본 타깃`}</strong></span></a>
+        <a className={selectedMyTeam ? "complete" : "locked"} href="#opponent-prep"><b>2</b><span><small>준비할 상대</small><strong>{selectedMyTeam ? selectedOpponent?.team_name ?? "순위 계산 중" : "내 팀 선택 후 계산"}</strong></span></a>
         <a className={matchupBattlecard ? "ready" : "locked"} href="#draft-battlecard"><b>3</b><span><small>드래프트 배틀카드</small><strong>{matchupBattlecard ? "확인 준비 완료" : "상대 선택 후 생성"}</strong></span></a>
       </nav>
 
       {initialSpace === "TEAM" && <PlayerPracticePanel key={selectedMyTeam?.team_id ?? "no-team"} ownTeam={selectedMyTeam} opponent={selectedOpponent} reviewCandidates={teamBrief.map((card) => card.entry)} aiValidation={aiValidation} />}
-
-      {targetMatchDayBrief && pinnedTargetProfile && <T1OnePageBrief
-        brief={targetMatchDayBrief}
-        profile={pinnedTargetProfile}
-        onPrint={printT1OnePageBrief}
-        onDownload={downloadTargetMatchDayBrief}
-      />}
 
       {quality.publication && quality.importQuality && <section className={`audit-notice ${quality.publication.ready_for_radar ? "ready" : "blocked"}`} aria-label="발행 데이터 품질 감사" role="status">
         <div><span>발행 데이터 감사</span><strong>전체 {quality.importQuality.discovered_game_count}경기 중 {quality.importQuality.imported_game_count}경기 사용</strong></div>
@@ -1209,9 +1130,9 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
       <section className="opponent-prep" id="opponent-prep">
         <div className="section-heading opponent-heading">
           <div>
-            <p className="eyebrow">02 · {defaultTargetTeam ? `${DEFAULT_TARGET_TEAM_NAME} TARGET DESK` : "MY TEAM → OPPONENT PRIORITY"}</p>
-            <h2>{defaultTargetTeam ? isOwnTeamDefaultTarget ? "T1 시점 상대 준비실" : "T1 공략 준비실" : "내 팀 기준 상대 준비 순서"}</h2>
-            <p className="section-description">{defaultTargetTeam ? "T1을 기본 분석 상대로 고정하고, 내 팀 공개 픽과 T1의 픽·밴·글로벌 메타 교집합을 먼저 봅니다. 다른 상대를 선택해도 점수 기반 순위는 유지됩니다." : "공식 대진 일정, 동일 리그, 양 팀의 픽 충돌, 현재 메타와의 겹침, 공개 경기 표본을 합쳐 먼저 볼 상대를 정합니다."}</p>
+            <p className="eyebrow">02 · MY TEAM → OPPONENT PRIORITY</p>
+            <h2>내 팀 기준 상대 준비 순서</h2>
+            <p className="section-description">공식 대진 일정, 동일 리그, 양 팀의 픽 충돌, 현재 메타와의 겹침, 공개 경기 표본을 합쳐 먼저 볼 상대를 정합니다.</p>
           </div>
           {selectedOpponent && <div className="opponent-controls">
             <TeamChooser label="준비할 상대 선택" teams={rankedOpponentTeams} value={selectedOpponent.team_id} onChange={selectOpponent} />
@@ -1229,20 +1150,19 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
             <p className="team-data-boundary">공개 경기 성향만 사용 · 선수 숙련도와 스크림 미포함</p>
           </article>
           <div className="priority-queue">
-            <header><div><span>{defaultOpponentTarget ? "T1 TARGET + OPPONENT PRIORITY" : "OPPONENT PRIORITY QUEUE"}</span><h3>{defaultOpponentTarget ? "고정 타깃과 우선 상대" : "먼저 준비할 상대"}</h3></div><b>{defaultOpponentTarget ? "T1 + 상위 3팀" : "상위 4팀"}</b></header>
+            <header><div><span>OPPONENT PRIORITY QUEUE</span><h3>먼저 준비할 상대</h3></div><b>상위 4팀</b></header>
             <div>{priorityQueueItems.map((priority, index) => {
               const topPick = priority.team.priority_picks[0];
               const active = priority.team.team_id === selectedOpponent?.team_id;
-              const targetLocked = priority.team.team_id === defaultOpponentTarget?.team_id;
-              return <button type="button" className={`${active ? "active" : ""} ${priority.next_meeting ? "scheduled" : ""} ${targetLocked ? "target-locked" : ""}`} key={priority.team.team_id} onClick={() => selectOpponent(priority.team.team_id)} aria-pressed={active}>
+              return <button type="button" className={`${active ? "active" : ""} ${priority.next_meeting ? "scheduled" : ""}`} key={priority.team.team_id} onClick={() => selectOpponent(priority.team.team_id)} aria-pressed={active}>
                 <span className={`priority-tier ${priority.tier.toLowerCase()}`}>{priority.tier}</span>
-                <span className="priority-order">{targetLocked ? "TGT" : String(index + 1).padStart(2, "0")}</span>
+                <span className="priority-order">{String(index + 1).padStart(2, "0")}</span>
                 {topPick ? <img src={championImageUrl(topPick.champion_id)} alt="" /> : <span className="priority-placeholder" />}
                 <span className="priority-team"><strong>{priority.team.team_name}</strong><small>{priority.reasons.join(" · ")}</small></span>
                 <span className="priority-score"><strong>{priority.score}</strong><small>/ 100</small></span>
               </button>;
             })}</div>
-            <footer><b>타깃·점수</b><span>{defaultOpponentTarget ? "T1은 제품 기본 타깃으로 맨 앞에 표시하되 점수는 변경하지 않음 · " : ""}확정 대진은 경기 시간순 선배치 · 공식 대진 최대 30 · 동일 리그 30 · 상승 메타 최대 24 · 픽 충돌 최대 18 · 표본 최대 18 · 품질 경고 감점</span></footer>
+            <footer><b>점수</b><span>선택한 상대를 맨 앞에 표시하되 점수는 변경하지 않음 · 확정 대진은 경기 시간순 선배치 · 공식 대진 최대 30 · 동일 리그 30 · 상승 메타 최대 24 · 픽 충돌 최대 18 · 표본 최대 18 · 품질 경고 감점</span></footer>
           </div>
         </div> : <div className="team-priority-setup">
           <span>STEP 01</span><h3>내 팀을 선택하면 상대 우선순위가 열립니다.</h3><p>현재 발행본의 {opponentTeams.length}개 팀 중 소속 팀을 고르면, 자기 팀을 제외한 상대만 공개 근거로 다시 정렬합니다.</p><a href="#top">위에서 내 팀 선택 ↑</a>
@@ -1255,7 +1175,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
         {matchupBattlecard ? <section className="draft-battlecard" id="draft-battlecard" aria-label={`${matchupBattlecard.own_team.team_name} 대 ${matchupBattlecard.opponent.team_name} 드래프트 배틀카드`}>
           <header className="battlecard-head">
             <div>
-              <span>DRAFT BATTLECARD · {isDefaultTargetSelected ? "T1 TARGET" : "PUBLIC EVIDENCE"}</span>
+              <span>DRAFT BATTLECARD · PUBLIC EVIDENCE</span>
               <h3>{matchupBattlecard.own_team.team_name} <em>vs</em> {matchupBattlecard.opponent.team_name}</h3>
               <p>픽·밴을 자동 추천하지 않고, 회의 전에 합의할 보호·충돌·견제·교환 질문만 압축합니다.</p>
             </div>
@@ -1399,7 +1319,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
           <article><b>04</b><h3>근거와 경고</h3><p>모든 후보에서 원본 이벤트와 표본 부족 여부를 함께 확인합니다.</p></article>
         </div>
       </section>
-      <footer className="site-footer"><span>{initialSpace === "TEAM" ? "PUBLIC TEAM EVIDENCE" : initialSpace === "T1" ? "TBD NEVER INFERRED" : initialSpace === "CREATOR" ? "HUMAN REVIEW REQUIRED" : "종합 점수 없음"}</span><p>{initialSpace === "TEAM" ? "공개 경기로 준비 순서를 만들되 스크림과 내부 계획은 추정하지 않습니다." : initialSpace === "T1" ? "확정된 일정·팀 ID와 공개 경기만 연결합니다." : initialSpace === "CREATOR" ? "생성된 장면은 발행 승인이 아니라 편집 시작점입니다." : "팀 수요 속도 → 픽 점유율 변화 → 지역 편차 순서로 읽습니다."}</p><b>SCHEMA v{report.schema_version}</b></footer>
+      <footer className="site-footer"><span>{initialSpace === "TEAM" ? "PUBLIC TEAM EVIDENCE" : initialSpace === "CREATOR" ? "HUMAN REVIEW REQUIRED" : "종합 점수 없음"}</span><p>{initialSpace === "TEAM" ? "공개 경기로 준비 순서를 만들되 스크림과 내부 계획은 추정하지 않습니다." : initialSpace === "CREATOR" ? "생성된 장면은 발행 승인이 아니라 편집 시작점입니다." : "팀 수요 속도 → 픽 점유율 변화 → 지역 편차 순서로 읽습니다."}</p><b>SCHEMA v{report.schema_version}</b></footer>
       <section className="legal-notice" aria-label="Riot Games 비제휴 고지">
         캐릭터 이미지는 Riot Games Data Dragon을 통해 제공됩니다. Pro Meta Intelligence isn&apos;t endorsed by Riot Games and doesn&apos;t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
       </section>
@@ -1481,6 +1401,14 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   );
 }
 
+/** The retired T1 space is served by the team-neutral team analysis workspace. */
+export function normalizeProductSpace(space: ProductSpace): ActiveProductSpace {
+  return space === "T1" ? "TEAM" : space;
+}
+
 export function RadarDashboard({ initialSpace = "ONBOARDING" }: { initialSpace?: ProductSpace }) {
-  return <ChampionNameProvider><RadarDashboardContent initialSpace={initialSpace} /><AppNavigation currentSpace={initialSpace} /></ChampionNameProvider>;
+  const space = normalizeProductSpace(initialSpace);
+  // LocaleProvider only changes context values; the child tree shape is fixed, so switching
+  // language re-renders consumers without remounting the draft session.
+  return <LocaleProvider><ChampionNameProvider><RadarDashboardContent initialSpace={space} /><AppNavigation currentSpace={space} /></ChampionNameProvider></LocaleProvider>;
 }
