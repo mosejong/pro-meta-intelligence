@@ -1,4 +1,5 @@
 import { championAssetId } from "./champion-assets";
+import { championKey as roleChampionKey, validateRoles, type TeamRoles } from "./champion-roles";
 import { applyDraftSelection, completeFearlessGame, DRAFT_MODEL_VERSION, fearlessLocks, type DraftGame, type DraftSelection, type DraftSide } from "./draft-agent";
 import { MAX_DRAFT_FILE_BYTES } from "./draft-session";
 import { isRadarReport, type OpponentTeam, type RadarReport } from "./radar-types";
@@ -11,6 +12,7 @@ import {
   type RosterCapture,
   type RosterComparison,
 } from "./roster-comparison";
+import { basisKey, ROSTER_ROLES, type RosterRole } from "./roster-scenario";
 
 export type DraftComparisonInput = {
   report: RadarReport;
@@ -24,6 +26,11 @@ export type DraftComparisonInput = {
    * "not recorded" (legacy v1 files); it is never filled from default observations here.
    */
   roster?: { basis: unknown; rosters: unknown } | null;
+  /**
+   * Explicit user-assigned champion roles keyed by team ID (from a ready simulation input or a v3
+   * file). Omitted/null means "not recorded"; roles are never inferred from pick order here.
+   */
+  roles?: unknown;
 };
 
 /** Comparison key only. Display keeps the Data Dragon asset id so nameOf() resolves it. */
@@ -44,6 +51,8 @@ export type DraftComparisonSnapshot = {
   locks: string[];
   /** Detached roster at capture time; null when the source did not record one. */
   roster: RosterCapture | null;
+  /** Detached, validated team → role → champion at capture time; null when not recorded. */
+  roles: TeamRoles | null;
 };
 export type DraftSnapshotResult = { ok: true; snapshot: DraftComparisonSnapshot } | { ok: false; message: string };
 
@@ -84,7 +93,7 @@ function detachSelection(selection: DraftSelection): DraftSelection {
 
 /** Capture detached values only. No report, team, game, or selection references escape. */
 export function buildDraftComparisonSnapshot(input: DraftComparisonInput): DraftSnapshotResult {
-  const { report, blueTeam, redTeam, selections, games, firstPickSide, roster } = input;
+  const { report, blueTeam, redTeam, selections, games, firstPickSide, roster, roles } = input;
   if (!blueTeam?.team_id.trim() || !redTeam?.team_id.trim() || blueTeam.team_id === redTeam.team_id) {
     return { ok: false, message: "서로 다른 블루·레드 팀을 선택하세요." };
   }
@@ -125,19 +134,66 @@ export function buildDraftComparisonSnapshot(input: DraftComparisonInput): Draft
     if (!captured.ok) return { ok: false, message: `가상 로스터: ${captured.message}` };
     rosterCapture = captured.capture;
   }
+  const teams = { BLUE: { id: blue.team_id, name: blue.team_name }, RED: { id: red.team_id, name: red.team_name } };
+  let roleCapture: TeamRoles | null = null;
+  if (roles !== undefined && roles !== null) {
+    // Validated against this set's actual picks per team ID; a fresh copy, never the caller's object.
+    const validated = validateRoles(roles, { teams, selections: replay });
+    if (!validated.ok) return { ok: false, message: `역할 배정: ${validated.issues.map((issue) => issue.message).join(" ")}` };
+    roleCapture = validated.roles;
+  }
   const lockIds = new Map<string, string>();
   for (const id of locks) if (!lockIds.has(keyOf(id))) lockIds.set(keyOf(id), championAssetId(id));
   return { ok: true, snapshot: {
     evidenceIdentity: evidenceIdentityOf(report),
     model: DRAFT_MODEL_VERSION,
     patch: report.patch_id, cutoff: report.cutoff,
-    teams: { BLUE: { id: blue.team_id, name: blue.team_name }, RED: { id: red.team_id, name: red.team_name } },
+    teams,
     firstPickSide,
     games: history.map((game) => ({ blue_team_id: game.blue_team_id, red_team_id: game.red_team_id, selections: game.selections.map(detachSelection) })),
     selections: replay.map(detachSelection),
     locks: [...lockIds.entries()].sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0)).map(([, id]) => id),
     roster: rosterCapture,
+    roles: roleCapture,
   } };
+}
+
+/**
+ * Canonical identity of a snapshot's draft and roster only (teams by side, first selection,
+ * previous games, selections, roster basis and player IDs) — not roles, not the large evidence
+ * fingerprint. A ready simulation input attaches its roles to an A/B snapshot only when this key
+ * and the evidence identity match, so an input from an earlier render never lands on a new B.
+ */
+export function draftRosterKey(snapshot: Pick<DraftComparisonSnapshot, "model" | "patch" | "cutoff" | "teams" | "firstPickSide" | "games" | "selections" | "roster">) {
+  const roster = snapshot.roster;
+  return JSON.stringify({
+    model: snapshot.model, patch: snapshot.patch, cutoff: snapshot.cutoff,
+    blue: snapshot.teams.BLUE.id, red: snapshot.teams.RED.id, first: snapshot.firstPickSide,
+    games: snapshot.games.map((game) => [game.blue_team_id, game.red_team_id, game.selections.map((item) => [item.side, item.kind, item.slot, keyOf(item.champion_id)])]),
+    selections: snapshot.selections.map((item) => [item.side, item.kind, item.slot, keyOf(item.champion_id)]),
+    roster: roster ? [basisKey(roster.basis), roster.team_ids.map((id) => ROSTER_ROLES.map((role) => {
+      const slot = roster.teams[id]?.[role];
+      return slot ? [slot.source_team_id, slot.player_id] : null;
+    }))] : null,
+  });
+}
+
+export type RoleSlotChange = { team_id: string; role: RosterRole; a: string; b: string };
+export type RoleComparison =
+  | { status: "NOT_RECORDED"; missing: Array<"A" | "B"> }
+  | { status: "PAIR_CHANGED" }
+  | { status: "COMPARED"; changes: RoleSlotChange[] };
+
+/** Compare champion roles by team ID and role (never by side), so a side swap alone is no change. */
+export function compareRoles(a: TeamRoles | null, b: TeamRoles | null): RoleComparison {
+  if (!a || !b) return { status: "NOT_RECORDED", missing: [...(a ? [] : ["A" as const]), ...(b ? [] : ["B" as const])] };
+  const aIds = Object.keys(a).sort(), bIds = Object.keys(b).sort();
+  if (JSON.stringify(aIds) !== JSON.stringify(bIds)) return { status: "PAIR_CHANGED" };
+  const changes: RoleSlotChange[] = [];
+  for (const teamId of aIds) for (const role of ROSTER_ROLES) {
+    if (roleChampionKey(a[teamId][role]) !== roleChampionKey(b[teamId][role])) changes.push({ team_id: teamId, role, a: a[teamId][role], b: b[teamId][role] });
+  }
+  return { status: "COMPARED", changes };
 }
 
 export type DraftSlotChange = { before: DraftSelection; after: DraftSelection };
@@ -153,6 +209,8 @@ export type DraftComparisonResult =
     removedLocks: string[];
     /** By team ID and role; NOT_RECORDED when either side has no roster record. */
     roster: RosterComparison;
+    /** By team ID and role; NOT_RECORDED when either side has no role assignment record. */
+    roles: RoleComparison;
   };
 
 export function compareDraftSnapshots(a: DraftComparisonSnapshot, b: DraftComparisonSnapshot): DraftComparisonResult {
@@ -175,17 +233,29 @@ export function compareDraftSnapshots(a: DraftComparisonSnapshot, b: DraftCompar
     addedLocks: b.locks.filter((id) => !aLocks.has(keyOf(id))),
     removedLocks: a.locks.filter((id) => !bLocks.has(keyOf(id))),
     roster: compareRosterCaptures(a.roster, b.roster),
+    roles: compareRoles(a.roles, b.roles),
   };
 }
 
 // ---- Reproducible export -------------------------------------------------------------
 
 export const DRAFT_COMPARISON_ARTIFACT = "public-draft-comparison";
-/** v2 adds both rosters and their comparison. v1 files still replay read-only with no roster record. */
-export const DRAFT_COMPARISON_SCHEMA = "2";
+/**
+ * v3 adds each input's user-assigned champion roles (or an explicit null) and their comparison.
+ * v2 (rosters, no roles) and v1 (no roster, no roles) still replay read-only; their missing
+ * records stay "not recorded" and are never filled from the current roster or roles.
+ */
+export const DRAFT_COMPARISON_SCHEMA = "3";
+export const ROSTER_DRAFT_COMPARISON_SCHEMA = "2";
 export const LEGACY_DRAFT_COMPARISON_SCHEMA = "1";
+const SUPPORTED_SCHEMAS: readonly string[] = [DRAFT_COMPARISON_SCHEMA, ROSTER_DRAFT_COMPARISON_SCHEMA, LEGACY_DRAFT_COMPARISON_SCHEMA];
 export const MAX_DRAFT_COMPARISON_BYTES = MAX_DRAFT_FILE_BYTES;
-const COMPARISON_BOUNDARY = "Public-evidence A/B draft comparison for human review. Lists pick/ban, side, Fearless lock and virtual roster slot differences only. Rosters are checked against the embedded analysis snapshot's player observations only (no season-history file). No win probability, player effect, synergy, counter or simulation output.";
+const COMPARISON_BOUNDARY = "Public-evidence A/B draft comparison for human review. Lists pick/ban, side, Fearless lock, virtual roster slot and user-assigned champion role differences only. Champion roles are assigned by the user (null = not recorded), never inferred from pick order. Rosters are checked against the embedded analysis snapshot's player observations only (no season-history file). Annual player/champion counts shown on screen are a current supplementary reference recomputed from a separately published file; they are NOT included in or reproduced by this file. No win probability, player effect, synergy, counter or simulation output.";
+
+const rolesExport = (snapshot: DraftComparisonSnapshot) => {
+  const roles = snapshot.roles;
+  return roles ? Object.fromEntries(Object.keys(roles).sort().map((id) => [id, Object.fromEntries(ROSTER_ROLES.map((role) => [role, roles[id][role]]))])) : null;
+};
 
 function exportInput(snapshot: DraftComparisonSnapshot & { roster: RosterCapture }) {
   return {
@@ -195,7 +265,13 @@ function exportInput(snapshot: DraftComparisonSnapshot & { roster: RosterCapture
     previous_games: snapshot.games,
     selections: snapshot.selections,
     roster: rosterExport(snapshot.roster),
+    champion_roles: rolesExport(snapshot),
   };
+}
+
+function roleComparisonRecord(comparison: RoleComparison) {
+  if (comparison.status === "COMPARED") return { status: comparison.status, changes: comparison.changes.map((change) => ({ team_id: change.team_id, role: change.role, a: change.a, b: change.b })) };
+  return comparison.status === "NOT_RECORDED" ? { status: comparison.status, missing: comparison.missing } : { status: comparison.status };
 }
 
 function comparisonRecord(diff: Extract<DraftComparisonResult, { ok: true }>, schema: string) {
@@ -207,7 +283,9 @@ function comparisonRecord(diff: Extract<DraftComparisonResult, { ok: true }>, sc
     added_locks: diff.addedLocks,
     removed_locks: diff.removedLocks,
   };
-  return schema === LEGACY_DRAFT_COMPARISON_SCHEMA ? base : { ...base, roster: rosterComparisonRecord(diff.roster) };
+  if (schema === LEGACY_DRAFT_COMPARISON_SCHEMA) return base;
+  const withRoster = { ...base, roster: rosterComparisonRecord(diff.roster) };
+  return schema === ROSTER_DRAFT_COMPARISON_SCHEMA ? withRoster : { ...withRoster, roles: roleComparisonRecord(diff.roles) };
 }
 
 export type DraftComparisonExport = { ok: true; text: string; bytes: number } | { ok: false; message: string };
@@ -259,9 +337,9 @@ export function replayDraftComparison(text: string): DraftComparisonReplay {
   let value: unknown;
   try { value = JSON.parse(text); } catch { return { ok: false, message: "JSON 파일을 읽을 수 없습니다." }; }
   if (!isObject(value) || value.artifact_type !== DRAFT_COMPARISON_ARTIFACT ||
-    (value.schema_version !== DRAFT_COMPARISON_SCHEMA && value.schema_version !== LEGACY_DRAFT_COMPARISON_SCHEMA) ||
+    typeof value.schema_version !== "string" || !SUPPORTED_SCHEMAS.includes(value.schema_version) ||
     value.format !== "HARD_FEARLESS_5_BAN_5_PICK") return { ok: false, message: "지원하는 드래프트 비교 파일이 아닙니다." };
-  const schema = value.schema_version === LEGACY_DRAFT_COMPARISON_SCHEMA ? LEGACY_DRAFT_COMPARISON_SCHEMA : DRAFT_COMPARISON_SCHEMA;
+  const schema = value.schema_version;
   if (value.model_version !== DRAFT_MODEL_VERSION) return { ok: false, message: "분석 모델 버전이 달라 재현할 수 없습니다." };
   const report = value.analysis_snapshot;
   if (!isRadarReport(report) || !report.opponent_prep) return { ok: false, message: "분석 데이터가 없거나 손상되었습니다." };
@@ -277,12 +355,19 @@ export function replayDraftComparison(text: string): DraftComparisonReplay {
     const redTeam = teams.find((team) => team.team_id === (raw.red_team as Record<string, unknown>).team_id) ?? null;
     // v1 recorded no roster: it stays "not recorded" and is never filled from current observations.
     let roster: DraftComparisonInput["roster"] = null;
-    if (schema === DRAFT_COMPARISON_SCHEMA) {
+    if (schema !== LEGACY_DRAFT_COMPARISON_SCHEMA) {
       const parsed = parseRosterExport(raw.roster, report);
       if (!parsed.ok) return { ok: false, message: `가상 로스터: ${parsed.message}` };
       roster = { basis: parsed.basis, rosters: parsed.rosters };
     }
-    return buildDraftComparisonSnapshot({ report, blueTeam, redTeam, roster,
+    // v1/v2 recorded no roles (a role field there is rejected, never used); v3 records roles or an explicit null.
+    let roles: unknown = null;
+    if (schema === DRAFT_COMPARISON_SCHEMA) {
+      if (!Object.hasOwn(raw, "champion_roles")) return { ok: false, message: "역할 배정 기록(champion_roles)이 없습니다." };
+      roles = raw.champion_roles;
+      if (roles !== null && !isObject(roles)) return { ok: false, message: "역할 배정: 형식이 올바르지 않습니다." };
+    } else if (Object.hasOwn(raw, "champion_roles")) return { ok: false, message: "이전 형식 파일에 역할 배정 기록이 들어 있습니다." };
+    return buildDraftComparisonSnapshot({ report, blueTeam, redTeam, roster, roles,
       selections: raw.selections as DraftSelection[], games: raw.previous_games as DraftGame[], firstPickSide: raw.first_pick_side as DraftSide });
   };
   const a = replayInput(value.baseline_a);

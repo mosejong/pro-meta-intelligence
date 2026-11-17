@@ -283,7 +283,9 @@ test("draft A/B comparison: legality, teams, evidence identity, isolation and re
       const exported = serializeDraftComparison(liveReport, a, b);
       assert.equal(exported.ok, true, exported.message);
       const parsed = JSON.parse(exported.text);
-      assert.equal(parsed.schema_version, "2");
+      assert.equal(parsed.schema_version, "3", "current exports are v3 (roster + explicit role record or null)");
+      assert.equal(parsed.baseline_a.champion_roles, null, "no roles assigned: explicit null, never inferred");
+      assert.deepEqual(parsed.comparison.roles, { status: "NOT_RECORDED", missing: ["A", "B"] });
       assert.equal(parsed.baseline_a.roster.evidence_scope, "CURRENT_REPORT_PLAYER_OBSERVATIONS");
       assert.deepEqual(Object.keys(parsed.current_b.roster.rosters), [teamA.team_id, teamB.team_id].sort(), "keyed by team ID");
       assert.match(parsed.boundary, /No win probability, player effect/);
@@ -292,7 +294,7 @@ test("draft A/B comparison: legality, teams, evidence identity, isolation and re
       assert.ok(parsed.comparison.roster.changes.some((c) => c.team_id === teamB.team_id && c.role === "SUPPORT"));
       const replay = replayDraftComparison(exported.text);
       assert.equal(replay.ok, true, replay.message);
-      assert.equal(replay.schema, "2");
+      assert.equal(replay.schema, "3");
       assert.equal(serializeDraftComparison(liveReport, replay.a, replay.b).text, exported.text, "byte-identical re-export");
       const tamper = (fn) => { const copy = structuredClone(parsed); fn(copy); return replayDraftComparison(JSON.stringify(copy)); };
       const sup = (c) => c.current_b.roster.rosters[teamB.team_id].SUPPORT;
@@ -306,7 +308,8 @@ test("draft A/B comparison: legality, teams, evidence identity, isolation and re
         ["scope", (c) => { c.current_b.roster.evidence_scope = "SEASON_HISTORY"; }],
         ["basis", (c) => { c.baseline_a.roster.basis.patch_id = "0.0"; }],
         ["duplicate", (c) => { c.current_b.roster.rosters[teamA.team_id].SUPPORT = structuredClone(sup(c)); }],
-        ["unknown schema", (c) => { c.schema_version = "3"; }],
+        ["unknown schema", (c) => { c.schema_version = "4"; }],
+        ["missing role record", (c) => { delete c.current_b.champion_roles; }],
       ]) assert.equal(tamper(fn).ok, false, label);
       const emptyA = snap(input({ roster: { ...live, rosters: { [teamA.team_id]: R.emptySlots(), [teamB.team_id]: R.emptySlots() } } }));
       assert.equal(replayDraftComparison(serializeDraftComparison(liveReport, emptyA, b).text).ok, true, "empty slots replay");
@@ -319,6 +322,7 @@ test("draft A/B comparison: legality, teams, evidence identity, isolation and re
       const v1 = structuredClone(v2);
       v1.schema_version = "1";
       delete v1.baseline_a.roster; delete v1.current_b.roster; delete v1.comparison.roster;
+      delete v1.baseline_a.champion_roles; delete v1.current_b.champion_roles; delete v1.comparison.roles;
       const replay = replayDraftComparison(JSON.stringify(v1));
       assert.equal(replay.ok, true, replay.message);
       assert.equal(replay.schema, "1");
@@ -332,6 +336,123 @@ test("draft A/B comparison: legality, teams, evidence identity, isolation and re
       assert.match(markup, /이미 고정된 기준 A는 소급 변경되지 않습니다/);
       assert.match(markup, /시즌 전체 선수 기록은 포함하지 않습니다/);
       assert.match(markup, /선수 효과·승률·시너지·카운터 평가나 경기 시뮬레이션은 계산하지 않습니다/);
+    });
+
+    // ---- Explicit user roles (schema v3) ---------------------------------------------------
+    const { compareRoles, draftRosterKey } = await vite.ssrLoadModule("/app/draft-comparison.ts");
+    const { teamPicks } = await vite.ssrLoadModule("/app/champion-roles.ts");
+    /** Roles in the order of each team's own pick slots (test convenience only; the product never infers this). */
+    const rolesFor = (value, rotate = {}) => {
+      const result = {};
+      for (const [side, team] of [["BLUE", value.blueTeam], ["RED", value.redTeam]]) {
+        const picks = teamPicks(value.selections, side);
+        const shift = rotate[team.team_id] ?? 0;
+        result[team.team_id] = Object.fromEntries(R.ROSTER_ROLES.map((role, i) => [role, picks[(i + shift) % 5]]));
+      }
+      return result;
+    };
+
+    await t.test("roles: validated, detached copy; later edits of the source never reach a frozen A", () => {
+      const value = input(); value.roles = rolesFor(value);
+      const a = snap(value);
+      assert.deepEqual(a.roles, rolesFor(input()));
+      value.roles[teamA.team_id].TOP = "edited";
+      assert.notEqual(a.roles[teamA.team_id].TOP, "edited", "A keeps roles at freeze time");
+      assert.equal(snap(input()).roles, null, "no roles given → explicit null (never inferred from slots)");
+      assert.equal(draftRosterKey(a), draftRosterKey(snap(input())), "draft/roster key ignores roles");
+      assert.notEqual(draftRosterKey(a), draftRosterKey(snap(input({ selections: draft("BLUE", "next") }))));
+    });
+
+    await t.test("roles: bad shape, other-team pick, duplicate, missing role and alias", () => {
+      const fails = (mutate) => { const value = input(); value.roles = rolesFor(value); mutate(value.roles, value); const result = build(value); return result.ok === false && /역할 배정/.test(result.message); };
+      assert.ok(fails((r) => { r[teamA.team_id].TOP = null; }), "unassigned role");
+      assert.ok(fails((r) => { r[teamA.team_id].TOP = r[teamB.team_id].TOP; }), "other team's pick");
+      assert.ok(fails((r) => { r[teamA.team_id].MID = r[teamA.team_id].TOP; }), "duplicate champion");
+      assert.ok(fails((r) => { delete r[teamA.team_id].SUPPORT; }), "missing role key");
+      assert.ok(fails((r) => { r[teamC.team_id] = r[teamA.team_id]; delete r[teamA.team_id]; }), "other team id");
+      assert.ok(fails((r) => { r[teamA.team_id].TOP = "<script>"; }));
+      // Ban ids are not picks: the first BLUE selection ("Wukong") is a ban in this fixture.
+      const value = input(); value.roles = rolesFor(value);
+      const banId = value.selections.find((s) => s.kind === "BAN").champion_id;
+      value.roles[teamA.team_id].TOP = banId;
+      assert.equal(build(value).ok, false, "a ban is never a role champion");
+    });
+
+    await t.test("roles: compare by team ID; side swap alone is no role change; role swap within a team is", () => {
+      const value = input(); value.roles = rolesFor(value);
+      const a = snap(value);
+      const same = snap({ ...input(), roles: rolesFor(input()) });
+      assert.deepEqual(compare(a, same).roles, { status: "COMPARED", changes: [] });
+      const rotated = input(); rotated.roles = rolesFor(rotated, { [teamA.team_id]: 1 });
+      const diff = compare(a, snap(rotated)).roles;
+      assert.equal(diff.status, "COMPARED");
+      assert.equal(diff.changes.length, 5);
+      assert.ok(diff.changes.every((c) => c.team_id === teamA.team_id));
+      assert.deepEqual(compare(a, snap(input())).roles, { status: "NOT_RECORDED", missing: ["B"] });
+      assert.deepEqual(compareRoles(null, a.roles), { status: "NOT_RECORDED", missing: ["A"] });
+      // Swapped sides with the same per-team champions (picks move with the team).
+      const blue = teamPicks(value.selections, "BLUE"), red = teamPicks(value.selections, "RED");
+      const swappedSel = value.selections.map((s) => {
+        if (s.kind !== "PICK") return s;
+        const list = s.side === "BLUE" ? red : blue;
+        const own = s.side === "BLUE" ? blue : red;
+        return { ...s, champion_id: list[own.indexOf(s.champion_id)] ?? s.champion_id };
+      });
+      const swapped = input({ blueTeam: teamB, redTeam: teamA, selections: swappedSel });
+      swapped.roles = { [teamA.team_id]: a.roles[teamA.team_id], [teamB.team_id]: a.roles[teamB.team_id] };
+      const swappedSnap = build(swapped);
+      assert.equal(swappedSnap.ok, true, swappedSnap.message);
+      assert.deepEqual(compare(a, swappedSnap.snapshot).roles.changes, [], "side swap keeps role meaning by team ID");
+      const otherPair = input({ blueTeam: teamC, roster: rosterFor(liveReport, teamC, teamB) }); otherPair.roles = rolesFor(otherPair);
+      assert.equal(compare(a, snap(otherPair)).roles.status, "PAIR_CHANGED");
+    });
+
+    await t.test("roles: v3 export replays byte-identically; role tampering and v1/v2 role smuggling rejected", () => {
+      const aIn = input(); aIn.roles = rolesFor(aIn);
+      const bIn = input(); bIn.roles = rolesFor(bIn, { [teamB.team_id]: 2 });
+      const a = snap(aIn), b = snap(bIn);
+      const exported = serializeDraftComparison(liveReport, a, b);
+      assert.equal(exported.ok, true, exported.message);
+      const parsed = JSON.parse(exported.text);
+      assert.equal(parsed.schema_version, "3");
+      assert.deepEqual(Object.keys(parsed.baseline_a.champion_roles), [teamA.team_id, teamB.team_id].sort());
+      assert.equal(parsed.comparison.roles.status, "COMPARED");
+      assert.equal(parsed.comparison.roles.changes.length, 5);
+      assert.match(parsed.boundary, /NOT included in or reproduced by this file/);
+      assert.doesNotMatch(exported.text, /player-season|season_accepted_game_count|recent_game_limit/, "no annual data in the file");
+      const replay = replayDraftComparison(exported.text);
+      assert.equal(replay.ok, true, replay.message);
+      assert.deepEqual(replay.a.roles, a.roles);
+      assert.equal(serializeDraftComparison(liveReport, replay.a, replay.b).text, exported.text, "byte-identical re-export");
+      const tamper = (fn) => { const copy = structuredClone(parsed); fn(copy); return replayDraftComparison(JSON.stringify(copy)).ok; };
+      const ta = teamA.team_id, tb = teamB.team_id;
+      assert.equal(tamper((c) => { c.current_b.champion_roles[tb].TOP = c.current_b.champion_roles[ta].TOP; }), false, "other team's pick");
+      assert.equal(tamper((c) => { c.current_b.champion_roles[tb].MID = c.current_b.champion_roles[tb].TOP; }), false, "duplicate");
+      assert.equal(tamper((c) => { c.current_b.champion_roles[tb].TOP = null; }), false, "unassigned");
+      assert.equal(tamper((c) => { c.current_b.champion_roles = "x"; }), false, "shape");
+      assert.equal(tamper((c) => { c.comparison.roles.changes.pop(); }), false, "recorded role diff must match");
+      assert.equal(tamper((c) => { c.comparison.roles = { status: "NOT_RECORDED", missing: ["A", "B"] }; }), false);
+      assert.equal(tamper((c) => { c.current_b.champion_roles = null; }), false, "null roles change the recorded comparison");
+      assert.equal(tamper((c) => { c.current_b.champion_roles = null; c.comparison.roles = { status: "NOT_RECORDED", missing: ["B"] }; }), true, "explicit null is valid when recorded consistently");
+      // v2: roster but no roles; read-only; any role field is rejected, never used.
+      const v2 = structuredClone(parsed); v2.schema_version = "2";
+      delete v2.baseline_a.champion_roles; delete v2.current_b.champion_roles; delete v2.comparison.roles;
+      const v2Replay = replayDraftComparison(JSON.stringify(v2));
+      assert.equal(v2Replay.ok, true, v2Replay.message);
+      assert.equal(v2Replay.schema, "2");
+      assert.equal(v2Replay.a.roles, null); assert.equal(v2Replay.b.roles, null);
+      assert.equal(v2Replay.comparison.roles.status, "NOT_RECORDED", "never filled from current roles");
+      const smuggled = structuredClone(v2); smuggled.baseline_a.champion_roles = parsed.baseline_a.champion_roles;
+      assert.equal(replayDraftComparison(JSON.stringify(smuggled)).ok, false, "role field in v2 rejected");
+      const smuggledRecord = structuredClone(v2); smuggledRecord.comparison.roles = parsed.comparison.roles;
+      assert.equal(replayDraftComparison(JSON.stringify(smuggledRecord)).ok, false, "v2 record must match the v2 recomputation");
+    });
+
+    await t.test("roles: panel shows role state and keeps the annual reference out of the file", () => {
+      const markup = renderToStaticMarkup(createElement(DraftComparisonPanel, { ...input(), nameOf: (id) => id }));
+      assert.match(markup, /역할 배정 기록 없음/, "B without a ready input has no role record");
+      assert.match(markup, /비교 JSON에 포함되지 않습니다/);
+      assert.doesNotMatch(markup, /유리|승리|숙련도|강함/);
     });
 
     await t.test("panel replay section is read-only, Korean and isolated from baseline/draft/autosave", async () => {

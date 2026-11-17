@@ -137,7 +137,7 @@ async function freezeA(page) {
   await expect(comparisonRegion(page)).toContainText("로스터 동일");
 }
 
-test("roster frozen into A, edited for B, exported as v2 and replayed read-only", async ({ page }, testInfo) => {
+test("roster frozen into A, edited for B, exported as v3 and replayed read-only", async ({ page }, testInfo) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await openStudio(page);
@@ -176,7 +176,8 @@ test("roster frozen into A, edited for B, exported as v2 and replayed read-only"
   const filePath = testInfo.outputPath("roster-comparison.json");
   await (await downloadPromise).saveAs(filePath);
   const artifact = JSON.parse(await readFile(filePath, "utf8"));
-  expect(artifact.schema_version).toBe("2");
+  expect(artifact.schema_version).toBe("3");
+  expect(artifact.baseline_a.champion_roles).toBeNull(); // no roles assigned in this flow: explicit null, never inferred
   const blueId = artifact.baseline_a.blue_team.team_id;
   const foreignId = JSON.parse(foreign)[1];
   expect(artifact.current_b.roster.rosters[blueId].SUPPORT.player_id).toBe(foreignId);
@@ -215,6 +216,7 @@ test("roster frozen into A, edited for B, exported as v2 and replayed read-only"
   await fileInput.setInputFiles({ name: "legacy-v1.json", mimeType: "application/json", buffer: mutate((file) => {
     file.schema_version = "1";
     delete file.baseline_a.roster; delete file.current_b.roster; delete file.comparison.roster;
+    delete file.baseline_a.champion_roles; delete file.current_b.champion_roles; delete file.comparison.roles;
   }) });
   await expect(replaySection.getByRole("status").filter({ hasText: "기록된 결과와 일치" })).toBeVisible();
   await expect(replaySection).toContainText("이전 형식(v1)");

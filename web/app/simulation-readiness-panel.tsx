@@ -34,6 +34,11 @@ type SimulationReadinessPanelProps = {
   disabled?: boolean;
   /** Dedicated workspace panels need no second expansion click. */
   defaultOpen?: boolean;
+  /**
+   * Current ready input (a detached copy of the validated snapshot), or null when not ready / unmounted.
+   * Called only when the ready input actually changes; a new callback identity or re-render never re-notifies.
+   */
+  onReadyInputChange?: (snapshot: SimulationInputSnapshot | null) => void;
 };
 
 const roleLabels: Record<RosterRole, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
@@ -74,7 +79,7 @@ function FixedInputView({ snapshot, nameOf }: { snapshot: SimulationInputSnapsho
  * the fixed input lives in memory only. Replaying a file is display-only: it never changes the
  * draft, rosters, the A/B baseline or device storage. No outcome or winner is computed here.
  */
-export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, nameOf, publicationRoot = "./", disabled = false, defaultOpen = false }: SimulationReadinessPanelProps) {
+export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, nameOf, publicationRoot = "./", disabled = false, defaultOpen = false, onReadyInputChange }: SimulationReadinessPanelProps) {
   const [roleDraft, setRoleDraft] = useState<RoleDraft>({});
   const [open, setOpen] = useState(defaultOpen);
   const [fixed, setFixed] = useState<SimulationInputSnapshot | null>(null);
@@ -114,6 +119,23 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
     () => buildSimulationReadiness({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, roles: JSON.parse(rolesKey) }),
     [report, blueTeam, redTeam, selections, games, firstPickSide, roster, rolesKey],
   );
+  // Notify the parent of the current ready input only when it really changes (latest callback via ref).
+  const readyCallback = useRef(onReadyInputChange);
+  useEffect(() => { readyCallback.current = onReadyInputChange; });
+  const notified = useRef<SimulationInputSnapshot | null>(null);
+  const readySnapshot = readiness.ok ? readiness.snapshot : null;
+  useEffect(() => {
+    const previous = notified.current;
+    if (previous === readySnapshot) return;
+    if (previous && readySnapshot && sameSimulationInput(previous, readySnapshot)) return;
+    notified.current = readySnapshot;
+    readyCallback.current?.(readySnapshot ? structuredClone(readySnapshot) : null);
+  }, [readySnapshot]);
+  useEffect(() => () => {
+    if (notified.current) readyCallback.current?.(null);
+    notified.current = null;
+  }, []);
+
   const capture = useMemo(() => {
     if (!complete || !roster || !blueTeam || !redTeam) return null;
     const result = captureRoster(report, [blueTeam.team_id, redTeam.team_id], roster.basis, roster.rosters);

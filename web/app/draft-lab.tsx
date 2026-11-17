@@ -35,6 +35,7 @@ import { PartnershipPlacement } from "./partnership-placement";
 import { RosterWorkshop } from "./roster-workshop";
 import { SimulationReadinessPanel } from "./simulation-readiness-panel";
 import type { LiveRoster } from "./roster-comparison";
+import type { SimulationInputSnapshot } from "./simulation-scenario";
 import { DEFAULT_LOCALE, LanguageSelector, useLocale, type Locale, type MessageKey } from "./locale";
 import "./draft-workspace.css";
 import "./draft-studio.css";
@@ -240,6 +241,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [comparisonEpoch, setComparisonEpoch] = useState(0);
   // Live virtual roster published by the roster editor (tagged with its basis and pair); null until restored.
   const [liveRoster, setLiveRoster] = useState<LiveRoster | null>(null);
+  /** Current ready simulation input (with explicit roles) reported by the readiness panel, or null. */
+  const [readyInput, setReadyInput] = useState<SimulationInputSnapshot | null>(null);
   const blueTeam = teams.find((team) => team.team_id === blueTeamId) ?? null;
   const redTeam = teams.find((team) => team.team_id === redTeamId) ?? null;
   const turn = nextDraftTurn(selections, firstPickSide);
@@ -673,13 +676,20 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     </div>
 
     <div id={panelOf("COMPARISON")} className="studio-comparison-panel" role="tabpanel" aria-labelledby={`${panelOf("COMPARISON")}-tab`} hidden={studioTab !== "COMPARISON"}>
-    <DraftComparisonPanel key={comparisonEpoch} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} />
+    <DraftComparisonPanel key={comparisonEpoch} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf}
+      readyInput={readyInput} publicationRoot={productRootHref(currentSpace)}
+      onOpenRoleAssignment={() => showStudioTab("SIMULATION", () => {
+        const target = document.querySelector<HTMLElement>(`#${panelOf("SIMULATION")} .simulation-readiness-team select:not(:disabled)`)
+          ?? document.querySelector<HTMLElement>(`#${panelOf("SIMULATION")} .simulation-readiness > summary`);
+        target?.focus();
+        if (target) scrollIntoViewGently(target);
+      })} />
     </div>
 
     <div id={panelOf("SIMULATION")} className="studio-simulation-panel" role="tabpanel" aria-labelledby={`${panelOf("SIMULATION")}-tab`} hidden={studioTab !== "SIMULATION"}>
     {/* Simulation input gate (with assigned-champion season records): explicit champion roles +
         current rosters; no outcome is computed. */}
-    <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} publicationRoot={productRootHref(currentSpace)} defaultOpen disabled={!canSelect} />
+    <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} publicationRoot={productRootHref(currentSpace)} defaultOpen disabled={!canSelect} onReadyInputChange={setReadyInput} />
     </div>
     </div>
     </div>
