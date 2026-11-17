@@ -3,7 +3,8 @@ export type ProductSpace = "ONBOARDING" | "TEAM" | "T1" | "CREATOR" | "RADAR" | 
 const slugs: Record<ProductSpace, string> = {
   ONBOARDING: "",
   TEAM: "team/",
-  T1: "t1/",
+  // Old bookmarked T1 links now open the team-neutral analysis workspace.
+  T1: "team/",
   CREATOR: "creator/",
   RADAR: "radar/",
   DRAFT: "draft/",
@@ -14,7 +15,7 @@ export function productSpaceFromPath(pathname: string): ProductSpace {
   const segments = pathname.toLowerCase().split("/").filter(Boolean);
   const leaf = segments.at(-1) === "index.html" ? segments.at(-2) : segments.at(-1);
   if (leaf === "team") return "TEAM";
-  if (leaf === "t1") return "T1";
+  if (leaf === "t1") return "TEAM";
   if (leaf === "creator") return "CREATOR";
   if (leaf === "radar") return "RADAR";
   if (leaf === "draft") return "DRAFT";

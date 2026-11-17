@@ -75,7 +75,7 @@ export function SubmissionProof({
   return <main className="submission-proof">
     <header className="submission-topbar">
       <a className="brand" href={productSpaceHref(currentSpace, "ONBOARDING")} aria-label="Pro Meta Intelligence 홈"><span className="brand-mark">PM</span><span><strong>PRO META</strong><small>INTELLIGENCE</small></span></a>
-      <nav aria-label="제출 자료 이동"><a href={productSpaceHref(currentSpace, "T1")}>T1 라이브 데모</a><a href={productSpaceHref(currentSpace, "RADAR")}>근거 레이더</a><a href="https://github.com/mosejong/pro-meta-intelligence">코드 저장소</a></nav>
+      <nav aria-label="제출 자료 이동"><a href={productSpaceHref(currentSpace, "TEAM")}>팀 분석 데모</a><a href={productSpaceHref(currentSpace, "RADAR")}>근거 레이더</a><a href="https://github.com/mosejong/pro-meta-intelligence">코드 저장소</a></nav>
       <button type="button" onClick={printProof}>인쇄 / PDF</button>
     </header>
 
@@ -95,7 +95,7 @@ export function SubmissionProof({
         <article className="submission-candidate">{topCandidate && <img src={championImageUrl(topCandidate.champion_id)} alt="" />}<div><span>검토 후보 #{topCandidate?.rank ?? "-"}</span><h3>{topCandidate ? `${nameOf(topCandidate.champion_id)} · ${roleLabels[topCandidate.role] ?? topCandidate.role}` : "후보 확인 대기"}</h3><p>{topCandidate ? `${topCandidate.metrics.current_distinct_team_count}개 팀 관측 · 근거 이벤트 ${topCandidate.evidence_event_ids.length}건` : "공개 피드를 확인하고 있습니다."}</p></div></article>
         <ol><li><b>1</b><div><strong>T1 공개 프로필 확인</strong><span>최신 관측 5인과 과거 관측을 분리</span></div></li><li><b>2</b><div><strong>공식 일정과 상대 연결</strong><span>TBD 상대는 확정된 것처럼 연결하지 않음</span></div></li><li><b>3</b><div><strong>픽·밴 충돌을 5개 라인으로 압축</strong><span>보호·경합·견제 검토·교환 시나리오</span></div></li><li><b>4</b><div><strong>근거 JSON과 한 장 브리프 전달</strong><span>분석가가 원문 이벤트까지 역추적 가능</span></div></li></ol>
       </div>
-      <footer><a href={productSpaceHref(currentSpace, "T1")}>T1 실제 화면 열기 →</a><a href={productSpaceHref(currentSpace, "TEAM")}>내 팀 기준으로 바꾸기 →</a></footer>
+      <footer><a href={productSpaceHref(currentSpace, "DRAFT")}>밴픽 화면 열기 →</a><a href={productSpaceHref(currentSpace, "TEAM")}>팀 분석 화면 열기 →</a></footer>
     </section>
 
     <section className="submission-evidence" aria-labelledby="submission-evidence-title">

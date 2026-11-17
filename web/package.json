@@ -11,7 +11,9 @@
     "build": "vinext build",
     "build:pages": "vite build --config vite.pages.config.ts",
     "start": "vinext start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/draft-benchmark.test.mjs tests/draft-exchange.test.mjs",
+    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/draft-benchmark.test.mjs tests/draft-exchange.test.mjs tests/locale.test.mjs tests/draft-autosave.test.mjs tests/draft-comparison.test.mjs tests/roster-scenario.test.mjs",
+    "test:locale": "node --test tests/locale.test.mjs",
+    "test:e2e": "npm run build:pages && playwright test",
     "benchmark:draft": "node scripts/evaluate-draft.mjs",
     "test:pages": "npm run build:pages && node --test tests/pages-build.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern dist-pages --ignore-pattern .next"
@@ -25,6 +27,7 @@
     "@eslint/js": "9.39.4",
     "@next/eslint-plugin-next": "16.2.6",
     "@openai/sites-vite-plugin": "0.1.0",
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",

@@ -35,9 +35,9 @@ export function TargetProfilePanel({ profile, onDownload }: { profile: TargetPro
   const otherLineupCount = profile.players.filter((player) => player.roster_status === "OTHER_OBSERVED").length;
   return <section className="target-profile" id="target-profile" aria-label={`${profile.target.team_name} 타깃 프로필`}>
     <header className="target-profile-head">
-      <div className="target-lock" aria-hidden="true"><span>TARGET</span><strong>T1</strong></div>
-      <div><span>T1 TARGET PROFILE · PUBLIC STAGE ONLY</span><h3>T1의 이번 패치에서 바뀐 것</h3><p>선수별 공개 대회 픽, 패치 변화, 최근 경기 순서를 한 화면에 묶었습니다. 빈도는 다음 경기 의도나 숙련도 예측이 아닙니다.</p></div>
-      <button type="button" onClick={onDownload}>T1 프로필 JSON</button>
+      <div className="target-lock" aria-hidden="true"><span>OPPONENT</span><strong>{profile.target.team_name.slice(0, 4).toUpperCase()}</strong></div>
+      <div><span>OPPONENT PROFILE · PUBLIC STAGE ONLY</span><h3>{profile.target.team_name}의 이번 패치에서 바뀐 것</h3><p>선수별 공개 대회 픽, 패치 변화, 최근 경기 순서를 한 화면에 묶었습니다. 빈도는 다음 경기 의도나 숙련도 예측이 아닙니다.</p></div>
+      <button type="button" onClick={onDownload}>상대 프로필 JSON</button>
     </header>
 
     <div className="target-kpis">
@@ -82,7 +82,7 @@ export function TargetProfilePanel({ profile, onDownload }: { profile: TargetPro
     </div>
 
     <div className={`target-matchup-strip ${profile.matchup ? "ready" : "setup"}`}>
-      <div><span>MY TEAM × T1</span><h4>{profile.matchup ? `${profile.matchup.own_team_name} 기준 충돌 지점` : "내 팀을 선택하면 T1전 질문이 완성됩니다"}</h4><p>{profile.matchup?.staff_questions[0] ?? "공개 픽이 겹치는 지점과 T1이 자주 닫은 우리 자원을 분리해 보여줍니다."}</p></div>
+      <div><span>MY TEAM × OPPONENT</span><h4>{profile.matchup ? `${profile.matchup.own_team_name} 기준 충돌 지점` : `내 팀을 선택하면 ${profile.target.team_name}전 질문이 완성됩니다`}</h4><p>{profile.matchup?.staff_questions[0] ?? `공개 픽이 겹치는 지점과 ${profile.target.team_name}이(가) 자주 닫은 우리 자원을 분리해 보여줍니다.`}</p></div>
       {profile.matchup ? <div className="target-matchup-counts"><span><b>{profile.matchup.protect_count}</b>보호</span><span><b>{profile.matchup.contested_count}</b>충돌</span><span><b>{profile.matchup.deny_review_count}</b>견제 검토</span><span><b>{profile.matchup.exchange_available ? "1" : "0"}</b>교환안</span></div> : <a href="#team-setup">내 팀 선택 ↑</a>}
     </div>
 

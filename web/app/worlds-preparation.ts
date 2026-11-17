@@ -59,8 +59,23 @@ export const WORLDS_2026 = {
   final: {
     teams: ["GEN", "BLG"], start_at: "2026-11-14T19:00:00Z", start_checked_on: "2026-11-12",
     source: "https://en.wikipedia.org/wiki/2026_League_of_Legends_World_Championship_final",
+    // score follows the teams order. The operator confirmed BLG as champion and Knight's first Worlds title
+    // on 2026-11-17; the 1:3 score and Finals MVP come from match reports, not an official results page.
+    result: { winner: "BLG", score: [1, 3] },
+    finals_mvp: "Knight",
+    result_checked_on: "2026-11-17",
+    result_basis: "OPERATOR_CONFIRMED_AND_MATCH_REPORTS",
+    result_sources: [
+      "https://www.invenglobal.com/articles/28661/bilibili-gaming-win-worlds-2026-beating-geng-3-1-in-the-final",
+      "https://en.wikipedia.org/wiki/2026_League_of_Legends_World_Championship_final",
+    ],
   },
+  // The event is over: nothing is "next". Per-game picks of the final are not recorded here.
+  status: "COMPLETED",
+  completed_checked_on: "2026-11-17",
 } as const;
+
+export const WORLDS_COMPLETED = WORLDS_2026.status === "COMPLETED";
 
 export type WorldsStage = "QUARTERFINAL" | "OUT_OF_KNOCKOUTS";
 
@@ -79,9 +94,11 @@ export function worldsQuarterfinalFor(code: string) {
 
 type KnockoutMatch = { start_at: string; teams: readonly string[]; result?: { winner: string; score: readonly number[] } };
 
-// The team's latest known knockout pairing: a semifinal replaces the quarterfinal once published.
+// The team's latest known knockout pairing: the final replaces a semifinal, which replaces the quarterfinal.
 function latestKnockoutFor(code: string) {
-  const stages: [string, readonly KnockoutMatch[]][] = [["4강", WORLDS_2026.semifinals], ["8강", WORLDS_2026.quarterfinals]];
+  const stages: [string, readonly KnockoutMatch[]][] = [
+    ["결승", [WORLDS_2026.final]], ["4강", WORLDS_2026.semifinals], ["8강", WORLDS_2026.quarterfinals],
+  ];
   for (const [label, matches] of stages) {
     const match = matches.find((item) => item.teams.includes(code));
     if (!match) continue;
@@ -92,18 +109,31 @@ function latestKnockoutFor(code: string) {
   return null;
 }
 
-// The next match to prepare for. A match with a reviewed result is finished and never shown as next.
+// The next match to prepare for. A match with a reviewed result is finished and never shown as next,
+// and once the event is completed no team has a next match, even where a result was not recorded.
 export function worldsNextMatchFor(code: string) {
+  if (WORLDS_COMPLETED) return null;
   const match = latestKnockoutFor(code);
   if (!match || match.result) return null;
   return { label: match.label, start_at: match.start_at, opponent: match.opponent };
 }
 
-// The latest finished match with a reviewed official result.
+// The latest finished match with a reviewed result (match reports or operator confirmation, see sources).
 export function worldsLastResultFor(code: string) {
   const match = latestKnockoutFor(code);
   return match?.result ? { label: match.label, start_at: match.start_at, opponent: match.opponent, ...match.result } : null;
 }
+
+// Historical one-line outcome of the event, built only from reviewed fields.
+export function worldsOutcomeText() {
+  const { final } = WORLDS_2026;
+  const runnerUp = final.teams.find((team) => team !== final.result.winner);
+  const winnerScore = final.result.score[final.teams.indexOf(final.result.winner)];
+  const loserScore = final.result.score[1 - final.teams.indexOf(final.result.winner)];
+  return `${final.result.winner} 우승 · 결승 ${final.result.winner} ${winnerScore}:${loserScore} ${runnerUp} · 결승 MVP ${final.finals_mvp}`;
+}
+
+export const WORLDS_RESULT_BASIS_LABEL = "운영자 확인 + 경기 보도 · 공식 결과 페이지 미확인";
 
 const roles = [
   ["TOP", "탑"], ["JUNGLE", "정글"], ["MID", "미드"], ["BOTTOM", "바텀"], ["SUPPORT", "서포터"],

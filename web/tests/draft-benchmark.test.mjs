@@ -78,9 +78,13 @@ test("historical draft evaluation measures the production preview and rejects le
       // T1's semifinal has a reviewed result, so it is never shown as the next match.
       assert.equal(worldsNextMatchFor("T1"), null);
       assert.deepEqual(worldsLastResultFor("T1"), { label: "4강", start_at: "2026-11-08T22:00:00Z", opponent: "BLG", won: false, own_score: 1, opponent_score: 3 });
-      assert.deepEqual(worldsLastResultFor("BLG"), { label: "4강", start_at: "2026-11-08T22:00:00Z", opponent: "T1", won: true, own_score: 3, opponent_score: 1 });
-      assert.equal(worldsNextMatchFor("KC").label, "8강");
-      assert.equal(worldsNextMatchFor("HLE"), null);
+      // The reviewed final (current worlds-preparation.ts) is BLG's latest finished match; the semifinal stays recorded for T1.
+      assert.deepEqual(worldsLastResultFor("BLG"), { label: "결승", start_at: "2026-11-14T19:00:00Z", opponent: "GEN", won: true, own_score: 3, opponent_score: 1 });
+      assert.deepEqual(worldsLastResultFor("GEN"), { label: "결승", start_at: "2026-11-14T19:00:00Z", opponent: "BLG", won: false, own_score: 1, opponent_score: 3 });
+      // Worlds is recorded as completed: no team has a next match, including a quarterfinalist without a recorded result.
+      assert.equal(WORLDS_2026.status, "COMPLETED");
+      for (const code of ["KC", "BLG", "GEN", "T1", "HLE"]) assert.equal(worldsNextMatchFor(code), null);
+      assert.equal(worldsLastResultFor("KC"), null);
       assert.deepEqual(Object.keys(DRAFT_SCOUT_PACKS).sort(), ["BLG", "DK", "GEN", "IG", "KC", "LYON", "TES"]);
       for (const entry of WORLDS_2026.quarterfinals.flatMap((match) => match.teams).filter((code) => code !== "T1")) {
         assert.equal(draftScoutFor(entry).target.team_name, WORLDS_2026.teams.find((team) => team.code === entry).names[0]);
@@ -432,5 +436,108 @@ test("historical draft evaluation measures the production preview and rejects le
         assert.throws(() => evaluateDraftBenchmark(invalid), error);
       });
     }
+    await t.test("champion info shows only recorded public evidence and keeps staged/confirmed distinct", async () => {
+      const { summarizeChampionEvidence, DraftChampionInfo } = await vite.ssrLoadModule("/app/draft-champion-info.tsx");
+      const teams = report.opponent_prep.teams;
+      const blue = teams.find((team) => team.priority_picks.length > 0);
+      const red = teams.find((team) => team.team_id !== blue.team_id);
+      const pick = blue.priority_picks[0];
+      const summary = summarizeChampionEvidence(report, blue, red, pick.champion_id);
+      assert.equal(summary.has_public_sample, true);
+      // Roles come only from recorded public picks/entries; nothing is filled in from the name.
+      const recordedRoles = new Set([
+        ...blue.priority_picks, ...red.priority_picks,
+        ...[blue, red].flatMap((team) => (team.recent_games ?? []).flatMap((game) => game.picks)),
+        ...report.entries,
+      ].filter((item) => item.champion_id === pick.champion_id && item.role).map((item) => item.role));
+      assert.deepEqual(new Set(summary.observed_roles), new Set([...recordedRoles].filter((role) => ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"].includes(role))));
+      const blueRow = summary.teams.find((row) => row.side === "BLUE");
+      assert.equal(blueRow.team_name, blue.team_name);
+      // Published artifacts can expose fewer example citations than their declared aggregate.
+      // Preserve one reported row; only merging several rows requires complete citations.
+      const singleRow = summarizeChampionEvidence(report, { ...blue, priority_picks: [pick] }, red, pick.champion_id).teams.find((row) => row.side === "BLUE");
+      assert.equal(singleRow.summary_pick_count, pick.game_count);
+      // A champion absent from every bounded summary is UNKNOWN (null), not zero, and not marked weak.
+      const unseen = summarizeChampionEvidence(report, blue, red, "NotAChampionInThisFeed");
+      assert.equal(unseen.has_public_sample, false);
+      assert.deepEqual(unseen.observed_roles, []);
+      assert.deepEqual(unseen.radar, []);
+      assert.ok(unseen.teams.every((row) => row.summary_pick_count === null && row.summary_ban_count === null
+        && row.summary_received_ban_count === null && row.recent_pick_count === 0));
+
+      // Identity comes from citations, never from assuming matching roles mean matching games.
+      // A missing summary stays unknown; duplicate recent records count only once.
+      const tendency = (champion_id, role, game_count, evidence_event_ids) => ({ champion_id, ...(role ? { role } : {}), game_count, game_rate: 0.1, phase_1_count: 0, phase_2_count: 0, evidence_event_ids });
+      const recentPick = (champion_id, role, evidence_event_id) => ({ champion_id, role, player_id: null, player_name: null, sequence: 7, evidence_event_id });
+      const recentGame = (match_id, picks) => ({ match_id, observed_at: "2026-11-01T00:00:00Z", league: "WLDs", tournament: "Worlds", side: "BLUE", opponent_team_id: "X", opponent_team_name: "X", result: "WIN", first_pick: true, picks });
+      const synthetic = {
+        ...structuredClone(blue), team_id: "SYNTHETIC", team_name: "합성팀", game_count: 30,
+        priority_picks: [tendency("Wukong", "TOP", 4, ["e1", "e2", "e3", "e4"]), tendency("MonkeyKing", "TOP", 4, ["e1", "e2", "e3", "e4"]), tendency("MonkeyKing", "JUNGLE", 2, ["e5", "e6"])],
+        frequent_bans: [tendency("Ahri", null, 9, ["e8"])],
+        received_bans: [tendency("Wukong", null, 3, ["e7", "e8", "e9"])],
+        recent_games: [recentGame("m1", [recentPick("MonkeyKing", "TOP", "e1")]), recentGame("m2", [recentPick("Ahri", "MID", "e9")]), recentGame("m1", [recentPick("Wukong", "TOP", "e1")])],
+      };
+      const radarEntry = (champion_id, current_pick_count, current_distinct_team_count, eligible_for_review, evidence_event_ids) => ({ champion_id, role: "TOP", eligible_for_review, evidence_event_ids, metrics: { current_pick_count, current_distinct_team_count } });
+      const aliasReport = { ...report, entries: [radarEntry("Wukong", 5, 3, false, ["r1", "r2"]), radarEntry("MonkeyKing", 4, 2, true, ["r2", "r3"])] };
+      const flex = summarizeChampionEvidence(aliasReport, synthetic, null, "Wukong");
+      assert.deepEqual(flex.observed_roles, ["TOP", "JUNGLE"]);
+      assert.deepEqual(flex.teams, [{
+        side: "BLUE", team_name: "합성팀", team_game_count: 30,
+        summary_pick_count: 6, summary_ban_count: null, summary_received_ban_count: 3,
+        recent_game_count: 2, recent_pick_count: 1, evidence_count: 9,
+      }]);
+      assert.deepEqual(flex.radar, [{ role: "TOP", current_pick_count: 5, current_distinct_team_count: 3, eligible_for_review: true, evidence_count: 3 }]);
+      assert.deepEqual(summarizeChampionEvidence(aliasReport, synthetic, null, "MonkeyKing"), { ...flex, champion_id: "MonkeyKing" });
+      const countAliasRows = (rows) => summarizeChampionEvidence(aliasReport, { ...synthetic, priority_picks: rows }, null, "Wukong").teams[0].summary_pick_count;
+      assert.equal(countAliasRows([tendency("Wukong", "TOP", 2, ["a", "b"]), tendency("MonkeyKing", "TOP", 1, ["c"])]), 3, "same-role aliases can contain different games");
+      assert.equal(countAliasRows([tendency("Wukong", "TOP", 2, ["a", "b"]), tendency("MonkeyKing", "TOP", 2, ["b", "c"])]), 3, "overlap is determined by event identity");
+      assert.equal(countAliasRows([tendency("Wukong", "TOP", 4, ["a"]), tendency("MonkeyKing", "TOP", 2, ["b"])]), null, "incomplete citations cannot establish the combined count");
+
+      const nameOf = (id) => `이름-${id}`;
+      const render = (props) => renderToStaticMarkup(createElement(DraftChampionInfo, { report, blueTeam: blue, redTeam: red, nameOf, ...props }));
+      const empty = render({ focus: null });
+      assert.match(empty, /class="draft-champion-info empty"/);
+      assert.match(empty, /챔피언을 고르면/);
+      assert.doesNotMatch(empty, /role="tablist"/);
+      const staged = render({ focus: { champion_id: pick.champion_id, status: "STAGED", selection: { side: "BLUE", kind: "PICK", slot: 1 } } });
+      assert.match(staged, new RegExp(`<h3>이름-${pick.champion_id}</h3>`));
+      assert.match(staged, /올려놓음\(확정 전\)/);
+      assert.doesNotMatch(staged, /확정됨/);
+      assert.match(staged, /팀 단위 공개 경기 기록이며 선수 개인 기록이 아닙니다/);
+      assert.match(staged, /목록에 없으면 0회가 아니라 미확인입니다/);
+      for (const label of ["개요", "룬", "아이템", "근거"]) assert.match(staged, new RegExp(`role="tab"[^>]*>${label}</button>`));
+      assert.equal((staged.match(/aria-selected="true"/g) ?? []).length, 1);
+      const confirmed = render({ focus: { champion_id: pick.champion_id, status: "CONFIRMED", selection: { side: "RED", kind: "BAN", slot: 2 } } });
+      assert.match(confirmed, /레드 2번째 밴 · 확정됨/);
+      for (const [tab, label] of [["RUNES", "룬 자료 미연결"], ["ITEMS", "아이템 자료 미연결"]]) {
+        const html = render({ focus: { champion_id: pick.champion_id, status: "STAGED", selection: { side: "BLUE", kind: "PICK", slot: 1 } }, initialTab: tab });
+        assert.match(html, new RegExp(label));
+        assert.doesNotMatch(html, /승률|숙련도|추천 룬|추천 빌드/);
+      }
+      const evidence = render({ focus: { champion_id: pick.champion_id, status: "STAGED", selection: { side: "BLUE", kind: "PICK", slot: 1 } }, initialTab: "EVIDENCE" });
+      assert.ok(evidence.replaceAll("<!-- -->", "").includes(`경기 패치 ${report.patch_id} · 기준 ${report.cutoff}`));
+      const unseenHtml = render({ focus: { champion_id: "NotAChampionInThisFeed", status: "STAGED", selection: { side: "BLUE", kind: "BAN", slot: 1 } } });
+      assert.match(unseenHtml, /관측 없음/);
+      assert.match(unseenHtml, /0회라는 뜻도, 약하다는 뜻도 아닙니다/);
+      assert.doesNotMatch(unseenHtml.replaceAll("<!-- -->", ""), /픽 0경기|밴 0경기|픽·밴 기록 없음/);
+
+      // Bounded summary: listed counts are scoped, missing lists say unknown, recent games are separate.
+      const flexFocus = { champion_id: "Wukong", status: "CONFIRMED", selection: { side: "BLUE", kind: "PICK", slot: 1 } };
+      const flexHtml = renderToStaticMarkup(createElement(DraftChampionInfo, { report: aliasReport, blueTeam: synthetic, redTeam: null, nameOf, focus: flexFocus })).replaceAll("<!-- -->", "");
+      assert.match(flexHtml, /합성팀 · 팀 공개 요약/);
+      assert.match(flexHtml, /픽 6경기 · 밴 집계 미확인/);
+      assert.match(flexHtml, /최근 기록 2경기 중 픽 1경기/);
+      assert.match(flexHtml, /탑 · 정글/);
+      assert.doesNotMatch(flexHtml, /열람 닫기|정보 열람 중/);
+      const flexEvidence = renderToStaticMarkup(createElement(DraftChampionInfo, { report: aliasReport, blueTeam: synthetic, redTeam: null, nameOf, focus: flexFocus, initialTab: "EVIDENCE" })).replaceAll("<!-- -->", "");
+      assert.match(flexEvidence, /우선 픽 6경기 · 자주 하는 밴 집계 미확인 · 받은 밴 3경기/);
+      assert.match(flexEvidence, /경기별 확인 · 최근 2경기 중 픽 1경기/);
+      assert.match(flexEvidence, /근거 기록 9건/);
+      assert.equal((flexEvidence.match(/메타 레이더 · 탑/g) ?? []).length, 1);
+      // Inspecting an earlier confirmed slot is labelled as read-only viewing and can be closed.
+      const inspectedHtml = renderToStaticMarkup(createElement(DraftChampionInfo, { report: aliasReport, blueTeam: synthetic, redTeam: null, nameOf, focus: { ...flexFocus, inspected: true }, onCloseInspect() {} })).replaceAll("<!-- -->", "");
+      assert.match(inspectedHtml, /블루 1번째 픽 · 확정됨 · 정보 열람 중/);
+      assert.match(inspectedHtml, /<button type="button" class="draft-champion-close">열람 닫기<\/button>/);
+    });
   } finally { await vite.close(); }
 });
