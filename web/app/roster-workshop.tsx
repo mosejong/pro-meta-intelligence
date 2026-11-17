@@ -22,6 +22,7 @@ import {
   type RosterRole,
   type RosterState,
 } from "./roster-scenario";
+import type { LiveRoster } from "./roster-comparison";
 import { PlayerPoolPanel } from "./player-pool-panel";
 import { poolBasis, type PoolBasis, type PoolSelection } from "./player-pool-evidence";
 import "./roster-workshop.css";
@@ -44,30 +45,39 @@ type RosterWorkshopProps = {
   focusChampionId?: string | null;
   /** Page-relative publication root for the on-demand season history file. */
   publicationRoot?: string;
+  /**
+   * Receives the live roster (edits, file imports and device restores) tagged with its basis and
+   * pair, or null while none is ready. Must be a stable function (e.g. a state setter).
+   */
+  onRosterChange?: (roster: LiveRoster | null) => void;
 };
 
 const NO_SELECTIONS: readonly PoolSelection[] = [];
 const NO_PICKS: readonly string[] = [];
+const IGNORE_ROSTER = () => {};
 
 /**
  * Collapsible virtual roster editor next to the team setup. Remounts per snapshot basis and
  * unordered team pair, so a side swap keeps each team's lineup while a new pair starts from
- * its own observations. It never touches the draft, the comparison baseline or analysis.
+ * its own observations. It never touches the draft or analysis; its live roster becomes the
+ * A/B comparison's current B, and an already frozen A is never changed retroactively.
  */
-export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null, publicationRoot = "./" }: RosterWorkshopProps) {
+export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null, publicationRoot = "./", onRosterChange = IGNORE_ROSTER }: RosterWorkshopProps) {
   const basis = useMemo(() => rosterBasis(report), [report]);
   const pool = useMemo(() => poolBasis(report), [report]);
   if (!blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) return null;
   return <RosterWorkshopBody key={`${basisKey(basis)}|${pairKey([blueTeam.team_id, redTeam.team_id])}`}
     basis={basis} patchId={report.patch_id} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={disabled}
-    pool={pool} selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} publicationRoot={publicationRoot} />;
+    pool={pool} selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} publicationRoot={publicationRoot}
+    onRosterChange={onRosterChange} />;
 }
 
 type Status = { tone: "info" | "error"; text: string } | null;
 
-function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled, pool, selections, previousPicks, focusChampionId, publicationRoot }: {
+function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled, pool, selections, previousPicks, focusChampionId, publicationRoot, onRosterChange }: {
   basis: RosterBasis; patchId: string; teams: OpponentTeam[]; blueTeam: OpponentTeam; redTeam: OpponentTeam; disabled: boolean;
   pool: PoolBasis; selections: readonly PoolSelection[]; previousPicks: readonly string[]; focusChampionId: string | null; publicationRoot: string;
+  onRosterChange: (roster: LiveRoster | null) => void;
 }) {
   const season = useMemo(() => ({ basis, publicationRoot }), [basis, publicationRoot]);
   const index = useMemo(() => buildRosterIndex(teams), [teams]);
@@ -79,6 +89,10 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   const [fileStatus, setFileStatus] = useState<Status>(null);
   const [editStatus, setEditStatus] = useState("");
   const [reading, setReading] = useState(false);
+  // The device copy is checked once per editor (basis + pair); until then nothing is published,
+  // so the comparison never captures an unrestored default lineup.
+  const [restored, setRestored] = useState(false);
+  const restoreDone = useRef(false);
   const mounted = useRef(false);
 
   useEffect(() => {
@@ -87,7 +101,10 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   }, []);
 
   useEffect(() => {
+    if (restoreDone.current) return;
     const restore = window.setTimeout(() => {
+      restoreDone.current = true;
+      setRestored(true);
       let saved: string | null = null;
       try { saved = window.localStorage.getItem(ROSTER_STORAGE_KEY); }
       catch { setStorage({ tone: "error", text: "이 기기 저장소를 사용할 수 없습니다. 파일 저장은 가능합니다." }); return; }
@@ -100,6 +117,13 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
     }, 0);
     return () => window.clearTimeout(restore);
   }, [basis, teamIds, index]);
+
+  // Publish the actual roster state (not a recomputed default) for the A/B comparison's B.
+  useEffect(() => {
+    if (restored) onRosterChange({ basis, teamIds, rosters });
+  }, [restored, basis, teamIds, rosters, onRosterChange]);
+  // A remount (new pair/basis) or removal withdraws this editor's roster before the next one publishes.
+  useEffect(() => () => onRosterChange(null), [onRosterChange]);
 
   function serialize(state: RosterState) {
     return serializeRosterScenario({ basis, team_ids: teamIds, rosters: state }, index);
@@ -151,7 +175,7 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
       if (!result.ok) { setFileStatus({ tone: "error", text: `${result.error} 현재 로스터를 유지합니다.` }); return; }
       commit(result.value.rosters);
       setEditStatus("");
-      setFileStatus({ tone: "info", text: "로스터 파일을 불러왔습니다. 밴픽과 기준 A는 바뀌지 않습니다." });
+      setFileStatus({ tone: "info", text: "로스터 파일을 불러왔습니다. 밴픽은 바뀌지 않고 A/B 비교의 현재 B에만 반영되며, 이미 고정된 기준 A는 소급 변경되지 않습니다." });
     } catch { if (mounted.current) setFileStatus({ tone: "error", text: "파일을 읽지 못했습니다. 현재 로스터를 유지합니다." }); }
     finally { input.value = ""; if (mounted.current) setReading(false); }
   }
@@ -165,7 +189,7 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   return <details className="roster-workshop" lang="ko" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
     <summary>가상 로스터·포지션 <small>원관측과 다른 슬롯 {changedCount} · 빈칸 {emptyCount}</small></summary>
     {open && <div className="roster-workshop-body">
-      <p className="roster-workshop-note" role="note"><b>기존 추천 순위·예측/시뮬레이션에는 로스터 변경이 아직 반영되지 않습니다.</b> 변경은 아래 선수 근거·남은 관측 챔프 표시에만 반영됩니다. 같은 공개 스냅샷에서 관측된 선수만 고를 수 있으며, CURRENT는 자료상의 관측 표시일 뿐 공식 최신 소속이 아닙니다. 역할 관측이 하나로 정해지지 않으면 빈칸으로 둡니다.</p>
+      <p className="roster-workshop-note" role="note"><b>기존 추천 순위·예측/시뮬레이션에는 로스터 변경이 아직 반영되지 않습니다.</b> 변경은 아래 선수 근거·남은 관측 챔프 표시와 A/B 비교의 현재 B 로스터에만 반영되며, 이미 고정된 기준 A는 소급 변경되지 않습니다. 같은 공개 스냅샷에서 관측된 선수만 고를 수 있으며, CURRENT는 자료상의 관측 표시일 뿐 공식 최신 소속이 아닙니다. 역할 관측이 하나로 정해지지 않으면 빈칸으로 둡니다.</p>
       <div className="roster-workshop-teams">
         <RosterTeam side="BLUE" team={blueTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} />
         <RosterTeam side="RED" team={redTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} />

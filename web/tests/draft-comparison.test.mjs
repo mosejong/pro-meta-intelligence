@@ -14,13 +14,24 @@ test("draft A/B comparison: legality, teams, evidence identity, isolation and re
       replayDraftComparisonFile, evidenceIdentityOf, MAX_DRAFT_COMPARISON_BYTES } = await vite.ssrLoadModule("/app/draft-comparison.ts");
     const { DraftComparisonPanel } = await vite.ssrLoadModule("/app/draft-comparison-panel.tsx");
     const { applyDraftSelection } = await vite.ssrLoadModule("/app/draft-agent.ts");
+    const R = await vite.ssrLoadModule("/app/roster-scenario.ts");
     // Shipped public feed: a real RadarReport with opponent_prep teams.
     const liveReport = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
     assert.ok(liveReport.opponent_prep?.teams.length >= 3, "fixture needs at least three teams");
     const [teamA, teamB, teamC] = liveReport.opponent_prep.teams;
     const draft = (side = "BLUE", prefix = "champ") => Array.from({ length: 20 }, (_, i) => i)
       .reduce((all, i) => applyDraftSelection(all, i === 0 && prefix === "champ" ? "Wukong" : `${prefix}${i}`, [], side), []);
-    const input = (overrides = {}) => ({ report: liveReport, blueTeam: teamA, redTeam: teamB, selections: draft(), games: [], firstPickSide: "BLUE", ...overrides });
+    /** Live roster as the roster editor publishes it (here: the observed lineup of the pair). */
+    const rosterFor = (report, blue, red) => {
+      const teamIds = [blue.team_id, red.team_id].sort();
+      const index = R.buildRosterIndex(report.opponent_prep.teams);
+      return { basis: R.rosterBasis(report), teamIds, rosters: R.observedRosters(report.opponent_prep.teams, teamIds, index) };
+    };
+    const input = (overrides = {}) => {
+      const value = { report: liveReport, blueTeam: teamA, redTeam: teamB, selections: draft(), games: [], firstPickSide: "BLUE", ...overrides };
+      if (!("roster" in overrides)) value.roster = rosterFor(value.report, value.blueTeam ?? teamA, value.redTeam ?? teamB);
+      return value;
+    };
     const snap = (value) => { const result = build(value); assert.equal(result.ok, true, result.message); return result.snapshot; };
 
     await t.test("legal complete draft; aliases deduplicate and keep display ids", () => {
@@ -70,7 +81,11 @@ test("draft A/B comparison: legality, teams, evidence identity, isolation and re
       assert.deepEqual(diff.changes.map(c => c.before.kind), ["BAN", "PICK"]);
       assert.deepEqual(diff.teamChanges.map(c => [c.side, c.before.id, c.after.id]), [["BLUE", teamA.team_id, teamB.team_id], ["RED", teamB.team_id, teamA.team_id]]);
       value.blueTeam = teamC;
-      assert.equal(compare(a, snap(value)).teamChanges[0].after.id, teamC.team_id);
+      assert.equal(build(value).ok, false, "a roster for the previous pair is never reused for a new pair");
+      value.roster = rosterFor(liveReport, teamC, teamA);
+      const changedPair = compare(a, snap(value));
+      assert.equal(changedPair.teamChanges[0].after.id, teamC.team_id);
+      assert.equal(changedPair.roster.status, "PAIR_CHANGED");
     });
 
     await t.test("red-first B compares against blue-first A slot by slot", () => {
@@ -124,7 +139,7 @@ test("draft A/B comparison: legality, teams, evidence identity, isolation and re
       // The shared public analysis snapshot is reused as-is; the comparison-specific fields add no prediction.
       const comparisonFields = { ...parsed }; delete comparisonFields.analysis_snapshot; delete comparisonFields.boundary;
       const { boundary } = parsed;
-      assert.match(boundary, /no win probability/);
+      assert.match(boundary, /no win probability/i);
       assert.doesNotMatch(JSON.stringify(comparisonFields), /staged_champion|win_rate|probability|synergy_score|counter_score/);
       const replay = replayDraftComparison(exported.text);
       assert.equal(replay.ok, true, replay.message);
@@ -207,6 +222,118 @@ test("draft A/B comparison: legality, teams, evidence identity, isolation and re
       assert.equal(compare(a, replayedOther.a).ok, false, "never mixed with the current studio evidence");
     });
 
+    // ---- Virtual rosters (schema v2) ------------------------------------------------------
+    const index = R.buildRosterIndex(liveReport.opponent_prep.teams);
+    const foreignPlayer = [...index.players.values()].find((p) => p.source_team_id !== teamA.team_id && p.source_team_id !== teamB.team_id);
+    const withRoster = (live, mutate) => { const copy = structuredClone(live); mutate(copy.rosters); return copy; };
+
+    await t.test("roster: frozen A is detached; identical picks still surface roster slot changes by team and role", () => {
+      assert.ok(foreignPlayer, "feed needs a player from a third team");
+      const live = rosterFor(liveReport, teamA, teamB);
+      const before = JSON.stringify(liveReport.opponent_prep.teams);
+      const a = snap(input({ roster: live }));
+      // Later edits of the live roster object must not reach the frozen capture.
+      live.rosters[teamA.team_id].SUPPORT = { source_team_id: foreignPlayer.source_team_id, player_id: foreignPlayer.player_id };
+      live.rosters[teamB.team_id].TOP = null;
+      assert.notEqual(a.roster.teams[teamA.team_id].SUPPORT?.player_id, foreignPlayer.player_id, "A keeps the roster at freeze time");
+      const b = snap(input({ roster: live }));
+      const diff = compare(a, b);
+      assert.equal(diff.unchangedCount, 20, "picks/bans identical");
+      assert.equal(diff.roster.status, "COMPARED");
+      assert.deepEqual(diff.roster.changes.map((c) => [c.team_id, c.role]).sort(), [[teamA.team_id, "SUPPORT"], [teamB.team_id, "TOP"]].sort());
+      const support = diff.roster.changes.find((c) => c.role === "SUPPORT");
+      assert.equal(support.b.player_id, foreignPlayer.player_id);
+      assert.equal(support.b.player_name, foreignPlayer.player_name, "label from the report record");
+      assert.equal(JSON.stringify(liveReport.opponent_prep.teams), before, "source data is not mutated");
+      assert.equal(compare(a, a).roster.changes.length, 0);
+    });
+
+    await t.test("roster: side swap keeps meaning by team ID", () => {
+      const live = rosterFor(liveReport, teamA, teamB);
+      const a = snap(input({ roster: live }));
+      const edited = withRoster(live, (r) => { r[teamA.team_id].SUPPORT = { source_team_id: foreignPlayer.source_team_id, player_id: foreignPlayer.player_id }; });
+      const swapped = snap(input({ blueTeam: teamB, redTeam: teamA, roster: edited }));
+      const diff = compare(a, swapped);
+      assert.equal(diff.teamChanges.length, 2);
+      assert.deepEqual(diff.roster.changes.map((c) => [c.team_id, c.role]), [[teamA.team_id, "SUPPORT"]], "only the edited slot, not every slot of both sides");
+      assert.equal(compare(a, snap(input({ blueTeam: teamB, redTeam: teamA, roster: live }))).roster.changes.length, 0, "swap alone is not a roster change");
+    });
+
+    await t.test("roster: unknown, ambiguous, duplicate, wrong-pair and wrong-basis rosters rejected; empty slots allowed", () => {
+      const live = rosterFor(liveReport, teamA, teamB);
+      const fails = (roster) => build(input({ roster })).ok === false;
+      assert.ok(fails(withRoster(live, (r) => { r[teamA.team_id].MID = { source_team_id: teamA.team_id, player_id: "ghost-id" }; })));
+      const placed = Object.values(live.rosters[teamA.team_id]).find(Boolean);
+      assert.ok(placed, "observed lineup has at least one placed player");
+      const otherRole = R.ROSTER_ROLES.find((role) => live.rosters[teamB.team_id][role]?.player_id !== placed.player_id);
+      assert.ok(fails(withRoster(live, (r) => { r[teamB.team_id][otherRole] = { ...placed }; })), "duplicate player");
+      assert.ok(fails({ ...live, rosters: { [teamA.team_id]: live.rosters[teamA.team_id], [teamC.team_id]: R.emptySlots() } }), "other pair");
+      assert.ok(fails({ ...live, basis: { ...live.basis, cutoff: "other" } }), "other basis");
+      assert.ok(fails({ ...live, rosters: null }));
+      const empty = snap(input({ roster: { ...live, rosters: { [teamA.team_id]: R.emptySlots(), [teamB.team_id]: R.emptySlots() } } }));
+      assert.equal(Object.values(empty.roster.teams[teamA.team_id]).every((slot) => slot === null), true);
+    });
+
+    await t.test("roster: v2 export replays byte-identically and detects roster tampering", () => {
+      const live = rosterFor(liveReport, teamA, teamB);
+      const a = snap(input({ roster: live }));
+      const b = snap(input({ blueTeam: teamB, redTeam: teamA, roster: withRoster(live, (r) => {
+        r[teamB.team_id].SUPPORT = { source_team_id: foreignPlayer.source_team_id, player_id: foreignPlayer.player_id };
+      }) }));
+      const exported = serializeDraftComparison(liveReport, a, b);
+      assert.equal(exported.ok, true, exported.message);
+      const parsed = JSON.parse(exported.text);
+      assert.equal(parsed.schema_version, "2");
+      assert.equal(parsed.baseline_a.roster.evidence_scope, "CURRENT_REPORT_PLAYER_OBSERVATIONS");
+      assert.deepEqual(Object.keys(parsed.current_b.roster.rosters), [teamA.team_id, teamB.team_id].sort(), "keyed by team ID");
+      assert.match(parsed.boundary, /No win probability, player effect/);
+      assert.match(parsed.boundary, /no season-history file/);
+      assert.equal(parsed.comparison.roster.status, "COMPARED");
+      assert.ok(parsed.comparison.roster.changes.some((c) => c.team_id === teamB.team_id && c.role === "SUPPORT"));
+      const replay = replayDraftComparison(exported.text);
+      assert.equal(replay.ok, true, replay.message);
+      assert.equal(replay.schema, "2");
+      assert.equal(serializeDraftComparison(liveReport, replay.a, replay.b).text, exported.text, "byte-identical re-export");
+      const tamper = (fn) => { const copy = structuredClone(parsed); fn(copy); return replayDraftComparison(JSON.stringify(copy)); };
+      const sup = (c) => c.current_b.roster.rosters[teamB.team_id].SUPPORT;
+      for (const [label, fn] of [
+        ["ghost id", (c) => { sup(c).player_id = "ghost-id"; }],
+        ["renamed label", (c) => { sup(c).player_name = "Someone"; }],
+        ["swapped source team", (c) => { sup(c).source_team_id = teamA.team_id; }],
+        ["recorded diff", (c) => { c.comparison.roster.changes = []; }],
+        ["recorded status", (c) => { c.comparison.roster = { status: "NOT_RECORDED" }; }],
+        ["missing roster", (c) => { delete c.baseline_a.roster; }],
+        ["scope", (c) => { c.current_b.roster.evidence_scope = "SEASON_HISTORY"; }],
+        ["basis", (c) => { c.baseline_a.roster.basis.patch_id = "0.0"; }],
+        ["duplicate", (c) => { c.current_b.roster.rosters[teamA.team_id].SUPPORT = structuredClone(sup(c)); }],
+        ["unknown schema", (c) => { c.schema_version = "3"; }],
+      ]) assert.equal(tamper(fn).ok, false, label);
+      const emptyA = snap(input({ roster: { ...live, rosters: { [teamA.team_id]: R.emptySlots(), [teamB.team_id]: R.emptySlots() } } }));
+      assert.equal(replayDraftComparison(serializeDraftComparison(liveReport, emptyA, b).text).ok, true, "empty slots replay");
+      assert.equal(serializeDraftComparison(liveReport, snap(input({ roster: null })), b).ok, false, "v2 export requires both rosters");
+    });
+
+    await t.test("roster: legacy v1 file replays read-only with roster NOT_RECORDED (never filled from current)", () => {
+      const a = snap(input()); const b = snap(input({ selections: draft("BLUE", "next") }));
+      const v2 = JSON.parse(serializeDraftComparison(liveReport, a, b).text);
+      const v1 = structuredClone(v2);
+      v1.schema_version = "1";
+      delete v1.baseline_a.roster; delete v1.current_b.roster; delete v1.comparison.roster;
+      const replay = replayDraftComparison(JSON.stringify(v1));
+      assert.equal(replay.ok, true, replay.message);
+      assert.equal(replay.schema, "1");
+      assert.equal(replay.a.roster, null); assert.equal(replay.b.roster, null);
+      assert.equal(replay.comparison.roster.status, "NOT_RECORDED");
+      const smuggled = structuredClone(v1); smuggled.comparison.roster = v2.comparison.roster;
+      assert.equal(replayDraftComparison(JSON.stringify(smuggled)).ok, false, "v1 record must match the v1 recomputation");
+      const markup = renderToStaticMarkup(createElement(DraftComparisonPanel, { ...input({ roster: null }), nameOf: (id) => id }));
+      assert.match(markup, /가상 로스터를 확인하는 중/, "no live roster: nothing is frozen from defaults");
+      assert.match(markup, /<button type="button" disabled="">현재 완료 드래프트를 기준 A로 고정<\/button>/);
+      assert.match(markup, /이미 고정된 기준 A는 소급 변경되지 않습니다/);
+      assert.match(markup, /시즌 전체 선수 기록은 포함하지 않습니다/);
+      assert.match(markup, /선수 효과·승률·시너지·카운터 평가나 경기 시뮬레이션은 계산하지 않습니다/);
+    });
+
     await t.test("panel replay section is read-only, Korean and isolated from baseline/draft/autosave", async () => {
       const markup = renderToStaticMarkup(createElement(DraftComparisonPanel, { ...input(), nameOf: (id) => id }));
       assert.match(markup, /<h3 id="draft-comparison-replay-title">저장한 비교 파일 재현<\/h3>/);
@@ -217,7 +344,8 @@ test("draft A/B comparison: legality, teams, evidence identity, isolation and re
       const source = await readFile(new URL("../app/draft-comparison-panel.tsx", import.meta.url), "utf8");
       const handler = source.match(/async function openReplay[\s\S]*?\r?\n {2}\}\r?\n/)?.[0];
       assert.ok(handler, "replay handler found");
-      assert.doesNotMatch(handler, /setBaseline|writeLocalDraft|onChange\(|selections/, "replay never replaces baseline A or the draft");
+      assert.doesNotMatch(handler, /setBaseline|writeLocalDraft|onChange\(|selections|roster|localStorage/i, "replay never replaces baseline A, the draft or the roster");
+      assert.doesNotMatch(source, /localStorage|onRosterChange|roster-workshop/, "panel cannot write the roster or its device copy");
       assert.match(handler, /readingRef\.current\) \{ input\.value = ""; return; \}/, "duplicate submission ignored");
       assert.match(handler, /finally \{[\s\S]*input\.value = "";/, "input is reset after every attempt");
       assert.doesNotMatch(source, /draft-session|use-draft-save|draft-autosave/, "panel has no access to autosave");

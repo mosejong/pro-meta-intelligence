@@ -109,41 +109,62 @@ export function parseDraftSession(text: string): DraftSessionResult {
 }
 
 // IndexedDB accommodates the complete public snapshot without localStorage's small quota.
-function openDraftDatabase(): Promise<IDBDatabase> {
+export const DRAFT_STORAGE_TIMEOUT_MS = 10_000;
+
+function openDraftDatabase(timeoutMs: number): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("pro-meta-draft", 1);
-    request.onupgradeneeded = () => request.result.createObjectStore("sessions");
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+    let settled = false;
+    const fail = (error: unknown) => { if (!settled) { settled = true; clearTimeout(timer); reject(error); } };
+    const timer = setTimeout(() => fail(new Error("Draft storage open timed out")), timeoutMs);
+    try {
+      const request = indexedDB.open("pro-meta-draft", 1);
+      request.onupgradeneeded = () => {
+        if (settled) { request.transaction?.abort(); return; }
+        request.result.createObjectStore("sessions");
+      };
+      request.onsuccess = () => {
+        if (settled) { request.result.close(); return; }
+        settled = true; clearTimeout(timer); resolve(request.result);
+      };
+      request.onerror = () => fail(request.error);
+      request.onblocked = () => fail(new Error("Draft storage is blocked by another connection"));
+    } catch (error) { fail(error); }
   });
 }
 
-export async function readLocalDraft(): Promise<string | null> {
-  const database = await openDraftDatabase();
+export async function readLocalDraft(timeoutMs = DRAFT_STORAGE_TIMEOUT_MS): Promise<string | null> {
+  const database = await openDraftDatabase(timeoutMs);
   try {
     return await new Promise((resolve, reject) => {
-      const request = database.transaction("sessions", "readonly").objectStore("sessions").get("current");
-      request.onsuccess = () => resolve(typeof request.result === "string" ? request.result : null);
-      request.onerror = () => reject(request.error);
+      const transaction = database.transaction("sessions", "readonly");
+      const timer = setTimeout(() => { reject(new Error("Draft storage read timed out")); transaction.abort(); }, timeoutMs);
+      let request: IDBRequest;
+      try { request = transaction.objectStore("sessions").get("current"); }
+      catch (error) { clearTimeout(timer); reject(error); transaction.abort(); return; }
+      request.onsuccess = () => { clearTimeout(timer); resolve(typeof request.result === "string" ? request.result : null); };
+      request.onerror = () => { clearTimeout(timer); reject(request.error); };
+      transaction.onabort = () => { clearTimeout(timer); reject(transaction.error ?? new Error("Draft storage read aborted")); };
     });
   } finally { database.close(); }
 }
 
-async function persistLocalDraft(text: string): Promise<void> {
-  const database = await openDraftDatabase();
+async function persistLocalDraft(text: string, timeoutMs: number): Promise<void> {
+  const database = await openDraftDatabase(timeoutMs);
   try {
     await new Promise<void>((resolve, reject) => {
       const transaction = database.transaction("sessions", "readwrite");
-      transaction.objectStore("sessions").put(text, "current");
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-      transaction.onabort = () => reject(transaction.error);
+      const timer = setTimeout(() => { reject(new Error("Draft storage write timed out")); transaction.abort(); }, timeoutMs);
+      try { transaction.objectStore("sessions").put(text, "current"); }
+      catch (error) { clearTimeout(timer); reject(error); transaction.abort(); return; }
+      transaction.oncomplete = () => { clearTimeout(timer); resolve(); };
+      transaction.onerror = () => { clearTimeout(timer); reject(transaction.error); };
+      transaction.onabort = () => { clearTimeout(timer); reject(transaction.error); };
     });
   } finally { database.close(); }
 }
 
 let pendingWrite: Promise<void> = Promise.resolve();
-export function writeLocalDraft(text: string): Promise<void> {
-  pendingWrite = pendingWrite.catch(() => undefined).then(() => persistLocalDraft(text));
+export function writeLocalDraft(text: string, timeoutMs = DRAFT_STORAGE_TIMEOUT_MS): Promise<void> {
+  pendingWrite = pendingWrite.catch(() => undefined).then(() => persistLocalDraft(text, timeoutMs));
   return pendingWrite;
 }

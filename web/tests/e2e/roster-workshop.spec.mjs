@@ -114,6 +114,141 @@ test("edit, move, device restore and side swap keep each team's virtual roster",
   expect(errors).toEqual([]);
 });
 
+const comparisonRegion = (page) => page.getByRole("region", { name: "드래프트 A/B 비교", exact: true });
+const rosterTable = (page) => comparisonRegion(page).locator(".draft-comparison-body").first().locator("table").filter({ hasText: "변경된 로스터 슬롯" });
+
+async function finishDraft(page) {
+  for (let i = 0; i < 20; i += 1) {
+    await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
+    await page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ }).click();
+    await expect(progress(page)).toHaveAttribute("value", String(i + 1));
+  }
+}
+
+async function freezeA(page) {
+  const freeze = comparisonRegion(page).getByRole("button", { name: "현재 완료 드래프트를 기준 A로 고정", exact: true });
+  await expect(freeze).toBeEnabled();
+  await freeze.click();
+  await expect(comparisonRegion(page)).toContainText("고정 당시 가상 로스터 포함");
+  await expect(comparisonRegion(page)).toContainText("로스터 동일");
+}
+
+test("roster frozen into A, edited for B, exported as v2 and replayed read-only", async ({ page }, testInfo) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await openStudio(page);
+  await finishDraft(page);
+  await freezeA(page);
+  const comparison = comparisonRegion(page);
+
+  await openRoster(page);
+  const blueName = (await page.locator(".roster-team.blue h3").textContent()).replace(/^BLUE/, "");
+  const redName = (await page.locator(".roster-team.red h3").textContent()).replace(/^RED/, "");
+  const foreign = await foreignOption(page, "blue", redName);
+  expect(foreign).not.toBeNull();
+  await slot(page, "blue", "SUPPORT").selectOption(foreign);
+  // Picks/bans are identical; the roster change alone is shown by side and role.
+  await expect(comparison).toContainText("동일 20개");
+  await expect(rosterTable(page)).toContainText("변경된 로스터 슬롯 1개");
+  const supportRow = rosterTable(page).locator("tbody tr").first();
+  await expect(supportRow.locator("th")).toHaveText(`블루 ${blueName} 서포터`);
+  await expect(supportRow.locator("td").nth(1)).toContainText("가상 변경");
+  await expect(supportRow.locator("td").nth(0)).not.toContainText("가상 변경");
+
+  // A second slot edit (clear to empty) updates B only.
+  const blueTop = await slot(page, "blue", "TOP").inputValue();
+  if (blueTop) {
+    await slot(page, "blue", "TOP").selectOption("");
+    await expect(rosterTable(page)).toContainText("변경된 로스터 슬롯 2개");
+    await expect(rosterTable(page).locator("tbody tr").filter({ hasText: "탑" }).locator("td").nth(1)).toHaveText("빈칸 · 미배정");
+  }
+  const expectedChanges = blueTop ? 2 : 1;
+
+  const downloadPromise = page.waitForEvent("download");
+  await comparison.getByRole("button", { name: "A/B 비교 JSON 저장", exact: true }).click();
+  const filePath = testInfo.outputPath("roster-comparison.json");
+  await (await downloadPromise).saveAs(filePath);
+  const artifact = JSON.parse(await readFile(filePath, "utf8"));
+  expect(artifact.schema_version).toBe("2");
+  const blueId = artifact.baseline_a.blue_team.team_id;
+  const foreignId = JSON.parse(foreign)[1];
+  expect(artifact.current_b.roster.rosters[blueId].SUPPORT.player_id).toBe(foreignId);
+  expect(artifact.baseline_a.roster.rosters[blueId].SUPPORT?.player_id ?? null).not.toBe(foreignId);
+  expect(artifact.baseline_a.roster.evidence_scope).toBe("CURRENT_REPORT_PLAYER_OBSERVATIONS");
+  expect(artifact.comparison.roster.changes).toHaveLength(expectedChanges);
+
+  // Read-only replay: draft, roster editor, its device copy and baseline A stay as they are.
+  const live = { blue: await values(page, "blue"), red: await values(page, "red") };
+  const stored = await page.evaluate(() => localStorage.getItem("pro-meta-roster-scenario-v1"));
+  const unchanged = async () => {
+    await expect(progress(page)).toHaveAttribute("value", "20");
+    expect({ blue: await values(page, "blue"), red: await values(page, "red") }).toEqual(live);
+    expect(await page.evaluate(() => localStorage.getItem("pro-meta-roster-scenario-v1"))).toBe(stored);
+    await expect(rosterTable(page)).toContainText(`변경된 로스터 슬롯 ${expectedChanges}개`);
+    await expect(comparison.getByRole("button", { name: "현재 B로 기준 A 교체", exact: true })).toBeEnabled();
+  };
+  const replaySection = comparison.locator(".draft-comparison-replay");
+  const fileInput = comparison.locator('input[type="file"]');
+  await fileInput.setInputFiles(filePath);
+  await expect(replaySection.getByRole("status").filter({ hasText: "기록된 결과와 일치" })).toBeVisible();
+  await expect(replaySection).toContainText(`변경된 로스터 슬롯 ${expectedChanges}개`);
+  await unchanged();
+
+  const mutate = (fn) => { const copy = structuredClone(artifact); fn(copy); return Buffer.from(JSON.stringify(copy)); };
+  await fileInput.setInputFiles({ name: "ghost.json", mimeType: "application/json",
+    buffer: mutate((file) => { file.current_b.roster.rosters[blueId].SUPPORT.player_id = "ghost-id"; }) });
+  await expect(replaySection.getByRole("alert")).toContainText("가상 로스터");
+  await expect(replaySection).not.toContainText("변경된 로스터 슬롯");
+  await unchanged();
+  await fileInput.setInputFiles({ name: "future.json", mimeType: "application/json", buffer: mutate((file) => { file.schema_version = "9"; }) });
+  await expect(replaySection.getByRole("alert")).toContainText("지원하는 드래프트 비교 파일이 아닙니다");
+  await unchanged();
+
+  // A legacy v1 file replays with roster "기록 없음", never filled from the current roster.
+  await fileInput.setInputFiles({ name: "legacy-v1.json", mimeType: "application/json", buffer: mutate((file) => {
+    file.schema_version = "1";
+    delete file.baseline_a.roster; delete file.current_b.roster; delete file.comparison.roster;
+  }) });
+  await expect(replaySection.getByRole("status").filter({ hasText: "기록된 결과와 일치" })).toBeVisible();
+  await expect(replaySection).toContainText("이전 형식(v1)");
+  await expect(replaySection).toContainText("로스터: 기록 없음");
+  await expect(replaySection).not.toContainText("변경된 로스터 슬롯");
+  await unchanged();
+  await comparison.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: testInfo.outputPath("roster-comparison.png"), fullPage: true });
+  expect(errors).toEqual([]);
+});
+
+test("after freezing A, a side swap keeps the roster change attributed to the same team", async ({ page }, testInfo) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await openStudio(page);
+  await finishDraft(page);
+  await freezeA(page);
+  await openRoster(page);
+  const blueName = (await page.locator(".roster-team.blue h3").textContent()).replace(/^BLUE/, "");
+  const redName = (await page.locator(".roster-team.red h3").textContent()).replace(/^RED/, "");
+  const foreign = await foreignOption(page, "blue", redName);
+  await slot(page, "blue", "SUPPORT").selectOption(foreign);
+  await expect(rosterTable(page)).toContainText("변경된 로스터 슬롯 1개");
+
+  await page.getByRole("button", { name: "현재 세트 초기화", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "초기화", exact: true }).click();
+  await expect(progress(page)).toHaveAttribute("value", "0");
+  await page.getByRole("button", { name: "블루와 레드 팀 교체", exact: true }).click();
+  await expect(page.locator(".roster-team.red h3")).toContainText(blueName);
+  await expect(slot(page, "red", "SUPPORT")).toHaveValue(foreign);
+  await finishDraft(page);
+
+  const comparison = comparisonRegion(page);
+  await expect(comparison).toContainText(`블루: ${blueName} → ${redName}`);
+  await expect(rosterTable(page)).toContainText("변경된 로스터 슬롯 1개");
+  await expect(rosterTable(page).locator("tbody tr").first().locator("th")).toHaveText(`레드 ${blueName} 서포터 (A에서는 블루)`);
+  await comparison.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: testInfo.outputPath("roster-comparison-swapped.png"), fullPage: true });
+  expect(errors).toEqual([]);
+});
+
 test("roster files round-trip, invalid files are rejected and the draft is never replaced", async ({ page }, testInfo) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));

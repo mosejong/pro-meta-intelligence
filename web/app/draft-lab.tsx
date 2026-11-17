@@ -33,6 +33,8 @@ import { DraftChampionInfo, type ChampionFocus } from "./draft-champion-info";
 import { DraftComparisonPanel } from "./draft-comparison-panel";
 import { PartnershipPlacement } from "./partnership-placement";
 import { RosterWorkshop } from "./roster-workshop";
+import { SimulationReadinessPanel } from "./simulation-readiness-panel";
+import type { LiveRoster } from "./roster-comparison";
 import { DEFAULT_LOCALE, LanguageSelector, useLocale, type Locale, type MessageKey } from "./locale";
 import "./draft-workspace.css";
 import "./draft-studio.css";
@@ -219,6 +221,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [inspected, setInspected] = useState<InspectedSlot | null>(null);
   // Remount key for the A/B comparison panel; its memory-only baseline A is dropped on import/restore.
   const [comparisonEpoch, setComparisonEpoch] = useState(0);
+  // Live virtual roster published by the roster editor (tagged with its basis and pair); null until restored.
+  const [liveRoster, setLiveRoster] = useState<LiveRoster | null>(null);
   const blueTeam = teams.find((team) => team.team_id === blueTeamId) ?? null;
   const redTeam = teams.find((team) => team.team_id === redTeamId) ?? null;
   const turn = nextDraftTurn(selections, firstPickSide);
@@ -499,10 +503,11 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <TeamChooser label="RED TEAM" teams={teams} value={redTeamId} onChange={(id) => changeTeam("RED", id)} disabled={games.length > 0 || hasCurrentWork} locale={locale} />
       {(hasCurrentWork || games.length > 0) && <p className="draft-setup-hint">{t("draft.setupHint")}</p>}
     </section>
-    {/* Virtual roster editor: separate file/storage; does not change the draft, baseline A or analysis. */}
+    {/* Virtual roster editor: separate file/storage; never changes the draft or analysis. Its live roster
+        is the A/B comparison's current B; an already frozen A is not changed retroactively. */}
     <RosterWorkshop report={report} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={!canSelect}
       selections={selections} previousPicks={previousPicks} focusChampionId={championFocus?.champion_id ?? null}
-      publicationRoot={productRootHref(currentSpace)} />
+      publicationRoot={productRootHref(currentSpace)} onRosterChange={setLiveRoster} />
 
     <section className="draft-series" aria-label={t("draft.seriesLabel")} lang={lang.ui}>
       <label className="draft-first-selection">{t("draft.firstPick")}
@@ -561,7 +566,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       </section>
       <TeamDraftColumn side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={setInspected} />
     </section>
-    <DraftComparisonPanel key={comparisonEpoch} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} nameOf={nameOf} />
+    <DraftComparisonPanel key={comparisonEpoch} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} />
+    {/* Simulation input gate: explicit champion roles + current rosters; no outcome is computed. */}
+    <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} disabled={!canSelect} />
     </div>
 
     <div id="studio-panel-details" className="studio-details-panel" role="tabpanel" aria-labelledby="studio-panel-details-tab" hidden={studioTab !== "DETAILS"}>

@@ -2,6 +2,15 @@ import { championAssetId } from "./champion-assets";
 import { applyDraftSelection, completeFearlessGame, DRAFT_MODEL_VERSION, fearlessLocks, type DraftGame, type DraftSelection, type DraftSide } from "./draft-agent";
 import { MAX_DRAFT_FILE_BYTES } from "./draft-session";
 import { isRadarReport, type OpponentTeam, type RadarReport } from "./radar-types";
+import {
+  captureRoster,
+  compareRosterCaptures,
+  parseRosterExport,
+  rosterComparisonRecord,
+  rosterExport,
+  type RosterCapture,
+  type RosterComparison,
+} from "./roster-comparison";
 
 export type DraftComparisonInput = {
   report: RadarReport;
@@ -10,6 +19,11 @@ export type DraftComparisonInput = {
   selections: DraftSelection[];
   games: DraftGame[];
   firstPickSide: DraftSide;
+  /**
+   * Virtual roster for this pair (`{ basis, rosters }` keyed by team ID). Omitted/null means
+   * "not recorded" (legacy v1 files); it is never filled from default observations here.
+   */
+  roster?: { basis: unknown; rosters: unknown } | null;
 };
 
 /** Comparison key only. Display keeps the Data Dragon asset id so nameOf() resolves it. */
@@ -28,6 +42,8 @@ export type DraftComparisonSnapshot = {
   games: DraftGame[];
   selections: DraftSelection[];
   locks: string[];
+  /** Detached roster at capture time; null when the source did not record one. */
+  roster: RosterCapture | null;
 };
 export type DraftSnapshotResult = { ok: true; snapshot: DraftComparisonSnapshot } | { ok: false; message: string };
 
@@ -68,7 +84,7 @@ function detachSelection(selection: DraftSelection): DraftSelection {
 
 /** Capture detached values only. No report, team, game, or selection references escape. */
 export function buildDraftComparisonSnapshot(input: DraftComparisonInput): DraftSnapshotResult {
-  const { report, blueTeam, redTeam, selections, games, firstPickSide } = input;
+  const { report, blueTeam, redTeam, selections, games, firstPickSide, roster } = input;
   if (!blueTeam?.team_id.trim() || !redTeam?.team_id.trim() || blueTeam.team_id === redTeam.team_id) {
     return { ok: false, message: "서로 다른 블루·레드 팀을 선택하세요." };
   }
@@ -103,6 +119,12 @@ export function buildDraftComparisonSnapshot(input: DraftComparisonInput): Draft
     }
     replay = next;
   }
+  let rosterCapture: RosterCapture | null = null;
+  if (roster) {
+    const captured = captureRoster(report, [blue.team_id, red.team_id], roster.basis, roster.rosters);
+    if (!captured.ok) return { ok: false, message: `가상 로스터: ${captured.message}` };
+    rosterCapture = captured.capture;
+  }
   const lockIds = new Map<string, string>();
   for (const id of locks) if (!lockIds.has(keyOf(id))) lockIds.set(keyOf(id), championAssetId(id));
   return { ok: true, snapshot: {
@@ -114,6 +136,7 @@ export function buildDraftComparisonSnapshot(input: DraftComparisonInput): Draft
     games: history.map((game) => ({ blue_team_id: game.blue_team_id, red_team_id: game.red_team_id, selections: game.selections.map(detachSelection) })),
     selections: replay.map(detachSelection),
     locks: [...lockIds.entries()].sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0)).map(([, id]) => id),
+    roster: rosterCapture,
   } };
 }
 
@@ -128,6 +151,8 @@ export type DraftComparisonResult =
     firstPickChanged: boolean;
     addedLocks: string[];
     removedLocks: string[];
+    /** By team ID and role; NOT_RECORDED when either side has no roster record. */
+    roster: RosterComparison;
   };
 
 export function compareDraftSnapshots(a: DraftComparisonSnapshot, b: DraftComparisonSnapshot): DraftComparisonResult {
@@ -149,28 +174,32 @@ export function compareDraftSnapshots(a: DraftComparisonSnapshot, b: DraftCompar
     firstPickChanged: a.firstPickSide !== b.firstPickSide,
     addedLocks: b.locks.filter((id) => !aLocks.has(keyOf(id))),
     removedLocks: a.locks.filter((id) => !bLocks.has(keyOf(id))),
+    roster: compareRosterCaptures(a.roster, b.roster),
   };
 }
 
 // ---- Reproducible export -------------------------------------------------------------
 
 export const DRAFT_COMPARISON_ARTIFACT = "public-draft-comparison";
-export const DRAFT_COMPARISON_SCHEMA = "1";
+/** v2 adds both rosters and their comparison. v1 files still replay read-only with no roster record. */
+export const DRAFT_COMPARISON_SCHEMA = "2";
+export const LEGACY_DRAFT_COMPARISON_SCHEMA = "1";
 export const MAX_DRAFT_COMPARISON_BYTES = MAX_DRAFT_FILE_BYTES;
-const COMPARISON_BOUNDARY = "Public-evidence A/B draft comparison for human review. Lists pick/ban, side and Fearless lock differences only; no win probability, synergy, counter or simulation output.";
+const COMPARISON_BOUNDARY = "Public-evidence A/B draft comparison for human review. Lists pick/ban, side, Fearless lock and virtual roster slot differences only. Rosters are checked against the embedded analysis snapshot's player observations only (no season-history file). No win probability, player effect, synergy, counter or simulation output.";
 
-function exportInput(snapshot: DraftComparisonSnapshot) {
+function exportInput(snapshot: DraftComparisonSnapshot & { roster: RosterCapture }) {
   return {
     blue_team: { team_id: snapshot.teams.BLUE.id, team_name: snapshot.teams.BLUE.name },
     red_team: { team_id: snapshot.teams.RED.id, team_name: snapshot.teams.RED.name },
     first_pick_side: snapshot.firstPickSide,
     previous_games: snapshot.games,
     selections: snapshot.selections,
+    roster: rosterExport(snapshot.roster),
   };
 }
 
-function comparisonRecord(diff: Extract<DraftComparisonResult, { ok: true }>) {
-  return {
+function comparisonRecord(diff: Extract<DraftComparisonResult, { ok: true }>, schema: string) {
+  const base = {
     changes: diff.changes.map(({ before, after }) => ({ side: before.side, kind: before.kind, slot: before.slot, a: before.champion_id, b: after.champion_id })),
     unchanged_count: diff.unchangedCount,
     team_changes: diff.teamChanges.map(({ side, before, after }) => ({ side, a: before.id, b: after.id })),
@@ -178,6 +207,7 @@ function comparisonRecord(diff: Extract<DraftComparisonResult, { ok: true }>) {
     added_locks: diff.addedLocks,
     removed_locks: diff.removedLocks,
   };
+  return schema === LEGACY_DRAFT_COMPARISON_SCHEMA ? base : { ...base, roster: rosterComparisonRecord(diff.roster) };
 }
 
 export type DraftComparisonExport = { ok: true; text: string; bytes: number } | { ok: false; message: string };
@@ -190,6 +220,7 @@ export function serializeDraftComparison(report: RadarReport, a: DraftComparison
   if (evidenceIdentityOf(report) !== a.evidenceIdentity) return { ok: false, message: "현재 분석 데이터가 기준 A와 다릅니다. 기준 A를 교체한 뒤 저장하세요." };
   const diff = compareDraftSnapshots(a, b);
   if (!diff.ok) return { ok: false, message: diff.message };
+  if (!a.roster || !b.roster) return { ok: false, message: "기준 A와 현재 B 모두 가상 로스터가 기록되어야 저장할 수 있습니다." };
   const text = JSON.stringify({
     artifact_type: DRAFT_COMPARISON_ARTIFACT,
     schema_version: DRAFT_COMPARISON_SCHEMA,
@@ -199,9 +230,9 @@ export function serializeDraftComparison(report: RadarReport, a: DraftComparison
     cutoff: report.cutoff,
     evidence: { source_versions: report.opponent_prep?.evidence_index.source_versions ?? report.evidence_index.source_versions },
     analysis_snapshot: report,
-    baseline_a: exportInput(a),
-    current_b: exportInput(b),
-    comparison: comparisonRecord(diff),
+    baseline_a: exportInput({ ...a, roster: a.roster }),
+    current_b: exportInput({ ...b, roster: b.roster }),
+    comparison: comparisonRecord(diff, DRAFT_COMPARISON_SCHEMA),
     boundary: COMPARISON_BOUNDARY,
   }, null, 2);
   const bytes = new TextEncoder().encode(text).byteLength;
@@ -210,7 +241,7 @@ export function serializeDraftComparison(report: RadarReport, a: DraftComparison
 }
 
 export type DraftComparisonReplay =
-  | { ok: true; a: DraftComparisonSnapshot; b: DraftComparisonSnapshot; comparison: Extract<DraftComparisonResult, { ok: true }> }
+  | { ok: true; schema: string; a: DraftComparisonSnapshot; b: DraftComparisonSnapshot; comparison: Extract<DraftComparisonResult, { ok: true }> }
   | { ok: false; message: string };
 
 /** File entry point: rejects oversize files from metadata before reading their contents. */
@@ -227,8 +258,10 @@ export function replayDraftComparison(text: string): DraftComparisonReplay {
   if (new TextEncoder().encode(text).byteLength > MAX_DRAFT_COMPARISON_BYTES) return { ok: false, message: "비교 파일은 16MB 이하여야 합니다." };
   let value: unknown;
   try { value = JSON.parse(text); } catch { return { ok: false, message: "JSON 파일을 읽을 수 없습니다." }; }
-  if (!isObject(value) || value.artifact_type !== DRAFT_COMPARISON_ARTIFACT || value.schema_version !== DRAFT_COMPARISON_SCHEMA ||
+  if (!isObject(value) || value.artifact_type !== DRAFT_COMPARISON_ARTIFACT ||
+    (value.schema_version !== DRAFT_COMPARISON_SCHEMA && value.schema_version !== LEGACY_DRAFT_COMPARISON_SCHEMA) ||
     value.format !== "HARD_FEARLESS_5_BAN_5_PICK") return { ok: false, message: "지원하는 드래프트 비교 파일이 아닙니다." };
+  const schema = value.schema_version === LEGACY_DRAFT_COMPARISON_SCHEMA ? LEGACY_DRAFT_COMPARISON_SCHEMA : DRAFT_COMPARISON_SCHEMA;
   if (value.model_version !== DRAFT_MODEL_VERSION) return { ok: false, message: "분석 모델 버전이 달라 재현할 수 없습니다." };
   const report = value.analysis_snapshot;
   if (!isRadarReport(report) || !report.opponent_prep) return { ok: false, message: "분석 데이터가 없거나 손상되었습니다." };
@@ -242,7 +275,14 @@ export function replayDraftComparison(text: string): DraftComparisonReplay {
     const teams = report.opponent_prep!.teams;
     const blueTeam = teams.find((team) => team.team_id === (raw.blue_team as Record<string, unknown>).team_id) ?? null;
     const redTeam = teams.find((team) => team.team_id === (raw.red_team as Record<string, unknown>).team_id) ?? null;
-    return buildDraftComparisonSnapshot({ report, blueTeam, redTeam,
+    // v1 recorded no roster: it stays "not recorded" and is never filled from current observations.
+    let roster: DraftComparisonInput["roster"] = null;
+    if (schema === DRAFT_COMPARISON_SCHEMA) {
+      const parsed = parseRosterExport(raw.roster, report);
+      if (!parsed.ok) return { ok: false, message: `가상 로스터: ${parsed.message}` };
+      roster = { basis: parsed.basis, rosters: parsed.rosters };
+    }
+    return buildDraftComparisonSnapshot({ report, blueTeam, redTeam, roster,
       selections: raw.selections as DraftSelection[], games: raw.previous_games as DraftGame[], firstPickSide: raw.first_pick_side as DraftSide });
   };
   const a = replayInput(value.baseline_a);
@@ -251,8 +291,8 @@ export function replayDraftComparison(text: string): DraftComparisonReplay {
   if (!b.ok) return { ok: false, message: `현재 B: ${b.message}` };
   const comparison = compareDraftSnapshots(a.snapshot, b.snapshot);
   if (!comparison.ok) return comparison;
-  if (JSON.stringify(comparisonRecord(comparison)) !== JSON.stringify(value.comparison)) {
+  if (JSON.stringify(comparisonRecord(comparison, schema)) !== JSON.stringify(value.comparison)) {
     return { ok: false, message: "기록된 비교 결과가 입력을 다시 계산한 결과와 다릅니다." };
   }
-  return { ok: true, a: a.snapshot, b: b.snapshot, comparison };
+  return { ok: true, schema, a: a.snapshot, b: b.snapshot, comparison };
 }
