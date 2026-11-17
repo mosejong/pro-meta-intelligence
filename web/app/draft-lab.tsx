@@ -500,7 +500,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       {(hasCurrentWork || games.length > 0) && <p className="draft-setup-hint">{t("draft.setupHint")}</p>}
     </section>
     {/* Virtual roster editor: separate file/storage; does not change the draft, baseline A or analysis. */}
-    <RosterWorkshop report={report} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={!canSelect} />
+    <RosterWorkshop report={report} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={!canSelect}
+      selections={selections} previousPicks={previousPicks} focusChampionId={championFocus?.champion_id ?? null} />
 
     <section className="draft-series" aria-label={t("draft.seriesLabel")} lang={lang.ui}>
       <label className="draft-first-selection">{t("draft.firstPick")}

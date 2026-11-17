@@ -30,7 +30,30 @@ main.draft-lab.draft-studio .roster-workshop-file { position: relative; display:
 main.draft-lab.draft-studio .roster-workshop-file input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 main.draft-lab.draft-studio .roster-workshop-file:focus-within { outline: 2px solid #f0d6ae; outline-offset: 3px; }
 main.draft-lab.draft-studio .roster-workshop [role="alert"] { color: var(--draft-red); }
+/* Read-only player evidence: collapsed by default, wraps instead of scrolling sideways. */
+main.draft-lab.draft-studio .player-pool { padding: 6px 10px; border: 1px solid var(--studio-line); background: var(--studio-panel); }
+main.draft-lab.draft-studio .player-pool > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; min-height: 36px; cursor: pointer; color: var(--studio-text); font-weight: 600; }
+main.draft-lab.draft-studio .player-pool > summary small { font-weight: 400; color: var(--studio-muted); }
+main.draft-lab.draft-studio .player-pool > summary:focus-visible { outline: 2px solid #f0d6ae; outline-offset: 3px; }
+main.draft-lab.draft-studio .player-pool-note { margin: 4px 0 8px; }
+main.draft-lab.draft-studio .player-pool-teams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+main.draft-lab.draft-studio .player-pool-team { min-width: 0; }
+main.draft-lab.draft-studio .player-pool-team h4 { display: flex; gap: 8px; align-items: baseline; margin: 0 0 6px; font-size: 12px; color: var(--studio-text); }
+main.draft-lab.draft-studio .player-pool-team h4 span { font-size: 11px; color: var(--draft-blue); }
+main.draft-lab.draft-studio .player-pool-team.red h4 span { color: var(--draft-red); }
+main.draft-lab.draft-studio .player-pool-team > ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+main.draft-lab.draft-studio .player-pool-team > ul > li { min-width: 0; padding: 4px 6px; border-left: 2px solid var(--studio-line); overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .player-pool-role { display: inline-block; min-width: 40px; font-weight: 600; color: var(--studio-text); }
+main.draft-lab.draft-studio .player-pool-head strong { color: var(--studio-text); }
+main.draft-lab.draft-studio .player-pool-flags { display: flex; flex-wrap: wrap; gap: 2px 8px; }
+main.draft-lab.draft-studio .player-pool-flags em { font-style: normal; color: var(--studio-action); }
+main.draft-lab.draft-studio .player-pool-champs { display: flex; flex-wrap: wrap; gap: 4px; margin: 2px 0 0; padding: 0; list-style: none; }
+main.draft-lab.draft-studio .player-pool-champs li { padding: 1px 6px; border: 1px solid var(--studio-line); border-radius: 3px; color: var(--studio-text); }
+main.draft-lab.draft-studio .player-pool-champs li:not([data-state="AVAILABLE"]) { color: var(--studio-muted); text-decoration: line-through; text-decoration-thickness: 1px; }
+main.draft-lab.draft-studio .player-pool-champs li small { text-decoration: none; }
+main.draft-lab.draft-studio .player-pool-focus { color: var(--studio-text); }
 @media (max-width: 720px) {
   main.draft-lab.draft-studio .roster-workshop-teams { grid-template-columns: minmax(0, 1fr); }
+  main.draft-lab.draft-studio .player-pool-teams { grid-template-columns: minmax(0, 1fr); }
   main.draft-lab.draft-studio .roster-slot-flags { padding-left: 0; }
 }

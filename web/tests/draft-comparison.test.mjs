@@ -215,7 +215,7 @@ test("draft A/B comparison: legality, teams, evidence identity, isolation and re
       assert.match(markup, /읽기 전용/);
       // Static evidence only (no DOM runtime here): the replay path cannot touch baseline A or studio state.
       const source = await readFile(new URL("../app/draft-comparison-panel.tsx", import.meta.url), "utf8");
-      const handler = source.match(/async function openReplay[\s\S]*?\n {2}\}\n/)?.[0];
+      const handler = source.match(/async function openReplay[\s\S]*?\r?\n {2}\}\r?\n/)?.[0];
       assert.ok(handler, "replay handler found");
       assert.doesNotMatch(handler, /setBaseline|writeLocalDraft|onChange\(|selections/, "replay never replaces baseline A or the draft");
       assert.match(handler, /readingRef\.current\) \{ input\.value = ""; return; \}/, "duplicate submission ignored");

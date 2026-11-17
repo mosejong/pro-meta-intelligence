@@ -70,7 +70,7 @@ test("edit, move, device restore and side swap keep each team's virtual roster",
   page.on("pageerror", (error) => errors.push(error.message));
   await openStudio(page);
   await openRoster(page);
-  await expect(roster(page).getByRole("note")).toContainText("현재 분석/추천/시뮬레이션에는 로스터 변경이 아직 반영되지 않습니다");
+  await expect(roster(page).getByRole("note")).toContainText("기존 추천 순위·예측/시뮬레이션에는 로스터 변경이 아직 반영되지 않습니다");
   await expect(roster(page).getByRole("note")).toContainText("공식 최신 소속이 아닙니다");
   const blueName = (await page.locator(".roster-team.blue h3").textContent()).replace(/^BLUE/, "");
   const redName = (await page.locator(".roster-team.red h3").textContent()).replace(/^RED/, "");

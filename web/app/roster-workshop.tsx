@@ -22,6 +22,8 @@ import {
   type RosterRole,
   type RosterState,
 } from "./roster-scenario";
+import { PlayerPoolPanel } from "./player-pool-panel";
+import { poolBasis, type PoolBasis, type PoolSelection } from "./player-pool-evidence";
 import "./roster-workshop.css";
 
 /** Device copy of the latest edited roster scenario (small, separate from the draft session). */
@@ -36,24 +38,34 @@ type RosterWorkshopProps = {
   blueTeam: OpponentTeam | null;
   redTeam: OpponentTeam | null;
   disabled: boolean;
+  /** Live draft state, used only for the evidence panel's lock labels. */
+  selections?: readonly PoolSelection[];
+  previousPicks?: readonly string[];
+  focusChampionId?: string | null;
 };
+
+const NO_SELECTIONS: readonly PoolSelection[] = [];
+const NO_PICKS: readonly string[] = [];
 
 /**
  * Collapsible virtual roster editor next to the team setup. Remounts per snapshot basis and
  * unordered team pair, so a side swap keeps each team's lineup while a new pair starts from
  * its own observations. It never touches the draft, the comparison baseline or analysis.
  */
-export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled }: RosterWorkshopProps) {
+export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null }: RosterWorkshopProps) {
   const basis = useMemo(() => rosterBasis(report), [report]);
+  const pool = useMemo(() => poolBasis(report), [report]);
   if (!blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) return null;
   return <RosterWorkshopBody key={`${basisKey(basis)}|${pairKey([blueTeam.team_id, redTeam.team_id])}`}
-    basis={basis} patchId={report.patch_id} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={disabled} />;
+    basis={basis} patchId={report.patch_id} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={disabled}
+    pool={pool} selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} />;
 }
 
 type Status = { tone: "info" | "error"; text: string } | null;
 
-function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled }: {
+function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled, pool, selections, previousPicks, focusChampionId }: {
   basis: RosterBasis; patchId: string; teams: OpponentTeam[]; blueTeam: OpponentTeam; redTeam: OpponentTeam; disabled: boolean;
+  pool: PoolBasis; selections: readonly PoolSelection[]; previousPicks: readonly string[]; focusChampionId: string | null;
 }) {
   const index = useMemo(() => buildRosterIndex(teams), [teams]);
   const teamIds = useMemo(() => [blueTeam.team_id, redTeam.team_id].sort() as [string, string], [blueTeam.team_id, redTeam.team_id]);
@@ -150,11 +162,13 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   return <details className="roster-workshop" lang="ko" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
     <summary>가상 로스터·포지션 <small>원관측과 다른 슬롯 {changedCount} · 빈칸 {emptyCount}</small></summary>
     {open && <div className="roster-workshop-body">
-      <p className="roster-workshop-note" role="note"><b>현재 분석/추천/시뮬레이션에는 로스터 변경이 아직 반영되지 않습니다.</b> 같은 공개 스냅샷에서 관측된 선수만 고를 수 있으며, CURRENT는 자료상의 관측 표시일 뿐 공식 최신 소속이 아닙니다. 역할 관측이 하나로 정해지지 않으면 빈칸으로 둡니다.</p>
+      <p className="roster-workshop-note" role="note"><b>기존 추천 순위·예측/시뮬레이션에는 로스터 변경이 아직 반영되지 않습니다.</b> 변경은 아래 선수 근거·남은 관측 챔프 표시에만 반영됩니다. 같은 공개 스냅샷에서 관측된 선수만 고를 수 있으며, CURRENT는 자료상의 관측 표시일 뿐 공식 최신 소속이 아닙니다. 역할 관측이 하나로 정해지지 않으면 빈칸으로 둡니다.</p>
       <div className="roster-workshop-teams">
         <RosterTeam side="BLUE" team={blueTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} />
         <RosterTeam side="RED" team={redTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} />
       </div>
+      <PlayerPoolPanel basis={pool} teams={teams} index={index} rosters={rosters} blueTeam={blueTeam} redTeam={redTeam}
+        selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} />
       {editStatus && <p className="roster-workshop-status" role="status">{editStatus}</p>}
       <div className="roster-workshop-actions">
         <button type="button" disabled={disabled || reading || changedCount === 0} onClick={() => { setEditStatus("원관측 배치로 되돌렸습니다."); commit(observed); }}>원관측으로 되돌리기</button>
