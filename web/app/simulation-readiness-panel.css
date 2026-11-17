@@ -26,6 +26,20 @@ main.draft-lab.draft-studio .simulation-readiness-fixed table { width: 100%; bor
 main.draft-lab.draft-studio .simulation-readiness-fixed caption { text-align: left; padding-bottom: 4px; color: var(--studio-text); }
 main.draft-lab.draft-studio .simulation-readiness-fixed :is(th, td) { padding: 4px 8px; border-top: 1px solid var(--studio-line); text-align: left; font-weight: 400; }
 main.draft-lab.draft-studio .simulation-readiness-identity { color: var(--studio-text); font-weight: 600; }
+/* Optional season evidence of the assigned champions: collapsed, role cards (no wide table). */
+main.draft-lab.draft-studio .simulation-evidence { border: 1px solid var(--studio-line); background: var(--studio-panel); padding: 0 10px; }
+main.draft-lab.draft-studio .simulation-evidence > summary { min-height: 44px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; cursor: pointer; color: var(--studio-text); font-weight: 600; }
+main.draft-lab.draft-studio .simulation-evidence > summary small { font-weight: 400; color: var(--studio-muted); }
+main.draft-lab.draft-studio .simulation-evidence-body { display: grid; gap: 8px; padding-bottom: 10px; min-width: 0; }
+main.draft-lab.draft-studio .simulation-evidence-body button { justify-self: start; padding: 6px 12px; font-size: 12px; }
+main.draft-lab.draft-studio .simulation-evidence-status { display: grid; gap: 6px; }
+main.draft-lab.draft-studio .simulation-evidence-teams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+main.draft-lab.draft-studio .simulation-evidence-team { min-width: 0; }
+main.draft-lab.draft-studio .simulation-evidence-team h4 { margin: 0 0 4px; font-size: 12px; color: var(--studio-text); }
+main.draft-lab.draft-studio .simulation-evidence-team ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+main.draft-lab.draft-studio .simulation-evidence-team li { display: grid; gap: 2px; padding: 6px 8px; border: 1px solid var(--studio-line); overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .simulation-evidence-counts { display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--studio-text); }
 @media (max-width: 720px) {
   main.draft-lab.draft-studio .simulation-readiness-teams { grid-template-columns: minmax(0, 1fr); }
+  main.draft-lab.draft-studio .simulation-evidence-teams { grid-template-columns: minmax(0, 1fr); }
 }

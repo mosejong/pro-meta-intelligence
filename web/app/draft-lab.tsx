@@ -568,7 +568,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     </section>
     <DraftComparisonPanel key={comparisonEpoch} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} />
     {/* Simulation input gate: explicit champion roles + current rosters; no outcome is computed. */}
-    <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} disabled={!canSelect} />
+    <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} publicationRoot={productRootHref(currentSpace)} disabled={!canSelect} />
     </div>
 
     <div id="studio-panel-details" className="studio-details-panel" role="tabpanel" aria-labelledby="studio-panel-details-tab" hidden={studioTab !== "DETAILS"}>

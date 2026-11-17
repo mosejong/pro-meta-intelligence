@@ -16,6 +16,7 @@ import {
   type ChampionRoles,
   type SimulationInputSnapshot,
 } from "./simulation-scenario";
+import { SimulationPlayerEvidence } from "./simulation-player-evidence-panel";
 import "./simulation-readiness-panel.css";
 
 type SimulationReadinessPanelProps = {
@@ -28,6 +29,8 @@ type SimulationReadinessPanelProps = {
   /** Live roster from the roster editor; null while it restores (never filled with defaults here). */
   roster: LiveRoster | null;
   nameOf: (championId: string) => string;
+  /** Publication root relative to the page (e.g. "./" or "../") for the optional season file. */
+  publicationRoot?: string;
   disabled?: boolean;
 };
 
@@ -69,7 +72,7 @@ function FixedInputView({ snapshot, nameOf }: { snapshot: SimulationInputSnapsho
  * the fixed input lives in memory only. Replaying a file is display-only: it never changes the
  * draft, rosters, the A/B baseline or device storage. No outcome or winner is computed here.
  */
-export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, nameOf, disabled = false }: SimulationReadinessPanelProps) {
+export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, nameOf, publicationRoot = "./", disabled = false }: SimulationReadinessPanelProps) {
   const [roleDraft, setRoleDraft] = useState<RoleDraft>({});
   const [fixed, setFixed] = useState<SimulationInputSnapshot | null>(null);
   const [exportMessage, setExportMessage] = useState("");
@@ -86,7 +89,8 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
   }, []);
 
   const complete = selections.length === 20 && Boolean(blueTeam && redTeam);
-  const basis = useMemo(() => basisKey(rosterBasis(report)), [report]);
+  const reportBasis = useMemo(() => rosterBasis(report), [report]);
+  const basis = useMemo(() => basisKey(reportBasis), [reportBasis]);
   const contexts = useMemo(() => {
     const result: Record<string, string> = {};
     if (!blueTeam || !redTeam) return result;
@@ -203,6 +207,7 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
       })}</div>}
       {complete && !readiness.ok && <ul className="simulation-readiness-issues" aria-label="준비 미충족 항목">{readiness.issues.map((issue, index) => <li key={index}>{issue.message}</li>)}</ul>}
       {readiness.ok && <p role="status">입력 준비 완료: 두 팀의 역할 10개와 로스터 10명이 현재 밴픽·분석 데이터와 맞습니다.</p>}
+      <SimulationPlayerEvidence snapshot={readiness.ok ? readiness.snapshot : null} basis={reportBasis} publicationRoot={publicationRoot} nameOf={nameOf} />
       <div className="simulation-readiness-actions">
         <button type="button" disabled={!readiness.ok || disabled} onClick={fix}>{fixed ? "현재 입력으로 다시 고정" : "준비된 입력 고정"}</button>
         <button type="button" disabled={!fixed} onClick={download}>입력 JSON 저장</button>
