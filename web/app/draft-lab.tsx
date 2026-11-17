@@ -23,7 +23,7 @@ import {
   type DraftSide,
   type DraftGame,
 } from "./draft-agent";
-import { productSpaceHref, type ProductSpace } from "./product-space";
+import { productRootHref, productSpaceHref, type ProductSpace } from "./product-space";
 import { isDraftSessionErrorCode, MAX_DRAFT_FILE_BYTES, parseDraftSession, readLocalDraft, type DraftSession, type DraftSessionErrorCode } from "./draft-session";
 import { useDraftSave } from "./use-draft-save";
 import type { OpponentTeam, RadarReport } from "./radar-types";
@@ -501,7 +501,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     </section>
     {/* Virtual roster editor: separate file/storage; does not change the draft, baseline A or analysis. */}
     <RosterWorkshop report={report} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={!canSelect}
-      selections={selections} previousPicks={previousPicks} focusChampionId={championFocus?.champion_id ?? null} />
+      selections={selections} previousPicks={previousPicks} focusChampionId={championFocus?.champion_id ?? null}
+      publicationRoot={productRootHref(currentSpace)} />
 
     <section className="draft-series" aria-label={t("draft.seriesLabel")} lang={lang.ui}>
       <label className="draft-first-selection">{t("draft.firstPick")}

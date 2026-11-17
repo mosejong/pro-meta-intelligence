@@ -18,6 +18,8 @@ const publishedFiles = [
   "feed/schedule-changes.json",
   "feed/current-creator.json",
   "feed/index.json",
+  // Derived per-player season aggregate only (no raw rows); loaded on demand by the draft studio.
+  "history/player-season-2026.json",
 ];
 
 export function preparePublishedAssets() {

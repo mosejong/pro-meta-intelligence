@@ -42,6 +42,8 @@ type RosterWorkshopProps = {
   selections?: readonly PoolSelection[];
   previousPicks?: readonly string[];
   focusChampionId?: string | null;
+  /** Page-relative publication root for the on-demand season history file. */
+  publicationRoot?: string;
 };
 
 const NO_SELECTIONS: readonly PoolSelection[] = [];
@@ -52,21 +54,22 @@ const NO_PICKS: readonly string[] = [];
  * unordered team pair, so a side swap keeps each team's lineup while a new pair starts from
  * its own observations. It never touches the draft, the comparison baseline or analysis.
  */
-export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null }: RosterWorkshopProps) {
+export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null, publicationRoot = "./" }: RosterWorkshopProps) {
   const basis = useMemo(() => rosterBasis(report), [report]);
   const pool = useMemo(() => poolBasis(report), [report]);
   if (!blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) return null;
   return <RosterWorkshopBody key={`${basisKey(basis)}|${pairKey([blueTeam.team_id, redTeam.team_id])}`}
     basis={basis} patchId={report.patch_id} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={disabled}
-    pool={pool} selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} />;
+    pool={pool} selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} publicationRoot={publicationRoot} />;
 }
 
 type Status = { tone: "info" | "error"; text: string } | null;
 
-function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled, pool, selections, previousPicks, focusChampionId }: {
+function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled, pool, selections, previousPicks, focusChampionId, publicationRoot }: {
   basis: RosterBasis; patchId: string; teams: OpponentTeam[]; blueTeam: OpponentTeam; redTeam: OpponentTeam; disabled: boolean;
-  pool: PoolBasis; selections: readonly PoolSelection[]; previousPicks: readonly string[]; focusChampionId: string | null;
+  pool: PoolBasis; selections: readonly PoolSelection[]; previousPicks: readonly string[]; focusChampionId: string | null; publicationRoot: string;
 }) {
+  const season = useMemo(() => ({ basis, publicationRoot }), [basis, publicationRoot]);
   const index = useMemo(() => buildRosterIndex(teams), [teams]);
   const teamIds = useMemo(() => [blueTeam.team_id, redTeam.team_id].sort() as [string, string], [blueTeam.team_id, redTeam.team_id]);
   const observed = useMemo(() => observedRosters(teams, teamIds, index), [teams, teamIds, index]);
@@ -168,7 +171,7 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
         <RosterTeam side="RED" team={redTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} />
       </div>
       <PlayerPoolPanel basis={pool} teams={teams} index={index} rosters={rosters} blueTeam={blueTeam} redTeam={redTeam}
-        selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} />
+        selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} season={season} />
       {editStatus && <p className="roster-workshop-status" role="status">{editStatus}</p>}
       <div className="roster-workshop-actions">
         <button type="button" disabled={disabled || reading || changedCount === 0} onClick={() => { setEditStatus("원관측 배치로 되돌렸습니다."); commit(observed); }}>원관측으로 되돌리기</button>

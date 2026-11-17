@@ -3,7 +3,9 @@
 import { useChampionNames } from "./champion-names";
 import type { OpponentTeam } from "./radar-types";
 import { teamEvidence, type PoolBasis, type PoolChampionState, type PoolSelection, type SlotEvidence } from "./player-pool-evidence";
-import type { RosterIndex, RosterState } from "./roster-scenario";
+import type { RosterBasis, RosterIndex, RosterState } from "./roster-scenario";
+import { PLAYER_SEASON_PATH } from "./player-season-history";
+import { PlayerSeasonSection } from "./player-season-panel";
 
 const roleLabels: Record<string, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
 const roleLabel = (role: string) => roleLabels[role] ?? `역할 미확인(${role})`;
@@ -25,6 +27,8 @@ type PlayerPoolPanelProps = {
   selections: readonly PoolSelection[];
   previousPicks: readonly string[];
   focusChampionId: string | null;
+  /** Season history link (loaded only when its section is opened); omitted = section hidden. */
+  season?: { basis: RosterBasis; publicationRoot: string };
 };
 
 /**
@@ -32,7 +36,7 @@ type PlayerPoolPanelProps = {
  * which listed champions remain open under this game's bans/picks and earlier games' picks.
  * Nothing here selects, stages or confirms a champion, and it feeds no recommendation.
  */
-export function PlayerPoolPanel({ basis, teams, index, rosters, blueTeam, redTeam, selections, previousPicks, focusChampionId }: PlayerPoolPanelProps) {
+export function PlayerPoolPanel({ basis, teams, index, rosters, blueTeam, redTeam, selections, previousPicks, focusChampionId, season }: PlayerPoolPanelProps) {
   const common = { teams, index, basis, selections, previousPicks, focusChampionId, rosters };
   const sides = [
     { side: "BLUE", team: blueTeam, rows: teamEvidence({ ...common, teamId: blueTeam.team_id }) },
@@ -55,6 +59,8 @@ export function PlayerPoolPanel({ basis, teams, index, rosters, blueTeam, redTea
         <ul>{rows.map((row) => <PoolRow key={row.role} row={row} index={index} />)}</ul>
       </section>)}
     </div>
+    {season && <PlayerSeasonSection basis={season.basis} publicationRoot={season.publicationRoot} path={PLAYER_SEASON_PATH}
+      index={index} rosters={rosters} blueTeam={blueTeam} redTeam={redTeam} selections={selections} previousPicks={previousPicks} />}
   </details>;
 }
 
