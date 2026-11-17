@@ -45,6 +45,8 @@ type RosterWorkshopProps = {
   focusChampionId?: string | null;
   /** Page-relative publication root for the on-demand season history file. */
   publicationRoot?: string;
+  /** Dedicated workspace panels start expanded, while embedded usages remain collapsible. */
+  defaultOpen?: boolean;
   /**
    * Receives the live roster (edits, file imports and device restores) tagged with its basis and
    * pair, or null while none is ready. Must be a stable function (e.g. a state setter).
@@ -62,29 +64,30 @@ const IGNORE_ROSTER = () => {};
  * its own observations. It never touches the draft or analysis; its live roster becomes the
  * A/B comparison's current B, and an already frozen A is never changed retroactively.
  */
-export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null, publicationRoot = "./", onRosterChange = IGNORE_ROSTER }: RosterWorkshopProps) {
+export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null, publicationRoot = "./", defaultOpen = false, onRosterChange = IGNORE_ROSTER }: RosterWorkshopProps) {
   const basis = useMemo(() => rosterBasis(report), [report]);
   const pool = useMemo(() => poolBasis(report), [report]);
   if (!blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) return null;
   return <RosterWorkshopBody key={`${basisKey(basis)}|${pairKey([blueTeam.team_id, redTeam.team_id])}`}
     basis={basis} patchId={report.patch_id} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={disabled}
     pool={pool} selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} publicationRoot={publicationRoot}
-    onRosterChange={onRosterChange} />;
+    defaultOpen={defaultOpen} onRosterChange={onRosterChange} />;
 }
 
 type Status = { tone: "info" | "error"; text: string } | null;
 
-function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled, pool, selections, previousPicks, focusChampionId, publicationRoot, onRosterChange }: {
+function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled, pool, selections, previousPicks, focusChampionId, publicationRoot, defaultOpen, onRosterChange }: {
   basis: RosterBasis; patchId: string; teams: OpponentTeam[]; blueTeam: OpponentTeam; redTeam: OpponentTeam; disabled: boolean;
   pool: PoolBasis; selections: readonly PoolSelection[]; previousPicks: readonly string[]; focusChampionId: string | null; publicationRoot: string;
   onRosterChange: (roster: LiveRoster | null) => void;
+  defaultOpen: boolean;
 }) {
   const season = useMemo(() => ({ basis, publicationRoot }), [basis, publicationRoot]);
   const index = useMemo(() => buildRosterIndex(teams), [teams]);
   const teamIds = useMemo(() => [blueTeam.team_id, redTeam.team_id].sort() as [string, string], [blueTeam.team_id, redTeam.team_id]);
   const observed = useMemo(() => observedRosters(teams, teamIds, index), [teams, teamIds, index]);
   const [rosters, setRosters] = useState<RosterState>(observed);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [storage, setStorage] = useState<Status>({ tone: "info", text: "기기 저장 확인 중" });
   const [fileStatus, setFileStatus] = useState<Status>(null);
   const [editStatus, setEditStatus] = useState("");

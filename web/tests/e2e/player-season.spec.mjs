@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
+import { showPanel } from "./studio-panels.mjs";
 
 /**
  * Season history section in the real draft studio. Network responses for the season file are
@@ -68,9 +69,11 @@ test("a stalled history request times out and retries without changing the draft
   try {
     await openPool(page);
     const before = await slot(page, "blue", "TOP").inputValue();
+    await showPanel(page, "DRAFT");
     await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
     await confirm(page).click();
     await expect(page.locator(".draft-turn-progress")).toHaveAttribute("value", "1");
+    await showPanel(page, "ROSTER");
     await season(page).locator("> summary").click();
     await expect(season(page).getByRole("status")).toContainText("불러오는 중");
     await page.clock.fastForward(15001);
@@ -88,7 +91,8 @@ test("the actual derived file loads from the draft route and matches all display
   const state = watch(page);
   await page.goto(`${root}draft/`);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
-  await roster(page).locator("> summary").click();
+  await showPanel(page, "ROSTER");
+  if ((await roster(page).getAttribute("open")) === null) await roster(page).locator("> summary").click();
   await pool(page).locator("> summary").click();
   expect(state.requests).toBe(0);
   await season(page).locator("> summary").click();
@@ -122,7 +126,8 @@ async function openPool(page) {
   await page.goto(root);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
-  await roster(page).locator("> summary").click();
+  await showPanel(page, "ROSTER");
+  if ((await roster(page).getAttribute("open")) === null) await roster(page).locator("> summary").click();
   await expect(slot(page, "blue", "TOP")).toBeEnabled();
   await pool(page).locator("> summary").click();
 }
@@ -190,6 +195,7 @@ test("season records load only on open, follow scope, roster edits and bans/undo
   const listed = await top.locator('.player-season-champs li[data-state="AVAILABLE"]').evaluateAll((items) =>
     items.map((item) => ({ championId: item.dataset.champion, name: item.textContent.replace(/ \d+경기.*$/, "") })));
   let banned = null;
+  await showPanel(page, "DRAFT");
   for (const candidate of listed) {
     await page.locator("#draft-search").fill(candidate.name);
     const button = page.locator(".draft-picker-grid button:not(:disabled)").filter({ has: page.getByText(candidate.name, { exact: true }) });
@@ -205,6 +211,7 @@ test("season records load only on open, follow scope, roster edits and bans/undo
   await page.locator("#draft-search").fill("");
 
   // Restore the observed roster: rows follow the slots without another request.
+  await showPanel(page, "ROSTER");
   await roster(page).getByRole("button", { name: "원관측으로 되돌리기" }).click();
   for (const side of ["blue", "red"]) for (const role of ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"]) {
     const value = await slot(page, side, role).inputValue();

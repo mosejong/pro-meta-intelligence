@@ -32,6 +32,8 @@ type SimulationReadinessPanelProps = {
   /** Publication root relative to the page (e.g. "./" or "../") for the optional season file. */
   publicationRoot?: string;
   disabled?: boolean;
+  /** Dedicated workspace panels need no second expansion click. */
+  defaultOpen?: boolean;
 };
 
 const roleLabels: Record<RosterRole, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
@@ -72,8 +74,9 @@ function FixedInputView({ snapshot, nameOf }: { snapshot: SimulationInputSnapsho
  * the fixed input lives in memory only. Replaying a file is display-only: it never changes the
  * draft, rosters, the A/B baseline or device storage. No outcome or winner is computed here.
  */
-export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, nameOf, publicationRoot = "./", disabled = false }: SimulationReadinessPanelProps) {
+export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, nameOf, publicationRoot = "./", disabled = false, defaultOpen = false }: SimulationReadinessPanelProps) {
   const [roleDraft, setRoleDraft] = useState<RoleDraft>({});
+  const [open, setOpen] = useState(defaultOpen);
   const [fixed, setFixed] = useState<SimulationInputSnapshot | null>(null);
   const [exportMessage, setExportMessage] = useState("");
   const [replay, setReplay] = useState<{ fileName: string; snapshot: SimulationInputSnapshot } | null>(null);
@@ -180,7 +183,7 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
   const replaySame = replay && readiness.ok ? sameSimulationInput(replay.snapshot, readiness.snapshot) : false;
   const summaryState = fixed ? "입력 고정됨" : readiness.ok ? "준비 가능" : complete ? "역할·로스터 확인 필요" : `미충족 · 밴픽 ${selections.length}/20`;
 
-  return <details className="simulation-readiness" lang="ko">
+  return <details className="simulation-readiness" lang="ko" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
     <summary>시뮬레이션 입력 준비 <small>{summaryState}</small></summary>
     <div className="simulation-readiness-body">
       <p className="simulation-readiness-note" role="note">역할은 사용자 배정입니다. 선수 근거는 현재 관측이며 연간 자료는 포함하지 않습니다. 학습된 선수/챔피언 효과·상성·룬·아이템·실제 승률은 아직 계산하지 않습니다.</p>

@@ -125,6 +125,10 @@ test("draft header and tabs localize while draft controls, tab wiring and data s
     assert.match(zh, /role="tablist" aria-label="工作区视图"/);
     assert.match(zh, /id="studio-panel-draft-tab"[^>]*>模拟禁选<\/button>/);
     assert.match(zh, /id="studio-panel-details-tab"[^>]*>详细分析<\/button>/);
+    assert.match(zh, /id="studio-panel-roster-tab"[^>]*>选手·阵容<\/button>/);
+    assert.match(zh, /id="studio-panel-comparison-tab"[^>]*>A\/B 对比<\/button>/);
+    assert.match(zh, /id="studio-panel-simulation-tab"[^>]*>模拟准备<\/button>/);
+    assert.match(zh, /class="studio-info-entry" lang="zh-CN"[^>]*>查看英雄信息<\/button>/);
     // Chinese coverage is incomplete and must say so (and that the rest stays Korean).
     assert.match(zh, /<p class="studio-locale-note" lang="zh-CN" role="note">[^<]*进行中[^<]*韩语[^<]*<\/p>/);
     assert.match(zh, /<label class="studio-locale-select" lang="zh-CN"><span>语言<\/span>/);

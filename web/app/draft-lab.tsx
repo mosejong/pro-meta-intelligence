@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- champion portraits use Riot Data Dragon */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { championAssetId, championImageUrl } from "./champion-assets";
 import { useChampionNames } from "./champion-names";
 import {
@@ -51,11 +51,24 @@ const laneLabels: Record<DraftAgentOption["lane"], string> = {
   EXPERIMENT: "실험안",
 };
 
-type StudioTab = "DRAFT" | "DETAILS";
+type StudioTab = "DRAFT" | "ROSTER" | "DETAILS" | "COMPARISON" | "SIMULATION";
 const studioTabs: Array<{ id: StudioTab; label: MessageKey; panel: string }> = [
   { id: "DRAFT", label: "draft.tab.DRAFT", panel: "studio-panel-draft" },
+  { id: "ROSTER", label: "draft.tab.ROSTER", panel: "studio-panel-roster" },
   { id: "DETAILS", label: "draft.tab.DETAILS", panel: "studio-panel-details" },
+  { id: "COMPARISON", label: "draft.tab.COMPARISON", panel: "studio-panel-comparison" },
+  { id: "SIMULATION", label: "draft.tab.SIMULATION", panel: "studio-panel-simulation" },
 ];
+const panelOf = (tab: StudioTab) => studioTabs.find((item) => item.id === tab)!.panel;
+
+// The rail is vertical beside the panels from this width and a horizontal strip above them below it.
+const RAIL_QUERY = "(min-width: 1100px)";
+function subscribeRail(onChange: () => void) {
+  const query = window.matchMedia?.(RAIL_QUERY);
+  query?.addEventListener("change", onChange);
+  return () => query?.removeEventListener("change", onChange);
+}
+const verticalRail = () => Boolean(window.matchMedia?.(RAIL_QUERY).matches);
 
 const roleLabels: Record<string, string> = {
   TOP: "탑",
@@ -214,9 +227,13 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [importing, setImporting] = useState(false);
   const [storageStatus, setStorageStatus] = useState<StorageStatus>({ code: "CHECKING" });
   const [importStatus, setImportStatus] = useState<ImportStatus | null>(null);
-  // Both panels stay mounted; switching tabs only hides one, so draft, timer and lock state survive.
+  // All five panels stay mounted; switching only sets `hidden`, so draft, timer, roster, baseline A,
+  // role assignments, frozen input and file-replay state all survive a round trip through the rail.
   const [studioTab, setStudioTab] = useState<StudioTab>("DRAFT");
   const studioTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const studioRail = useRef<HTMLDivElement>(null);
+  const studioShell = useRef<HTMLDivElement>(null);
+  const railVertical = useSyncExternalStore(subscribeRail, verticalRail, () => false);
   // Read-only viewing of an already-confirmed slot. Separate from pendingChampion: it never stages or confirms.
   const [inspected, setInspected] = useState<InspectedSlot | null>(null);
   // Remount key for the A/B comparison panel; its memory-only baseline A is dropped on import/restore.
@@ -321,21 +338,64 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     ? championPool.filter((championId) => !isChampionLocked(selections, championId, previousPicks))
     : championPool;
 
+  // The horizontal (narrow) rail scrolls itself to keep the selected tab in view; never the page.
+  // Also re-runs when the rail turns horizontal (e.g. window narrowed) so the selected tab is not left off-screen.
+  useEffect(() => {
+    const rail = studioRail.current;
+    const tab = studioTabRefs.current[studioTabs.findIndex((item) => item.id === studioTab)];
+    if (!rail || !tab || rail.scrollWidth <= rail.clientWidth) return;
+    const left = tab.getBoundingClientRect().left - rail.getBoundingClientRect().left + rail.scrollLeft;
+    if (left < rail.scrollLeft) rail.scrollLeft = left;
+    else if (left + tab.offsetWidth > rail.scrollLeft + rail.clientWidth) rail.scrollLeft = left + tab.offsetWidth - rail.clientWidth;
+  }, [studioTab, railVertical, locale]);
+
   function showStudioTab(tab: StudioTab, then?: () => void) {
     setStudioTab(tab);
     // Run after React commits the visibility change so focus/scroll target a visible node.
     if (then) window.setTimeout(then, 0);
   }
 
+  /** Rail selection: if the page is scrolled past the panel start, bring the new panel's top into view. */
+  function selectStudioTab(tab: StudioTab) {
+    setStudioTab(tab);
+    const shell = studioShell.current;
+    if (shell && shell.getBoundingClientRect().top < 0) {
+      window.setTimeout(() => scrollIntoViewGently(shell), 0);
+    }
+  }
+
   function onStudioTabKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const last = studioTabs.length - 1;
-    const next = event.key === "ArrowRight" ? (index === last ? 0 : index + 1)
-      : event.key === "ArrowLeft" ? (index === 0 ? last : index - 1)
+    // Both axes are accepted: the rail is vertical on wide screens and horizontal on narrow ones.
+    const next = event.key === "ArrowRight" || event.key === "ArrowDown" ? (index === last ? 0 : index + 1)
+      : event.key === "ArrowLeft" || event.key === "ArrowUp" ? (index === 0 ? last : index - 1)
         : event.key === "Home" ? 0 : event.key === "End" ? last : null;
     if (next === null) return;
     event.preventDefault();
-    setStudioTab(studioTabs[next].id);
+    selectStudioTab(studioTabs[next].id);
     studioTabRefs.current[next]?.focus();
+  }
+
+  /** Confirmed-slot inspection opens the champion info in the details panel; it never stages or confirms. */
+  function inspectSlot(slot: InspectedSlot) {
+    setInspected(slot);
+    openChampionInfo();
+  }
+
+  function openChampionInfo() {
+    showStudioTab("DETAILS", () => {
+      const info = document.getElementById("studio-champion-info");
+      scrollIntoViewGently(info);
+      info?.focus({ preventScroll: true });
+    });
+  }
+
+  function focusSaveRetry() {
+    showStudioTab("DRAFT", () => {
+      const alert = document.querySelector<HTMLElement>(".draft-save-failed");
+      scrollIntoViewGently(alert, "center");
+      alert?.querySelector("button")?.focus({ preventScroll: true });
+    });
   }
 
   function resetDraft() {
@@ -479,9 +539,20 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <span lang={lang.ui}>{t("draft.format")}</span>
       <LanguageSelector className="studio-locale-select" />
       {locale !== "ko" && <p className="studio-locale-note" lang={locale} role="note">{t("locale.partialNote")}</p>}
+      {/* Visible from every panel; the full warning and retry stay in the draft panel. Never shown as saved. */}
+      {storageStatus.code === "SAVE_FAILED" && <button type="button" className="studio-save-flag" lang={lang.ui} onClick={focusSaveRetry}>{t("draft.saveFailedFlag")}</button>}
     </header>
 
-    <div className="studio-tabs" lang={locale} role="tablist" aria-label={t("draft.tabsLabel")}>
+    {/* Team selection is shared by all panels and rendered once. */}
+    <section id="draft-workspace" className="draft-match-setup" aria-label={t("draft.setupLabel")} lang={lang.ui} inert={!canSelect}>
+      <TeamChooser label="BLUE TEAM" teams={teams} value={blueTeamId} onChange={(id) => changeTeam("BLUE", id)} disabled={games.length > 0 || hasCurrentWork} locale={locale} />
+      <button type="button" onClick={swapSides} disabled={hasCurrentWork} aria-label={t("draft.swapLabel")}>⇄<small>{t("draft.swap")}</small></button>
+      <TeamChooser label="RED TEAM" teams={teams} value={redTeamId} onChange={(id) => changeTeam("RED", id)} disabled={games.length > 0 || hasCurrentWork} locale={locale} />
+      {(hasCurrentWork || games.length > 0) && <p className="draft-setup-hint">{t("draft.setupHint")}</p>}
+    </section>
+
+    <div className="studio-shell" ref={studioShell}>
+    <div className="studio-tabs" ref={studioRail} lang={locale} role="tablist" aria-label={t("draft.tabsLabel")} aria-orientation={railVertical ? "vertical" : "horizontal"}>
       {studioTabs.map((tab, index) => <button
         key={tab.id}
         ref={(node) => { studioTabRefs.current[index] = node; }}
@@ -491,24 +562,13 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         aria-selected={studioTab === tab.id}
         aria-controls={tab.panel}
         tabIndex={studioTab === tab.id ? 0 : -1}
-        onClick={() => setStudioTab(tab.id)}
+        onClick={() => selectStudioTab(tab.id)}
         onKeyDown={(event) => onStudioTabKey(event, index)}
       >{t(tab.label)}</button>)}
     </div>
 
-    <div id="studio-panel-draft" className="studio-draft-panel" role="tabpanel" aria-labelledby="studio-panel-draft-tab" hidden={studioTab !== "DRAFT"}>
-    <section id="draft-workspace" className="draft-match-setup" aria-label={t("draft.setupLabel")} lang={lang.ui} inert={!canSelect}>
-      <TeamChooser label="BLUE TEAM" teams={teams} value={blueTeamId} onChange={(id) => changeTeam("BLUE", id)} disabled={games.length > 0 || hasCurrentWork} locale={locale} />
-      <button type="button" onClick={swapSides} disabled={hasCurrentWork} aria-label={t("draft.swapLabel")}>⇄<small>{t("draft.swap")}</small></button>
-      <TeamChooser label="RED TEAM" teams={teams} value={redTeamId} onChange={(id) => changeTeam("RED", id)} disabled={games.length > 0 || hasCurrentWork} locale={locale} />
-      {(hasCurrentWork || games.length > 0) && <p className="draft-setup-hint">{t("draft.setupHint")}</p>}
-    </section>
-    {/* Virtual roster editor: separate file/storage; never changes the draft or analysis. Its live roster
-        is the A/B comparison's current B; an already frozen A is not changed retroactively. */}
-    <RosterWorkshop report={report} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={!canSelect}
-      selections={selections} previousPicks={previousPicks} focusChampionId={championFocus?.champion_id ?? null}
-      publicationRoot={productRootHref(currentSpace)} onRosterChange={setLiveRoster} />
-
+    <div className="studio-panels">
+    <div id={panelOf("DRAFT")} className="studio-draft-panel" role="tabpanel" aria-labelledby={`${panelOf("DRAFT")}-tab`} hidden={studioTab !== "DRAFT"}>
     <section className="draft-series" aria-label={t("draft.seriesLabel")} lang={lang.ui}>
       <label className="draft-first-selection">{t("draft.firstPick")}
         <select value={firstPickSide} disabled={!canSelect || selections.length > 0 || Boolean(pendingChampion)} onChange={(event) => {
@@ -535,9 +595,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       {games.map((game, index) => <details key={index}><summary>{format("draft.gameLocks", { game: index + 1 })}</summary><div className="draft-series-locks" lang={lang.name}>{game.selections.filter((selection) => selection.kind === "PICK").map((selection) => <span key={selection.champion_id}><img src={championImageUrl(selection.champion_id)} alt="" />{nameOf(selection.champion_id)}</span>)}</div></details>)}
     </section>
 
-    {/* No lang on the stage/picker containers: they hold the Korean-only champion-info panel. */}
+    {/* No lang on the stage/picker containers: their children set lang per control. */}
     <section className="draft-stage" aria-label={t("draft.stageLabel")} inert={!canSelect}>
-      <TeamDraftColumn side="BLUE" team={blueTeam} selections={selections} staged={staged} active={turn?.side === "BLUE"} nameOf={nameOf} inspected={inspectedSelection} onInspect={setInspected} />
+      <TeamDraftColumn side="BLUE" team={blueTeam} selections={selections} staged={staged} active={turn?.side === "BLUE"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
       <section className="draft-control-room">
         <div className={`draft-clock ${timer <= 10 ? "urgent" : ""}`} lang={lang.ui}><span>{`TURN ${Math.min(selections.length + 1, STANDARD_DRAFT_SEQUENCE.length)} / ${STANDARD_DRAFT_SEQUENCE.length}`}</span><strong>{String(timer).padStart(2, "0")}</strong><button type="button" onClick={() => setTimerRunning((running) => !running)} disabled={!turn}>{timerRunning ? t("draft.timerPause") : t("draft.timerStart")}</button></div>
         <div className={`draft-current-turn ${turn?.side.toLowerCase() ?? "complete"}`} role="status" lang={lang.ui}><span>{phaseLabel}</span><h2>{turn ? format("draft.turnHeading", { team: frame.acting_team_name ?? "", side: t(sideKey(turn.side)) }) : t("draft.scenarioComplete")}</h2><p>{turn ? format(turnHintKey(turn.kind), { slot: turn.slot }) : t("draft.turnDoneHint")}</p>{!turn && <button type="button" onClick={nextGame}>{t("draft.nextGame")}</button>}</div>
@@ -559,20 +619,30 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
             {pendingChampion && <button className="draft-cancel-stage" type="button" onClick={() => setPendingChampion(null)}>{t("draft.cancelStage")}</button>}
             <button type="button" onClick={confirmChampion} disabled={!turn || !pendingChampion || !blueTeam || !redTeam}>{turn?.kind === "BAN" ? t("draft.confirm.BAN") : t("draft.confirm.PICK")}</button>
           </div>
-          <DraftChampionInfo focus={championFocus} report={report} blueTeam={blueTeam} redTeam={redTeam} nameOf={nameOf} onCloseInspect={() => setInspected(null)} />
+          {/* The full champion info lives in the details panel; this only switches panels. */}
+          <button type="button" className="studio-info-entry" lang={lang.ui} aria-controls={panelOf("DETAILS")} onClick={openChampionInfo}>{t("draft.championInfoOpen")}</button>
         </section>
         <div className="draft-actions" lang={lang.ui}><button type="button" onClick={undo} disabled={!selections.length}>{t("draft.undo")}</button><button type="button" onClick={() => setPendingReset("GAME")} disabled={!hasCurrentWork}>{t("draft.resetGame")}</button><button type="button" onClick={downloadScenario} disabled={!selections.length && !games.length}>{t("draft.scenarioJson")}</button></div>
         <ol className="draft-sequence-mini" aria-label={t("draft.sequenceLabel")} lang={lang.ui}>{draftSequence(firstPickSide).map((item, index) => <li className={index < selections.length ? "done" : index === selections.length ? "current" : ""} key={index}><span>{index + 1}</span><b>{item.side === "BLUE" ? "B" : "R"}{item.kind === "BAN" ? "B" : "P"}{item.slot}</b></li>)}</ol>
       </section>
-      <TeamDraftColumn side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={setInspected} />
+      <TeamDraftColumn side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
     </section>
-    <DraftComparisonPanel key={comparisonEpoch} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} />
-    {/* Simulation input gate: explicit champion roles + current rosters; no outcome is computed. */}
-    <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} publicationRoot={productRootHref(currentSpace)} disabled={!canSelect} />
     </div>
 
-    <div id="studio-panel-details" className="studio-details-panel" role="tabpanel" aria-labelledby="studio-panel-details-tab" hidden={studioTab !== "DETAILS"}>
+    <div id={panelOf("ROSTER")} className="studio-roster-panel" role="tabpanel" aria-labelledby={`${panelOf("ROSTER")}-tab`} hidden={studioTab !== "ROSTER"}>
+    {/* Virtual roster editor (with current player evidence and season records): separate file/storage;
+        never changes the draft or analysis. Its live roster is the A/B comparison's current B; an
+        already frozen A is not changed retroactively. */}
+    <RosterWorkshop report={report} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={!canSelect}
+      selections={selections} previousPicks={previousPicks} focusChampionId={championFocus?.champion_id ?? null}
+      publicationRoot={productRootHref(currentSpace)} defaultOpen onRosterChange={setLiveRoster} />
+    </div>
+
+    <div id={panelOf("DETAILS")} className="studio-details-panel" role="tabpanel" aria-labelledby={`${panelOf("DETAILS")}-tab`} hidden={studioTab !== "DETAILS"}>
     <nav className="draft-workspace-nav" aria-label="상세 분석 이동"><button type="button" onClick={() => showStudioTab("DRAFT")}>모의 밴픽으로</button><a href={productSpaceHref(currentSpace, "TEAM")}>선택한 두 팀 분석</a><a href={productSpaceHref(currentSpace, "PROOF")}>예측 검증 결과</a></nav>
+    <div id="studio-champion-info" className="studio-champion-info" tabIndex={-1}>
+      <DraftChampionInfo focus={championFocus} report={report} blueTeam={blueTeam} redTeam={redTeam} nameOf={nameOf} onCloseInspect={() => setInspected(null)} />
+    </div>
     <p className="studio-details-staged" role="status">{pendingChampion ? `${nameOf(pendingChampion)} 올려놓음 · 확정은 모의 밴픽 탭에서 합니다.` : turn ? "올려놓은 챔피언이 없습니다. 아래 후보를 누르면 올려놓기만 하고 확정하지 않습니다." : "밴픽이 완료되었습니다."}</p>
     <section id="draft-preview" className="draft-response-preview" aria-label="확정 전 상대 픽 예상" aria-live="polite">
       <h3>{pendingChampion ? `${nameOf(pendingChampion)} ${turn?.kind === "BAN" ? "밴" : "픽"}을 확정한다면` : "챔피언을 올려놓고 상대 픽을 비교하세요"}</h3>
@@ -600,6 +670,18 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <button type="button" onClick={() => showStudioTab("DRAFT", () => scrollIntoViewGently(document.getElementById("draft-workspace")))}>모의 밴픽으로 돌아가기</button>
     </div>
     <footer className="draft-lab-boundary"><b>검증 경계</b><p>이 에이전트는 공개 대회 픽·밴 빈도와 현재 레이더만 사용합니다. 조합 시너지·카운터·패치 강도 모델은 아직 검증되지 않았으므로 승률 예측이 아닌 공개 기록 기반 검토이며, 자동 승률과 최종 추천을 표시하지 않습니다.</p><a href={productSpaceHref(currentSpace, "PROOF")}>현재 제품 검증 상태 →</a></footer>
+    </div>
+
+    <div id={panelOf("COMPARISON")} className="studio-comparison-panel" role="tabpanel" aria-labelledby={`${panelOf("COMPARISON")}-tab`} hidden={studioTab !== "COMPARISON"}>
+    <DraftComparisonPanel key={comparisonEpoch} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} />
+    </div>
+
+    <div id={panelOf("SIMULATION")} className="studio-simulation-panel" role="tabpanel" aria-labelledby={`${panelOf("SIMULATION")}-tab`} hidden={studioTab !== "SIMULATION"}>
+    {/* Simulation input gate (with assigned-champion season records): explicit champion roles +
+        current rosters; no outcome is computed. */}
+    <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} publicationRoot={productRootHref(currentSpace)} defaultOpen disabled={!canSelect} />
+    </div>
+    </div>
     </div>
     <dialog ref={resetDialog} className="draft-reset-dialog" aria-labelledby="draft-reset-title" aria-describedby="draft-reset-description" onCancel={() => setPendingReset(null)} lang={lang.ui}>
       <h2 id="draft-reset-title">{pendingReset === "SERIES" ? t("draft.reset.seriesTitle") : t("draft.reset.gameTitle")}</h2>

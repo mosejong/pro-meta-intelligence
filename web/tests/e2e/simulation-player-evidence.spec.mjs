@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
+import { showPanel } from "./studio-panels.mjs";
 
 /**
  * Season evidence of the assigned champions inside the simulation-readiness panel. The season file
@@ -88,6 +89,7 @@ async function readyInput(page, url = root) {
     await page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ }).click();
     await expect(progress(page)).toHaveAttribute("value", String(i + 1));
   }
+  await showPanel(page, "ROSTER");
   await openDetails(roster(page));
   await expect(rosterSlot(page, "blue", "TOP")).toBeEnabled();
   for (const side of ["blue", "red"]) for (const role of ROLES) {
@@ -96,6 +98,7 @@ async function readyInput(page, url = root) {
     expect(value).not.toBeNull();
     await rosterSlot(page, side, role).selectOption(value);
   }
+  await showPanel(page, "SIMULATION");
   await openDetails(panel(page));
   for (const side of ["blue", "red"]) for (const [i, role] of ROLES.entries()) await roleSlot(page, side, role).selectOption({ index: i + 1 });
   await expect(panel(page).getByRole("status").filter({ hasText: "입력 준비 완료" })).toBeVisible();
@@ -202,12 +205,16 @@ test("opens lazily, counts the assigned champion per role and follows player and
   await expect(progress(page)).toHaveAttribute("value", "20");
   expect(await page.evaluate((key) => localStorage.getItem(key), ROSTER_KEY)).toBe(storedBefore);
   await expect(fixedRegion).toContainText("현재 입력과 같음");
+  await showPanel(page, "COMPARISON");
   await expect(abButton(page)).toBeEnabled();
+  await showPanel(page, "SIMULATION");
   await expectNoOverflow(page);
   await evidence(page).screenshot({ path: testInfo.outputPath("simulation-evidence.png") });
 
   // Replace the blue MID player: the row switches to the new player without another request.
+  await showPanel(page, "ROSTER");
   await rosterSlot(page, "blue", "MID").selectOption(replacement);
+  await showPanel(page, "SIMULATION");
   await expect(blueMid).toHaveAttribute("data-player-key", replacement);
   await expect(blueMid.locator('[data-scope="season"]')).toHaveAttribute("data-picks", "0");
   await expect(blueMid.locator('[data-scope="season"]')).toHaveAttribute("data-games", "5");

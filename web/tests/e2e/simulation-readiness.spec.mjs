@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
+import { showPanel } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const ROLES = ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"];
@@ -21,6 +22,7 @@ async function openDetails(locator) {
 }
 
 async function finishDraft(page) {
+  await showPanel(page, "DRAFT");
   for (let i = 0; i < 20; i += 1) {
     await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
     await page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ }).click();
@@ -43,6 +45,7 @@ async function unusedPlayer(page, side, role) {
 
 /** Fill every empty roster slot explicitly; the readiness gate requires ten players. */
 async function fillRoster(page) {
+  await showPanel(page, "ROSTER");
   await openDetails(roster(page));
   await expect(rosterSlot(page, "blue", "TOP")).toBeEnabled();
   for (const side of ["blue", "red"]) for (const role of ROLES) {
@@ -53,18 +56,22 @@ async function fillRoster(page) {
   }
 }
 
-test("incomplete draft shows only a short unmet notice in the collapsed panel", async ({ page }) => {
+test("incomplete draft shows a short unmet notice immediately in its dedicated panel", async ({ page }) => {
   await openStudio(page);
-  await expect(panel(page)).not.toHaveAttribute("open", "");
+  await showPanel(page, "SIMULATION");
+  await expect(panel(page)).toHaveAttribute("open", "");
   await expect(panel(page).locator("> summary")).toContainText("미충족 · 밴픽 0/20");
   await openDetails(panel(page));
   await expect(panel(page).getByRole("status").filter({ hasText: "현재 0/20개" })).toBeVisible();
   await expect(panel(page).locator("select")).toHaveCount(0);
   await expect(panel(page).getByRole("button", { name: "준비된 입력 고정", exact: true })).toBeDisabled();
-  // The main draft controls stay usable with the panel open.
+  // The main draft controls stay usable with the panel open (switching panels never closes it).
+  await showPanel(page, "DRAFT");
   await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
   await page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ }).click();
   await expect(progress(page)).toHaveAttribute("value", "1");
+  await showPanel(page, "SIMULATION");
+  await expect(panel(page)).toHaveAttribute("open", "");
   await expect(panel(page).getByRole("status").filter({ hasText: "현재 1/20개" })).toBeVisible();
 });
 
@@ -74,6 +81,7 @@ test("20 turns → explicit roles → fix → export → read-only replay → ro
   await openStudio(page);
   await finishDraft(page);
   await fillRoster(page);
+  await showPanel(page, "SIMULATION");
   await openDetails(panel(page));
   const body = panel(page);
   await expect(body.getByRole("note")).toContainText("역할은 사용자 배정");
@@ -117,8 +125,10 @@ test("20 turns → explicit roles → fix → export → read-only replay → ro
     await expect(progress(page)).toHaveAttribute("value", "20");
     expect(await rosterValues(page)).toEqual(expectedRoster);
     expect(await page.evaluate((key) => localStorage.getItem(key), ROSTER_KEY)).toBe(expectedStored);
+    await showPanel(page, "COMPARISON");
     await expect(page.getByRole("region", { name: "드래프트 A/B 비교", exact: true })
       .getByRole("button", { name: "현재 완료 드래프트를 기준 A로 고정", exact: true })).toBeEnabled();
+    await showPanel(page, "SIMULATION");
   };
   const replay = body.locator(".simulation-readiness-replay");
   const fileInput = replay.locator('input[type="file"]');
@@ -130,7 +140,9 @@ test("20 turns → explicit roles → fix → export → read-only replay → ro
   // Change one roster slot: the replayed file and the fixed input now differ from the current input.
   const replacement = await unusedPlayer(page, "blue", "SUPPORT");
   expect(replacement).not.toBeNull();
+  await showPanel(page, "ROSTER");
   await rosterSlot(page, "blue", "SUPPORT").selectOption(replacement);
+  await showPanel(page, "SIMULATION");
   await expect(replay.locator(".simulation-readiness-identity")).toHaveText("현재 입력과 다름");
   await expect(body.getByRole("region", { name: "고정한 시뮬레이션 입력" })).toContainText("고정 뒤 현재 입력이 바뀌었습니다");
   const edited = await rosterValues(page);

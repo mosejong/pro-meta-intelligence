@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
+import { showPanel } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const progress = (page) => page.locator(".draft-turn-progress");
@@ -47,6 +48,7 @@ async function openStudio(page) {
 }
 
 async function openRoster(page) {
+  await showPanel(page, "ROSTER");
   if ((await roster(page).getAttribute("open")) === null) await roster(page).locator("> summary").click();
   await expect(roster(page).locator(".roster-workshop-body")).toBeVisible();
   await expect(slot(page, "blue", "TOP")).toBeEnabled();
@@ -118,6 +120,7 @@ const comparisonRegion = (page) => page.getByRole("region", { name: "드래프�
 const rosterTable = (page) => comparisonRegion(page).locator(".draft-comparison-body").first().locator("table").filter({ hasText: "변경된 로스터 슬롯" });
 
 async function finishDraft(page) {
+  await showPanel(page, "DRAFT");
   for (let i = 0; i < 20; i += 1) {
     await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
     await page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ }).click();
@@ -126,6 +129,7 @@ async function finishDraft(page) {
 }
 
 async function freezeA(page) {
+  await showPanel(page, "COMPARISON");
   const freeze = comparisonRegion(page).getByRole("button", { name: "현재 완료 드래프트를 기준 A로 고정", exact: true });
   await expect(freeze).toBeEnabled();
   await freeze.click();
@@ -148,6 +152,7 @@ test("roster frozen into A, edited for B, exported as v2 and replayed read-only"
   expect(foreign).not.toBeNull();
   await slot(page, "blue", "SUPPORT").selectOption(foreign);
   // Picks/bans are identical; the roster change alone is shown by side and role.
+  await showPanel(page, "COMPARISON");
   await expect(comparison).toContainText("동일 20개");
   await expect(rosterTable(page)).toContainText("변경된 로스터 슬롯 1개");
   const supportRow = rosterTable(page).locator("tbody tr").first();
@@ -158,7 +163,9 @@ test("roster frozen into A, edited for B, exported as v2 and replayed read-only"
   // A second slot edit (clear to empty) updates B only.
   const blueTop = await slot(page, "blue", "TOP").inputValue();
   if (blueTop) {
+    await showPanel(page, "ROSTER");
     await slot(page, "blue", "TOP").selectOption("");
+    await showPanel(page, "COMPARISON");
     await expect(rosterTable(page)).toContainText("변경된 로스터 슬롯 2개");
     await expect(rosterTable(page).locator("tbody tr").filter({ hasText: "탑" }).locator("td").nth(1)).toHaveText("빈칸 · 미배정");
   }
@@ -230,8 +237,10 @@ test("after freezing A, a side swap keeps the roster change attributed to the sa
   const redName = (await page.locator(".roster-team.red h3").textContent()).replace(/^RED/, "");
   const foreign = await foreignOption(page, "blue", redName);
   await slot(page, "blue", "SUPPORT").selectOption(foreign);
+  await showPanel(page, "COMPARISON");
   await expect(rosterTable(page)).toContainText("변경된 로스터 슬롯 1개");
 
+  await showPanel(page, "DRAFT");
   await page.getByRole("button", { name: "현재 세트 초기화", exact: true }).click();
   await page.getByRole("dialog").getByRole("button", { name: "초기화", exact: true }).click();
   await expect(progress(page)).toHaveAttribute("value", "0");
@@ -240,6 +249,7 @@ test("after freezing A, a side swap keeps the roster change attributed to the sa
   await expect(slot(page, "red", "SUPPORT")).toHaveValue(foreign);
   await finishDraft(page);
 
+  await showPanel(page, "COMPARISON");
   const comparison = comparisonRegion(page);
   await expect(comparison).toContainText(`블루: ${blueName} → ${redName}`);
   await expect(rosterTable(page)).toContainText("변경된 로스터 슬롯 1개");

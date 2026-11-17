@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
+import { showPanel } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const progress = (page) => page.locator(".draft-turn-progress");
@@ -27,6 +28,7 @@ async function commit(page, turn, keyboard = false) {
 }
 
 async function finish(page, firstIndex = 0, keyboard = false) {
+  await showPanel(page, "DRAFT");
   for (let i = 0; i < 20; i += 1) {
     await choose(page, i === 0 ? firstIndex : 0, keyboard);
     await commit(page, i + 1, keyboard);
@@ -70,7 +72,9 @@ test("a completed A and edited B export and replay without replacing the live dr
   await openStudio(page);
   await finish(page);
   const comparison = page.getByRole("region", { name: "드래프트 A/B 비교", exact: true });
+  await showPanel(page, "COMPARISON");
   await comparison.getByRole("button", { name: "현재 완료 드래프트를 기준 A로 고정", exact: true }).click();
+  await showPanel(page, "DRAFT");
   await page.getByRole("button", { name: "현재 세트 초기화", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("dialog").getByRole("button", { name: "계속 분석하기", exact: true }).click();
@@ -79,6 +83,7 @@ test("a completed A and edited B export and replay without replacing the live dr
   await page.getByRole("dialog").getByRole("button", { name: "초기화", exact: true }).click();
   await expect(progress(page)).toHaveAttribute("value", "0");
   await finish(page, 1);
+  await showPanel(page, "COMPARISON");
   await expect(comparison).toContainText("변경 밴");
   const downloadPromise = page.waitForEvent("download");
   await comparison.getByRole("button", { name: "A/B 비교 JSON 저장", exact: true }).click();

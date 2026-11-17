@@ -52,16 +52,38 @@ test("server-renders the home page as the mock draft studio, not a long product 
   // The retired ProductHome intro must not come before (or replace) the draft workspace.
   assert.doesNotMatch(html, /어떤 분석을 할까요|오늘은 이것만 먼저 보세요|id="home-today"|id="home-spaces"/);
   assert.match(html, /role="tablist" aria-label="작업실 보기"/);
-  const draft = studioTabState(html, "studio-panel-draft");
-  const details = studioTabState(html, "studio-panel-details");
-  assert.equal(draft.selected, true);
-  assert.equal(draft.hidden, false);
-  assert.equal(details.selected, false);
-  assert.equal(details.hidden, true);
-  assert.match(draft.tab, /tabindex="0"/);
-  assert.match(details.tab, /tabindex="-1"/);
-  assert.match(text, />모의 밴픽<\/button>/);
-  assert.match(text, />상세 분석<\/button>/);
+  // Five real panels in rail order; only the draft panel is selected and visible on entry.
+  const panels = [
+    ["studio-panel-draft", "모의 밴픽"], ["studio-panel-roster", "선수·로스터"], ["studio-panel-details", "상세 분석"],
+    ["studio-panel-comparison", "A/B 비교"], ["studio-panel-simulation", "시뮬레이션 준비"],
+  ];
+  const tabOrder = panels.map(([id]) => html.indexOf(`id="${id}-tab"`));
+  assert.deepEqual([...tabOrder].sort((a, b) => a - b), tabOrder, "rail order");
+  for (const [index, [id, label]] of panels.entries()) {
+    const state = studioTabState(html, id);
+    assert.equal(state.selected, index === 0, `${id} selected`);
+    assert.equal(state.hidden, index !== 0, `${id} hidden`);
+    assert.match(state.tab, index === 0 ? /tabindex="0"/ : /tabindex="-1"/);
+    assert.match(text, new RegExp(`id="${id}-tab"[^>]*>${label}</button>`));
+  }
+  const panelStart = (id) => html.indexOf(`id="${id}"`);
+  // The team setup is shared once, above every panel.
+  assert.equal(html.match(/class="draft-match-setup"/g)?.length, 1);
+  assert.ok(html.indexOf('class="draft-match-setup"') < panelStart("studio-panel-draft"));
+  // Roster, A/B and simulation-readiness are each rendered once, inside their own panel.
+  for (const [marker, id, next] of [
+    ['class="roster-workshop"', "studio-panel-roster", "studio-panel-details"],
+    ['class="draft-comparison"', "studio-panel-comparison", "studio-panel-simulation"],
+    ['class="simulation-readiness"', "studio-panel-simulation", null],
+  ]) {
+    assert.equal(html.split(marker).length - 1, 1, `${marker} rendered once`);
+    const at = html.indexOf(marker);
+    assert.ok(at > panelStart(id) && (next === null || at < panelStart(next)), `${marker} is in ${id}`);
+  }
+  // The draft panel only offers a small entry to champion info; the info itself is in details.
+  assert.match(text, /<button type="button" class="studio-info-entry"[^>]*aria-controls="studio-panel-details"[^>]*>챔피언 정보 보기<\/button>/);
+  assert.ok(html.indexOf('class="draft-champion-info') > panelStart("studio-panel-details"));
+  assert.ok(html.indexOf('class="draft-champion-info') < panelStart("studio-panel-comparison"));
   // Both team choosers, side swap and first-pick choice open on the home page.
   assert.match(html, /aria-label="BLUE TEAM: /);
   assert.match(html, /aria-label="RED TEAM: /);

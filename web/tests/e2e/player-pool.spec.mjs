@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { showPanel } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const ROLES = ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"];
@@ -18,6 +19,7 @@ async function openStudio(page) {
 }
 
 async function openPool(page) {
+  await showPanel(page, "ROSTER");
   if ((await roster(page).getAttribute("open")) === null) await roster(page).locator("> summary").click();
   await expect(slot(page, "blue", "TOP")).toBeEnabled();
   if ((await pool(page).getAttribute("open")) === null) await pool(page).locator("> summary").click();
@@ -39,6 +41,8 @@ async function findTarget(page, exclude = []) {
   const listed = await pool(page).locator('.player-pool-champs li[data-state="AVAILABLE"]').evaluateAll((items) =>
     items.map((item) => ({ championId: item.dataset.champion, name: item.textContent.replace(/ \d+경기.*$/, "") })));
   const seen = new Set();
+  // The search and picker live in the draft panel.
+  await showPanel(page, "DRAFT");
   for (const { championId, name } of listed) {
     if (seen.has(championId) || exclude.includes(championId)) continue;
     seen.add(championId);
@@ -81,7 +85,9 @@ test("evidence follows roster edits, live bans/undo, next-set fearless locks, re
 
   // Ban a listed champion: its chips become "this game ban"; undo restores them.
   const banned = await findTarget(page);
+  await showPanel(page, "ROSTER");
   await expect(chips(page, banned.championId).first()).toBeVisible();
+  await showPanel(page, "DRAFT");
   await stageAndConfirm(page, banned, 1);
   for (const chip of await chips(page, banned.championId).all()) await expect(chip).toHaveAttribute("data-state", "BANNED_NOW");
   await expect(pool(page).locator(".player-pool-focus").first()).toContainText(`선택 챔프 ${banned.name}`);
@@ -112,6 +118,7 @@ test("evidence follows roster edits, live bans/undo, next-set fearless locks, re
   for (const chip of await chips(page, banned.championId).all()) await expect(chip).toHaveAttribute("data-state", "AVAILABLE");
 
   const details = page.locator(".draft-session-details");
+  await showPanel(page, "DRAFT");
   if ((await details.getAttribute("open")) === null) await details.locator("summary").click();
   await expect(details.getByRole("status").filter({ hasText: "이 기기에 저장됨" })).toBeVisible();
   await page.reload();

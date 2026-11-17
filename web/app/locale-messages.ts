@@ -36,6 +36,11 @@ const ko = {
   "draft.tabsLabel": "작업실 보기",
   "draft.tab.DRAFT": "모의 밴픽",
   "draft.tab.DETAILS": "상세 분석",
+  "draft.tab.ROSTER": "선수·로스터",
+  "draft.tab.COMPARISON": "A/B 비교",
+  "draft.tab.SIMULATION": "시뮬레이션 준비",
+  "draft.championInfoOpen": "챔피언 정보 보기",
+  "draft.saveFailedFlag": "저장 실패",
   "locale.selectorLabel": "언어",
   "locale.partialNote": "중국어 간체 번역은 진행 중입니다. 밴픽 기본 흐름만 번역되었고 상세 분석, 챔피언 정보와 챔피언 이름은 한국어로 표시됩니다.",
 
@@ -228,6 +233,11 @@ const zhCN: Messages = {
   "draft.tabsLabel": "工作区视图",
   "draft.tab.DRAFT": "模拟禁选",
   "draft.tab.DETAILS": "详细分析",
+  "draft.tab.ROSTER": "选手·阵容",
+  "draft.tab.COMPARISON": "A/B 对比",
+  "draft.tab.SIMULATION": "模拟准备",
+  "draft.championInfoOpen": "查看英雄信息",
+  "draft.saveFailedFlag": "保存失败",
   "locale.selectorLabel": "语言",
   "locale.partialNote": "简体中文翻译进行中。目前仅翻译了禁选基本流程，详细分析、英雄信息和英雄名称仍以韩语显示。",
 
