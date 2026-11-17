@@ -56,6 +56,28 @@ function history(overrides = {}) {
 const parse = (value, b = basis) => S.parsePlayerSeasonHistory(typeof value === "string" ? value : JSON.stringify(value), { basis: b, season: 2026 });
 const ok = (value) => { const result = parse(value); assert.equal(result.ok, true, result.error); return result.value; };
 
+function checkRetainedAsset(text, currentBasis) {
+  const archivedBasis = JSON.parse(text).roster_basis;
+  const archived = S.parsePlayerSeasonHistory(text, { basis: archivedBasis });
+  assert.equal(archived.ok, true, "retained history must remain internally valid even when a refresh failed");
+  const result = S.parsePlayerSeasonHistory(text, { basis: currentBasis });
+  if (!result.ok) {
+    assert.equal(result.code, "BASIS_MISMATCH", result.error);
+    assert.ok(Date.parse(archivedBasis.cutoff) <= Date.parse(currentBasis.cutoff), "a retained optional asset must not come from a future cutoff");
+  }
+  return result;
+}
+
+test("a retained valid asset is withheld after a feed refresh but corrupt or future assets still fail", () => {
+  const text = JSON.stringify(history());
+  assert.equal(checkRetainedAsset(text, basis).ok, true);
+  const later = { ...basis, cutoff: "2026-11-15T00:00:00Z" };
+  assert.equal(checkRetainedAsset(text, later).code, "BASIS_MISMATCH");
+  assert.throws(() => checkRetainedAsset(text, { ...basis, cutoff: "2026-11-13T00:00:00Z" }));
+  const broken = history(); broken.players[0].games += 1;
+  assert.throws(() => checkRetainedAsset(JSON.stringify(broken), later));
+});
+
 test("rejects contradictory periods, provenance and role subset counts", () => {
   const cases = {
     reversed: p => { p.players[0].roles.MID.season.first_observed_at = t("10-02"); },
@@ -169,11 +191,14 @@ test("loader reports unavailable, declared oversize and propagates aborts", asyn
 });
 
 const realPath = new URL("../public/history/player-season-2026.json", import.meta.url);
-test("real derived file matches the published roster basis across teams", { skip: !existsSync(realPath) && "derived file not generated" }, async () => {
+test("real derived file is valid and either matches the feed or is safely withheld", { skip: !existsSync(realPath) && "derived file not generated" }, async () => {
   const feed = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
   const text = await readFile(realPath, "utf8");
   assert.ok(Buffer.byteLength(text) <= S.MAX_PLAYER_SEASON_BYTES);
-  const result = S.parsePlayerSeasonHistory(text, { basis: R.rosterBasis(feed) });
+  const result = checkRetainedAsset(text, R.rosterBasis(feed));
+  if (!result.ok) {
+    return; // Accepted feed publication may continue; runtime must not apply these old records.
+  }
   assert.equal(result.ok, true, result.error);
   const value = result.value;
   const teams = feed.opponent_prep.teams.filter((team) => (team.player_profiles ?? []).length);

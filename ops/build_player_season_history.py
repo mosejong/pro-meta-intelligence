@@ -4,6 +4,9 @@ The CSV must match its archive metadata (file name, byte length, SHA-256). The o
 retrieval time from the metadata is kept as the availability time; it is never replaced by a new
 acquisition time. The output is written to a temporary file, validated, then swapped in, so any
 failure leaves the previously accepted derived file untouched.
+
+With ``--archive-dir`` the CSV is chosen automatically: only the verified archive snapshot whose
+hash, retrieval time and version exactly match the accepted feed's import report is used.
 """
 
 from __future__ import annotations
@@ -13,7 +16,7 @@ import hashlib
 import json
 import os
 import tempfile
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from pro_meta_intelligence.ingestion.oracles_elixir import SOURCE_ID, OracleElixirCSVAdapter
@@ -24,7 +27,7 @@ from pro_meta_intelligence.opponent.player_season import (
     roster_basis_from_feed,
     roster_references_from_feed,
 )
-from pro_meta_intelligence.sources import SourceRegistry
+from pro_meta_intelligence.sources import ArchivedSnapshot, SnapshotArchive, SourceRegistry
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW_DIR = ROOT / "outputs" / "oracles-elixir" / "raw" / SOURCE_ID
@@ -77,10 +80,100 @@ def validate_output(text: str, *, season: int, basis: dict[str, object]) -> None
         raise ValueError("derived history has no players")
 
 
+def select_accepted_snapshot(
+    feed: dict[str, object], archive_dir: Path, *, now: datetime | None = None
+) -> ArchivedSnapshot:
+    """Return exactly the verified archive snapshot the accepted feed was built from.
+
+    Never falls back to the newest, a rejected, or a differently-timed snapshot.
+    """
+
+    report = (feed.get("input") or {}).get("import_report") or {}  # type: ignore[union-attr]
+    if report.get("source_id") != SOURCE_ID:
+        raise ValueError("accepted feed source is not the OE match data source")
+    content_hash = report.get("content_hash")
+    source_version = report.get("source_version")
+    if not isinstance(content_hash, str) or not isinstance(source_version, str):
+        raise ValueError("accepted feed is missing its source hash or version")
+    retrieved_at = datetime.fromisoformat(str(report.get("retrieved_at")))
+    if retrieved_at.tzinfo is None:
+        raise ValueError("accepted feed retrieval time must be timezone-aware")
+    if retrieved_at > (now or datetime.now(UTC)):
+        raise ValueError("accepted feed source was retrieved in the future")
+    evidence = [
+        item
+        for item in ((feed.get("evidence_index") or {}).get("source_versions") or [])  # type: ignore[union-attr]
+        if item.get("source_id") == SOURCE_ID
+    ]
+    if evidence and not any(
+        item.get("content_hash") == content_hash and item.get("source_version") == source_version
+        for item in evidence
+    ):
+        raise ValueError("accepted feed evidence index does not cite its import source")
+    inspection = SnapshotArchive(archive_dir).inspect(SOURCE_ID)
+    if inspection.issues:
+        codes = ", ".join(sorted({issue.code for issue in inspection.issues}))
+        raise ValueError(f"archive integrity issues: {codes}")
+    matches = [
+        snapshot
+        for snapshot in inspection.snapshots
+        if snapshot.content_hash == content_hash and snapshot.retrieved_at == retrieved_at
+    ]
+    if len(matches) != 1:
+        raise ValueError("accepted feed source not found exactly once in verified archive")
+    return matches[0]
+
+
+def ensure_not_regressing(output: Path, feed: dict[str, object], retrieved_at: datetime) -> None:
+    """Automatic refresh never moves the published cutoff or source time backwards."""
+
+    if not output.exists():
+        return
+    previous = json.loads(output.read_text(encoding="utf-8"))
+    previous_cutoff = datetime.fromisoformat(str(previous["cutoff"]))
+    previous_retrieved = datetime.fromisoformat(str(previous["source"]["retrieved_at"]))
+    if datetime.fromisoformat(str(feed["cutoff"])) < previous_cutoff:
+        raise ValueError("accepted feed cutoff is older than the published season history")
+    if retrieved_at < previous_retrieved:
+        raise ValueError("accepted feed source is older than the published season history")
+
+
+def build_from_archive(
+    archive_dir: Path,
+    feed_path: Path,
+    output: Path,
+    *,
+    season: int,
+    now: datetime | None = None,
+) -> dict[str, object]:
+    feed = json.loads(feed_path.read_text(encoding="utf-8"))
+    snapshot = select_accepted_snapshot(feed, archive_dir, now=now)
+    ensure_not_regressing(output, feed, snapshot.retrieved_at)
+    report = feed["input"]["import_report"]
+    return build(
+        snapshot.data_path,
+        snapshot.metadata_path,
+        feed_path,
+        output,
+        season=season,
+        expected_source_version=report["source_version"],
+        expected_retrieved_at=snapshot.retrieved_at,
+    )
+
+
 def build(
-    csv_path: Path, meta_path: Path, feed_path: Path, output: Path, *, season: int
+    csv_path: Path,
+    meta_path: Path,
+    feed_path: Path,
+    output: Path,
+    *,
+    season: int,
+    expected_source_version: str | None = None,
+    expected_retrieved_at: datetime | None = None,
 ) -> dict[str, object]:
     archive = verify_archive(csv_path, meta_path)
+    if expected_retrieved_at is not None and archive["retrieved_at"] != expected_retrieved_at:
+        raise ValueError("archive retrieval time differs from the accepted feed source")
     retrieved_at = archive["retrieved_at"]
     assert isinstance(retrieved_at, datetime)
     feed = json.loads(feed_path.read_text(encoding="utf-8"))
@@ -93,6 +186,11 @@ def build(
     )
     if imported.report.content_hash != archive["content_hash"]:
         raise ValueError("adapter hash differs from archive metadata")
+    if (
+        expected_source_version is not None
+        and imported.report.source_version != expected_source_version
+    ):
+        raise ValueError("adapter source version differs from the accepted feed source")
     history = build_player_season_history(
         imported.matches,
         imported.draft_events,
@@ -135,13 +233,29 @@ def build(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--csv", type=Path, default=DEFAULT_CSV)
-    parser.add_argument("--meta", type=Path, default=DEFAULT_META)
+    parser.add_argument("--csv", type=Path)
+    parser.add_argument("--meta", type=Path)
+    parser.add_argument(
+        "--archive-dir",
+        type=Path,
+        help="Verified SnapshotArchive root; uses exactly the accepted feed's source snapshot.",
+    )
     parser.add_argument("--feed", type=Path, default=DEFAULT_FEED)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--season", type=int, default=2026)
     args = parser.parse_args(argv)
-    result = build(args.csv, args.meta, args.feed, args.output, season=args.season)
+    if args.archive_dir is not None:
+        if args.csv is not None or args.meta is not None:
+            parser.error("--archive-dir cannot be combined with --csv/--meta")
+        result = build_from_archive(args.archive_dir, args.feed, args.output, season=args.season)
+    else:
+        result = build(
+            args.csv or DEFAULT_CSV,
+            args.meta or DEFAULT_META,
+            args.feed,
+            args.output,
+            season=args.season,
+        )
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 

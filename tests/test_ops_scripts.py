@@ -132,6 +132,32 @@ def test_hosted_oe_collector_restores_private_state_and_publishes_only_safe_head
     for international_event in ("WLDs", "MSI", "FST"):
         assert f"--patch-selection-league {international_event}" in workflow
 
+    history_path = "web/public/history/player-season-2026.json"
+    history = workflow.split("name: Refresh season player history", 1)[1].split("- name:", 1)[0]
+    assert "if: steps.sync-health.outcome == 'success'" in history
+    assert "continue-on-error: true" in history
+    assert "python ops/build_player_season_history.py" in history
+    assert '--archive-dir "$PRIVATE_ARCHIVE_DIR"' in history
+    assert f"--output {history_path}" in history
+    assert "--season 2026" in history
+    assert "if: steps.season-history-refresh.outcome == 'failure'" in workflow
+    assert workflow.index("id: sync-health") < workflow.index("id: season-history-refresh")
+    assert workflow.index("id: season-history-refresh") < workflow.index("npm run test:pages")
+    assert "git checkout -- web/public/history" not in workflow
+    assert "git clean -fdq -- web/public/history" not in workflow
+    publish = workflow.split("name: Publish only the reviewed public feed heads", 1)[1]
+    publish = publish.split("- name:", 1)[0]
+    assert "web/public/history/player-season-2026\\.json|" in publish
+    assert publish.count(history_path) == 2  # change check and git add
+    for private in (
+        "outputs/",
+        "PRIVATE_ARCHIVE_DIR",
+        ".meta.json",
+        ".csv",
+        "web/public/history/*",
+    ):
+        assert private not in publish
+
     assert 'cron: "13 7,19 * * *"' in workflow
     assert 'cron: "13 7 * * *"' not in workflow
     assert "SourceAttemptLedger" in (ROOT / "src/pro_meta_intelligence/cli.py").read_text(

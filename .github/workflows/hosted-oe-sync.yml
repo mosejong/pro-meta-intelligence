@@ -196,6 +196,21 @@ jobs:
           git checkout -- web/app/scouting
           git clean -fdq -- web/app/scouting
           echo "::warning::Scouting refresh failed; previously accepted packs were kept unchanged."
+      - name: Refresh season player history from the accepted feed source
+        id: season-history-refresh
+        if: steps.sync-health.outcome == 'success'
+        # A history failure must not block the accepted feed; the generator swaps atomically,
+        # so the previously published file stays byte-for-byte unchanged on any failure.
+        continue-on-error: true
+        run: >-
+          python ops/build_player_season_history.py
+          --feed web/public/feed/current.json
+          --archive-dir "$PRIVATE_ARCHIVE_DIR"
+          --output web/public/history/player-season-2026.json
+          --season 2026
+      - name: Warn when the season player history refresh failed
+        if: steps.season-history-refresh.outcome == 'failure'
+        run: echo "::warning::Season player history refresh failed; the previous file was kept unchanged."
       - name: Validate and build the independent Pages artifact
         working-directory: web
         run: npm ci && npm run lint && npm run test:pages
@@ -208,7 +223,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          allowed_pattern='^(web/public/feed/current\.json|web/public/feed/current-creator\.json|web/public/feed/history-status\.json|web/public/feed/decision-outcomes\.json|web/public/feed/collection-status\.json|web/app/scouting/t1-vs-(kc|tes|ig|gen|lyon|dk|blg)\.json)$'
+          allowed_pattern='^(web/public/feed/current\.json|web/public/feed/current-creator\.json|web/public/feed/history-status\.json|web/public/feed/decision-outcomes\.json|web/public/feed/collection-status\.json|web/public/history/player-season-2026\.json|web/app/scouting/t1-vs-(kc|tes|ig|gen|lyon|dk|blg)\.json)$'
           unexpected=$(git diff --name-only | grep -Ev "$allowed_pattern" || true)
           if [[ -n "$unexpected" ]]; then
             echo "Unexpected tracked changes from hosted sync:" >&2
@@ -221,6 +236,7 @@ jobs:
             web/public/feed/history-status.json \
             web/public/feed/decision-outcomes.json \
             web/public/feed/collection-status.json \
+            web/public/history/player-season-2026.json \
             web/app/scouting/t1-vs-{kc,tes,ig,gen,lyon,dk,blg}.json; then
             echo "Public OE feed heads are already current."
             exit 0
@@ -233,6 +249,7 @@ jobs:
             web/public/feed/history-status.json \
             web/public/feed/decision-outcomes.json \
             web/public/feed/collection-status.json \
+            web/public/history/player-season-2026.json \
             web/app/scouting/t1-vs-{kc,tes,ig,gen,lyon,dk,blg}.json
           staged=$(git diff --cached --name-only | grep -Ev "$allowed_pattern" || true)
           if [[ -n "$staged" ]]; then
