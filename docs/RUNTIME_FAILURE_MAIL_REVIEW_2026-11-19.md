@@ -22,6 +22,8 @@
 
 ## 운영 확인 관문
 
-운영 전용 PR 통합 및 다음 공식 일정 갱신/감시 결과 확인이 남는다. 일정 소스는 최소 **6시간 간격**을 지켜야 하므로 마지막 실패 요청 시각(11/19 02:13 KST) 직후 수동 반복 요청하지 않는다. 기존 cron상 다음 일정 갱신은 09:17 KST, 감시는 09:43 KST이나 실제 GitHub 실행은 지연될 수 있다. 10:45 후속 확인에서 새 일정 취득·빈 일정·공개 건강과 이슈 #120 회복 여부를 대조한다. 현재 시점에는 완전 복구/메일 중단을 확정하지 않는다.
+운영 전용 [PR #126](https://github.com/mosejong/pro-meta-intelligence/pull/126)은 원격 Python/web CI 모두 통과 후 main `b0d7455a`로 통합했다. 웹 파일은 포함하지 않아 새 제품 Pages 배포는 유발하지 않았다. 다음 공식 일정 갱신/감시의 실제 회복 결과 확인은 남는다.
+
+일정 소스는 최소 **6시간 간격**을 지켜야 하므로 마지막 실패 요청 시각(11/19 02:13 KST) 직후 수동 반복 요청하지 않는다. 기존 cron상 다음 일정 갱신은 09:17 KST, 감시는 09:43 KST이나 실제 GitHub 실행은 지연될 수 있다. 10:45 후속 자동화에 새 일정 취득·빈 일정·공개 건강과 이슈 #120 회복 여부 대조를 추가했다. 현재 시점에는 완전 복구/메일 중단을 확정하지 않는다.
 
 증거: `outputs/schedule-diagnostics-44356201642/`, `outputs/watchdog-44262583725/health.json`, `outputs/schedule-parser-compatibility-20261119.json`, `outputs/schedule-empty-offline-snapshot-20261119.json`, `outputs/runtime-mail-final-python-20261119.log`. 메일 알림은 과거 기록이므로 수정 뒤 과거 메일 자체가 사라지지 않는다.
