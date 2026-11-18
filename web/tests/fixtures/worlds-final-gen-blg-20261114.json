@@ -1,0 +1,49 @@
+{
+  "artifact_type": "manually-reviewed-draft-reference",
+  "schema_version": 1,
+  "event": "Worlds 2026 final",
+  "reviewed_on": "2026-11-18",
+  "first_game_at": "2026-11-14T19:00:00Z",
+  "verification": "SECONDARY_MATCH_PAGES_AND_LINKED_CHAMPION_IMAGE_FILENAMES_NOT_OFFICIAL_VOD",
+  "usage": "Requested local case study only; not a newly enabled collection source or training feed.",
+  "reported_patch_labels": { "leaguerecords": "26.20", "outdrafted": "16.20" },
+  "series_source": "https://outdrafted.lol/lol/match/115660540726095133",
+  "games": [
+    {
+      "game": 1,
+      "source_url": "https://leaguerecords.com/championships/worlds/2026/46/1",
+      "blue": "Gen.G", "red": "Bilibili Gaming",
+      "blue_bans": ["Nocturne", "Orianna", "Vi", "Jax", "Camille"],
+      "red_bans": ["Qiyana", "Cassiopeia", "Lulu", "Ezreal", "Seraphine"],
+      "blue_picks": ["Lee Sin", "Syndra", "Olaf", "Corki", "Nami"],
+      "red_picks": ["Renata Glasc", "Kalista", "Locke", "K'Sante", "Jarvan IV"]
+    },
+    {
+      "game": 2,
+      "source_url": "https://leaguerecords.com/championships/worlds/2026/46/2",
+      "blue": "Gen.G", "red": "Bilibili Gaming",
+      "blue_bans": ["Nocturne", "Qiyana", "Nautilus", "Lulu", "Akali"],
+      "red_bans": ["Jayce", "Vi", "Galio", "Renekton", "Viktor"],
+      "blue_picks": ["Ezreal", "Karma", "Cho'Gath", "Orianna", "Vayne"],
+      "red_picks": ["Cassiopeia", "Camille", "Naafiri", "Gnar", "Ziggs"]
+    },
+    {
+      "game": 3,
+      "source_url": "https://leaguerecords.com/championships/worlds/2026/46/3",
+      "blue": "Gen.G", "red": "Bilibili Gaming",
+      "blue_bans": ["Nautilus", "Renekton", "Seraphine", "Kai'Sa", "Sivir"],
+      "red_bans": ["Qiyana", "Jayce", "Lulu", "Xayah", "Poppy"],
+      "blue_picks": ["Ambessa", "Wukong", "Annie", "Rakan", "Jhin"],
+      "red_picks": ["Jax", "Vi", "Viktor", "Alistar", "Taliyah"]
+    },
+    {
+      "game": 4,
+      "source_url": "https://leaguerecords.com/championships/worlds/2026/46/4",
+      "blue": "Bilibili Gaming", "red": "Gen.G",
+      "blue_bans": ["Qiyana", "Jayce", "Seraphine", "Sylas", "Rumble"],
+      "red_bans": ["Nautilus", "Skarner", "Kindred", "Renekton", "Galio"],
+      "blue_picks": ["Nocturne", "Yunara", "Neeko", "Gwen", "Twisted Fate"],
+      "red_picks": ["Lulu", "Xayah", "Pantheon", "Akali", "Aurora"]
+    }
+  ]
+}
