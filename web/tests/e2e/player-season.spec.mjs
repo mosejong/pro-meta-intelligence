@@ -96,6 +96,8 @@ test("the actual derived file loads from the draft route and matches all display
   await pool(page).locator("> summary").click();
   expect(state.requests).toBe(0);
   await season(page).locator("> summary").click();
+  await expect(season(page).locator("[data-history-coverage-notice]")).toContainText("2014년 이후 자료를 순차 확보 중");
+  await expect(season(page).locator("[data-history-coverage-notice]")).toContainText("2026년 자료만 표시");
   await expect(season(page).getByRole("note")).toContainText(`제외 ${real.import_summary.rejected_game_count}경기`);
   expect(state.requests).toBe(1);
   for (const side of ["blue", "red"]) for (const role of ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"]) {

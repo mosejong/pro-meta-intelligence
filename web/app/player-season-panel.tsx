@@ -87,6 +87,7 @@ export function PlayerSeasonSection({ basis, publicationRoot, path, index, roste
   return <details className="player-season" open={open} onToggle={(event) => toggle(event.currentTarget.open)}>
     <summary>{PLAYER_SEASON_YEAR} 연간 역할별 기록 <small>현재 스냅샷 목록과 별도 · 펼칠 때 불러옴</small></summary>
     {open && <div className="player-season-body">
+      <p className="player-season-status" data-history-coverage-notice="">2014년 이후 자료를 순차 확보 중이며, 이 섹션은 {PLAYER_SEASON_YEAR}년 자료만 표시합니다. 연도·대회별 누락이 있을 수 있습니다.</p>
       {!current
         ? <button type="button" className="player-season-retry" onClick={start}>연간 자료 불러오기</button>
         : current.status === "loading"

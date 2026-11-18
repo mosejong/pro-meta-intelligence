@@ -39,6 +39,8 @@ import type { SimulationInputSnapshot } from "./simulation-scenario";
 import { DEFAULT_LOCALE, LanguageSelector, useLocale, type Locale, type MessageKey } from "./locale";
 import "./draft-workspace.css";
 import "./draft-studio.css";
+import { WorkspaceHeader } from "./workspace-header";
+import { DraftSharePanel } from "./draft-share-panel";
 
 type DraftLabProps = {
   currentSpace: ProductSpace;
@@ -300,6 +302,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   // Memoized above, so timer ticks and status updates never resubmit; each committed change is written immediately.
   const retrySave = useDraftSave(saveSnapshot, setStorageStatus);
 
+  const shareSession = useMemo(() => ({ report, blueTeamId, redTeamId, games, selections, stagedChampion: pendingChampion, firstPickSide }),
+    [report, blueTeamId, redTeamId, games, selections, pendingChampion, firstPickSide]);
+
   useEffect(() => {
     if (!timerRunning || !turn || timer <= 0) return;
     const timeout = window.setTimeout(() => setTimer((value) => Math.max(0, value - 1)), 1000);
@@ -530,11 +535,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       ? { champion_id: staged.champion_id, status: "STAGED", selection: staged }
       : focusSelection ? { champion_id: focusSelection.champion_id, status: "CONFIRMED", selection: focusSelection } : null;
   return <main className="draft-lab draft-studio" lang="ko">
-    <header className="draft-lab-topbar">
-      <a className="brand" href={productSpaceHref(currentSpace, "ONBOARDING")} aria-label={t("draft.brandLabel")} lang={lang.ui}><span className="brand-mark">PM</span><span><strong>PRO META</strong><small>INTELLIGENCE</small></span></a>
-      <nav aria-label={t("draft.pagesLabel")} lang={lang.ui}><a href={productSpaceHref(currentSpace, "TEAM")}>{t("space.TEAM")}</a><a href={productSpaceHref(currentSpace, "RADAR")}>{t("space.RADAR")}</a><a href={productSpaceHref(currentSpace, "CREATOR")}>{t("space.CREATOR")}</a><a href={productSpaceHref(currentSpace, "PROOF")}>{t("space.PROOF")}</a></nav>
+    <WorkspaceHeader currentSpace={currentSpace}>
       <div lang={lang.ui}><span>{seriesReport ? report.fixture_only ? t("draft.data.fixture") : t("draft.data.locked") : feedLabel}</span><b>PATCH {report.patch_id}</b></div>
-    </header>
+    </WorkspaceHeader>
 
     <header className="studio-workspace-header">
       <h1 lang={locale}>{t("draft.title")}</h1>
@@ -588,12 +591,14 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         {!saveSnapshot && <small>{importing ? "파일을 불러오는 중이라 지금은 다시 저장할 수 없습니다." : "저장할 최신 밴픽이 아직 없습니다."}</small>}
         <small>현재 화면의 최신 밴픽만 다시 저장하며 이전 상태로 되돌리지 않습니다.</small>
       </div>}
-      <details className="draft-session-details"><summary>{t("draft.sessionSummary")}</summary>
+      <DraftSharePanel outgoing={shareSession} liveReport={liveReport} ready={canSelect} incomingReady={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onAccept={(session) => { setComparisonEpoch((epoch) => epoch + 1); setPendingReset(null); restoreSession(session); }} />
+      <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={() => setPendingReset("SERIES")} disabled={!games.length && !hasCurrentWork}>{t("draft.resetSeries")}</button></div>
+      <details className="draft-session-details"><summary lang="ko">고급 설정 · 파일 저장·불러오기</summary>
       <p>{format("draft.sessionInfo", { state: t(seriesReport ? "draft.sessionInfo.locked" : "draft.sessionInfo.pending"), patch: report.patch_id, cutoff: report.cutoff ?? "", model: DRAFT_MODEL_VERSION })}</p>
-      <div className="draft-session-controls"><label>{t("draft.import")}<input type="file" accept=".json,application/json" disabled={!sessionReady || importing} onChange={(event) => void importScenario(event.currentTarget)} /></label><button type="button" onClick={downloadScenario} disabled={!canSelect}>{t("draft.saveJson")}</button></div>
+      <div className="draft-session-controls"><button type="button" onClick={downloadScenario} disabled={!selections.length && !games.length}>{t("draft.scenarioJson")}</button><label>{t("draft.import")}<input type="file" accept=".json,application/json" disabled={!sessionReady || importing} onChange={(event) => void importScenario(event.currentTarget)} /></label><button type="button" onClick={downloadScenario} disabled={!canSelect}>{t("draft.saveJson")}</button></div>
       <p role="status" lang={reasonLang(storageStatus)}>{storageText}</p>
       {importText && <p role="status" lang={reasonLang(importStatus)}>{importText}</p>}
-      <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={reopenPreviousGame} disabled={!games.length || hasCurrentWork}>{t("draft.reopen")}</button><button type="button" onClick={() => setPendingReset("SERIES")} disabled={!games.length && !hasCurrentWork}>{t("draft.resetSeries")}</button></div>
+      <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={reopenPreviousGame} disabled={!games.length || hasCurrentWork}>{t("draft.reopen")}</button></div>
       </details>
       {games.map((game, index) => <details key={index}><summary>{format("draft.gameLocks", { game: index + 1 })}</summary><div className="draft-series-locks" lang={lang.name}>{game.selections.filter((selection) => selection.kind === "PICK").map((selection) => <span key={selection.champion_id}><img src={championImageUrl(selection.champion_id)} alt="" />{nameOf(selection.champion_id)}</span>)}</div></details>)}
     </section>
@@ -625,7 +630,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
           {/* The full champion info lives in the details panel; this only switches panels. */}
           <button type="button" className="studio-info-entry" lang={lang.ui} aria-controls={panelOf("DETAILS")} onClick={openChampionInfo}>{t("draft.championInfoOpen")}</button>
         </section>
-        <div className="draft-actions" lang={lang.ui}><button type="button" onClick={undo} disabled={!selections.length}>{t("draft.undo")}</button><button type="button" onClick={() => setPendingReset("GAME")} disabled={!hasCurrentWork}>{t("draft.resetGame")}</button><button type="button" onClick={downloadScenario} disabled={!selections.length && !games.length}>{t("draft.scenarioJson")}</button></div>
+        <div className="draft-actions" lang={lang.ui}><button type="button" onClick={undo} disabled={!selections.length}>{t("draft.undo")}</button><button type="button" onClick={() => setPendingReset("GAME")} disabled={!hasCurrentWork}>{t("draft.resetGame")}</button></div>
         <ol className="draft-sequence-mini" aria-label={t("draft.sequenceLabel")} lang={lang.ui}>{draftSequence(firstPickSide).map((item, index) => <li className={index < selections.length ? "done" : index === selections.length ? "current" : ""} key={index}><span>{index + 1}</span><b>{item.side === "BLUE" ? "B" : "R"}{item.kind === "BAN" ? "B" : "P"}{item.slot}</b></li>)}</ol>
       </section>
       <TeamDraftColumn side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />

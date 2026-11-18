@@ -159,7 +159,7 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /결정할 3가지/);
   assert.match(html, /LIVE DECISION QUEUE/);
   assert.match(html, /티어표가 아니라 회의 시작점입니다/);
-  assert.match(html, /<main class="section-space space-team quick-view">/);
+  assert.match(html, /<main class="legacy-workspace section-space space-team quick-view">/);
   assert.match(html, /처음이라면 여기만/);
   assert.match(html, /세 줄로 먼저 이해하세요/);
   assert.match(html, /01 · 한 줄 결론/);
@@ -309,7 +309,7 @@ test("server-renders every focused workspace route", async () => {
     const response = await render(path);
     assert.equal(response.status, 200);
     const html = await response.text();
-    assert.match(html, new RegExp(`<main class="section-space ${className} quick-view">`));
+    assert.match(html, new RegExp(`<main class="legacy-workspace section-space ${className} quick-view">`));
     assert.match(html, new RegExp(marker));
     assert.match(html, /세 줄로 먼저 이해하세요/);
     assert.match(html, new RegExp(guideAction));

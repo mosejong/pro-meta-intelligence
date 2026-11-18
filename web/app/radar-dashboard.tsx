@@ -61,6 +61,8 @@ import { TargetMatchDayPanel } from "./target-match-day-panel";
 import { compareTeamsForDefault } from "./team-defaults";
 import { buildWorkspaceUrl, parseWorkspaceSearch, type WorkspaceViewMode } from "./workspace-link";
 import "./bright-theme.css";
+import { WorkspaceHeader } from "./workspace-header";
+import "./legacy-workspace.css";
 
 // The draft studio is the heaviest client module; load it only on the draft/home page.
 const DraftLab = lazy(() => import("./draft-lab").then((module) => ({ default: module.DraftLab })));
@@ -787,13 +789,13 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   ).level === "STALE";
 
   if (initialSpace === "PROOF") {
-    return <SubmissionProof
+    return <div className="legacy-workspace legacy-proof"><WorkspaceHeader currentSpace={initialSpace} /><SubmissionProof
       currentSpace={initialSpace}
       report={report}
       collectionStatus={collectionStatus}
       aiValidation={aiValidation}
       feedLabel={feedState.label}
-    />;
+    /></div>;
   }
 
   // The home page is the mock draft studio itself; /draft/ keeps the same studio for existing links.
@@ -853,28 +855,20 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   } : currentSectionGuide;
 
   return (
-    <main className={`section-space space-${initialSpace.toLowerCase()} ${viewMode === "QUICK" ? "quick-view" : "full-view"}`}>
-      <header className="topbar">
-        <a className="brand" href={productSpaceHref(initialSpace, "ONBOARDING")} aria-label="Pro Meta Intelligence 홈">
-          <span className="brand-mark">PM</span>
-          <span><strong>PRO META</strong><small>INTELLIGENCE</small></span>
-        </a>
-        <nav aria-label="주요 메뉴">
-          <a className={initialSpace === "TEAM" ? "active" : ""} href={productSpaceHref(initialSpace, "TEAM")}>팀 분석</a>
-          <a className={initialSpace === "CREATOR" ? "active" : ""} href={productSpaceHref(initialSpace, "CREATOR")}>콘텐츠</a>
-          <a className={initialSpace === "RADAR" ? "active" : ""} href={productSpaceHref(initialSpace, "RADAR")}>메타 레이더</a>
-          <a href={productSpaceHref(initialSpace, "DRAFT")}>Draft Lab</a>
-        </nav>
+    <main className={`legacy-workspace section-space space-${initialSpace.toLowerCase()} ${viewMode === "QUICK" ? "quick-view" : "full-view"}`}>
+      <WorkspaceHeader currentSpace={initialSpace}>
         <div className="topbar-actions">
           <span className={`snapshot-state ${feedState.kind} ${isHistoricalPublication ? "stale" : ""}`} title={feedState.detail} aria-live="polite"><i />{feedState.label}</span>
           <button className="view-mode-button" type="button" aria-pressed={viewMode === "FULL"} onClick={toggleViewMode}>{viewMode === "QUICK" ? "전체 근거 보기" : "쉬운 화면으로"}</button>
           <button className="refresh-button" type="button" onClick={() => { manualOverride.current = false; void loadPublishedFeed(); }} aria-label="발행 피드 새로고침">↻</button>
-          <button className="load-button" type="button" onClick={() => fileInput.current?.click()}>
-            JSON 불러오기 <span>↗</span>
-          </button>
+          <details className="workspace-file-options"><summary>고급 설정</summary>
+            <div><button className="load-button" type="button" onClick={() => fileInput.current?.click()}>
+              자료 파일 불러오기 <span>↗</span>
+            </button></div>
+          </details>
         </div>
         <input ref={fileInput} className="visually-hidden" type="file" accept="application/json,.json" onChange={loadReport} aria-label="Meta Radar JSON 불러오기" />
-      </header>
+      </WorkspaceHeader>
 
       <section className="section-portal-hero" id="top">
         <div><span>{sectionCopy.index} · {sectionCopy.eyebrow}</span><h1>{sectionCopy.title}</h1><p>{sectionCopy.detail}</p></div>
