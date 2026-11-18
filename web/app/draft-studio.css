@@ -352,3 +352,5 @@ main.draft-lab.draft-studio .studio-save-flag { min-height: 32px; padding: 2px 1
   }
   main.draft-lab.draft-studio .studio-shell .studio-tabs button[aria-selected="true"] { border-left-color: var(--studio-action); background: var(--studio-panel); }
 }
+main.draft-lab.draft-studio .studio-preview-footer { border-top: 1px solid var(--studio-line); margin-top: 20px; padding: 12px 0; color: var(--studio-muted); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .studio-preview-footer p { margin: 0 0 6px; }

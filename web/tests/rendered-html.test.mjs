@@ -746,8 +746,8 @@ test("builds a balanced private-safe 30-case player tendency human baseline deck
   }
 });
 
-test("keeps human team decisions snapshot-scoped and validates local journal data", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+test("keeps human team decisions snapshot-scoped and validates local journal data using frozen eligible 20261114 fixtures", async () => {
+  const feed = JSON.parse(await readFile(new URL("./fixtures/eligible-feed-20261114.json", import.meta.url), "utf8"));
   const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
   assert.ok(t1);
   const vite = await createServer({
@@ -821,8 +821,8 @@ test("keeps human team decisions snapshot-scoped and validates local journal dat
   }
 });
 
-test("reconciles journal decisions only to exact or immutable source-state outcomes", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+test("reconciles journal decisions only to exact or immutable source-state outcomes using frozen eligible 20261114 fixtures", async () => {
+  const feed = JSON.parse(await readFile(new URL("./fixtures/eligible-feed-20261114.json", import.meta.url), "utf8"));
   const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
   const vite = await createServer({
     root: fileURLToPath(templateRoot),
@@ -903,8 +903,8 @@ test("reconciles journal decisions only to exact or immutable source-state outco
   }
 });
 
-test("builds deterministic creator scenes for YouTube and Shorts exports", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+test("builds deterministic creator scenes for YouTube and Shorts exports using frozen eligible 20261114 fixtures", async () => {
+  const feed = JSON.parse(await readFile(new URL("./fixtures/eligible-feed-20261114.json", import.meta.url), "utf8"));
   const entry = feed.entries.find((item) => item.eligible_for_review);
   assert.ok(entry);
 
@@ -940,9 +940,9 @@ test("builds deterministic creator scenes for YouTube and Shorts exports", async
   }
 });
 
-test("builds a claim-locked five-scene storyboard from the published creator brief", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
-  const brief = JSON.parse(await readFile(new URL("public/feed/current-creator.json", templateRoot), "utf8"));
+test("builds a claim-locked five-scene storyboard from the creator brief using frozen eligible 20261114 fixtures", async () => {
+  const feed = JSON.parse(await readFile(new URL("./fixtures/eligible-feed-20261114.json", import.meta.url), "utf8"));
+  const brief = JSON.parse(await readFile(new URL("./fixtures/eligible-creator-20261114.json", import.meta.url), "utf8"));
   const vite = await createServer({
     root: fileURLToPath(templateRoot),
     configFile: false,
@@ -986,8 +986,8 @@ test("builds a claim-locked five-scene storyboard from the published creator bri
   }
 });
 
-test("builds T1 creator angles only from exact public pick and Radar overlaps", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+test("builds T1 creator angles only from exact public pick and Radar overlaps using frozen eligible 20261114 fixtures", async () => {
+  const feed = JSON.parse(await readFile(new URL("./fixtures/eligible-feed-20261114.json", import.meta.url), "utf8"));
   const vite = await createServer({
     root: fileURLToPath(templateRoot),
     configFile: false,
@@ -1042,8 +1042,8 @@ test("builds T1 creator angles only from exact public pick and Radar overlaps", 
   }
 });
 
-test("builds a deterministic evidence-bounded match-day brief from the published feed", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+test("builds a deterministic evidence-bounded match-day brief from the feed using frozen eligible 20261114 fixtures", async () => {
+  const feed = JSON.parse(await readFile(new URL("./fixtures/eligible-feed-20261114.json", import.meta.url), "utf8"));
   const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
   assert.ok(t1);
 
@@ -1089,6 +1089,50 @@ test("builds a deterministic evidence-bounded match-day brief from the published
     assert.equal(lowSample.opponent.evidence_quality, "LOW_SAMPLE");
     assert.equal(incomplete.opponent.evidence_quality, "INCOMPLETE_EVIDENCE");
     assert.ok(incomplete.unknowns.some((item) => item.includes("누락")));
+  } finally {
+    await vite.close();
+  }
+});
+
+test("published sources remain aligned and an ineligible view abstains without fabricating match-day preparation", async () => {
+  const published = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const brief = JSON.parse(await readFile(new URL("public/feed/current-creator.json", templateRoot), "utf8"));
+  // Always exercise abstention, even after the daily feed produces eligible entries again.
+  const feed = { ...published, entries: published.entries.map(entry => ({ ...entry, eligible_for_review: false })) };
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot), configFile: false, publicDir: false,
+    server: { middlewareMode: true }, appType: "custom", logLevel: "silent",
+  });
+  try {
+    const { buildTeamBrief } = await vite.ssrLoadModule("/app/team-brief.ts");
+    const { isCreatorBrief } = await vite.ssrLoadModule("/app/creator-storyboard.ts");
+    const { buildT1CreatorAngles } = await vite.ssrLoadModule("/app/creator-t1-angle.ts");
+    const { buildEmergencyBrief } = await vite.ssrLoadModule("/app/emergency-brief.ts");
+    const { buildTargetMatchDayBrief } = await vite.ssrLoadModule("/app/target-match-day.ts");
+    assert.deepEqual(buildTeamBrief(feed), []);
+    assert.equal(isCreatorBrief(brief), true);
+    assert.equal(brief.source_snapshot.patch_id, feed.patch_id);
+    assert.equal(brief.source_snapshot.cutoff, feed.cutoff);
+    if (!published.entries.some(entry => entry.eligible_for_review)) assert.deepEqual(brief.topic_candidates, []);
+    assert.deepEqual(buildT1CreatorAngles(feed), []);
+
+    const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+    assert.ok(t1);
+    const emergency = buildEmergencyBrief(feed, t1);
+    assert.deepEqual(emergency.patch_review_queue, []);
+    assert.ok(emergency.meta_overlaps.every((item) => !item.radar_eligible && item.review_level === "CONTEXT_ONLY"));
+
+    // With no profile, preparation may use only the published opponent picks/bans.
+    const matchday = buildTargetMatchDayBrief(feed, t1, null);
+    const expectedSources = [];
+    if (t1.priority_picks[0]) expectedSources.push({ type: "PICK", evidence_ids: t1.priority_picks[0].evidence_event_ids });
+    if (t1.frequent_bans[0] || t1.received_bans[0]) expectedSources.push({
+      type: "BAN",
+      evidence_ids: [...(t1.frequent_bans[0]?.evidence_event_ids ?? []), ...(t1.received_bans[0]?.evidence_event_ids ?? [])],
+    });
+    assert.deepEqual(matchday.prepare_now.map(({ type, evidence_ids }) => ({ type, evidence_ids })), expectedSources);
+    const withoutPreparationEvidence = { ...t1, priority_picks: [], frequent_bans: [], received_bans: [] };
+    assert.deepEqual(buildTargetMatchDayBrief(feed, withoutPreparationEvidence, null).prepare_now, []);
   } finally {
     await vite.close();
   }

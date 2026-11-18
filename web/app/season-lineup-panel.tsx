@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useChampionNames } from "./champion-names";
 import { fetchJsonWithTimeout } from "./publication-loader";
 import { emptySeasonSlots, parseSeasonCardCatalog, verifySeasonCardIntegrity, resolveSeasonRef, type SeasonCardCatalog, type SeasonCardRef, type TeamSeasonSlots } from "./season-player-cards";
 import { ROSTER_ROLES, type RosterRole } from "./roster-scenario";
@@ -8,6 +9,7 @@ export function SeasonLineupPanel({ catalog, onCatalog, lineups, teams, publicat
   catalog: SeasonCardCatalog | null; onCatalog: (c: SeasonCardCatalog) => void; lineups: TeamSeasonSlots; teams: { id: string; name: string; side: string }[]; publicationRoot: string; disabled: boolean;
   onChoose: (teamId: string, role: RosterRole, ref: SeasonCardRef | null) => void;
 }) {
+  const { nameOf } = useChampionNames();
   const [busy, setBusy] = useState(false), [message, setMessage] = useState("");
   const [year, setYear] = useState(2022), [query, setQuery] = useState("");
   const request = useRef<AbortController | null>(null);
@@ -47,7 +49,7 @@ export function SeasonLineupPanel({ catalog, onCatalog, lineups, teams, publicat
               const card = catalog.cards.find(c => c.id === e.target.value);
               onChoose(team.id, role, card ? { catalog_id: catalog.catalog_id, card_id: card.id, player_id: card.player_id } : null);
             }}><option value="">시즌 선수 미지정</option>{choices.map(c => <option key={c.id} value={c.id}>{c.season} {c.player_name} · {c.team_names.join(" / ")} · {c.game_count}경기</option>)}</select></label>
-            {selected && <p><strong>{selected.season} {selected.player_name}</strong> · {selected.game_count}경기<br />{[...selected.champions].sort((a, b) => b.games - a.games || a.champion_id.localeCompare(b.champion_id)).slice(0, 5).map(c => `${c.champion_id} ${c.games}회`).join(" · ")}<br /><small>선택 당시 역할 {roles[selected.role]} · 출처 OE · 과거 원본 팀 표기입니다.</small></p>}
+            {selected && <p><strong>{selected.season} {selected.player_name}</strong> · {selected.game_count}경기<br />{[...selected.champions].sort((a, b) => b.games - a.games || a.champion_id.localeCompare(b.champion_id)).slice(0, 5).map(c => `${nameOf(c.champion_id)} ${c.games}회`).join(" · ")}<br /><small>선택 당시 역할 {roles[selected.role]} · 출처 OE · 과거 원본 팀 표기입니다.</small></p>}
             {ref && !selected && <p role="alert">저장된 시즌 선수를 확인하지 못했습니다. 현재 선수로 대체하지 않습니다.</p>}
           </div>;
         })}
