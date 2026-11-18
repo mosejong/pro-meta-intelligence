@@ -1,0 +1,26 @@
+/* "내 연습 보관함": compact collapsed panel; 44px touch targets; no horizontal overflow at 390px. */
+.draft-practice-library { min-width: 0; max-width: 100%; }
+.draft-practice-library > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.draft-practice-library > summary:focus-visible,
+.draft-practice-library button:focus-visible,
+.draft-practice-library input:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.draft-practice-note,
+.draft-practice-save small,
+.draft-practice-status { margin: 0.4rem 0; overflow-wrap: anywhere; }
+.draft-practice-save { display: grid; gap: 0.35rem; min-width: 0; }
+.draft-practice-save > div,
+.draft-practice-confirm > div,
+.draft-practice-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; min-width: 0; }
+.draft-practice-save input { flex: 1 1 12rem; min-width: 0; min-height: 44px; box-sizing: border-box; font: inherit; }
+.draft-practice-library button { min-height: 44px; min-width: 44px; padding: 0 0.9rem; font: inherit; cursor: pointer; }
+.draft-practice-library button:disabled { cursor: not-allowed; opacity: 0.55; }
+.draft-practice-status.error { font-weight: 600; }
+.draft-practice-confirm { margin: 0.5rem 0; padding: 0.6rem; border: 1px solid currentColor; border-radius: 6px; }
+.draft-practice-confirm p { margin: 0 0 0.5rem; overflow-wrap: anywhere; }
+.draft-practice-list { list-style: none; margin: 0.5rem 0; padding: 0; display: grid; gap: 0.5rem; }
+.draft-practice-list > li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem;
+  padding: 0.5rem 0; border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent); min-width: 0; }
+.draft-practice-meta { display: grid; gap: 0.15rem; flex: 1 1 12rem; min-width: 0; }
+.draft-practice-meta b,
+.draft-practice-meta small { overflow-wrap: anywhere; }
+.draft-practice-list > li.damaged .draft-practice-meta b { font-style: italic; }

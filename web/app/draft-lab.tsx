@@ -48,6 +48,7 @@ import { DraftPositionStack } from "./draft-position-stack";
 import { emptyChampionRoles, championKey, teamPicks, type ChampionRoles, type RoleAssignments } from "./champion-roles";
 import { buildDraftPositionBoard, reconcileChampionRoles, moveChampionRole } from "./draft-position-board";
 import { normalizeDraftPositions } from "./draft-position-session";
+import { DraftPracticeLibraryPanel } from "./draft-practice-library-panel";
 import { basisKey, rosterBasis, type RosterRole } from "./roster-scenario";
 import { DraftResultPanel } from "./draft-result-panel";
 
@@ -364,6 +365,10 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     if (!sessionReady || !seriesReport || !blueTeam || !redTeam || importing || room.active) return null;
     return serializeDraftScenario(seriesReport, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide, positionRecord);
   }, [sessionReady, seriesReport, blueTeam, redTeam, selections, games, pendingChampion, importing, firstPickSide, room.active, positionRecord]);
+  // Practice library gate: any board/context/mode change invalidates a pending or in-flight library load.
+  const practiceBoardKey = useMemo(() => JSON.stringify([seriesReport ? [seriesReport.patch_id, seriesReport.cutoff] : null,
+    blueTeamId, redTeamId, firstPickSide, games, selections, pendingChampion, positionRecord, room.active, importing, sessionReady]),
+  [seriesReport, blueTeamId, redTeamId, firstPickSide, games, selections, pendingChampion, positionRecord, room.active, importing, sessionReady]);
   // Memoized above, so timer ticks and status updates never resubmit; each committed change is written immediately.
   const retrySave = useDraftSave(saveSnapshot, setStorageStatus);
 
@@ -687,6 +692,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       }} />
       <DraftSharePanel outgoing={shareSession} liveReport={liveReport} ready={canSelect && !room.active} incomingReady={!room.active && sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onAccept={(session) => { if (room.active) return; setComparisonEpoch((epoch) => epoch + 1); setPendingReset(null); restoreSession(session); }} />
       <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={() => setPendingReset("SERIES")} disabled={room.active || (!games.length && !hasCurrentWork)}>{t("draft.resetSeries")}</button></div>
+      {/* Named local practices: separate database; loading reuses the file-import reset path. */}
+      <DraftPracticeLibraryPanel scenario={saveSnapshot} boardKey={practiceBoardKey} hasWork={hasCurrentWork || games.length > 0} locked={room.active || !sessionReady || importing}
+        onLoad={(session) => { if (room.active) return; setComparisonEpoch((epoch) => epoch + 1); setPendingReset(null); restoreSession(session); }} />
       <details className="draft-session-details"><summary lang="ko">고급 설정 · 파일 저장·불러오기</summary>
       <p>{format("draft.sessionInfo", { state: t(seriesReport ? "draft.sessionInfo.locked" : "draft.sessionInfo.pending"), patch: report.patch_id, cutoff: report.cutoff ?? "", model: DRAFT_MODEL_VERSION })}</p>
       <div className="draft-session-controls"><button type="button" onClick={downloadScenario} disabled={!selections.length && !games.length}>{t("draft.scenarioJson")}</button><label>{t("draft.import")}<input type="file" accept=".json,application/json" disabled={room.active || !sessionReady || importing} onChange={(event) => void importScenario(event.currentTarget)} /></label><button type="button" onClick={downloadScenario} disabled={!canSelect}>{t("draft.saveJson")}</button></div>
