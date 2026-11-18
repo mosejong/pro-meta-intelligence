@@ -20,6 +20,7 @@ const publishedFiles = [
   "feed/index.json",
   // Derived per-player season aggregate only (no raw rows); loaded on demand by the draft studio.
   "history/player-season-2026.json",
+  "history/season-player-cards.json",
 ];
 
 export function preparePublishedAssets() {

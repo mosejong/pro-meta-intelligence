@@ -25,6 +25,7 @@ web/public/feed/*
 !web/public/feed/schedule-changes.json
 web/public/history/*
 !web/public/history/player-season-2026.json
+!web/public/history/season-player-cards.json
 web/.site-public/
 web/test-results/
 web/test-results-*/

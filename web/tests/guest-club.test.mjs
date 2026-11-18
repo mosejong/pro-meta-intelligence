@@ -48,7 +48,7 @@ test("old snapshot clubs remain stored and deletable even when they cannot be ap
 test("corrupt, future and duplicate player libraries never get overwritten", () => {
   const { club, storage, data } = fixture();
   const envelope = { artifact_type: "guest-clubs", schema_version: 1, clubs: [club] };
-  for (const raw of ["broken", JSON.stringify({ ...envelope, schema_version: 2 }), JSON.stringify({ ...envelope, clubs: [{ ...club, slots: { ...club.slots, TOP: club.slots.MID } }] })]) {
+  for (const raw of ["broken", JSON.stringify({ ...envelope, schema_version: 3 }), JSON.stringify({ ...envelope, clubs: [{ ...club, slots: { ...club.slots, TOP: club.slots.MID } }] })]) {
     data.set(C.CLUB_STORAGE_KEY, raw);
     assert.throws(() => C.saveGuestClub(storage, club)); assert.throws(() => C.deleteGuestClub(storage, club.id));
     assert.equal(data.get(C.CLUB_STORAGE_KEY), raw);
