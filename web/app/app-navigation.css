@@ -170,22 +170,22 @@ body .product-home section.home-principles { border: 0; border-top: 1px solid va
 .team-lens .team-chooser label { font-size: .875rem; }
 @media (max-width: 960px) {
   body { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
-  body nav.app-bottom-navigation { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); position: fixed; z-index: 40; bottom: 0; left: 0; right: 0; padding: 8px 6px calc(8px + env(safe-area-inset-bottom)); border-top: 3px solid #E3A429; background: #131C3F; box-shadow: 0 -6px 25px #07142630; }
-  body nav.app-bottom-navigation a { display: grid; justify-items: center; align-content: center; gap: 4px; min-height: 54px; padding: 4px; border-radius: 4px; color: #AEB6DC; text-decoration: none; }
-  body nav.app-bottom-navigation a[aria-current="page"] { background: transparent; color: #E3A429; }
+  body nav.app-bottom-navigation { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); position: fixed; z-index: 40; bottom: 0; left: 0; right: 0; padding: 8px 6px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #dfb981; background: #111214; box-shadow: 0 -6px 25px #07142630; }
+  body nav.app-bottom-navigation a { display: grid; justify-items: center; align-content: center; gap: 4px; min-height: 54px; padding: 4px; border-radius: 4px; color: #a7a9ad; text-decoration: none; }
+  body nav.app-bottom-navigation a[aria-current="page"] { background: transparent; color: #dfb981; }
   body nav.app-bottom-navigation svg { width: 22px; height: 22px; }
-  body nav.app-bottom-navigation strong { font-family: var(--font-display, "Arial Narrow"), sans-serif; font-size: .72rem; font-weight: 500; white-space: nowrap; }
-  body nav.app-bottom-navigation a:focus-visible { outline: 2px solid #E3A429; outline-offset: -2px; }
+  body nav.app-bottom-navigation strong { font-family: Arial, "Malgun Gothic", sans-serif; font-size: .72rem; font-weight: 500; white-space: nowrap; }
+  body nav.app-bottom-navigation a:focus-visible { outline: 2px solid #dfb981; outline-offset: -2px; }
   /* Keyboard/focus scrolling keeps targets above the fixed bar instead of under it. */
   html { scroll-padding-bottom: calc(86px + env(safe-area-inset-bottom)); }
   body nav.app-bottom-navigation > details { min-width: 0; }
-  body nav.app-bottom-navigation summary { display: grid; justify-items: center; align-content: center; gap: 4px; min-height: 54px; padding: 4px; border-radius: 4px; color: #AEB6DC; cursor: pointer; list-style: none; }
+  body nav.app-bottom-navigation summary { display: grid; justify-items: center; align-content: center; gap: 4px; min-height: 54px; padding: 4px; border-radius: 4px; color: #a7a9ad; cursor: pointer; list-style: none; }
   body nav.app-bottom-navigation summary::-webkit-details-marker { display: none; }
-  body nav.app-bottom-navigation summary:focus-visible { outline: 2px solid #E3A429; outline-offset: -2px; }
-  body nav.app-bottom-navigation details[open] > summary { color: #E3A429; }
-  body nav.app-bottom-navigation details > ul { position: absolute; right: 8px; bottom: calc(100% + 6px); left: 8px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: calc(100dvh - 120px); margin: 0; padding: 8px; overflow-y: auto; list-style: none; border: 1px solid #33406E; border-radius: 6px; background: #131C3F; box-shadow: 0 -6px 25px #07142650; }
-  body nav.app-bottom-navigation details > ul a { display: flex; align-items: center; justify-items: start; min-height: 44px; padding: 8px 12px; border: 1px solid #33406E; color: #F4F6FC; font-size: .875rem; overflow-wrap: anywhere; }
-  body nav.app-bottom-navigation details > ul a[aria-current="page"] { border-color: #E3A429; color: #E3A429; }
+  body nav.app-bottom-navigation summary:focus-visible { outline: 2px solid #dfb981; outline-offset: -2px; }
+  body nav.app-bottom-navigation details[open] > summary { color: #dfb981; }
+  body nav.app-bottom-navigation details > ul { position: absolute; right: 8px; bottom: calc(100% + 6px); left: 8px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: calc(100dvh - 120px); margin: 0; padding: 8px; overflow-y: auto; list-style: none; border: 1px solid #34373c; border-radius: 6px; background: #111214; box-shadow: 0 -6px 25px #07142650; }
+  body nav.app-bottom-navigation details > ul a { display: flex; align-items: center; justify-items: start; min-height: 44px; padding: 8px 12px; border: 1px solid #34373c; color: #ececea; font-size: .875rem; overflow-wrap: anywhere; }
+  body nav.app-bottom-navigation details > ul a[aria-current="page"] { border-color: #dfb981; color: #dfb981; }
   #home-spaces .home-scoreboard-card { margin-top: 18px; }
   #home-spaces .sb-code { font-size: clamp(1.2rem, 6vw, 1.9rem); }
   #home-spaces .home-task-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

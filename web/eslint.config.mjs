@@ -11,6 +11,8 @@ const eslintConfig = defineConfig([
   globalIgnores([
     ".next/**",
     "dist/**",
+    "dist-room/**",
+    "dist-room-pages/**",
     "out/**",
     "build/**",
     "public/feed/snapshots/**",

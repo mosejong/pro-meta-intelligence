@@ -1,0 +1,24 @@
+/* A/B player · champion observation differences: collapsed, cards (no wide table), mobile single column. */
+main.draft-lab.draft-studio .comparison-evidence { border: 1px solid var(--studio-line); background: var(--studio-panel); padding: 0 10px; min-width: 0; }
+main.draft-lab.draft-studio .comparison-evidence > summary { min-height: 44px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; cursor: pointer; color: var(--studio-text); font-weight: 600; }
+main.draft-lab.draft-studio .comparison-evidence > summary small { font-weight: 400; color: var(--studio-muted); }
+main.draft-lab.draft-studio .comparison-evidence > summary:focus-visible { outline: 2px solid #f0d6ae; outline-offset: 3px; }
+main.draft-lab.draft-studio .comparison-evidence-body { display: grid; gap: 8px; padding-bottom: 10px; min-width: 0; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .comparison-evidence-body :is(p, ul, ol, h4) { margin: 0; }
+main.draft-lab.draft-studio .comparison-evidence-body button { justify-self: start; padding: 6px 12px; font-size: 12px; }
+main.draft-lab.draft-studio .comparison-evidence-status { display: grid; gap: 6px; }
+main.draft-lab.draft-studio .comparison-evidence-status ul { padding-left: 16px; }
+main.draft-lab.draft-studio .comparison-evidence-rows { display: grid; gap: 8px; padding: 0; list-style: none; }
+main.draft-lab.draft-studio .comparison-evidence-card { display: grid; gap: 6px; min-width: 0; padding: 8px; border: 1px solid var(--studio-line); }
+main.draft-lab.draft-studio .comparison-evidence-card[data-changed="true"] { border-color: #8a7350; }
+main.draft-lab.draft-studio .comparison-evidence-card h4 { font-size: 12px; color: var(--studio-text); }
+main.draft-lab.draft-studio .comparison-evidence-explain { display: grid; gap: 2px; padding-left: 16px; color: var(--studio-text); }
+main.draft-lab.draft-studio .comparison-evidence-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+main.draft-lab.draft-studio .comparison-evidence-side { display: grid; gap: 2px; min-width: 0; padding: 6px; background: var(--studio-bg); }
+main.draft-lab.draft-studio .comparison-evidence-counts { display: flex; flex-wrap: wrap; gap: 2px 10px; }
+main.draft-lab.draft-studio .comparison-evidence-pool > summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; }
+main.draft-lab.draft-studio .comparison-evidence-pool ol { display: flex; flex-wrap: wrap; gap: 2px 10px; padding: 0; list-style: none; }
+main.draft-lab.draft-studio .comparison-evidence-same > summary { cursor: pointer; min-height: 36px; display: flex; align-items: center; }
+@media (max-width: 720px) {
+  main.draft-lab.draft-studio .comparison-evidence-sides { grid-template-columns: minmax(0, 1fr); }
+}

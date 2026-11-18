@@ -2,6 +2,10 @@
 
 > **Detect what is worth testing before practice time is wasted.**
 
+**제품 목표·현재 단계·개발 순서:** [서비스 메인 문서](docs/PROJECT_MASTER_PLAN.md) · [개발일지](docs/DEVELOPMENT_LOG.md).
+두 문서는 검증된 로컬 기능, 진행 중인 시즌 연결, 원격 main과 실제 배포를 구분합니다.
+아래 기존 소개의 기능·스냅샷 날짜는 해당 기록 시점의 설명이며 현재 상태는 메인 문서와 실제 자료 기준을 확인하세요.
+
 Pro Meta Intelligence is an evidence-driven League of Legends esports strategy intelligence platform designed to surface **blind spots, joker-pick candidates, regional meta divergence, and practice-efficient test candidates** from public data.
 
 The goal is not to replace coaches or players with AI. The goal is to reduce information-search cost and help analysts bring better questions, evidence, and test candidates to coaching staff and players.

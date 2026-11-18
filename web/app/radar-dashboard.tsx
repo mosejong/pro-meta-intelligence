@@ -3,15 +3,16 @@
 /* eslint-disable @next/next/no-img-element -- this dual vinext/Vite build uses stable Riot CDN and relative static assets */
 
 import { applyScheduleReview } from "./schedule-review";
+import { readWorkspacePreference, writeWorkspacePreference } from "./workspace-storage";
 import { ChangeEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { championImageUrl } from "./champion-assets";
 import { ChampionNameProvider, useChampionNames } from "./champion-names";
-import { collectionStatusMessage, isCollectionStatus, type CollectionStatus } from "./collection-status";
+import type { CollectionStatus } from "./collection-status";
 import { DataTrustBar } from "./data-trust-bar";
 import { AIValidationPanel } from "./ai-validation-panel";
-import { isAIValidationStatus, type AIValidationStatus } from "./ai-validation";
+import type { AIValidationStatus } from "./ai-validation";
 import { CreatorExportLab } from "./creator-export";
-import { isCreatorBrief, type CreatorBrief } from "./creator-storyboard";
+import type { CreatorBrief } from "./creator-storyboard";
 import {
   createDecisionJournalEntry,
   DECISION_JOURNAL_STORAGE_KEY,
@@ -24,11 +25,10 @@ import {
 } from "./decision-journal";
 import { DecisionJournalPanel } from "./decision-journal-panel";
 import {
-  isDecisionOutcomesFeed,
   reconcileDecisionOutcome,
   type DecisionOutcomesFeed,
 } from "./decision-outcomes";
-import { isHistoryStatus, isRadarReport, isScheduleChangeLog, isScheduleSnapshot, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport, type ScheduleChangeLog, type ScheduleSnapshot } from "./radar-types";
+import { isRadarReport, type OpponentChampionTendency, type OpponentTeam, type RadarEntry, type RadarReport, type ScheduleChangeLog, type ScheduleSnapshot } from "./radar-types";
 import { PUBLICATION_FRESHNESS_POLICY, snapshotFreshness } from "./freshness";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
@@ -38,6 +38,19 @@ import { AppNavigation } from "./app-navigation";
 import { LocaleProvider } from "./locale";
 import { PlayerPracticePanel } from "./player-practice-panel";
 import { productRootHref, productSpaceHref, type ProductSpace } from "./product-space";
+import {
+  describePublishedFeed,
+  describeRefreshFailure,
+  FIRST_LOAD_FAILURE,
+  loadAIValidation,
+  loadCollectionStatus,
+  loadCoreReport,
+  loadCreatorBrief,
+  loadHistoryAndOutcomes,
+  loadScheduleAndChanges,
+  withHistoryStatus,
+  type FeedState,
+} from "./publication-loader";
 import { sampleReport } from "./sample-report";
 import { buildTeamContext } from "./team-context";
 import { buildTeamBrief, serializeTeamBrief } from "./team-brief";
@@ -48,6 +61,8 @@ import { TargetMatchDayPanel } from "./target-match-day-panel";
 import { compareTeamsForDefault } from "./team-defaults";
 import { buildWorkspaceUrl, parseWorkspaceSearch, type WorkspaceViewMode } from "./workspace-link";
 import "./bright-theme.css";
+import { WorkspaceHeader } from "./workspace-header";
+import "./legacy-workspace.css";
 
 // The draft studio is the heaviest client module; load it only on the draft/home page.
 const DraftLab = lazy(() => import("./draft-lab").then((module) => ({ default: module.DraftLab })));
@@ -111,12 +126,6 @@ const historyContinuityLabels: Record<string, string> = {
   NOT_STARTED: "수집 시작 전",
   ON_TRACK: "연속 수집 정상",
   GAP_DETECTED: "수집 공백 확인 필요",
-};
-
-type FeedState = {
-  kind: "connecting" | "published" | "demo" | "uploaded";
-  label: string;
-  detail: string;
 };
 
 function keyOf(entry: RadarEntry) {
@@ -294,6 +303,12 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   const emergencyTrigger = useRef<HTMLButtonElement>(null);
   const emergencyDialog = useRef<HTMLElement>(null);
   const manualOverride = useRef(false);
+  const manualReading = useRef(false);
+  const manualReadSeq = useRef(0);
+  const feedRequestSeq = useRef(0);
+  const feedRequestController = useRef<AbortController | null>(null);
+  const displaySource = useRef<"sample" | "published" | "uploaded">("sample");
+  const publishedCoreKey = useRef("");
   const requestedTeamId = useRef("");
   const requestedOpponentId = useRef("");
 
@@ -379,166 +394,115 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
     ? `${formatScheduleTime(targetMatchDayBrief.fixture.start_at)} KST · ${targetMatchDayBrief.fixture.league ?? "리그 미정"} ${targetMatchDayBrief.fixture.block ?? ""} · ${targetMatchDayBrief.fixture.best_of ? `Bo${targetMatchDayBrief.fixture.best_of}` : "형식 미정"}`
     : "공식 일정이 들어오면 상대와 준비 상태를 자동 연결합니다.";
 
+  const cancelFeedRequest = useCallback(() => {
+    feedRequestSeq.current += 1;
+    feedRequestController.current?.abort();
+    feedRequestController.current = null;
+  }, []);
+
   const loadPublishedFeed = useCallback(async () => {
     if (manualOverride.current) return;
+    // A newer request (refresh, interval, manual file, unmount) always invalidates the older one.
+    cancelFeedRequest();
+    const requestId = feedRequestSeq.current;
+    const controller = new AbortController();
+    feedRequestController.current = controller;
+    const isCurrent = () => feedRequestSeq.current === requestId && !controller.signal.aborted && !manualOverride.current;
+    const context = { base: new URL(productRootHref(initialSpace), document.baseURI), signal: controller.signal };
+    let core: RadarReport;
     try {
-      const publicationBase = new URL(productRootHref(initialSpace), document.baseURI);
-      const feedUrl = new URL("feed/current.json", publicationBase);
-      const response = await fetch(feedUrl, { cache: "no-store" });
-      if (!response.ok) throw new Error(`feed returned ${response.status}`);
-      const parsed: unknown = await response.json();
-      if (!isRadarReport(parsed)) throw new Error("unsupported report");
-      let publishedReport = parsed;
-      let publishedCollectionStatus: CollectionStatus | null = null;
-      const checkedAt = new Date().toISOString();
-      setFeedCheckedAt(checkedAt);
-      try {
-        const collectionUrl = new URL("feed/collection-status.json", publicationBase);
-        const collectionResponse = await fetch(collectionUrl, { cache: "no-store" });
-        if (!collectionResponse.ok) throw new Error(`collection status returned ${collectionResponse.status}`);
-        const collectionPayload: unknown = await collectionResponse.json();
-        if (!isCollectionStatus(collectionPayload)) throw new Error("unsupported collection status");
-        publishedCollectionStatus = collectionPayload;
-        setCollectionStatus(collectionPayload);
-      } catch {
-        setCollectionStatus(null);
-      }
-      try {
-        const creatorUrl = new URL("feed/current-creator.json", publicationBase);
-        const creatorResponse = await fetch(creatorUrl, { cache: "no-store" });
-        if (!creatorResponse.ok) throw new Error(`creator feed returned ${creatorResponse.status}`);
-        const creatorPayload: unknown = await creatorResponse.json();
-        if (
-          !isCreatorBrief(creatorPayload) ||
-          creatorPayload.source_snapshot.patch_id !== parsed.patch_id ||
-          creatorPayload.source_snapshot.cutoff !== parsed.cutoff
-        ) throw new Error("creator feed does not match radar feed");
-        setCreatorBrief(creatorPayload);
-      } catch {
+      core = await loadCoreReport(context);
+    } catch {
+      if (!isCurrent()) return;
+      feedRequestController.current = null;
+      if (displaySource.current === "sample") {
         setCreatorBrief(null);
-      }
-      try {
-        const statusUrl = new URL("feed/history-status.json", publicationBase);
-        const statusResponse = await fetch(statusUrl, { cache: "no-store" });
-        if (statusResponse.ok) {
-          const status: unknown = await statusResponse.json();
-          if (isHistoryStatus(status)) publishedReport = { ...parsed, history_status: status };
-        }
-      } catch {
-        // The Radar remains usable when the independently published status is unavailable.
-      }
-      try {
-        const outcomesUrl = new URL("feed/decision-outcomes.json", publicationBase);
-        const outcomesResponse = await fetch(outcomesUrl, { cache: "no-store" });
-        if (!outcomesResponse.ok) throw new Error(`decision outcomes returned ${outcomesResponse.status}`);
-        const outcomesPayload: unknown = await outcomesResponse.json();
-        const historyStatus = publishedReport.history_status;
-        if (
-          !isDecisionOutcomesFeed(outcomesPayload) ||
-          !historyStatus ||
-          outcomesPayload.as_of !== historyStatus.as_of ||
-          outcomesPayload.benchmark_ready !== historyStatus.benchmark_ready
-        ) throw new Error("decision outcomes do not match history status");
-        setDecisionOutcomes(outcomesPayload);
-      } catch {
         setDecisionOutcomes(null);
-      }
-      try {
-        const aiValidationUrl = new URL("feed/ai-validation.json", publicationBase);
-        const aiValidationResponse = await fetch(aiValidationUrl, { cache: "no-store" });
-        if (!aiValidationResponse.ok) throw new Error(`AI validation returned ${aiValidationResponse.status}`);
-        const aiValidationPayload: unknown = await aiValidationResponse.json();
-        if (!isAIValidationStatus(aiValidationPayload)) throw new Error("unsupported AI validation status");
-        setAIValidation(aiValidationPayload);
-      } catch {
         setAIValidation(null);
+        setCollectionStatus(null);
+        setFeedCheckedAt(null);
+        setFeedState(FIRST_LOAD_FAILURE);
+      } else {
+        // Keep the connected publication (or loaded file) and the work built on it; report the failure only.
+        setFeedState((previous) => describeRefreshFailure(previous));
       }
-      try {
-        const scheduleUrl = new URL("feed/schedule.json", publicationBase);
-        const scheduleResponse = await fetch(scheduleUrl, { cache: "no-store" });
-        if (!scheduleResponse.ok) throw new Error(`schedule returned ${scheduleResponse.status}`);
-        const schedulePayload: unknown = await scheduleResponse.json();
-        if (!isScheduleSnapshot(schedulePayload)) throw new Error("unsupported schedule");
-        const ageHours = (Date.parse(checkedAt) - Date.parse(schedulePayload.retrieved_at)) / (60 * 60 * 1000);
-        setSchedule(schedulePayload);
+      return;
+    }
+    if (!isCurrent()) return;
+
+    // The verified core is usable immediately; companions below only enrich it.
+    const checkedAt = new Date().toISOString();
+    const coreKey = `${core.patch_id}|${core.cutoff}`;
+    if (displaySource.current !== "published" || publishedCoreKey.current !== coreKey) {
+      setCreatorBrief(null);
+      setDecisionOutcomes(null);
+    }
+    displaySource.current = "published";
+    publishedCoreKey.current = coreKey;
+    setReport(core);
+    setSelectedKey((current) => core.entries.some((entry) => keyOf(entry) === current)
+      ? current
+      : core.entries[0] ? keyOf(core.entries[0]) : "");
+    setRole((current) => current === "ALL" || core.entries.some((entry) => entry.role === current) ? current : "ALL");
+    setFeedCheckedAt(checkedAt);
+    const publishedTeams = core.opponent_prep?.teams ?? [];
+    if (requestedTeamId.current) {
+      const sharedTeam = publishedTeams.find((team) => team.team_id === requestedTeamId.current);
+      setMyTeamId(sharedTeam?.team_id ?? "");
+    }
+    const sharedOpponent = publishedTeams.find((team) => team.team_id === requestedOpponentId.current);
+    // Keep a still-valid explicit choice; otherwise the shared link's opponent, else "" (neutral ranking default).
+    setOpponentId((current) => publishedTeams.some((team) => team.team_id === current)
+      ? current
+      : sharedOpponent?.team_id ?? "");
+    setFeedState(describePublishedFeed(core, checkedAt, null, true));
+
+    const settled: { collection: CollectionStatus | null } = { collection: null };
+    const guard = <T,>(promise: Promise<T>, apply: (value: T) => void, fail: () => void) =>
+      promise.then((value) => { if (isCurrent()) apply(value); }, () => { if (isCurrent()) fail(); });
+    await Promise.allSettled([
+      guard(loadCollectionStatus(context), (value) => {
+        settled.collection = value;
+        setCollectionStatus(value);
+      }, () => setCollectionStatus(null)),
+      guard(loadCreatorBrief(context, core), setCreatorBrief, () => setCreatorBrief(null)),
+      guard(loadHistoryAndOutcomes(context, core), ({ historyStatus, outcomes }) => {
+        if (historyStatus) setReport((current) => current === core ? withHistoryStatus(core, historyStatus) : current);
+        setDecisionOutcomes(outcomes);
+      }, () => setDecisionOutcomes(null)),
+      guard(loadAIValidation(context), setAIValidation, () => setAIValidation(null)),
+      guard(loadScheduleAndChanges(context, checkedAt), (result) => {
+        setSchedule(result.schedule);
+        setScheduleChanges(result.changes);
         setScheduleCheckedAt(checkedAt);
-        setScheduleState(ageHours <= 36 ? "connected" : "stale");
-        try {
-          const changesUrl = new URL("feed/schedule-changes.json", publicationBase);
-          const changesResponse = await fetch(changesUrl, { cache: "no-store" });
-          if (!changesResponse.ok) throw new Error(`schedule changes returned ${changesResponse.status}`);
-          const changesPayload: unknown = await changesResponse.json();
-          if (!isScheduleChangeLog(changesPayload)) throw new Error("unsupported schedule change log");
-          if (
-            changesPayload.current_snapshot.content_hash !== schedulePayload.content_hash ||
-            changesPayload.current_snapshot.retrieved_at !== schedulePayload.retrieved_at
-          ) {
-            throw new Error("schedule change log does not match the current schedule snapshot");
-          }
-          setScheduleChanges(changesPayload);
-        } catch {
-          setScheduleChanges(null);
-        }
-      } catch {
+        setScheduleState(result.state);
+      }, () => {
         setSchedule(null);
         setScheduleChanges(null);
         setScheduleCheckedAt(null);
         setScheduleState("unavailable");
-      }
-      setReport(publishedReport);
-      setSelectedKey(publishedReport.entries[0] ? keyOf(publishedReport.entries[0]) : "");
-      setRole("ALL");
-      setEligibleOnly(false);
-      setChampionQuery("");
-      setVisibleLimit(12);
-      const publishedTeams = publishedReport.opponent_prep?.teams ?? [];
-      if (requestedTeamId.current) {
-        const sharedTeam = publishedTeams.find((team) => team.team_id === requestedTeamId.current);
-        setMyTeamId(sharedTeam?.team_id ?? "");
-      }
-      const sharedOpponent = publishedTeams.find((team) => team.team_id === requestedOpponentId.current);
-      // Keep a still-valid explicit choice; otherwise the shared link's opponent, else "" (neutral ranking default).
-      setOpponentId((current) => publishedTeams.some((team) => team.team_id === current)
-        ? current
-        : sharedOpponent?.team_id ?? "");
-      const publishedFreshness = snapshotFreshness(
-        publishedReport.cutoff,
-        checkedAt,
-        PUBLICATION_FRESHNESS_POLICY,
-      );
-      const stalePublication = !publishedReport.fixture_only && publishedFreshness.level === "STALE";
-      const collectionDetail = collectionStatusMessage(publishedCollectionStatus, checkedAt);
-      setFeedState({
-        kind: publishedReport.fixture_only ? "demo" : "published",
-        label: publishedReport.fixture_only ? "PUBLISHED DEMO FEED" : stalePublication ? "STALE · REVIEW ONLY" : "LIVE PUBLISHED FEED",
-        detail: publishedReport.fixture_only ? "자동 연결됨 · 합성 데이터" : stalePublication ? `자동 연결됨 · ${publishedFreshness.ageLabel} 발행본 · ${collectionDetail ?? "현재 판단 잠금"}` : "자동 연결됨 · 검증된 발행본",
-      });
-    } catch {
-      setCreatorBrief(null);
-      setDecisionOutcomes(null);
-      setAIValidation(null);
-      setCollectionStatus(null);
-      setFeedCheckedAt(null);
-      setFeedState({
-        kind: "demo",
-        label: "DEMO FALLBACK",
-        detail: "발행 피드 없음 · 내장 데모 표시 중",
-      });
-    }
-  }, [initialSpace]);
+      }),
+    ]);
+    if (!isCurrent()) return;
+    feedRequestController.current = null;
+    setFeedState(describePublishedFeed(core, checkedAt, settled.collection, false));
+  }, [cancelFeedRequest, initialSpace]);
 
   useEffect(() => {
     const initial = window.setTimeout(() => void loadPublishedFeed(), 0);
-    const interval = window.setInterval(() => void loadPublishedFeed(), 5 * 60 * 1000);
+    const interval = window.setInterval(() => {
+      if (!manualReading.current) void loadPublishedFeed();
+    }, 5 * 60 * 1000);
     return () => {
       window.clearTimeout(initial);
       window.clearInterval(interval);
+      cancelFeedRequest();
     };
-  }, [loadPublishedFeed]);
+  }, [cancelFeedRequest, loadPublishedFeed]);
 
   useEffect(() => {
     const shared = parseWorkspaceSearch(window.location.search);
-    const storedTeamId = window.localStorage.getItem(MY_TEAM_STORAGE_KEY);
+    const storedTeamId = readWorkspacePreference(MY_TEAM_STORAGE_KEY);
     requestedTeamId.current = shared.teamId ?? "";
     requestedOpponentId.current = shared.opponentId ?? "";
     const restore = window.setTimeout(() => {
@@ -580,7 +544,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
 
   useEffect(() => {
     const shared = parseWorkspaceSearch(window.location.search);
-    const storedViewMode = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    const storedViewMode = readWorkspacePreference(VIEW_MODE_STORAGE_KEY);
     const restore = window.setTimeout(() => {
       if (shared.viewMode) setViewMode(shared.viewMode);
       else if (storedViewMode === "QUICK" || storedViewMode === "FULL") setViewMode(storedViewMode);
@@ -615,11 +579,21 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   async function loadReport(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
+    // While the file is read the interval stays quiet; an explicit refresh clicked meanwhile wins.
+    const startedRequest = feedRequestSeq.current;
+    const readId = ++manualReadSeq.current;
+    manualReading.current = true;
     try {
+      if (file.size > 16 * 1024 * 1024) throw new Error("report too large");
       const parsed: unknown = JSON.parse(await file.text());
       if (!isRadarReport(parsed) || parsed.entries.length === 0) {
         throw new Error("unsupported report");
       }
+      if (feedRequestSeq.current !== startedRequest || manualReadSeq.current !== readId) return;
+      // The local file now owns the screen: stop and invalidate any automatic request in flight.
+      manualOverride.current = true;
+      cancelFeedRequest();
+      displaySource.current = "uploaded";
       setReport(parsed);
       setSelectedKey(keyOf(parsed.entries[0]));
       setRole("ALL");
@@ -632,13 +606,16 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
       requestedTeamId.current = "";
       requestedOpponentId.current = "";
       setOpponentId("");
-      manualOverride.current = true;
       setFeedCheckedAt(new Date().toISOString());
       setFeedState({ kind: "uploaded", label: "LOCAL FILE", detail: file.name.toUpperCase() });
     } catch {
-      setFeedState({ kind: "demo", label: "INVALID LOCAL FILE", detail: "기존 화면 유지" });
+      if (feedRequestSeq.current !== startedRequest || manualReadSeq.current !== readId) return;
+      setFeedState((previous) => ({ ...previous, label: "INVALID LOCAL FILE", detail: "지원하지 않는 파일 또는 16MB 초과 · 기존 화면 유지" }));
     } finally {
-      event.target.value = "";
+      if (manualReadSeq.current === readId) {
+        manualReading.current = false;
+        event.target.value = "";
+      }
     }
   }
 
@@ -647,8 +624,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
     requestedOpponentId.current = "";
     setMyTeamId(teamId);
     setOpponentId("");
-    if (teamId) window.localStorage.setItem(MY_TEAM_STORAGE_KEY, teamId);
-    else window.localStorage.removeItem(MY_TEAM_STORAGE_KEY);
+    writeWorkspacePreference(MY_TEAM_STORAGE_KEY, teamId || null);
   }
 
   function selectOpponent(teamId: string) {
@@ -659,7 +635,7 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   function toggleViewMode() {
     const nextMode: WorkspaceViewMode = viewMode === "QUICK" ? "FULL" : "QUICK";
     setViewMode(nextMode);
-    window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, nextMode);
+    writeWorkspacePreference(VIEW_MODE_STORAGE_KEY, nextMode);
   }
 
   async function copyAnalysisLink() {
@@ -813,13 +789,13 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   ).level === "STALE";
 
   if (initialSpace === "PROOF") {
-    return <SubmissionProof
+    return <div className="legacy-workspace legacy-proof"><WorkspaceHeader currentSpace={initialSpace} /><SubmissionProof
       currentSpace={initialSpace}
       report={report}
       collectionStatus={collectionStatus}
       aiValidation={aiValidation}
       feedLabel={feedState.label}
-    />;
+    /></div>;
   }
 
   // The home page is the mock draft studio itself; /draft/ keeps the same studio for existing links.
@@ -879,28 +855,20 @@ function RadarDashboardContent({ initialSpace = "ONBOARDING" }: { initialSpace?:
   } : currentSectionGuide;
 
   return (
-    <main className={`section-space space-${initialSpace.toLowerCase()} ${viewMode === "QUICK" ? "quick-view" : "full-view"}`}>
-      <header className="topbar">
-        <a className="brand" href={productSpaceHref(initialSpace, "ONBOARDING")} aria-label="Pro Meta Intelligence 홈">
-          <span className="brand-mark">PM</span>
-          <span><strong>PRO META</strong><small>INTELLIGENCE</small></span>
-        </a>
-        <nav aria-label="주요 메뉴">
-          <a className={initialSpace === "TEAM" ? "active" : ""} href={productSpaceHref(initialSpace, "TEAM")}>팀 분석</a>
-          <a className={initialSpace === "CREATOR" ? "active" : ""} href={productSpaceHref(initialSpace, "CREATOR")}>콘텐츠</a>
-          <a className={initialSpace === "RADAR" ? "active" : ""} href={productSpaceHref(initialSpace, "RADAR")}>메타 레이더</a>
-          <a href={productSpaceHref(initialSpace, "DRAFT")}>Draft Lab</a>
-        </nav>
+    <main className={`legacy-workspace section-space space-${initialSpace.toLowerCase()} ${viewMode === "QUICK" ? "quick-view" : "full-view"}`}>
+      <WorkspaceHeader currentSpace={initialSpace}>
         <div className="topbar-actions">
           <span className={`snapshot-state ${feedState.kind} ${isHistoricalPublication ? "stale" : ""}`} title={feedState.detail} aria-live="polite"><i />{feedState.label}</span>
           <button className="view-mode-button" type="button" aria-pressed={viewMode === "FULL"} onClick={toggleViewMode}>{viewMode === "QUICK" ? "전체 근거 보기" : "쉬운 화면으로"}</button>
           <button className="refresh-button" type="button" onClick={() => { manualOverride.current = false; void loadPublishedFeed(); }} aria-label="발행 피드 새로고침">↻</button>
-          <button className="load-button" type="button" onClick={() => fileInput.current?.click()}>
-            JSON 불러오기 <span>↗</span>
-          </button>
+          <details className="workspace-file-options"><summary>고급 설정</summary>
+            <div><button className="load-button" type="button" onClick={() => fileInput.current?.click()}>
+              자료 파일 불러오기 <span>↗</span>
+            </button></div>
+          </details>
         </div>
         <input ref={fileInput} className="visually-hidden" type="file" accept="application/json,.json" onChange={loadReport} aria-label="Meta Radar JSON 불러오기" />
-      </header>
+      </WorkspaceHeader>
 
       <section className="section-portal-hero" id="top">
         <div><span>{sectionCopy.index} · {sectionCopy.eyebrow}</span><h1>{sectionCopy.title}</h1><p>{sectionCopy.detail}</p></div>

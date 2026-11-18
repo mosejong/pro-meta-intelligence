@@ -1,0 +1,22 @@
+.guest-club { padding: 16px; border: 1px solid var(--studio-line, #343a40); margin-bottom: 16px; background: var(--studio-panel, #16191c); overflow-wrap: anywhere; }
+.guest-club header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.guest-club h3 { margin: 0; }
+.guest-club p, .guest-club small { color: var(--studio-muted, #a7afb7); font-size: 12px; }
+.guest-club-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+.guest-club label { display: grid; gap: 6px; font-size: 12px; min-width: 0; }
+.guest-club input, .guest-club select { min-width: 0; width: 100%; box-sizing: border-box; min-height: 44px; background: #101315; color: var(--studio-text, #eee); border: 1px solid var(--studio-line, #343a40); padding: 8px; font: inherit; }
+.guest-club button { min-height: 44px; padding: 8px 12px; }
+.guest-club summary { min-height: 44px; cursor: pointer; align-content: center; }
+.guest-club-list { display: grid; gap: 8px; margin-top: 12px; }
+.guest-club-list article { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 0; border-top: 1px solid var(--studio-line, #343a40); }
+.guest-club-list article > div { flex: 1 1 140px; min-width: 0; display: grid; gap: 4px; }
+.guest-club-confirm { padding: 12px; border: 1px solid var(--studio-action, #debc86); margin-top: 12px; }
+.guest-club-confirm button + button { margin-left: 8px; }
+.guest-club [role="alert"] { color: #efa78d; }
+@media (max-width: 540px) { .guest-club-fields { grid-template-columns: 1fr; } }
+.season-lineup { padding: 12px; margin-bottom: 16px; border: 1px solid var(--studio-line, #343a40); }
+.season-lineup > summary { min-height: 44px; cursor: pointer; }
+.season-lineup p { font-size: 12px; overflow-wrap: anywhere; }
+.season-lineup-role { margin-bottom: 12px; min-width: 0; }
+.season-lineup label { display: grid; gap: 6px; font-size: 12px; }
+.season-lineup select, .season-lineup input { width: 100%; min-width: 0; min-height: 44px; box-sizing: border-box; color: var(--studio-text, #eee); background: #101315; border: 1px solid var(--studio-line, #343a40); padding: 8px; }

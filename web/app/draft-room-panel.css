@@ -1,0 +1,8 @@
+.draft-room { border-block: 1px solid var(--studio-line, #383b3e); padding: .8rem 0; color: var(--studio-text, #e1e1dd); font-size: .85rem; }
+.draft-room summary { cursor: pointer; font-weight: 650; }
+.draft-room p { margin: .6rem 0; line-height: 1.6; color: var(--studio-muted, #aaaead); }
+.draft-room button { margin: .25rem .4rem .25rem 0; padding: .5rem .7rem; background: var(--studio-raised, #26282a); color: inherit; border: 1px solid var(--studio-line, #46494a); border-radius: 4px; cursor: pointer; }
+.draft-room button:disabled { opacity: .45; cursor: default; }
+.draft-room input { display: block; width: 100%; box-sizing: border-box; background: #202223; color: inherit; padding: .5rem; }
+.draft-room-confirm { padding: .6rem; border: 1px solid var(--studio-line, #46494a); }
+.draft-room-turn { color: var(--studio-text, #e1e1dd); font-weight: 600; }

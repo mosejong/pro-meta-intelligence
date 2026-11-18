@@ -53,7 +53,7 @@ def test_adapter_fetches_only_manifested_official_file_and_validates_csv() -> No
     ]
 
     with pytest.raises(ValueError, match="not present"):
-        adapter.fetch_year(2025)
+        adapter.fetch_year(2013)
 
 
 def test_adapter_enforces_provider_daily_interval_before_network() -> None:

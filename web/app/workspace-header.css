@@ -1,0 +1,36 @@
+/* Unique classes keep studio and legacy header rules out of this shared surface. */
+header.workspace-header {
+  position: relative; z-index: 60; display: flex; align-items: center; flex-wrap: wrap;
+  gap: 8px 24px; min-height: 64px; padding: 8px clamp(12px, 2vw, 32px);
+  box-sizing: border-box; max-width: 100%; border-bottom: 1px solid #34373c;
+  background: #111214; color: #ececea; color-scheme: dark;
+  font: 13px/1.5 Arial, "Malgun Gothic", sans-serif;
+}
+.workspace-header *, .workspace-header *::before, .workspace-header *::after { box-sizing: border-box; }
+.workspace-header .workspace-brand { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #ececea; text-decoration: none; }
+.workspace-header .workspace-brand-mark { display: grid; place-items: center; width: 32px; height: 32px; background: #202226; border: 1px solid #34373c; border-radius: 3px; }
+.workspace-header .workspace-brand strong, .workspace-header .workspace-brand small { display: block; }
+.workspace-header .workspace-brand strong { font-size: 12px; letter-spacing: .06em; }
+.workspace-header .workspace-brand small { color: #a7a9ad; font-size: 9px; }
+.workspace-header .workspace-navigation { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; min-width: 0; }
+.workspace-header .workspace-navigation a, .workspace-header summary { display: flex; align-items: center; min-height: 44px; padding: 8px 10px; color: #a7a9ad; text-decoration: none; overflow-wrap: anywhere; }
+.workspace-header summary { display: list-item; cursor: pointer; }
+.workspace-header .workspace-primary { font-weight: 700; color: #ececea; }
+.workspace-header a[aria-current="page"], .workspace-header details[data-active="true"] > summary { color: #ececea; background: #202226; border-radius: 4px; }
+.workspace-header .workspace-resources { position: relative; min-width: 0; max-width: 100%; }
+.workspace-header .workspace-resource-menu { position: absolute; top: 100%; right: 0; width: 280px; max-width: calc(100vw - 24px); padding: 8px; background: #181a1d; border: 1px solid #34373c; border-radius: 4px; box-shadow: 0 12px 24px #0006; }
+.workspace-header .workspace-resource-menu p { margin: 8px 10px; color: #a7a9ad; font-size: 12px; }
+.workspace-header .workspace-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; min-width: 0; max-width: 100%; margin-left: auto; color: #a7a9ad; }
+.workspace-header .workspace-actions > div { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.workspace-header .workspace-actions :is(button, select) { min-height: 44px; border: 1px solid #34373c; border-radius: 4px; background: #202226; color: #ececea; font: inherit; }
+.workspace-header :is(a, summary, button, select):focus-visible { outline: 2px solid #ececea; outline-offset: 3px; }
+.workspace-header .workspace-file-options { position: relative; }
+.workspace-header .workspace-file-options > div { padding: 8px; border: 1px solid #34373c; background: #181a1d; }
+@media print { header.workspace-header { display: none; } }
+@media (max-width: 600px) {
+  header.workspace-header { gap: 4px 12px; }
+  .workspace-header .workspace-navigation { width: 100%; }
+  .workspace-header .workspace-resources { position: static; }
+  .workspace-header .workspace-resource-menu { top: auto; left: 12px; right: 12px; width: auto; }
+  .workspace-header .workspace-actions { width: 100%; margin-left: 0; }
+}

@@ -36,6 +36,7 @@ from pro_meta_intelligence.ingestion.oe_download import (
     OracleElixirDownloadError,
     OracleElixirDownloadIntervalError,
     OracleElixirPublishedDownloadAdapter,
+    archive_for_year,
 )
 from pro_meta_intelligence.ingestion.oracles_elixir import (
     MAX_ISSUE_DETAILS,
@@ -184,6 +185,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="download one explicitly reviewed Oracle's Elixir annual CSV",
     )
     oe_fetch.add_argument("--year", type=int, default=datetime.now(UTC).year)
+    oe_fetch.add_argument(
+        "--historical-usage-only",
+        action="store_true",
+        help="past annual appearance schema only; not draft-sequence evidence",
+    )
     oe_fetch.add_argument("--registry", type=Path, help="optional source registry JSON")
     oe_fetch.add_argument(
         "--archive-dir",
@@ -738,8 +744,19 @@ def _fetch_oe(args: argparse.Namespace) -> int:
     archive = SnapshotArchive(args.archive_dir)
     adapter = OracleElixirPublishedDownloadAdapter(_load_registry(args.registry))
     last_retrieved_at = archive.latest_retrieved_at(adapter.source_id)
+    ledger = SourceAttemptLedger(args.archive_dir)
+    operation = "FETCH_PUBLISHED_CSV"
+    last_attempted_at = ledger.latest_attempted_at(adapter.source_id, operation)
     try:
-        downloaded = adapter.fetch_year(args.year, last_retrieved_at=last_retrieved_at)
+        downloaded = adapter.fetch_year(
+            args.year,
+            last_retrieved_at=last_retrieved_at,
+            last_attempted_at=last_attempted_at,
+            on_request_started=lambda attempted_at: ledger.record(
+                adapter.source_id, operation, attempted_at
+            ),
+            historical_usage_only=args.historical_usage_only,
+        )
     except OracleElixirDownloadIntervalError as error:
         payload = {
             "schema_version": "1",
@@ -749,7 +766,7 @@ def _fetch_oe(args: argparse.Namespace) -> int:
         }
         _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", args.output)
         return 3
-    except OracleElixirDownloadError as error:
+    except (OracleElixirDownloadError, HttpTransportError) as error:
         payload = {
             "schema_version": "1",
             "status": "SOURCE_UNAVAILABLE",
@@ -906,7 +923,9 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
         archive = SnapshotArchive(args.archive_dir)
         registry = _load_registry(args.registry)
         adapter = OracleElixirPublishedDownloadAdapter(registry)
-        latest = archive.latest(adapter.source_id)
+        source_latest = archive.latest(adapter.source_id)
+        history = archive_for_year(archive.inspect(adapter.source_id), args.year)
+        latest = history.snapshots[-1] if history.snapshots else None
         attempt_ledger = SourceAttemptLedger(args.archive_dir)
         fetch_operation = "FETCH_PUBLISHED_CSV"
         last_attempted_at = attempt_ledger.latest_attempted_at(
@@ -932,7 +951,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
         try:
             downloaded = adapter.fetch_year(
                 args.year,
-                last_retrieved_at=latest.retrieved_at if latest else None,
+                last_retrieved_at=source_latest.retrieved_at if source_latest else None,
                 last_attempted_at=last_attempted_at,
                 on_request_started=lambda attempted_at: attempt_ledger.record(
                     adapter.source_id,
@@ -942,7 +961,8 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
             )
             network_attempted = True
             archived = archive.store(downloaded.artifact)
-            latest = archive.latest(adapter.source_id)
+            history = archive_for_year(archive.inspect(adapter.source_id), args.year)
+            latest = history.snapshots[-1] if history.snapshots else None
             if latest is None:  # pragma: no cover - archive.store guarantees metadata
                 raise AssertionError("downloaded source did not enter the archive")
             acquisition_status = "DOWNLOADED"
@@ -976,7 +996,7 @@ def _sync_oe_feed(args: argparse.Namespace) -> int:
                 ).isoformat()
 
         history_benchmark = benchmark_oe_blind_spots(
-            archive.inspect(adapter.source_id),
+            history,
             registry,
             source_timezone=args.source_timezone,
             history_criteria=OEHistoryCriteria(),

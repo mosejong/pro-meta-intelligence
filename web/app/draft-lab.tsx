@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- champion portraits use Riot Data Dragon */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { championAssetId, championImageUrl } from "./champion-assets";
 import { useChampionNames } from "./champion-names";
 import {
@@ -23,7 +23,7 @@ import {
   type DraftSide,
   type DraftGame,
 } from "./draft-agent";
-import { productSpaceHref, type ProductSpace } from "./product-space";
+import { productRootHref, productSpaceHref, type ProductSpace } from "./product-space";
 import { isDraftSessionErrorCode, MAX_DRAFT_FILE_BYTES, parseDraftSession, readLocalDraft, type DraftSession, type DraftSessionErrorCode } from "./draft-session";
 import { useDraftSave } from "./use-draft-save";
 import type { OpponentTeam, RadarReport } from "./radar-types";
@@ -33,9 +33,15 @@ import { DraftChampionInfo, type ChampionFocus } from "./draft-champion-info";
 import { DraftComparisonPanel } from "./draft-comparison-panel";
 import { PartnershipPlacement } from "./partnership-placement";
 import { RosterWorkshop } from "./roster-workshop";
+import { SimulationReadinessPanel } from "./simulation-readiness-panel";
+import type { LiveRoster } from "./roster-comparison";
+import type { SimulationInputSnapshot } from "./simulation-scenario";
 import { DEFAULT_LOCALE, LanguageSelector, useLocale, type Locale, type MessageKey } from "./locale";
 import "./draft-workspace.css";
 import "./draft-studio.css";
+import { WorkspaceHeader } from "./workspace-header";
+import { DraftSharePanel } from "./draft-share-panel";
+import { DraftRoomPanel, type RoomControls } from "./draft-room-panel";
 
 type DraftLabProps = {
   currentSpace: ProductSpace;
@@ -49,11 +55,24 @@ const laneLabels: Record<DraftAgentOption["lane"], string> = {
   EXPERIMENT: "실험안",
 };
 
-type StudioTab = "DRAFT" | "DETAILS";
+type StudioTab = "DRAFT" | "ROSTER" | "DETAILS" | "COMPARISON" | "SIMULATION";
 const studioTabs: Array<{ id: StudioTab; label: MessageKey; panel: string }> = [
   { id: "DRAFT", label: "draft.tab.DRAFT", panel: "studio-panel-draft" },
+  { id: "ROSTER", label: "draft.tab.ROSTER", panel: "studio-panel-roster" },
   { id: "DETAILS", label: "draft.tab.DETAILS", panel: "studio-panel-details" },
+  { id: "COMPARISON", label: "draft.tab.COMPARISON", panel: "studio-panel-comparison" },
+  { id: "SIMULATION", label: "draft.tab.SIMULATION", panel: "studio-panel-simulation" },
 ];
+const panelOf = (tab: StudioTab) => studioTabs.find((item) => item.id === tab)!.panel;
+
+// The rail is vertical beside the panels from this width and a horizontal strip above them below it.
+const RAIL_QUERY = "(min-width: 1100px)";
+function subscribeRail(onChange: () => void) {
+  const query = window.matchMedia?.(RAIL_QUERY);
+  query?.addEventListener("change", onChange);
+  return () => query?.removeEventListener("change", onChange);
+}
+const verticalRail = () => Boolean(window.matchMedia?.(RAIL_QUERY).matches);
 
 const roleLabels: Record<string, string> = {
   TOP: "탑",
@@ -186,6 +205,7 @@ function TeamDraftColumn({
 }
 
 export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftLabProps) {
+  const [room, setRoom] = useState<RoomControls>({ active: false, connected: false, sending: false, action: () => {} });
   const [seriesReport, setSeriesReport] = useState<RadarReport | null>(null);
   const report = seriesReport ?? liveReport;
   const [games, setGames] = useState<DraftGame[]>([]);
@@ -212,13 +232,21 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [importing, setImporting] = useState(false);
   const [storageStatus, setStorageStatus] = useState<StorageStatus>({ code: "CHECKING" });
   const [importStatus, setImportStatus] = useState<ImportStatus | null>(null);
-  // Both panels stay mounted; switching tabs only hides one, so draft, timer and lock state survive.
+  // All five panels stay mounted; switching only sets `hidden`, so draft, timer, roster, baseline A,
+  // role assignments, frozen input and file-replay state all survive a round trip through the rail.
   const [studioTab, setStudioTab] = useState<StudioTab>("DRAFT");
   const studioTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const studioRail = useRef<HTMLDivElement>(null);
+  const studioShell = useRef<HTMLDivElement>(null);
+  const railVertical = useSyncExternalStore(subscribeRail, verticalRail, () => false);
   // Read-only viewing of an already-confirmed slot. Separate from pendingChampion: it never stages or confirms.
   const [inspected, setInspected] = useState<InspectedSlot | null>(null);
   // Remount key for the A/B comparison panel; its memory-only baseline A is dropped on import/restore.
   const [comparisonEpoch, setComparisonEpoch] = useState(0);
+  // Live virtual roster published by the roster editor (tagged with its basis and pair); null until restored.
+  const [liveRoster, setLiveRoster] = useState<LiveRoster | null>(null);
+  /** Current ready simulation input (with explicit roles) reported by the readiness panel, or null. */
+  const [readyInput, setReadyInput] = useState<SimulationInputSnapshot | null>(null);
   const blueTeam = teams.find((team) => team.team_id === blueTeamId) ?? null;
   const redTeam = teams.find((team) => team.team_id === redTeamId) ?? null;
   const turn = nextDraftTurn(selections, firstPickSide);
@@ -229,6 +257,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const preview = useMemo(() => previewOpponentPick(report, blueTeam, redTeam, selections, pendingChampion, previousPicks, 3, firstPickSide),
     [report, blueTeam, redTeam, selections, pendingChampion, previousPicks, firstPickSide]);
   const canSelect = sessionReady && !importing && Boolean(blueTeam && redTeam) && (Boolean(seriesReport) || feedLabel !== "FEED CONNECTING");
+  const roomCanAct = !room.active || Boolean(room.connected && !room.sending && room.snapshot?.status === "DRAFTING" && room.role === turn?.side);
+  const roomHostReady = Boolean(room.role === "BLUE" && room.connected && !room.sending);
   const hasCurrentWork = selections.length > 0 || Boolean(pendingChampion);
 
   useEffect(() => {
@@ -276,6 +306,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   // Memoized above, so timer ticks and status updates never resubmit; each committed change is written immediately.
   const retrySave = useDraftSave(saveSnapshot, setStorageStatus);
 
+  const shareSession = useMemo(() => ({ report, blueTeamId, redTeamId, games, selections, stagedChampion: pendingChampion, firstPickSide }),
+    [report, blueTeamId, redTeamId, games, selections, pendingChampion, firstPickSide]);
+
   useEffect(() => {
     if (!timerRunning || !turn || timer <= 0) return;
     const timeout = window.setTimeout(() => setTimer((value) => Math.max(0, value - 1)), 1000);
@@ -317,24 +350,68 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     ? championPool.filter((championId) => !isChampionLocked(selections, championId, previousPicks))
     : championPool;
 
+  // The horizontal (narrow) rail scrolls itself to keep the selected tab in view; never the page.
+  // Also re-runs when the rail turns horizontal (e.g. window narrowed) so the selected tab is not left off-screen.
+  useEffect(() => {
+    const rail = studioRail.current;
+    const tab = studioTabRefs.current[studioTabs.findIndex((item) => item.id === studioTab)];
+    if (!rail || !tab || rail.scrollWidth <= rail.clientWidth) return;
+    const left = tab.getBoundingClientRect().left - rail.getBoundingClientRect().left + rail.scrollLeft;
+    if (left < rail.scrollLeft) rail.scrollLeft = left;
+    else if (left + tab.offsetWidth > rail.scrollLeft + rail.clientWidth) rail.scrollLeft = left + tab.offsetWidth - rail.clientWidth;
+  }, [studioTab, railVertical, locale]);
+
   function showStudioTab(tab: StudioTab, then?: () => void) {
     setStudioTab(tab);
     // Run after React commits the visibility change so focus/scroll target a visible node.
     if (then) window.setTimeout(then, 0);
   }
 
+  /** Rail selection: if the page is scrolled past the panel start, bring the new panel's top into view. */
+  function selectStudioTab(tab: StudioTab) {
+    setStudioTab(tab);
+    const shell = studioShell.current;
+    if (shell && shell.getBoundingClientRect().top < 0) {
+      window.setTimeout(() => scrollIntoViewGently(shell), 0);
+    }
+  }
+
   function onStudioTabKey(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const last = studioTabs.length - 1;
-    const next = event.key === "ArrowRight" ? (index === last ? 0 : index + 1)
-      : event.key === "ArrowLeft" ? (index === 0 ? last : index - 1)
+    // Both axes are accepted: the rail is vertical on wide screens and horizontal on narrow ones.
+    const next = event.key === "ArrowRight" || event.key === "ArrowDown" ? (index === last ? 0 : index + 1)
+      : event.key === "ArrowLeft" || event.key === "ArrowUp" ? (index === 0 ? last : index - 1)
         : event.key === "Home" ? 0 : event.key === "End" ? last : null;
     if (next === null) return;
     event.preventDefault();
-    setStudioTab(studioTabs[next].id);
+    selectStudioTab(studioTabs[next].id);
     studioTabRefs.current[next]?.focus();
   }
 
+  /** Confirmed-slot inspection opens the champion info in the details panel; it never stages or confirms. */
+  function inspectSlot(slot: InspectedSlot) {
+    setInspected(slot);
+    openChampionInfo();
+  }
+
+  function openChampionInfo() {
+    showStudioTab("DETAILS", () => {
+      const info = document.getElementById("studio-champion-info");
+      scrollIntoViewGently(info);
+      info?.focus({ preventScroll: true });
+    });
+  }
+
+  function focusSaveRetry() {
+    showStudioTab("DRAFT", () => {
+      const alert = document.querySelector<HTMLElement>(".draft-save-failed");
+      scrollIntoViewGently(alert, "center");
+      alert?.querySelector("button")?.focus({ preventScroll: true });
+    });
+  }
+
   function resetDraft() {
+    if (room.active) return;
     setSelections([]);
     setPendingChampion(null);
     setInspected(null);
@@ -343,14 +420,15 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   }
 
   function chooseChampion(championId: string) {
-    if (!canSelect || !turn || isChampionLocked(selections, championId, previousPicks)) return;
+    if (!roomCanAct || !canSelect || !turn || isChampionLocked(selections, championId, previousPicks)) return;
     if (!seriesReport) setSeriesReport(structuredClone(report));
     setPendingChampion(championId);
     setInspected(null);
   }
 
   function confirmChampion() {
-    if (!canSelect || !turn || !pendingChampion || !blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) return;
+    if (!roomCanAct || !canSelect || !turn || !pendingChampion || !blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) return;
+    if (room.active) { room.action("SELECT", pendingChampion); return; }
     setSelections((current) => applyDraftSelection(current, pendingChampion, previousPicks, firstPickSide));
     setPendingChampion(null);
     setTimer(30);
@@ -358,6 +436,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   }
 
   function changeTeam(side: DraftSide, teamId: string) {
+    if (room.active) return;
     if (games.length || hasCurrentWork) return;
     if (side === "BLUE") {
       setBlueTeamId(teamId);
@@ -370,6 +449,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   }
 
   function swapSides() {
+    if (room.active) return;
     if (hasCurrentWork) return;
     setBlueTeamId(redTeamId);
     setRedTeamId(blueTeamId);
@@ -377,6 +457,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   }
 
   function undo() {
+    if (room.active) return;
     setSelections((current) => current.slice(0, -1));
     setPendingChampion(null);
     setInspected(null);
@@ -384,6 +465,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   }
 
   function nextGame() {
+    if (room.active) { if (roomHostReady && room.snapshot?.status === "COMPLETE") room.action("NEXT_GAME"); return; }
     if (!blueTeam || !redTeam) return;
     const next = completeFearlessGame(games, { blue_team_id: blueTeamId, red_team_id: redTeamId, selections });
     if (next === games) return;
@@ -392,6 +474,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   }
 
   function reopenPreviousGame() {
+    if (room.active) return;
     const last = games.at(-1);
     if (!last) return;
     setGames(games.slice(0, -1));
@@ -403,6 +486,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   }
 
   function resetSeries() {
+    if (room.active) return;
     setGames([]);
     resetDraft();
     // Keep the captured data: starting the same draft again reproduces its output.
@@ -421,7 +505,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
   async function importScenario(input: HTMLInputElement) {
     const file = input.files?.[0];
-    if (!file || importing) return;
+    if (!file || importing || room.active) return;
     setImporting(true);
     try {
       if (file.size > MAX_DRAFT_FILE_BYTES) {
@@ -430,6 +514,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       }
       const result = parseDraftSession(await file.text());
       if (!result.ok) { setImportStatus({ code: "PARSE_FAILED", reason: sessionReason(result) }); return; }
+      if (room.active) return;
       // A replaced session must not be compared against an in-memory A from earlier data.
       setComparisonEpoch((epoch) => epoch + 1);
       restoreSession(result.session);
@@ -463,11 +548,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       ? { champion_id: staged.champion_id, status: "STAGED", selection: staged }
       : focusSelection ? { champion_id: focusSelection.champion_id, status: "CONFIRMED", selection: focusSelection } : null;
   return <main className="draft-lab draft-studio" lang="ko">
-    <header className="draft-lab-topbar">
-      <a className="brand" href={productSpaceHref(currentSpace, "ONBOARDING")} aria-label={t("draft.brandLabel")} lang={lang.ui}><span className="brand-mark">PM</span><span><strong>PRO META</strong><small>INTELLIGENCE</small></span></a>
-      <nav aria-label={t("draft.pagesLabel")} lang={lang.ui}><a href={productSpaceHref(currentSpace, "TEAM")}>{t("space.TEAM")}</a><a href={productSpaceHref(currentSpace, "RADAR")}>{t("space.RADAR")}</a><a href={productSpaceHref(currentSpace, "CREATOR")}>{t("space.CREATOR")}</a><a href={productSpaceHref(currentSpace, "PROOF")}>{t("space.PROOF")}</a></nav>
+    <WorkspaceHeader currentSpace={currentSpace}>
       <div lang={lang.ui}><span>{seriesReport ? report.fixture_only ? t("draft.data.fixture") : t("draft.data.locked") : feedLabel}</span><b>PATCH {report.patch_id}</b></div>
-    </header>
+    </WorkspaceHeader>
 
     <header className="studio-workspace-header">
       <h1 lang={locale}>{t("draft.title")}</h1>
@@ -475,9 +558,20 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <span lang={lang.ui}>{t("draft.format")}</span>
       <LanguageSelector className="studio-locale-select" />
       {locale !== "ko" && <p className="studio-locale-note" lang={locale} role="note">{t("locale.partialNote")}</p>}
+      {/* Visible from every panel; the full warning and retry stay in the draft panel. Never shown as saved. */}
+      {storageStatus.code === "SAVE_FAILED" && <button type="button" className="studio-save-flag" lang={lang.ui} onClick={focusSaveRetry}>{t("draft.saveFailedFlag")}</button>}
     </header>
 
-    <div className="studio-tabs" lang={locale} role="tablist" aria-label={t("draft.tabsLabel")}>
+    {/* Team selection is shared by all panels and rendered once. */}
+    <section id="draft-workspace" className="draft-match-setup" aria-label={t("draft.setupLabel")} lang={lang.ui} inert={!canSelect}>
+      <TeamChooser label="BLUE TEAM" teams={teams} value={blueTeamId} onChange={(id) => changeTeam("BLUE", id)} disabled={room.active || games.length > 0 || hasCurrentWork} locale={locale} />
+      <button type="button" onClick={swapSides} disabled={room.active || hasCurrentWork} aria-label={t("draft.swapLabel")}>⇄<small>{t("draft.swap")}</small></button>
+      <TeamChooser label="RED TEAM" teams={teams} value={redTeamId} onChange={(id) => changeTeam("RED", id)} disabled={room.active || games.length > 0 || hasCurrentWork} locale={locale} />
+      {(hasCurrentWork || games.length > 0) && <p className="draft-setup-hint">{t("draft.setupHint")}</p>}
+    </section>
+
+    <div className="studio-shell" ref={studioShell}>
+    <div className="studio-tabs" ref={studioRail} lang={locale} role="tablist" aria-label={t("draft.tabsLabel")} aria-orientation={railVertical ? "vertical" : "horizontal"}>
       {studioTabs.map((tab, index) => <button
         key={tab.id}
         ref={(node) => { studioTabRefs.current[index] = node; }}
@@ -487,24 +581,16 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         aria-selected={studioTab === tab.id}
         aria-controls={tab.panel}
         tabIndex={studioTab === tab.id ? 0 : -1}
-        onClick={() => setStudioTab(tab.id)}
+        onClick={() => selectStudioTab(tab.id)}
         onKeyDown={(event) => onStudioTabKey(event, index)}
       >{t(tab.label)}</button>)}
     </div>
 
-    <div id="studio-panel-draft" className="studio-draft-panel" role="tabpanel" aria-labelledby="studio-panel-draft-tab" hidden={studioTab !== "DRAFT"}>
-    <section id="draft-workspace" className="draft-match-setup" aria-label={t("draft.setupLabel")} lang={lang.ui} inert={!canSelect}>
-      <TeamChooser label="BLUE TEAM" teams={teams} value={blueTeamId} onChange={(id) => changeTeam("BLUE", id)} disabled={games.length > 0 || hasCurrentWork} locale={locale} />
-      <button type="button" onClick={swapSides} disabled={hasCurrentWork} aria-label={t("draft.swapLabel")}>⇄<small>{t("draft.swap")}</small></button>
-      <TeamChooser label="RED TEAM" teams={teams} value={redTeamId} onChange={(id) => changeTeam("RED", id)} disabled={games.length > 0 || hasCurrentWork} locale={locale} />
-      {(hasCurrentWork || games.length > 0) && <p className="draft-setup-hint">{t("draft.setupHint")}</p>}
-    </section>
-    {/* Virtual roster editor: separate file/storage; does not change the draft, baseline A or analysis. */}
-    <RosterWorkshop report={report} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={!canSelect} />
-
+    <div className="studio-panels">
+    <div id={panelOf("DRAFT")} className="studio-draft-panel" role="tabpanel" aria-labelledby={`${panelOf("DRAFT")}-tab`} hidden={studioTab !== "DRAFT"}>
     <section className="draft-series" aria-label={t("draft.seriesLabel")} lang={lang.ui}>
       <label className="draft-first-selection">{t("draft.firstPick")}
-        <select value={firstPickSide} disabled={!canSelect || selections.length > 0 || Boolean(pendingChampion)} onChange={(event) => {
+        <select value={firstPickSide} disabled={room.active || !canSelect || selections.length > 0 || Boolean(pendingChampion)} onChange={(event) => {
           const side = event.target.value;
           if (side === "BLUE" || side === "RED") { setFirstPickSide(side); if (!seriesReport) setSeriesReport(structuredClone(report)); }
         }}><option value="BLUE">{t("draft.firstPick.BLUE")}</option><option value="RED">{t("draft.firstPick.RED")}</option></select>
@@ -518,22 +604,30 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         {!saveSnapshot && <small>{importing ? "파일을 불러오는 중이라 지금은 다시 저장할 수 없습니다." : "저장할 최신 밴픽이 아직 없습니다."}</small>}
         <small>현재 화면의 최신 밴픽만 다시 저장하며 이전 상태로 되돌리지 않습니다.</small>
       </div>}
-      <details className="draft-session-details"><summary>{t("draft.sessionSummary")}</summary>
+      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={setRoom} onSnapshot={(session, reset) => {
+        if (reset) setComparisonEpoch(epoch => epoch + 1);
+        setSeriesReport(session.report); setBlueTeamId(session.blueTeamId); setRedTeamId(session.redTeamId);
+        setGames(session.games); setSelections(session.selections); setFirstPickSide(session.firstPickSide);
+        setPendingChampion(null); setInspected(null); setQuery(""); setTimer(30); setTimerRunning(false); setPendingReset(null);
+      }} />
+      <DraftSharePanel outgoing={shareSession} liveReport={liveReport} ready={canSelect && !room.active} incomingReady={!room.active && sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onAccept={(session) => { if (room.active) return; setComparisonEpoch((epoch) => epoch + 1); setPendingReset(null); restoreSession(session); }} />
+      <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={() => setPendingReset("SERIES")} disabled={room.active || (!games.length && !hasCurrentWork)}>{t("draft.resetSeries")}</button></div>
+      <details className="draft-session-details"><summary lang="ko">고급 설정 · 파일 저장·불러오기</summary>
       <p>{format("draft.sessionInfo", { state: t(seriesReport ? "draft.sessionInfo.locked" : "draft.sessionInfo.pending"), patch: report.patch_id, cutoff: report.cutoff ?? "", model: DRAFT_MODEL_VERSION })}</p>
-      <div className="draft-session-controls"><label>{t("draft.import")}<input type="file" accept=".json,application/json" disabled={!sessionReady || importing} onChange={(event) => void importScenario(event.currentTarget)} /></label><button type="button" onClick={downloadScenario} disabled={!canSelect}>{t("draft.saveJson")}</button></div>
+      <div className="draft-session-controls"><button type="button" onClick={downloadScenario} disabled={!selections.length && !games.length}>{t("draft.scenarioJson")}</button><label>{t("draft.import")}<input type="file" accept=".json,application/json" disabled={room.active || !sessionReady || importing} onChange={(event) => void importScenario(event.currentTarget)} /></label><button type="button" onClick={downloadScenario} disabled={!canSelect}>{t("draft.saveJson")}</button></div>
       <p role="status" lang={reasonLang(storageStatus)}>{storageText}</p>
       {importText && <p role="status" lang={reasonLang(importStatus)}>{importText}</p>}
-      <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={reopenPreviousGame} disabled={!games.length || hasCurrentWork}>{t("draft.reopen")}</button><button type="button" onClick={() => setPendingReset("SERIES")} disabled={!games.length && !hasCurrentWork}>{t("draft.resetSeries")}</button></div>
+      <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={reopenPreviousGame} disabled={room.active || !games.length || hasCurrentWork}>{t("draft.reopen")}</button></div>
       </details>
       {games.map((game, index) => <details key={index}><summary>{format("draft.gameLocks", { game: index + 1 })}</summary><div className="draft-series-locks" lang={lang.name}>{game.selections.filter((selection) => selection.kind === "PICK").map((selection) => <span key={selection.champion_id}><img src={championImageUrl(selection.champion_id)} alt="" />{nameOf(selection.champion_id)}</span>)}</div></details>)}
     </section>
 
-    {/* No lang on the stage/picker containers: they hold the Korean-only champion-info panel. */}
+    {/* No lang on the stage/picker containers: their children set lang per control. */}
     <section className="draft-stage" aria-label={t("draft.stageLabel")} inert={!canSelect}>
-      <TeamDraftColumn side="BLUE" team={blueTeam} selections={selections} staged={staged} active={turn?.side === "BLUE"} nameOf={nameOf} inspected={inspectedSelection} onInspect={setInspected} />
+      <TeamDraftColumn side="BLUE" team={blueTeam} selections={selections} staged={staged} active={turn?.side === "BLUE"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
       <section className="draft-control-room">
         <div className={`draft-clock ${timer <= 10 ? "urgent" : ""}`} lang={lang.ui}><span>{`TURN ${Math.min(selections.length + 1, STANDARD_DRAFT_SEQUENCE.length)} / ${STANDARD_DRAFT_SEQUENCE.length}`}</span><strong>{String(timer).padStart(2, "0")}</strong><button type="button" onClick={() => setTimerRunning((running) => !running)} disabled={!turn}>{timerRunning ? t("draft.timerPause") : t("draft.timerStart")}</button></div>
-        <div className={`draft-current-turn ${turn?.side.toLowerCase() ?? "complete"}`} role="status" lang={lang.ui}><span>{phaseLabel}</span><h2>{turn ? format("draft.turnHeading", { team: frame.acting_team_name ?? "", side: t(sideKey(turn.side)) }) : t("draft.scenarioComplete")}</h2><p>{turn ? format(turnHintKey(turn.kind), { slot: turn.slot }) : t("draft.turnDoneHint")}</p>{!turn && <button type="button" onClick={nextGame}>{t("draft.nextGame")}</button>}</div>
+        <div className={`draft-current-turn ${turn?.side.toLowerCase() ?? "complete"}`} role="status" lang={lang.ui}><span>{phaseLabel}</span><h2>{turn ? format("draft.turnHeading", { team: frame.acting_team_name ?? "", side: t(sideKey(turn.side)) }) : t("draft.scenarioComplete")}</h2><p>{turn ? format(turnHintKey(turn.kind), { slot: turn.slot }) : t("draft.turnDoneHint")}</p>{room.active && <p className="draft-room-turn">{room.role === "SPECTATOR" ? "관전 중 · 선택할 수 없습니다" : room.role === "BLUE" ? "나는 블루" : room.role === "RED" ? "나는 레드" : "참여 확인 중"} · {room.ended ? "참여 종료" : !room.connected ? "연결 확인 중" : room.sending ? "선택 반영 중" : room.snapshot?.status === "WAITING" ? "레드 참가 대기" : turn ? `${turn.side === "BLUE" ? "블루" : "레드"} 차례` : "세트 완료"}</p>}{!turn && <button type="button" disabled={room.active && !roomHostReady} onClick={nextGame}>{t("draft.nextGame")}</button>}</div>
         <progress className="draft-turn-progress" value={selections.length} max={20} aria-label={format("draft.progressLabel", { count: selections.length, total: 20 })} lang={lang.ui} />
         <section className="draft-picker" aria-label={t("draft.pickerLabel")}>
           <div className="draft-catalog" lang={lang.ui}>
@@ -543,27 +637,39 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
           <div className="draft-picker-grid">{visibleChampions.map((championId) => {
             const fearless = isChampionLocked([], championId, previousPicks);
             const locked = isChampionLocked(selections, championId, previousPicks);
-            return <button type="button" aria-pressed={pendingChampion === championId} disabled={locked || !turn} onClick={() => chooseChampion(championId)} key={championAssetId(championId)} title={fearless ? format("draft.lockReason.previous", { name: nameOf(championId) }) : locked ? format("draft.lockReason.taken", { name: nameOf(championId) }) : nameOf(championId)}><img src={championImageUrl(championId)} alt="" loading="lazy" /><span lang={lang.name}>{nameOf(championId)}</span>{locked && <b>{fearless ? t("draft.badge.fearless") : "LOCK"}</b>}</button>;
+            return <button type="button" aria-pressed={pendingChampion === championId} disabled={!roomCanAct || locked || !turn} onClick={() => chooseChampion(championId)} key={championAssetId(championId)} title={fearless ? format("draft.lockReason.previous", { name: nameOf(championId) }) : locked ? format("draft.lockReason.taken", { name: nameOf(championId) }) : nameOf(championId)}><img src={championImageUrl(championId)} alt="" loading="lazy" /><span lang={lang.name}>{nameOf(championId)}</span>{locked && <b>{fearless ? t("draft.badge.fearless") : "LOCK"}</b>}</button>;
           })}</div>
           {!visibleChampions.length && <p className="draft-search-empty" role="status">{championPool.length ? t("draft.empty.locked") : t("draft.empty.none")}</p>}
           </div>
           <div className="draft-lock-in" aria-live="polite" lang={lang.ui}>
             <div>{pendingChampion && <img src={championImageUrl(pendingChampion)} alt="" />}<span lang={lockInNameLang}><small lang={lockInLabelLang}>{pendingChampion ? t("draft.stagedPending") : t("draft.selectThenConfirm")}</small>{pendingChampion ? nameOf(pendingChampion) : turn ? t("draft.chooseChampion") : t("draft.complete")}</span></div>
             {pendingChampion && <button className="draft-cancel-stage" type="button" onClick={() => setPendingChampion(null)}>{t("draft.cancelStage")}</button>}
-            <button type="button" onClick={confirmChampion} disabled={!turn || !pendingChampion || !blueTeam || !redTeam}>{turn?.kind === "BAN" ? t("draft.confirm.BAN") : t("draft.confirm.PICK")}</button>
+            <button type="button" onClick={confirmChampion} disabled={!roomCanAct || !turn || !pendingChampion || !blueTeam || !redTeam}>{turn?.kind === "BAN" ? t("draft.confirm.BAN") : t("draft.confirm.PICK")}</button>
           </div>
-          <DraftChampionInfo focus={championFocus} report={report} blueTeam={blueTeam} redTeam={redTeam} nameOf={nameOf} onCloseInspect={() => setInspected(null)} />
+          {/* The full champion info lives in the details panel; this only switches panels. */}
+          <button type="button" className="studio-info-entry" lang={lang.ui} aria-controls={panelOf("DETAILS")} onClick={openChampionInfo}>{t("draft.championInfoOpen")}</button>
         </section>
-        <div className="draft-actions" lang={lang.ui}><button type="button" onClick={undo} disabled={!selections.length}>{t("draft.undo")}</button><button type="button" onClick={() => setPendingReset("GAME")} disabled={!hasCurrentWork}>{t("draft.resetGame")}</button><button type="button" onClick={downloadScenario} disabled={!selections.length && !games.length}>{t("draft.scenarioJson")}</button></div>
+        <div className="draft-actions" lang={lang.ui}><button type="button" onClick={undo} disabled={room.active || !selections.length}>{t("draft.undo")}</button><button type="button" onClick={() => setPendingReset("GAME")} disabled={room.active || !hasCurrentWork}>{t("draft.resetGame")}</button></div>
         <ol className="draft-sequence-mini" aria-label={t("draft.sequenceLabel")} lang={lang.ui}>{draftSequence(firstPickSide).map((item, index) => <li className={index < selections.length ? "done" : index === selections.length ? "current" : ""} key={index}><span>{index + 1}</span><b>{item.side === "BLUE" ? "B" : "R"}{item.kind === "BAN" ? "B" : "P"}{item.slot}</b></li>)}</ol>
       </section>
-      <TeamDraftColumn side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={setInspected} />
+      <TeamDraftColumn side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
     </section>
-    <DraftComparisonPanel key={comparisonEpoch} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} nameOf={nameOf} />
     </div>
 
-    <div id="studio-panel-details" className="studio-details-panel" role="tabpanel" aria-labelledby="studio-panel-details-tab" hidden={studioTab !== "DETAILS"}>
+    <div id={panelOf("ROSTER")} className="studio-roster-panel" role="tabpanel" aria-labelledby={`${panelOf("ROSTER")}-tab`} hidden={studioTab !== "ROSTER"}>
+    {/* Virtual roster editor (with current player evidence and season records): separate file/storage;
+        never changes the draft or analysis. Its live roster is the A/B comparison's current B; an
+        already frozen A is not changed retroactively. */}
+    <RosterWorkshop report={report} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={!canSelect}
+      selections={selections} previousPicks={previousPicks} focusChampionId={championFocus?.champion_id ?? null}
+      publicationRoot={productRootHref(currentSpace)} defaultOpen onRosterChange={setLiveRoster} />
+    </div>
+
+    <div id={panelOf("DETAILS")} className="studio-details-panel" role="tabpanel" aria-labelledby={`${panelOf("DETAILS")}-tab`} hidden={studioTab !== "DETAILS"}>
     <nav className="draft-workspace-nav" aria-label="상세 분석 이동"><button type="button" onClick={() => showStudioTab("DRAFT")}>모의 밴픽으로</button><a href={productSpaceHref(currentSpace, "TEAM")}>선택한 두 팀 분석</a><a href={productSpaceHref(currentSpace, "PROOF")}>예측 검증 결과</a></nav>
+    <div id="studio-champion-info" className="studio-champion-info" tabIndex={-1}>
+      <DraftChampionInfo focus={championFocus} report={report} blueTeam={blueTeam} redTeam={redTeam} nameOf={nameOf} onCloseInspect={() => setInspected(null)} />
+    </div>
     <p className="studio-details-staged" role="status">{pendingChampion ? `${nameOf(pendingChampion)} 올려놓음 · 확정은 모의 밴픽 탭에서 합니다.` : turn ? "올려놓은 챔피언이 없습니다. 아래 후보를 누르면 올려놓기만 하고 확정하지 않습니다." : "밴픽이 완료되었습니다."}</p>
     <section id="draft-preview" className="draft-response-preview" aria-label="확정 전 상대 픽 예상" aria-live="polite">
       <h3>{pendingChampion ? `${nameOf(pendingChampion)} ${turn?.kind === "BAN" ? "밴" : "픽"}을 확정한다면` : "챔피언을 올려놓고 상대 픽을 비교하세요"}</h3>
@@ -577,7 +683,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
     <section className="draft-agent-panel" aria-labelledby="draft-agent-title" inert={!canSelect}>
       <header><div><span>TURN-BY-TURN EVIDENCE AGENT</span><h2 id="draft-agent-title">{turn ? `${frame.acting_team_name}의 다음 ${turn.kind === "BAN" ? "밴" : "픽"} 검토안` : "밴픽 시나리오 완료"}</h2><p>{frame.boundary}</p></div><b>{frame.evidence_match_count} MATCHES</b></header>
-      <div className="draft-agent-options">{frame.options.length ? frame.options.map((option) => <button type="button" className={option.lane.toLowerCase()} onClick={() => { chooseChampion(option.champion_id); scrollIntoViewGently(document.getElementById("draft-preview"), "center"); }} key={`${option.lane}:${option.champion_id}`}>
+      <div className="draft-agent-options">{frame.options.length ? frame.options.map((option) => <button type="button" className={option.lane.toLowerCase()} disabled={!roomCanAct} onClick={() => { chooseChampion(option.champion_id); scrollIntoViewGently(document.getElementById("draft-preview"), "center"); }} key={`${option.lane}:${option.champion_id}`}>
         <span>{laneLabels[option.lane]} · {option.confidence === "HIGH" ? "근거 높음" : option.confidence === "MEDIUM" ? "근거 보통" : "낮은 표본"}</span>
         <div><img src={championImageUrl(option.champion_id)} alt="" /><h3>{nameOf(option.champion_id)}</h3><small>{roleLabels[option.role ?? ""] ?? option.role ?? "역할 확인"}</small></div>
         <p>{option.observation}</p><em>{option.question}</em><b>{option.evidence_team_name} 근거 {option.team_evidence_ids.length}건 · 글로벌 {option.global_evidence_ids.length}건 · 올려놓기 →</b>
@@ -592,10 +698,33 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     </div>
     <footer className="draft-lab-boundary"><b>검증 경계</b><p>이 에이전트는 공개 대회 픽·밴 빈도와 현재 레이더만 사용합니다. 조합 시너지·카운터·패치 강도 모델은 아직 검증되지 않았으므로 승률 예측이 아닌 공개 기록 기반 검토이며, 자동 승률과 최종 추천을 표시하지 않습니다.</p><a href={productSpaceHref(currentSpace, "PROOF")}>현재 제품 검증 상태 →</a></footer>
     </div>
+
+    <div id={panelOf("COMPARISON")} className="studio-comparison-panel" role="tabpanel" aria-labelledby={`${panelOf("COMPARISON")}-tab`} hidden={studioTab !== "COMPARISON"}>
+    <DraftComparisonPanel key={comparisonEpoch} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf}
+      readyInput={readyInput} publicationRoot={productRootHref(currentSpace)}
+      onOpenRoleAssignment={() => showStudioTab("SIMULATION", () => {
+        const target = document.querySelector<HTMLElement>(`#${panelOf("SIMULATION")} .simulation-readiness-team select:not(:disabled)`)
+          ?? document.querySelector<HTMLElement>(`#${panelOf("SIMULATION")} .simulation-readiness > summary`);
+        target?.focus();
+        if (target) scrollIntoViewGently(target);
+      })} />
+    </div>
+
+    <div id={panelOf("SIMULATION")} className="studio-simulation-panel" role="tabpanel" aria-labelledby={`${panelOf("SIMULATION")}-tab`} hidden={studioTab !== "SIMULATION"}>
+    {/* Simulation input gate (with assigned-champion season records): explicit champion roles +
+        current rosters; no outcome is computed. */}
+    <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} publicationRoot={productRootHref(currentSpace)} defaultOpen disabled={!canSelect} onReadyInputChange={setReadyInput} />
+    </div>
+    </div>
+    </div>
     <dialog ref={resetDialog} className="draft-reset-dialog" aria-labelledby="draft-reset-title" aria-describedby="draft-reset-description" onCancel={() => setPendingReset(null)} lang={lang.ui}>
       <h2 id="draft-reset-title">{pendingReset === "SERIES" ? t("draft.reset.seriesTitle") : t("draft.reset.gameTitle")}</h2>
       <p id="draft-reset-description">{pendingReset === "SERIES" ? t("draft.reset.seriesBody") : t("draft.reset.gameBody")}</p>
       <div><button ref={cancelReset} type="button" onClick={() => setPendingReset(null)}>{t("draft.reset.cancel")}</button><button type="button" onClick={() => { if (pendingReset === "SERIES") resetSeries(); else if (pendingReset === "GAME") resetDraft(); setPendingReset(null); }}>{t("draft.reset.confirm")}</button></div>
     </dialog>
+    <footer className="studio-preview-footer" aria-label="테스트판과 Riot Games 비제휴 고지">
+      <p>한국어 테스트판 · 구단은 이 브라우저에 저장됩니다. 실제 경기 승률과 완성된 경기 시뮬레이션은 제공하지 않습니다.</p>
+      <p>Pro Meta Intelligence isn&apos;t endorsed by Riot Games and doesn&apos;t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</p>
+    </footer>
   </main>;
 }

@@ -1,0 +1,27 @@
+/* Only legacy page shells and common panels; feature-specific visuals stay intact. */
+main.legacy-workspace, div.legacy-workspace {
+  --paper: #111214; --panel: #181a1d; --ink: #ececea; --muted: #a7a9ad;
+  --line: #34373c; --signal: #c4c6ca; --violet: #c4c6ca;
+  --app-blue: #c4c6ca; --app-blue-soft: #202226; --app-shadow: none;
+  background: var(--paper); color: var(--ink); color-scheme: dark;
+  min-width: 0; font-family: Arial, "Malgun Gothic", sans-serif;
+}
+body .legacy-workspace :is(.section-portal-hero, .section-plain-guide, .team-lens, .summary, .site-footer, .submission-hero, .submission-footer) {
+  background: #111214; color: #ececea; border-color: #34373c; box-shadow: none;
+}
+body .legacy-workspace :is(.data-trust-bar, .section-plain-guide article, .section-plain-guide > details, .today-queue, .panel) {
+  background: #181a1d; color: #ececea; border-color: #34373c; border-radius: 4px; box-shadow: none;
+}
+body .legacy-workspace :is(.data-trust-bar > details, .today-queue > header) { background: #202226; color: #ececea; border-color: #34373c; }
+body .legacy-workspace :is(.section-portal-hero, .section-plain-guide, .team-lens, .summary, .site-footer) :is(p, small) { color: #a7a9ad; }
+body .legacy-workspace .section-portal-hero h1 { font-size: clamp(24px, 3vw, 34px); line-height: 1.35; letter-spacing: -.025em; }
+body .legacy-workspace :is(.section-portal-hero > a, .section-plain-guide article > a, .team-lens-actions a) {
+  display: inline-flex; align-items: center; min-height: 44px; background: #202226; color: #ececea; border: 1px solid #34373c; border-radius: 4px;
+}
+body .legacy-workspace :is(.section-portal-hero > div > span, .section-plain-guide > header > span, .section-plain-guide article > b, .today-queue > header span, .today-queue > header b) { color: #c4c6ca; }
+/* Proof owns its print button and source links: retain them as a secondary toolbar. */
+body .legacy-proof .submission-topbar { position: static; height: auto; min-height: 56px; flex-wrap: wrap; gap: 8px 16px; padding-block: 8px; background: #181a1d; color: #ececea; border-color: #34373c; box-shadow: none; }
+body .legacy-proof .submission-topbar > .brand { display: none; }
+body .legacy-proof .submission-topbar nav { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+body .legacy-proof .submission-topbar :is(a, button) { display: inline-flex; align-items: center; min-height: 44px; color: #ececea; }
+body .legacy-proof .submission-topbar button { background: #202226; border: 1px solid #34373c; border-radius: 4px; }

@@ -10,11 +10,16 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from importlib.resources import files
 from typing import Any
-from urllib.parse import urlencode, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 from pro_meta_intelligence._version import USER_AGENT
 from pro_meta_intelligence.ingestion.http import HttpTransport, UrllibTransport
-from pro_meta_intelligence.sources import PolicyGate, RawSourceArtifact, SourceRegistry
+from pro_meta_intelligence.sources import (
+    ArchiveInspection,
+    PolicyGate,
+    RawSourceArtifact,
+    SourceRegistry,
+)
 
 REQUIRED_COLUMNS = frozenset(
     {
@@ -43,6 +48,26 @@ REQUIRED_COLUMNS = frozenset(
 )
 
 
+HISTORICAL_USAGE_COLUMNS = frozenset(
+    {
+        "gameid",
+        "year",
+        "league",
+        "date",
+        "patch",
+        "participantid",
+        "side",
+        "position",
+        "playerid",
+        "playername",
+        "teamid",
+        "teamname",
+        "champion",
+        "result",
+    }
+)
+
+
 class OracleElixirDownloadError(RuntimeError):
     pass
 
@@ -65,6 +90,27 @@ class PublishedFile:
 class PublishedCSVDownload:
     file: PublishedFile
     artifact: RawSourceArtifact
+
+
+def archive_for_year(inspection: ArchiveInspection, year: int) -> ArchiveInspection:
+    """Cache and historical-publication benchmarks must never mix annual file identities.
+
+    Acquisition throttling still uses the full source archive and shared attempt ledger.
+    Unknown URLs are not silently treated as a current-season cache.
+    """
+    published = _load_manifest(None).get(year)
+    if published is None:
+        raise ValueError("year is not present in the reviewed Oracle's Elixir manifest")
+    snapshots = []
+    for snapshot in inspection.snapshots:
+        parsed = urlparse(snapshot.final_url)
+        if (
+            parsed.scheme == "https"
+            and parsed.hostname in {"drive.google.com", "drive.usercontent.google.com"}
+            and parse_qs(parsed.query).get("id") == [published.file_id]
+        ):
+            snapshots.append(snapshot)
+    return ArchiveInspection(inspection.source_id, tuple(snapshots), inspection.issues)
 
 
 class OracleElixirPublishedDownloadAdapter:
@@ -95,12 +141,15 @@ class OracleElixirPublishedDownloadAdapter:
         last_retrieved_at: datetime | None = None,
         last_attempted_at: datetime | None = None,
         on_request_started: Callable[[datetime], None] | None = None,
+        historical_usage_only: bool = False,
     ) -> PublishedCSVDownload:
         now = self.clock()
         registration = self.gate.require(self.source_id, "FETCH_PUBLISHED_CSV", now)
         published = self.files.get(year)
         if published is None:
             raise ValueError("year is not present in the reviewed Oracle's Elixir manifest")
+        if historical_usage_only and year >= now.year:
+            raise ValueError("usage-only acquisition is limited to past annual files")
         previous_times = [
             value for value in (last_retrieved_at, last_attempted_at) if value is not None
         ]
@@ -119,7 +168,9 @@ class OracleElixirPublishedDownloadAdapter:
             maximum_bytes=registration.maximum_response_bytes,
             user_agent=USER_AGENT,
         )
-        _validate_csv(response.body, response.media_type)
+        _validate_csv(
+            response.body, response.media_type, historical_usage_only=historical_usage_only
+        )
         artifact = RawSourceArtifact.create(
             source_id=self.source_id,
             request_url=response.request_url,
@@ -160,7 +211,7 @@ def _load_manifest(raw: dict[str, Any] | None) -> dict[int, PublishedFile]:
     return result
 
 
-def _validate_csv(body: bytes, media_type: str) -> None:
+def _validate_csv(body: bytes, media_type: str, *, historical_usage_only: bool = False) -> None:
     if media_type == "text/html" or body.lstrip().lower().startswith(b"<!doctype html"):
         raise OracleElixirDownloadError(
             "provider returned HTML instead of CSV; the public file may be quota-limited"
@@ -170,7 +221,8 @@ def _validate_csv(body: bytes, media_type: str) -> None:
     except (UnicodeDecodeError, StopIteration, csv.Error) as error:
         raise OracleElixirDownloadError("provider response is not a readable UTF-8 CSV") from error
     normalized = {name.strip().lower() for name in header}
-    missing = sorted(REQUIRED_COLUMNS - normalized)
+    required = HISTORICAL_USAGE_COLUMNS if historical_usage_only else REQUIRED_COLUMNS
+    missing = sorted(required - normalized)
     if missing:
         raise OracleElixirDownloadError(
             f"provider CSV is missing required columns: {', '.join(missing)}"

@@ -519,7 +519,9 @@ def test_audit_oe_history_cli_fails_closed_for_an_empty_archive(tmp_path) -> Non
 
 def test_audit_oe_history_cli_accepts_matured_normalized_states(tmp_path) -> None:
     source_id = "oracles-elixir-match-data"
-    source_url = "https://drive.usercontent.google.com/download?id=reviewed"
+    source_url = (
+        "https://drive.usercontent.google.com/download?id=1hnpbrUpBMS1TZI7IovfpKeZfWJH1Aptm"
+    )
     retrieved_at = datetime(2026, 8, 22, 3, 0, tzinfo=UTC)
     base = (FIXTURES / "oracles_elixir_game.csv").read_bytes()
     rows = base.splitlines(keepends=True)
@@ -905,7 +907,9 @@ def test_sync_oe_feed_downloads_validates_and_publishes_under_one_lock(
                 raise OracleElixirDownloadIntervalError(previous + timedelta(days=1))
             if on_request_started is not None:
                 on_request_started(retrieved_at)
-            url = "https://drive.usercontent.google.com/download?id=reviewed"
+            url = (
+                "https://drive.usercontent.google.com/download?id=1hnpbrUpBMS1TZI7IovfpKeZfWJH1Aptm"
+            )
             return SimpleNamespace(
                 file=SimpleNamespace(year=year, filename="2026_test.csv"),
                 artifact=RawSourceArtifact.create(
@@ -1038,7 +1042,9 @@ def test_sync_oe_feed_publishes_with_audited_known_exclusions(tmp_path, monkeypa
         ):
             if on_request_started is not None:
                 on_request_started(retrieved_at)
-            url = "https://drive.usercontent.google.com/download?id=reviewed"
+            url = (
+                "https://drive.usercontent.google.com/download?id=1hnpbrUpBMS1TZI7IovfpKeZfWJH1Aptm"
+            )
             return SimpleNamespace(
                 file=SimpleNamespace(year=year, filename="2026_test.csv"),
                 artifact=RawSourceArtifact.create(
@@ -1133,7 +1139,9 @@ def test_sync_oe_feed_leaves_publication_unchanged_when_readiness_fails(
         ):
             if on_request_started is not None:
                 on_request_started(retrieved_at)
-            url = "https://drive.usercontent.google.com/download?id=reviewed"
+            url = (
+                "https://drive.usercontent.google.com/download?id=1hnpbrUpBMS1TZI7IovfpKeZfWJH1Aptm"
+            )
             return SimpleNamespace(
                 file=SimpleNamespace(year=year, filename="2026_test.csv"),
                 artifact=RawSourceArtifact.create(
@@ -1269,8 +1277,8 @@ def test_sync_oe_feed_persists_failed_attempt_and_blocks_early_retry(
         SnapshotArchive(archive_dir).store(
             RawSourceArtifact.create(
                 source_id=FailingDownloadAdapter.source_id,
-                request_url="https://drive.usercontent.google.com/download?id=reviewed",
-                final_url="https://drive.usercontent.google.com/download?id=reviewed",
+                request_url="https://drive.usercontent.google.com/download?id=1hnpbrUpBMS1TZI7IovfpKeZfWJH1Aptm",
+                final_url="https://drive.usercontent.google.com/download?id=1hnpbrUpBMS1TZI7IovfpKeZfWJH1Aptm",
                 media_type="text/csv",
                 retrieved_at=attempted_at - timedelta(days=2),
                 body=(FIXTURES / "oracles_elixir_game.csv").read_bytes(),

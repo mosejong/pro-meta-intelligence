@@ -4,6 +4,7 @@ import { useMemo, useRef, useState, type ChangeEvent } from "react";
 import {
   buildDraftComparisonSnapshot,
   compareDraftSnapshots,
+  draftRosterKey,
   evidenceIdentityOf,
   replayDraftComparisonFile,
   serializeDraftComparison,
@@ -11,23 +12,69 @@ import {
   type DraftComparisonResult,
   type DraftComparisonSnapshot,
 } from "./draft-comparison";
+import type { LiveRoster, RosterSlotRecord } from "./roster-comparison";
+import { ComparisonPlayerEvidence } from "./comparison-player-evidence-panel";
+import { rosterBasis } from "./roster-scenario";
+import type { SimulationInputSnapshot } from "./simulation-scenario";
 
-type DraftComparisonPanelProps = DraftComparisonInput & {
+type DraftComparisonPanelProps = Omit<DraftComparisonInput, "roster" | "roles"> & {
+  /** Roster published by the roster editor after its device restore; null while not ready. */
+  roster: LiveRoster | null;
   nameOf: (championId: string) => string;
+  /**
+   * Current ready simulation input (explicit roles) from the readiness panel, or null. Its roles are
+   * attached to B only when its draft, roster and analysis data match B exactly; never inferred.
+   */
+  readyInput?: SimulationInputSnapshot | null;
+  /** Publication root relative to the page for the optional season file (lazy, on open only). */
+  publicationRoot?: string;
+  /** Switch to the simulation-readiness tab's role assignment. */
+  onOpenRoleAssignment?: () => void;
 };
 
 type ComparisonOk = Extract<DraftComparisonResult, { ok: true }>;
-type ReplayView = { fileName: string; a: DraftComparisonSnapshot; b: DraftComparisonSnapshot; comparison: ComparisonOk };
+type ReplayView = { fileName: string; schema: string; a: DraftComparisonSnapshot; b: DraftComparisonSnapshot; comparison: ComparisonOk };
 
 const sideLabel = (side: "BLUE" | "RED") => side === "BLUE" ? "블루" : "레드";
+const roleLabels: Record<string, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
+const sideOf = (snapshot: DraftComparisonSnapshot, teamId: string) =>
+  snapshot.teams.BLUE.id === teamId ? "BLUE" as const : snapshot.teams.RED.id === teamId ? "RED" as const : null;
+
+function rosterPlayerLabel(slot: RosterSlotRecord | null, teamId: string) {
+  if (!slot) return "빈칸 · 미배정";
+  return slot.source_team_id === teamId ? slot.player_name : `${slot.player_name} (${slot.source_team_name} 관측 · 가상 변경)`;
+}
+
+/** Roster slot differences by team ID and role; the side label follows each snapshot's assignment. */
+function RosterDiffView({ a, b, diff }: { a: DraftComparisonSnapshot; b: DraftComparisonSnapshot; diff: ComparisonOk }) {
+  const roster = diff.roster;
+  if (roster.status === "NOT_RECORDED") return <p>로스터: 기록 없음 (이전 형식 비교 파일). 현재 로스터로 채우지 않습니다.</p>;
+  if (roster.status === "PAIR_CHANGED") return <p>로스터: A와 B의 팀 조합이 달라 역할별로 비교하지 않습니다.</p>;
+  if (!roster.changes.length) return <p>로스터 동일 (두 팀 10개 슬롯, 팀 ID·역할 기준)</p>;
+  return <table>
+    <caption>변경된 로스터 슬롯 {roster.changes.length}개 (팀 ID·역할 기준)</caption>
+    <thead><tr><th scope="col">팀·역할</th><th scope="col">A</th><th scope="col">B</th></tr></thead>
+    <tbody>{roster.changes.map((change) => {
+      const bSide = sideOf(b, change.team_id);
+      const aSide = sideOf(a, change.team_id);
+      const name = (bSide ? b.teams[bSide].name : aSide ? a.teams[aSide].name : change.team_id);
+      return <tr key={`${change.team_id}-${change.role}`}>
+        <th scope="row">{bSide ? sideLabel(bSide) : ""} {name} {roleLabels[change.role]}{aSide && bSide && aSide !== bSide ? ` (A에서는 ${sideLabel(aSide)})` : ""}</th>
+        <td>{rosterPlayerLabel(change.a, change.team_id)}</td><td>{rosterPlayerLabel(change.b, change.team_id)}</td>
+      </tr>;
+    })}</tbody>
+  </table>;
+}
 
 /** Read-only rendering shared by the live A/B result and a replayed comparison file. */
-function ComparisonDiffView({ a, b, diff, nameOf, caption }: {
+function ComparisonDiffView({ a, b, diff, nameOf, caption, legacy }: {
   a: DraftComparisonSnapshot;
   b: DraftComparisonSnapshot;
   diff: ComparisonOk;
   nameOf: (championId: string) => string;
   caption: string;
+  /** Replayed v1/v2 file: roles were not part of that format. */
+  legacy?: boolean;
 }) {
   const names = (ids: string[]) => ids.map(nameOf).join(", ") || "없음";
   return <>
@@ -45,7 +92,33 @@ function ComparisonDiffView({ a, b, diff, nameOf, caption }: {
       </tr>)}</tbody>
     </table> : <p>변경된 픽·밴 없음</p>}
     <p>이전 세트 피어리스 잠금 · 추가: {names(diff.addedLocks)} · 해제: {names(diff.removedLocks)}</p>
+    <RosterDiffView a={a} b={b} diff={diff} />
+    <RoleDiffView a={a} b={b} diff={diff} nameOf={nameOf} legacy={legacy} />
   </>;
+}
+
+/** User-assigned role differences by team ID; v1/v2 files have none and are never filled from current roles. */
+function RoleDiffView({ a, b, diff, nameOf, legacy }: { a: DraftComparisonSnapshot; b: DraftComparisonSnapshot; diff: ComparisonOk; nameOf: (id: string) => string; legacy?: boolean }) {
+  const roles = diff.roles;
+  if (legacy) return <p data-role-diff="legacy">역할 배정: 이전 형식 파일이라 기록되지 않았습니다. 현재 역할로 채우지 않습니다.</p>;
+  if (roles.status === "NOT_RECORDED") {
+    return <p data-role-diff="not-recorded">역할 배정: {roles.missing.map((side) => side === "A" ? "기준 A" : "현재 B").join("·")} 역할 배정 기록 없음. 픽 순서로 역할을 추정하지 않으며 픽·밴·로스터 비교는 그대로입니다.</p>;
+  }
+  if (roles.status === "PAIR_CHANGED") return <p data-role-diff="pair-changed">역할 배정: A와 B의 팀 조합이 달라 역할별로 비교하지 않습니다.</p>;
+  if (!roles.changes.length) return <p data-role-diff="same">역할 배정 동일 (두 팀 10개 역할, 팀 ID 기준)</p>;
+  return <table data-role-diff="changed">
+    <caption>변경된 역할 배정 {roles.changes.length}개 (팀 ID·역할 기준)</caption>
+    <thead><tr><th scope="col">팀·역할</th><th scope="col">A</th><th scope="col">B</th></tr></thead>
+    <tbody>{roles.changes.map((change) => {
+      const bSide = sideOf(b, change.team_id);
+      const aSide = sideOf(a, change.team_id);
+      const name = bSide ? b.teams[bSide].name : aSide ? a.teams[aSide].name : change.team_id;
+      return <tr key={`${change.team_id}-${change.role}`}>
+        <th scope="row">{bSide ? sideLabel(bSide) : ""} {name} {roleLabels[change.role]}</th>
+        <td>{nameOf(change.a)}</td><td>{nameOf(change.b)}</td>
+      </tr>;
+    })}</tbody>
+  </table>;
 }
 
 /**
@@ -53,9 +126,10 @@ function ComparisonDiffView({ a, b, diff, nameOf, caption }: {
  * component's memory only; the studio remounts the panel (key) on import/restore, so a
  * replaced session never compares against an A from different data.
  * A replayed comparison file is display-only: it never replaces baseline A, the in-progress
- * draft or the autosave.
+ * draft, the roster or the autosave. Freezing A copies the live roster; later roster edits only
+ * change B and never alter an already frozen A.
  */
-export function DraftComparisonPanel({ report, blueTeam, redTeam, selections, games, firstPickSide, nameOf }: DraftComparisonPanelProps) {
+export function DraftComparisonPanel({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, nameOf, readyInput = null, publicationRoot = "./", onOpenRoleAssignment }: DraftComparisonPanelProps) {
   const [baseline, setBaseline] = useState<DraftComparisonSnapshot | null>(null);
   const [exportMessage, setExportMessage] = useState("");
   const [replay, setReplay] = useState<ReplayView | null>(null);
@@ -65,10 +139,23 @@ export function DraftComparisonPanel({ report, blueTeam, redTeam, selections, ga
   const readingRef = useRef(false);
   const fileInput = useRef<HTMLInputElement>(null);
   // Inputs are immutable studio state; timer/status re-renders reuse this result.
-  const current = useMemo(
-    () => buildDraftComparisonSnapshot({ report, blueTeam, redTeam, selections, games, firstPickSide }),
-    [report, blueTeam, redTeam, selections, games, firstPickSide],
+  const structural = useMemo(
+    // No roster yet (editor still restoring, or no valid pair): never substitute default observations.
+    () => roster
+      ? buildDraftComparisonSnapshot({ report, blueTeam, redTeam, selections, games, firstPickSide, roster })
+      : { ok: false as const, message: "가상 로스터를 확인하는 중입니다. 로스터가 준비되면 고정할 수 있습니다." },
+    [report, blueTeam, redTeam, selections, games, firstPickSide, roster],
   );
+  // Roles of the ready input are attached only when it describes exactly this draft + roster + data
+  // (a ready input from an earlier render never lands on a new B). Otherwise B has no role record.
+  const current = useMemo(() => {
+    if (!structural.ok || !readyInput || !roster) return structural;
+    const base = structural.snapshot;
+    if (readyInput.evidenceIdentity !== base.evidenceIdentity || draftRosterKey(readyInput.draft) !== draftRosterKey(base)) return structural;
+    const withRoles = buildDraftComparisonSnapshot({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, roles: readyInput.roles });
+    return withRoles.ok ? withRoles : structural;
+  }, [structural, readyInput, report, blueTeam, redTeam, selections, games, firstPickSide, roster]);
+  const basis = useMemo(() => rosterBasis(report), [report]);
   const diff = useMemo(() => baseline && current.ok ? compareDraftSnapshots(baseline, current.snapshot) : null, [baseline, current]);
   const replaySameEvidence = useMemo(() => replay ? replay.a.evidenceIdentity === evidenceIdentityOf(report) : false, [replay, report]);
 
@@ -106,7 +193,7 @@ export function DraftComparisonPanel({ report, blueTeam, redTeam, selections, ga
     try {
       const result = await replayDraftComparisonFile(file);
       if (result.ok) {
-        setReplay({ fileName: file.name, a: result.a, b: result.b, comparison: result.comparison });
+        setReplay({ fileName: file.name, schema: result.schema, a: result.a, b: result.b, comparison: result.comparison });
         setReplayMessage({ tone: "status", text: `"${file.name}" 파일을 다시 계산했고 기록된 결과와 일치합니다. 읽기 전용으로 표시합니다.` });
       } else {
         // Never leave an earlier replay on screen under a new file's failure message.
@@ -133,6 +220,8 @@ export function DraftComparisonPanel({ report, blueTeam, redTeam, selections, ga
       <h2 id="draft-comparison-title">드래프트 A/B 비교</h2>
       <p>완료한 드래프트를 기준 A로 고정한 뒤 세트를 초기화하고 B를 다시 짜서 비교합니다. 같은 분석 데이터(패치·기준 시각·모델·출처)일 때만 비교합니다.</p>
       <p><b>기준 A는 이 화면의 메모리에만 있습니다.</b> 새로고침·페이지 이동·시나리오 파일 가져오기를 하면 사라지며 자동 저장되지 않습니다.</p>
+      <p>기준 A에는 고정 당시의 가상 로스터가, 현재 B에는 지금의 가상 로스터가 들어갑니다. 로스터를 바꾸면 B만 달라지고 이미 고정된 기준 A는 소급 변경되지 않습니다.</p>
+      <p>역할은 시뮬레이션 준비 탭에서 사용자가 배정한 값만 씁니다. 입력이 준비된 상태(같은 밴픽·로스터)에서 고정하면 그때의 역할 배정이 A에 함께 고정되며, 이후 역할을 바꿔도 A는 바뀌지 않습니다.</p>
     </header>
     <div className="draft-comparison-actions">
       <button type="button" disabled={!current.ok} onClick={freeze}>{baseline ? "현재 B로 기준 A 교체" : "현재 완료 드래프트를 기준 A로 고정"}</button>
@@ -141,16 +230,20 @@ export function DraftComparisonPanel({ report, blueTeam, redTeam, selections, ga
     </div>
     <div className="draft-comparison-body" aria-live="polite">
       {!baseline && <p>기준 A가 없습니다. 규칙에 맞는 픽·밴 20개를 완료한 뒤 고정하세요.</p>}
-      {baseline && <p>기준 A: 블루 {baseline.teams.BLUE.name} · 레드 {baseline.teams.RED.name} · 선픽 {sideLabel(baseline.firstPickSide)} · {baseline.games.length + 1}세트 · 패치 {baseline.patch} · 기준 {baseline.cutoff}</p>}
+      {baseline && <p>기준 A: 블루 {baseline.teams.BLUE.name} · 레드 {baseline.teams.RED.name} · 선픽 {sideLabel(baseline.firstPickSide)} · {baseline.games.length + 1}세트 · 패치 {baseline.patch} · 기준 {baseline.cutoff} · {baseline.roster ? "고정 당시 가상 로스터 포함" : "로스터 기록 없음"} · <span data-baseline-roles={baseline.roles ? "recorded" : "none"}>{baseline.roles ? "고정 당시 역할 배정 포함" : "역할 배정 기록 없음"}</span></p>}
+      {current.ok && <p>현재 B: <span data-current-roles={current.snapshot.roles ? "recorded" : "none"}>{current.snapshot.roles ? "현재 준비된 역할 배정 포함" : "역할 배정 기록 없음 (시뮬레이션 준비 탭에서 현재 밴픽·로스터에 맞게 배정하면 포함됩니다)"}</span></p>}
       {!current.ok && <p>현재 B: {current.message}</p>}
       {diff && !diff.ok && <p role="alert">{diff.message}</p>}
-      {diff?.ok && current.ok && baseline && <ComparisonDiffView a={baseline} b={current.snapshot} diff={diff} nameOf={nameOf} caption="변경된 픽·밴" />}
+      {diff?.ok && current.ok && baseline && <>
+        <ComparisonDiffView a={baseline} b={current.snapshot} diff={diff} nameOf={nameOf} caption="변경된 픽·밴" />
+        <ComparisonPlayerEvidence a={baseline} b={current.snapshot} basis={basis} publicationRoot={publicationRoot} nameOf={nameOf} onOpenRoles={onOpenRoleAssignment} />
+      </>}
       {exportMessage && <p role="status">{exportMessage}</p>}
-      <p className="draft-comparison-boundary">픽·밴·진영·잠금의 차이만 보여 줍니다. 승률·시너지·카운터 평가나 경기 시뮬레이션은 제공하지 않습니다.</p>
+      <p className="draft-comparison-boundary">픽·밴·진영·잠금·로스터 슬롯·사용자 역할 배정의 차이만 보여 줍니다. 로스터 근거는 현재 분석 데이터의 선수 관측뿐이며 시즌 전체 선수 기록은 포함하지 않습니다. 선수·챔피언 경험 차이의 연간 자료는 펼칠 때 불러오는 현재 추가 참고이며 비교 JSON에 포함되지 않습니다. 선수 효과·승률·시너지·카운터 평가나 경기 시뮬레이션은 계산하지 않습니다.</p>
     </div>
     <section className="draft-comparison-replay" aria-labelledby="draft-comparison-replay-title">
       <h3 id="draft-comparison-replay-title">저장한 비교 파일 재현</h3>
-      <p>저장한 A/B 비교 JSON을 열면 파일 안의 분석 데이터와 입력으로 결과를 다시 계산해 기록과 대조합니다. 결과는 읽기 전용이며 진행 중인 밴픽·자동 저장·기준 A는 바뀌지 않습니다. 16MB 이하 파일만 엽니다.</p>
+      <p>저장한 A/B 비교 JSON을 열면 파일 안의 분석 데이터와 입력으로 결과를 다시 계산해 기록과 대조합니다. 결과는 읽기 전용이며 진행 중인 밴픽·가상 로스터·자동 저장·기준 A는 바뀌지 않습니다. 16MB 이하 파일만 엽니다.</p>
       <div className="draft-comparison-actions">
         <label className="draft-comparison-file">
           <span>{reading ? "확인 중…" : "비교 JSON 열기"}</span>
@@ -164,8 +257,11 @@ export function DraftComparisonPanel({ report, blueTeam, redTeam, selections, ga
           <p>{replaySameEvidence
             ? "이 파일은 현재 스튜디오와 같은 분석 데이터(패치·기준 시각·모델·출처)로 만들어졌습니다."
             : "이 파일은 현재 스튜디오와 다른 분석 데이터로 만들어졌습니다. 파일 안의 데이터로만 재현했으며 현재 화면과 섞지 않습니다."}</p>
+          {replay.schema === "1" && <p>이전 형식(v1) 비교 파일입니다. 로스터는 기록되지 않았으며 현재 로스터로 채우지 않습니다.</p>}
+          {replay.schema === "2" && <p>이전 형식(v2) 비교 파일입니다. 역할 배정은 기록되지 않았으며 현재 역할로 채우지 않습니다.</p>}
+          <p>연간 선수·챔피언 기록은 비교 파일에 없으므로 재현하지 않습니다.</p>
           <p>파일 기준 A: 블루 {replay.a.teams.BLUE.name} · 레드 {replay.a.teams.RED.name} · 선픽 {sideLabel(replay.a.firstPickSide)} · {replay.a.games.length + 1}세트 · 패치 {replay.a.patch} · 기준 {replay.a.cutoff}</p>
-          <ComparisonDiffView a={replay.a} b={replay.b} diff={replay.comparison} nameOf={nameOf} caption="파일에 기록된 변경 픽·밴" />
+          <ComparisonDiffView a={replay.a} b={replay.b} diff={replay.comparison} nameOf={nameOf} caption="파일에 기록된 변경 픽·밴" legacy={replay.schema !== "3"} />
         </>}
       </div>
     </section>

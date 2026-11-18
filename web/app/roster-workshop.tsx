@@ -22,6 +22,12 @@ import {
   type RosterRole,
   type RosterState,
 } from "./roster-scenario";
+import type { LiveRoster } from "./roster-comparison";
+import { PlayerPoolPanel } from "./player-pool-panel";
+import { GuestClubPanel } from "./guest-club-panel";
+import { SeasonLineupPanel } from "./season-lineup-panel";
+import { emptySeasonSlots, validateSeasonLineup, type SeasonCardCatalog, type TeamSeasonSlots, type SeasonCardRef } from "./season-player-cards";
+import { poolBasis, type PoolBasis, type PoolSelection } from "./player-pool-evidence";
 import "./roster-workshop.css";
 
 /** Device copy of the latest edited roster scenario (small, separate from the draft session). */
@@ -36,34 +42,65 @@ type RosterWorkshopProps = {
   blueTeam: OpponentTeam | null;
   redTeam: OpponentTeam | null;
   disabled: boolean;
+  /** Live draft state, used only for the evidence panel's lock labels. */
+  selections?: readonly PoolSelection[];
+  previousPicks?: readonly string[];
+  focusChampionId?: string | null;
+  /** Page-relative publication root for the on-demand season history file. */
+  publicationRoot?: string;
+  /** Dedicated workspace panels start expanded, while embedded usages remain collapsible. */
+  defaultOpen?: boolean;
+  /**
+   * Receives the live roster (edits, file imports and device restores) tagged with its basis and
+   * pair, or null while none is ready. Must be a stable function (e.g. a state setter).
+   */
+  onRosterChange?: (roster: LiveRoster | null) => void;
 };
+
+const NO_SELECTIONS: readonly PoolSelection[] = [];
+const NO_PICKS: readonly string[] = [];
+const IGNORE_ROSTER = () => {};
 
 /**
  * Collapsible virtual roster editor next to the team setup. Remounts per snapshot basis and
  * unordered team pair, so a side swap keeps each team's lineup while a new pair starts from
- * its own observations. It never touches the draft, the comparison baseline or analysis.
+ * its own observations. It never touches the draft or analysis; its live roster becomes the
+ * A/B comparison's current B, and an already frozen A is never changed retroactively.
  */
-export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled }: RosterWorkshopProps) {
+export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null, publicationRoot = "./", defaultOpen = false, onRosterChange = IGNORE_ROSTER }: RosterWorkshopProps) {
   const basis = useMemo(() => rosterBasis(report), [report]);
+  const pool = useMemo(() => poolBasis(report), [report]);
   if (!blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) return null;
   return <RosterWorkshopBody key={`${basisKey(basis)}|${pairKey([blueTeam.team_id, redTeam.team_id])}`}
-    basis={basis} patchId={report.patch_id} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={disabled} />;
+    basis={basis} patchId={report.patch_id} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={disabled}
+    pool={pool} selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} publicationRoot={publicationRoot}
+    defaultOpen={defaultOpen} onRosterChange={onRosterChange} />;
 }
 
 type Status = { tone: "info" | "error"; text: string } | null;
 
-function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled }: {
+function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled, pool, selections, previousPicks, focusChampionId, publicationRoot, defaultOpen, onRosterChange }: {
   basis: RosterBasis; patchId: string; teams: OpponentTeam[]; blueTeam: OpponentTeam; redTeam: OpponentTeam; disabled: boolean;
+  pool: PoolBasis; selections: readonly PoolSelection[]; previousPicks: readonly string[]; focusChampionId: string | null; publicationRoot: string;
+  onRosterChange: (roster: LiveRoster | null) => void;
+  defaultOpen: boolean;
 }) {
+  const season = useMemo(() => ({ basis, publicationRoot }), [basis, publicationRoot]);
   const index = useMemo(() => buildRosterIndex(teams), [teams]);
   const teamIds = useMemo(() => [blueTeam.team_id, redTeam.team_id].sort() as [string, string], [blueTeam.team_id, redTeam.team_id]);
   const observed = useMemo(() => observedRosters(teams, teamIds, index), [teams, teamIds, index]);
   const [rosters, setRosters] = useState<RosterState>(observed);
-  const [open, setOpen] = useState(false);
+  const [seasonLineups, setSeasonLineups] = useState<TeamSeasonSlots>({});
+  const [seasonCatalog, setSeasonCatalog] = useState<SeasonCardCatalog | null>(null);
+  const [open, setOpen] = useState(defaultOpen);
   const [storage, setStorage] = useState<Status>({ tone: "info", text: "기기 저장 확인 중" });
   const [fileStatus, setFileStatus] = useState<Status>(null);
   const [editStatus, setEditStatus] = useState("");
   const [reading, setReading] = useState(false);
+  // The device copy is checked once per editor (basis + pair); until then nothing is published,
+  // so the comparison never captures an unrestored default lineup.
+  const [restored, setRestored] = useState(false);
+  const restoreDone = useRef(false);
   const mounted = useRef(false);
 
   useEffect(() => {
@@ -72,7 +109,10 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   }, []);
 
   useEffect(() => {
+    if (restoreDone.current) return;
     const restore = window.setTimeout(() => {
+      restoreDone.current = true;
+      setRestored(true);
       let saved: string | null = null;
       try { saved = window.localStorage.getItem(ROSTER_STORAGE_KEY); }
       catch { setStorage({ tone: "error", text: "이 기기 저장소를 사용할 수 없습니다. 파일 저장은 가능합니다." }); return; }
@@ -85,6 +125,13 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
     }, 0);
     return () => window.clearTimeout(restore);
   }, [basis, teamIds, index]);
+
+  // Publish the actual roster state (not a recomputed default) for the A/B comparison's B.
+  useEffect(() => {
+    if (restored) onRosterChange({ basis, teamIds, rosters });
+  }, [restored, basis, teamIds, rosters, onRosterChange]);
+  // A remount (new pair/basis) or removal withdraws this editor's roster before the next one publishes.
+  useEffect(() => () => onRosterChange(null), [onRosterChange]);
 
   function serialize(state: RosterState) {
     return serializeRosterScenario({ basis, team_ids: teamIds, rosters: state }, index);
@@ -99,13 +146,26 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   function choose(teamId: string, role: RosterRole, value: string) {
     const player = value ? index.players.get(value) : null;
     if (value && !player) { setEditStatus("선택한 선수를 현재 자료에서 찾을 수 없어 바꾸지 않았습니다."); return; }
+    if (player && Object.entries(seasonLineups).some(([id, slots]) => ROSTER_ROLES.some(r => (id !== teamId || r !== role) && slots[r]?.player_id === player.player_id))) { setEditStatus("이미 시즌 라인업에 배정한 선수입니다. 시즌 선수를 먼저 해제해 주세요."); return; }
     const result = assignSlot(rosters, teamId, role, player ? { source_team_id: player.source_team_id, player_id: player.player_id } : null, index);
     if (!result.ok) { setEditStatus(result.error); return; }
     const { movedFrom } = result.value;
+    setSeasonLineups(current => ({ ...current, [teamId]: { ...(current[teamId] ?? emptySeasonSlots()), [role]: null } }));
     setEditStatus(movedFrom && player
       ? `${player.player_name}을(를) ${teamName(movedFrom.teamId)} ${roleLabel(movedFrom.role)}에서 옮겼습니다. 이전 슬롯은 빈칸입니다.`
       : "");
     commit(result.value.state);
+  }
+
+  function chooseSeason(teamId: string, role: RosterRole, ref: SeasonCardRef | null) {
+    if (disabled || reading || !restored) return;
+    const nextRosters = structuredClone(rosters);
+    if (ref) nextRosters[teamId][role] = null;
+    const next = { ...seasonLineups, [teamId]: { ...(seasonLineups[teamId] ?? emptySeasonSlots()), [role]: ref } };
+    try {
+      for (const [id, slots] of Object.entries(next)) validateSeasonLineup(slots, nextRosters, id, seasonCatalog, next);
+      setSeasonLineups(next); commit(nextRosters); setEditStatus(ref ? "시즌 선수를 배정했습니다. 현재 선수 슬롯은 비우고, 구단 저장으로 시즌 선택을 보관하세요." : "시즌 선수 배정을 해제했습니다.");
+    } catch (e) { setEditStatus(e instanceof Error ? e.message : "시즌 선수를 배정하지 못했습니다."); }
   }
 
   function teamName(teamId: string) {
@@ -134,9 +194,10 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
       if (!mounted.current) return;
       const result = parseRosterScenario(text, { basis, teamIds, index });
       if (!result.ok) { setFileStatus({ tone: "error", text: `${result.error} 현재 로스터를 유지합니다.` }); return; }
+      setSeasonLineups({});
       commit(result.value.rosters);
       setEditStatus("");
-      setFileStatus({ tone: "info", text: "로스터 파일을 불러왔습니다. 밴픽과 기준 A는 바뀌지 않습니다." });
+      setFileStatus({ tone: "info", text: "로스터 파일을 불러왔습니다. 밴픽은 바뀌지 않고 A/B 비교의 현재 B에만 반영되며, 이미 고정된 기준 A는 소급 변경되지 않습니다." });
     } catch { if (mounted.current) setFileStatus({ tone: "error", text: "파일을 읽지 못했습니다. 현재 로스터를 유지합니다." }); }
     finally { input.value = ""; if (mounted.current) setReading(false); }
   }
@@ -146,21 +207,27 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   const all = [...statuses("BLUE", blueTeam), ...statuses("RED", redTeam)];
   const changedCount = all.filter((item) => item.status.changed).length;
   const emptyCount = all.filter((item) => !item.status.player).length;
+  const hasSeasonPlayers = Object.values(seasonLineups).some(slots => Object.values(slots).some(Boolean));
 
   return <details className="roster-workshop" lang="ko" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
     <summary>가상 로스터·포지션 <small>원관측과 다른 슬롯 {changedCount} · 빈칸 {emptyCount}</small></summary>
     {open && <div className="roster-workshop-body">
-      <p className="roster-workshop-note" role="note"><b>현재 분석/추천/시뮬레이션에는 로스터 변경이 아직 반영되지 않습니다.</b> 같은 공개 스냅샷에서 관측된 선수만 고를 수 있으며, CURRENT는 자료상의 관측 표시일 뿐 공식 최신 소속이 아닙니다. 역할 관측이 하나로 정해지지 않으면 빈칸으로 둡니다.</p>
+      <GuestClubPanel basis={basis} index={index} rosters={rosters} seasonLineups={seasonLineups} seasonCatalog={seasonCatalog} onSeasonApply={(teamId, slots) => setSeasonLineups(current => ({ ...current, [teamId]: slots }))} blueTeamId={blueTeam.team_id} redTeamId={redTeam.team_id} disabled={disabled || reading || !restored} onApply={(next) => { commit(next); setEditStatus("저장한 구단의 선수 구성을 적용했습니다."); }} />
+      <SeasonLineupPanel catalog={seasonCatalog} onCatalog={setSeasonCatalog} lineups={seasonLineups} teams={[{ id: blueTeam.team_id, name: blueTeam.team_name, side: "BLUE" }, { id: redTeam.team_id, name: redTeam.team_name, side: "RED" }]} publicationRoot={publicationRoot} disabled={disabled || reading || !restored} onChoose={chooseSeason} />
+      <p className="roster-workshop-note" role="note"><b>기존 추천 순위·예측/시뮬레이션에는 로스터 변경이 아직 반영되지 않습니다.</b> 변경은 아래 선수 근거·남은 관측 챔프 표시와 A/B 비교의 현재 B 로스터에만 반영되며, 이미 고정된 기준 A는 소급 변경되지 않습니다. 같은 공개 스냅샷에서 관측된 선수만 고를 수 있으며, CURRENT는 자료상의 관측 표시일 뿐 공식 최신 소속이 아닙니다. 역할 관측이 하나로 정해지지 않으면 빈칸으로 둡니다.</p>
       <div className="roster-workshop-teams">
         <RosterTeam side="BLUE" team={blueTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} />
         <RosterTeam side="RED" team={redTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} />
       </div>
+      <PlayerPoolPanel basis={pool} teams={teams} index={index} rosters={rosters} blueTeam={blueTeam} redTeam={redTeam}
+        selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} season={season} />
       {editStatus && <p className="roster-workshop-status" role="status">{editStatus}</p>}
       <div className="roster-workshop-actions">
-        <button type="button" disabled={disabled || reading || changedCount === 0} onClick={() => { setEditStatus("원관측 배치로 되돌렸습니다."); commit(observed); }}>원관측으로 되돌리기</button>
-        <button type="button" disabled={disabled} onClick={download}>로스터 파일 저장</button>
-        <label className="roster-workshop-file">로스터 파일 열기<input type="file" accept=".json,application/json" disabled={disabled || reading} onChange={(event) => void openFile(event.currentTarget)} /></label>
+        <button type="button" disabled={disabled || reading || (changedCount === 0 && !Object.values(seasonLineups).some(slots => Object.values(slots).some(Boolean)))} onClick={() => { setSeasonLineups({}); setEditStatus("원관측 배치로 되돌렸습니다. 시즌 배정도 해제했습니다."); commit(observed); }}>원관측으로 되돌리기</button>
+        <button type="button" disabled={disabled || hasSeasonPlayers} onClick={download}>로스터 파일 저장</button>
+        <label className="roster-workshop-file">로스터 파일 열기<input type="file" accept=".json,application/json" disabled={disabled || reading || hasSeasonPlayers} onChange={(event) => void openFile(event.currentTarget)} /></label>
       </div>
+      {hasSeasonPlayers && <p>시즌 선수가 배정된 자리는 현재 관측 로스터에서 비워 두었습니다. 시즌 선택은 내 구단에 저장하세요. 기존 로스터 파일은 시즌 선정을 해제한 뒤 이용할 수 있습니다.</p>}
       {storage && <p className="roster-workshop-status" role={storage.tone === "error" ? "alert" : "status"}>{storage.text}</p>}
       {fileStatus && <p className="roster-workshop-status" role={fileStatus.tone === "error" ? "alert" : "status"}>{fileStatus.text}</p>}
     </div>}

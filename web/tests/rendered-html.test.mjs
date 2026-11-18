@@ -52,16 +52,38 @@ test("server-renders the home page as the mock draft studio, not a long product 
   // The retired ProductHome intro must not come before (or replace) the draft workspace.
   assert.doesNotMatch(html, /어떤 분석을 할까요|오늘은 이것만 먼저 보세요|id="home-today"|id="home-spaces"/);
   assert.match(html, /role="tablist" aria-label="작업실 보기"/);
-  const draft = studioTabState(html, "studio-panel-draft");
-  const details = studioTabState(html, "studio-panel-details");
-  assert.equal(draft.selected, true);
-  assert.equal(draft.hidden, false);
-  assert.equal(details.selected, false);
-  assert.equal(details.hidden, true);
-  assert.match(draft.tab, /tabindex="0"/);
-  assert.match(details.tab, /tabindex="-1"/);
-  assert.match(text, />모의 밴픽<\/button>/);
-  assert.match(text, />상세 분석<\/button>/);
+  // Five real panels in rail order; only the draft panel is selected and visible on entry.
+  const panels = [
+    ["studio-panel-draft", "모의 밴픽"], ["studio-panel-roster", "선수·로스터"], ["studio-panel-details", "상세 분석"],
+    ["studio-panel-comparison", "A/B 비교"], ["studio-panel-simulation", "시뮬레이션 준비"],
+  ];
+  const tabOrder = panels.map(([id]) => html.indexOf(`id="${id}-tab"`));
+  assert.deepEqual([...tabOrder].sort((a, b) => a - b), tabOrder, "rail order");
+  for (const [index, [id, label]] of panels.entries()) {
+    const state = studioTabState(html, id);
+    assert.equal(state.selected, index === 0, `${id} selected`);
+    assert.equal(state.hidden, index !== 0, `${id} hidden`);
+    assert.match(state.tab, index === 0 ? /tabindex="0"/ : /tabindex="-1"/);
+    assert.match(text, new RegExp(`id="${id}-tab"[^>]*>${label}</button>`));
+  }
+  const panelStart = (id) => html.indexOf(`id="${id}"`);
+  // The team setup is shared once, above every panel.
+  assert.equal(html.match(/class="draft-match-setup"/g)?.length, 1);
+  assert.ok(html.indexOf('class="draft-match-setup"') < panelStart("studio-panel-draft"));
+  // Roster, A/B and simulation-readiness are each rendered once, inside their own panel.
+  for (const [marker, id, next] of [
+    ['class="roster-workshop"', "studio-panel-roster", "studio-panel-details"],
+    ['class="draft-comparison"', "studio-panel-comparison", "studio-panel-simulation"],
+    ['class="simulation-readiness"', "studio-panel-simulation", null],
+  ]) {
+    assert.equal(html.split(marker).length - 1, 1, `${marker} rendered once`);
+    const at = html.indexOf(marker);
+    assert.ok(at > panelStart(id) && (next === null || at < panelStart(next)), `${marker} is in ${id}`);
+  }
+  // The draft panel only offers a small entry to champion info; the info itself is in details.
+  assert.match(text, /<button type="button" class="studio-info-entry"[^>]*aria-controls="studio-panel-details"[^>]*>챔피언 정보 보기<\/button>/);
+  assert.ok(html.indexOf('class="draft-champion-info') > panelStart("studio-panel-details"));
+  assert.ok(html.indexOf('class="draft-champion-info') < panelStart("studio-panel-comparison"));
   // Both team choosers, side swap and first-pick choice open on the home page.
   assert.match(html, /aria-label="BLUE TEAM: /);
   assert.match(html, /aria-label="RED TEAM: /);
@@ -137,7 +159,7 @@ test("server-renders the team analyst surface", async () => {
   assert.match(html, /결정할 3가지/);
   assert.match(html, /LIVE DECISION QUEUE/);
   assert.match(html, /티어표가 아니라 회의 시작점입니다/);
-  assert.match(html, /<main class="section-space space-team quick-view">/);
+  assert.match(html, /<main class="legacy-workspace section-space space-team quick-view">/);
   assert.match(html, /처음이라면 여기만/);
   assert.match(html, /세 줄로 먼저 이해하세요/);
   assert.match(html, /01 · 한 줄 결론/);
@@ -287,7 +309,7 @@ test("server-renders every focused workspace route", async () => {
     const response = await render(path);
     assert.equal(response.status, 200);
     const html = await response.text();
-    assert.match(html, new RegExp(`<main class="section-space ${className} quick-view">`));
+    assert.match(html, new RegExp(`<main class="legacy-workspace section-space ${className} quick-view">`));
     assert.match(html, new RegExp(marker));
     assert.match(html, /세 줄로 먼저 이해하세요/);
     assert.match(html, new RegExp(guideAction));
@@ -724,8 +746,8 @@ test("builds a balanced private-safe 30-case player tendency human baseline deck
   }
 });
 
-test("keeps human team decisions snapshot-scoped and validates local journal data", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+test("keeps human team decisions snapshot-scoped and validates local journal data using frozen eligible 20261114 fixtures", async () => {
+  const feed = JSON.parse(await readFile(new URL("./fixtures/eligible-feed-20261114.json", import.meta.url), "utf8"));
   const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
   assert.ok(t1);
   const vite = await createServer({
@@ -799,8 +821,8 @@ test("keeps human team decisions snapshot-scoped and validates local journal dat
   }
 });
 
-test("reconciles journal decisions only to exact or immutable source-state outcomes", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+test("reconciles journal decisions only to exact or immutable source-state outcomes using frozen eligible 20261114 fixtures", async () => {
+  const feed = JSON.parse(await readFile(new URL("./fixtures/eligible-feed-20261114.json", import.meta.url), "utf8"));
   const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
   const vite = await createServer({
     root: fileURLToPath(templateRoot),
@@ -881,8 +903,8 @@ test("reconciles journal decisions only to exact or immutable source-state outco
   }
 });
 
-test("builds deterministic creator scenes for YouTube and Shorts exports", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+test("builds deterministic creator scenes for YouTube and Shorts exports using frozen eligible 20261114 fixtures", async () => {
+  const feed = JSON.parse(await readFile(new URL("./fixtures/eligible-feed-20261114.json", import.meta.url), "utf8"));
   const entry = feed.entries.find((item) => item.eligible_for_review);
   assert.ok(entry);
 
@@ -918,9 +940,9 @@ test("builds deterministic creator scenes for YouTube and Shorts exports", async
   }
 });
 
-test("builds a claim-locked five-scene storyboard from the published creator brief", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
-  const brief = JSON.parse(await readFile(new URL("public/feed/current-creator.json", templateRoot), "utf8"));
+test("builds a claim-locked five-scene storyboard from the creator brief using frozen eligible 20261114 fixtures", async () => {
+  const feed = JSON.parse(await readFile(new URL("./fixtures/eligible-feed-20261114.json", import.meta.url), "utf8"));
+  const brief = JSON.parse(await readFile(new URL("./fixtures/eligible-creator-20261114.json", import.meta.url), "utf8"));
   const vite = await createServer({
     root: fileURLToPath(templateRoot),
     configFile: false,
@@ -964,8 +986,8 @@ test("builds a claim-locked five-scene storyboard from the published creator bri
   }
 });
 
-test("builds T1 creator angles only from exact public pick and Radar overlaps", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+test("builds T1 creator angles only from exact public pick and Radar overlaps using frozen eligible 20261114 fixtures", async () => {
+  const feed = JSON.parse(await readFile(new URL("./fixtures/eligible-feed-20261114.json", import.meta.url), "utf8"));
   const vite = await createServer({
     root: fileURLToPath(templateRoot),
     configFile: false,
@@ -1020,8 +1042,8 @@ test("builds T1 creator angles only from exact public pick and Radar overlaps", 
   }
 });
 
-test("builds a deterministic evidence-bounded match-day brief from the published feed", async () => {
-  const feed = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+test("builds a deterministic evidence-bounded match-day brief from the feed using frozen eligible 20261114 fixtures", async () => {
+  const feed = JSON.parse(await readFile(new URL("./fixtures/eligible-feed-20261114.json", import.meta.url), "utf8"));
   const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
   assert.ok(t1);
 
@@ -1067,6 +1089,50 @@ test("builds a deterministic evidence-bounded match-day brief from the published
     assert.equal(lowSample.opponent.evidence_quality, "LOW_SAMPLE");
     assert.equal(incomplete.opponent.evidence_quality, "INCOMPLETE_EVIDENCE");
     assert.ok(incomplete.unknowns.some((item) => item.includes("누락")));
+  } finally {
+    await vite.close();
+  }
+});
+
+test("published sources remain aligned and an ineligible view abstains without fabricating match-day preparation", async () => {
+  const published = JSON.parse(await readFile(new URL("public/feed/current.json", templateRoot), "utf8"));
+  const brief = JSON.parse(await readFile(new URL("public/feed/current-creator.json", templateRoot), "utf8"));
+  // Always exercise abstention, even after the daily feed produces eligible entries again.
+  const feed = { ...published, entries: published.entries.map(entry => ({ ...entry, eligible_for_review: false })) };
+  const vite = await createServer({
+    root: fileURLToPath(templateRoot), configFile: false, publicDir: false,
+    server: { middlewareMode: true }, appType: "custom", logLevel: "silent",
+  });
+  try {
+    const { buildTeamBrief } = await vite.ssrLoadModule("/app/team-brief.ts");
+    const { isCreatorBrief } = await vite.ssrLoadModule("/app/creator-storyboard.ts");
+    const { buildT1CreatorAngles } = await vite.ssrLoadModule("/app/creator-t1-angle.ts");
+    const { buildEmergencyBrief } = await vite.ssrLoadModule("/app/emergency-brief.ts");
+    const { buildTargetMatchDayBrief } = await vite.ssrLoadModule("/app/target-match-day.ts");
+    assert.deepEqual(buildTeamBrief(feed), []);
+    assert.equal(isCreatorBrief(brief), true);
+    assert.equal(brief.source_snapshot.patch_id, feed.patch_id);
+    assert.equal(brief.source_snapshot.cutoff, feed.cutoff);
+    if (!published.entries.some(entry => entry.eligible_for_review)) assert.deepEqual(brief.topic_candidates, []);
+    assert.deepEqual(buildT1CreatorAngles(feed), []);
+
+    const t1 = feed.opponent_prep.teams.find((team) => team.team_name === "T1");
+    assert.ok(t1);
+    const emergency = buildEmergencyBrief(feed, t1);
+    assert.deepEqual(emergency.patch_review_queue, []);
+    assert.ok(emergency.meta_overlaps.every((item) => !item.radar_eligible && item.review_level === "CONTEXT_ONLY"));
+
+    // With no profile, preparation may use only the published opponent picks/bans.
+    const matchday = buildTargetMatchDayBrief(feed, t1, null);
+    const expectedSources = [];
+    if (t1.priority_picks[0]) expectedSources.push({ type: "PICK", evidence_ids: t1.priority_picks[0].evidence_event_ids });
+    if (t1.frequent_bans[0] || t1.received_bans[0]) expectedSources.push({
+      type: "BAN",
+      evidence_ids: [...(t1.frequent_bans[0]?.evidence_event_ids ?? []), ...(t1.received_bans[0]?.evidence_event_ids ?? [])],
+    });
+    assert.deepEqual(matchday.prepare_now.map(({ type, evidence_ids }) => ({ type, evidence_ids })), expectedSources);
+    const withoutPreparationEvidence = { ...t1, priority_picks: [], frequent_bans: [], received_bans: [] };
+    assert.deepEqual(buildTargetMatchDayBrief(feed, withoutPreparationEvidence, null).prepare_now, []);
   } finally {
     await vite.close();
   }

@@ -1,0 +1,45 @@
+/* Collapsed simulation-input gate at the bottom of the draft panel; normal flow, never overlays the draft. */
+main.draft-lab.draft-studio .simulation-readiness { max-width: 1680px; margin-inline: auto; padding: 4px clamp(12px, 2vw, 32px); border-bottom: 1px solid var(--studio-line); background: var(--studio-bg); font-size: 12px; color: var(--studio-muted); }
+main.draft-lab.draft-studio .simulation-readiness > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; min-height: 44px; cursor: pointer; color: var(--studio-text); font-size: 13px; font-weight: 600; }
+main.draft-lab.draft-studio .simulation-readiness > summary small { color: var(--studio-muted); font-size: 12px; font-weight: 400; }
+main.draft-lab.draft-studio .simulation-readiness > summary:focus-visible { outline: 2px solid #f0d6ae; outline-offset: 3px; }
+main.draft-lab.draft-studio .simulation-readiness-body { display: grid; gap: 10px; padding-bottom: 12px; }
+main.draft-lab.draft-studio .simulation-readiness :is(p, ul, h3) { margin: 0; }
+main.draft-lab.draft-studio .simulation-readiness h3 { font-size: 13px; color: var(--studio-text); }
+main.draft-lab.draft-studio .simulation-readiness b { color: var(--studio-text); }
+main.draft-lab.draft-studio .simulation-readiness-teams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+main.draft-lab.draft-studio .simulation-readiness-team { min-width: 0; margin: 0; padding: 10px; border: 1px solid var(--studio-line); background: var(--studio-panel); }
+main.draft-lab.draft-studio .simulation-readiness-team legend { padding: 0 4px; color: var(--studio-text); font-size: 13px; }
+main.draft-lab.draft-studio .simulation-readiness-team ol { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+main.draft-lab.draft-studio .simulation-readiness-team li { display: grid; gap: 2px; }
+main.draft-lab.draft-studio .simulation-readiness-team label { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: 8px; color: var(--studio-text); }
+main.draft-lab.draft-studio .simulation-readiness-team small { padding-left: 60px; font-size: 11px; }
+main.draft-lab.draft-studio .simulation-readiness select { min-width: 0; width: 100%; min-height: 36px; padding: 2px 6px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-bg); color: var(--studio-text); font: inherit; font-size: 12px; }
+main.draft-lab.draft-studio .simulation-readiness-issues { padding-left: 16px; }
+main.draft-lab.draft-studio .simulation-readiness-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+main.draft-lab.draft-studio .simulation-readiness-actions button { padding: 6px 12px; font-size: 12px; }
+main.draft-lab.draft-studio .simulation-readiness-file { position: relative; display: inline-flex; align-items: center; padding: 6px 12px; border: 1px solid var(--studio-line); color: var(--studio-text); cursor: pointer; }
+main.draft-lab.draft-studio .simulation-readiness-file input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+main.draft-lab.draft-studio :is(.simulation-readiness-fixed-section, .simulation-readiness-replay) { display: grid; gap: 6px; }
+main.draft-lab.draft-studio .simulation-readiness-fixed { display: grid; gap: 6px; }
+main.draft-lab.draft-studio .simulation-readiness-fixed table { width: 100%; border-collapse: collapse; }
+main.draft-lab.draft-studio .simulation-readiness-fixed caption { text-align: left; padding-bottom: 4px; color: var(--studio-text); }
+main.draft-lab.draft-studio .simulation-readiness-fixed :is(th, td) { padding: 4px 8px; border-top: 1px solid var(--studio-line); text-align: left; font-weight: 400; }
+main.draft-lab.draft-studio .simulation-readiness-identity { color: var(--studio-text); font-weight: 600; }
+/* Optional season evidence of the assigned champions: collapsed, role cards (no wide table). */
+main.draft-lab.draft-studio .simulation-evidence { border: 1px solid var(--studio-line); background: var(--studio-panel); padding: 0 10px; }
+main.draft-lab.draft-studio .simulation-evidence > summary { min-height: 44px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; cursor: pointer; color: var(--studio-text); font-weight: 600; }
+main.draft-lab.draft-studio .simulation-evidence > summary small { font-weight: 400; color: var(--studio-muted); }
+main.draft-lab.draft-studio .simulation-evidence-body { display: grid; gap: 8px; padding-bottom: 10px; min-width: 0; }
+main.draft-lab.draft-studio .simulation-evidence-body button { justify-self: start; padding: 6px 12px; font-size: 12px; }
+main.draft-lab.draft-studio .simulation-evidence-status { display: grid; gap: 6px; }
+main.draft-lab.draft-studio .simulation-evidence-teams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+main.draft-lab.draft-studio .simulation-evidence-team { min-width: 0; }
+main.draft-lab.draft-studio .simulation-evidence-team h4 { margin: 0 0 4px; font-size: 12px; color: var(--studio-text); }
+main.draft-lab.draft-studio .simulation-evidence-team ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+main.draft-lab.draft-studio .simulation-evidence-team li { display: grid; gap: 2px; padding: 6px 8px; border: 1px solid var(--studio-line); overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .simulation-evidence-counts { display: flex; flex-wrap: wrap; gap: 4px 10px; color: var(--studio-text); }
+@media (max-width: 720px) {
+  main.draft-lab.draft-studio .simulation-readiness-teams { grid-template-columns: minmax(0, 1fr); }
+  main.draft-lab.draft-studio .simulation-evidence-teams { grid-template-columns: minmax(0, 1fr); }
+}
