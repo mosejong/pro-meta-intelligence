@@ -34,6 +34,7 @@ import { DraftComparisonPanel } from "./draft-comparison-panel";
 import { PartnershipPlacement } from "./partnership-placement";
 import { RosterWorkshop } from "./roster-workshop";
 import { SimulationReadinessPanel } from "./simulation-readiness-panel";
+import { ExperimentReplayPanel } from "./experiment-replay-panel";
 import type { LiveRoster } from "./roster-comparison";
 import type { SimulationInputSnapshot } from "./simulation-scenario";
 import { DEFAULT_LOCALE, LanguageSelector, useLocale, type Locale, type MessageKey } from "./locale";
@@ -814,6 +815,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       if (id) assignPosition(side, id, role);
       else { const current = positionRoles[teamId]?.[role]; if (current) assignPosition(side, current, null); }
     }} onReadyInputChange={setReadyInput} />
+    {/* Assumption experiment on the validated ready input; runs only on its explicit button. */}
+    <ExperimentReplayPanel readyInput={readyInput} blocked={!canSelect || room.active} nameOf={nameOf} />
     </div>
     </div>
     </div>

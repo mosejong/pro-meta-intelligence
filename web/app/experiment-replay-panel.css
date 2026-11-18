@@ -1,0 +1,45 @@
+/* Assumption experiment/replay below the simulation readiness gate; same studio tone, normal flow. */
+main.draft-lab.draft-studio .experiment-replay { display: grid; gap: 10px; max-width: 1680px; margin-inline: auto; padding: 10px clamp(12px, 2vw, 32px) 16px; border-bottom: 1px solid var(--studio-line); background: var(--studio-bg); font-size: 12px; color: var(--studio-muted); min-width: 0; }
+main.draft-lab.draft-studio .experiment-replay :is(p, ul, ol, h3, h4, dl) { margin: 0; }
+main.draft-lab.draft-studio .experiment-replay header { display: grid; gap: 4px; }
+main.draft-lab.draft-studio .experiment-replay h3 { font-size: 13px; color: var(--studio-text); }
+main.draft-lab.draft-studio .experiment-replay h4 { font-size: 12px; color: var(--studio-text); }
+main.draft-lab.draft-studio .experiment-replay b { color: var(--studio-text); }
+main.draft-lab.draft-studio .experiment-replay details { border: 1px solid var(--studio-line); background: var(--studio-panel); padding: 0 10px; }
+main.draft-lab.draft-studio .experiment-replay details > summary { min-height: 40px; display: flex; align-items: center; cursor: pointer; color: var(--studio-text); font-weight: 600; }
+main.draft-lab.draft-studio .experiment-replay details > :not(summary) { padding-bottom: 10px; }
+main.draft-lab.draft-studio .experiment-replay details ul { display: grid; gap: 6px; padding-left: 16px; }
+main.draft-lab.draft-studio .experiment-replay details li { display: grid; gap: 2px; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-replay summary:focus-visible { outline: 2px solid #f0d6ae; outline-offset: 3px; }
+main.draft-lab.draft-studio .experiment-replay-inputs { display: grid; gap: 8px; }
+main.draft-lab.draft-studio .experiment-replay-teams, main.draft-lab.draft-studio .experiment-replay-states { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+main.draft-lab.draft-studio .experiment-replay-team { min-width: 0; margin: 0; padding: 10px; border: 1px solid var(--studio-line); background: var(--studio-panel); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+main.draft-lab.draft-studio .experiment-replay-team legend { padding: 0 4px; color: var(--studio-text); font-size: 13px; }
+main.draft-lab.draft-studio .experiment-replay-team legend small { color: var(--studio-muted); font-size: 11px; margin-left: 4px; }
+main.draft-lab.draft-studio .experiment-replay-field { display: grid; gap: 3px; min-width: 0; }
+main.draft-lab.draft-studio .experiment-replay-field label { color: var(--studio-text); }
+main.draft-lab.draft-studio .experiment-replay input[type="number"] { min-width: 0; width: 100%; min-height: 36px; padding: 2px 6px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-bg); color: var(--studio-text); font: inherit; font-size: 12px; }
+main.draft-lab.draft-studio .experiment-replay input[aria-invalid="true"] { border-color: #e58b8b; }
+main.draft-lab.draft-studio .experiment-replay-issue { color: #e58b8b; font-size: 11px; }
+main.draft-lab.draft-studio .experiment-replay-run { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 12px; }
+main.draft-lab.draft-studio .experiment-replay-run .experiment-replay-field { width: min(180px, 100%); }
+main.draft-lab.draft-studio .experiment-replay button { min-height: 36px; padding: 6px 12px; font-size: 12px; }
+main.draft-lab.draft-studio .experiment-replay-result { display: grid; gap: 10px; min-width: 0; }
+main.draft-lab.draft-studio .experiment-replay-identity { color: var(--studio-text); overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-replay-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+main.draft-lab.draft-studio .experiment-replay-speed { display: inline-flex; gap: 4px; }
+main.draft-lab.draft-studio .experiment-replay-speed button[aria-pressed="true"] { outline: 1px solid #f0d6ae; color: var(--studio-text); }
+main.draft-lab.draft-studio .experiment-replay-seek { display: grid; gap: 4px; color: var(--studio-text); }
+main.draft-lab.draft-studio .experiment-replay-seek input { width: 100%; min-height: 32px; }
+main.draft-lab.draft-studio .experiment-replay-state { min-width: 0; padding: 10px; border: 1px solid var(--studio-line); background: var(--studio-panel); display: grid; gap: 6px; }
+main.draft-lab.draft-studio .experiment-replay-state dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; }
+main.draft-lab.draft-studio .experiment-replay-state dl div { display: grid; gap: 1px; min-width: 0; }
+main.draft-lab.draft-studio .experiment-replay-state dd { margin: 0; color: var(--studio-text); font-size: 14px; font-variant-numeric: tabular-nums; }
+main.draft-lab.draft-studio .experiment-replay-state meter { width: 100%; }
+main.draft-lab.draft-studio .experiment-replay-log { display: grid; gap: 4px; padding: 0; list-style: none; }
+main.draft-lab.draft-studio .experiment-replay-log li { display: flex; gap: 8px; padding: 4px 8px; border-top: 1px solid var(--studio-line); overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-replay-log li span { flex: none; width: 36px; color: var(--studio-muted); font-variant-numeric: tabular-nums; }
+main.draft-lab.draft-studio .experiment-replay-outcome { padding: 8px 10px; border: 1px solid #f0d6ae; color: var(--studio-text); }
+@media (max-width: 720px) {
+  main.draft-lab.draft-studio :is(.experiment-replay-teams, .experiment-replay-states) { grid-template-columns: minmax(0, 1fr); }
+}
