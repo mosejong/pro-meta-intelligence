@@ -32,6 +32,55 @@ const observedRoles = new Set(["TOP", "JUNGLE", "MID", "BOTTOM", "ADC", "SUPPORT
 
 /** Deterministic public-record practice opponent; does not assign champion roles. */
 export function suggestSoloDraftTurn(input: SoloDraftInput): SoloDraftSuggestion | null {
+  return soloContext(input)?.select(new Set()) ?? null;
+}
+
+/** The evidence row that actually produced a candidate (finer than `source`, which is unchanged). */
+export type SoloDraftEvidence = "TEAM_PRIORITY" | "PLAYER_CURRENT" | "PLAYER_SEASON" | "RADAR_META" | "RADAR_FRAME" | "FALLBACK";
+export type SoloDraftExplainedChoice = SoloDraftSuggestion & { inferred_roles: string[]; evidence: SoloDraftEvidence };
+export type SoloDraftExplanation = {
+  turn: number;
+  kind: "BAN" | "PICK";
+  side: DraftSide;
+  /** Lookup target only: the team whose public records the rules try first. Not proof that rows existed. */
+  record_team: string;
+  record_scope: "OPPOSING_TEAM" | "ACTING_TEAM";
+  /**
+   * true only when the selector's own season eligibility (soloRoleCandidates) produced at least one
+   * acting-team current-player season candidate. false = missing/incompatible/unmatched: unknown, not zero use.
+   */
+  season_evidence: boolean;
+  selected: SoloDraftExplainedChoice;
+  alternatives: SoloDraftExplainedChoice[];
+};
+
+/**
+ * Read-only explanation for the same pre-choice state. Alternatives are what the unchanged rules
+ * pick when earlier candidates are made unavailable; replay/Fearless legality is still enforced.
+ */
+export function explainSoloDraftTurn(input: SoloDraftInput): SoloDraftExplanation | null {
+  const ctx = soloContext(input);
+  const selected = ctx?.select(new Set());
+  if (!ctx || !selected) return null;
+  const excluded = new Set([selected.champion_id]);
+  const alternatives: SoloDraftSuggestion[] = [];
+  while (alternatives.length < 2) {
+    const next = ctx.select(excluded);
+    if (!next || excluded.has(next.champion_id)) break;
+    alternatives.push(next);
+    excluded.add(next.champion_id);
+  }
+  const withRoles = (s: SoloDraftSuggestion): SoloDraftExplainedChoice =>
+    ({ ...s, inferred_roles: ctx.turn.kind === "PICK" ? ctx.rolesOf(s.champion_id) : [], evidence: ctx.evidenceOf(s) });
+  return {
+    turn: ctx.replayLength + 1, kind: ctx.turn.kind, side: ctx.turn.side,
+    record_team: ctx.target.team_name || ctx.target.team_id,
+    record_scope: ctx.turn.kind === "BAN" ? "OPPOSING_TEAM" : "ACTING_TEAM",
+    season_evidence: ctx.seasonEvidence, selected: withRoles(selected), alternatives: alternatives.map(withRoles),
+  };
+}
+
+function soloContext(input: SoloDraftInput) {
   const { report, blueTeam, redTeam, selections, previousPicks, firstPickSide, manualSide } = input;
   if (!blueTeam || !redTeam || !blueTeam.team_id || !redTeam.team_id || blueTeam.team_id === redTeam.team_id ||
     !["BLUE", "RED"].includes(firstPickSide) || !["BLUE", "RED"].includes(manualSide) ||
@@ -54,7 +103,7 @@ export function suggestSoloDraftTurn(input: SoloDraftInput): SoloDraftSuggestion
   const acting = turn.side === "BLUE" ? blueTeam : redTeam;
   const opposing = turn.side === "BLUE" ? redTeam : blueTeam;
   const target = turn.kind === "BAN" ? opposing : acting;
-  const available = (id: string) => applyDraftSelection(replay, id, previous, firstPickSide) !== replay;
+  const legal = (id: string) => applyDraftSelection(replay, id, previous, firstPickSide) !== replay;
   const frame = buildDraftAgentFrame(report, blueTeam, redTeam, replay, previous, firstPickSide);
   const priorities = [...target.priority_picks].sort((a, b) => b.game_rate - a.game_rate ||
     b.phase_1_count - a.phase_1_count || compare(canonical(a.champion_id) ?? a.champion_id, canonical(b.champion_id) ?? b.champion_id));
@@ -69,10 +118,6 @@ export function suggestSoloDraftTurn(input: SoloDraftInput): SoloDraftSuggestion
   };
   const covered = new Set(replay.filter(s => s.side === turn.side && s.kind === "PICK").map(s => strictRole(s.champion_id)).filter(Boolean));
   const repeatsRole = (id: string) => { const role = strictRole(id); return role !== null && covered.has(role); };
-  const records = [...new Set([
-    ...frame.options.map(o => canonical(o.champion_id)).filter((id): id is string => !!id && priorityIds.has(id)),
-    ...priorities.map(p => canonical(p.champion_id)).filter((id): id is string => !!id),
-  ])].filter(available);
   const roleCandidates = soloRoleCandidates(acting, report, input.seasonHistory);
   const picked = replay.filter(s => s.side === turn.side && s.kind === "PICK").map(s => s.champion_id);
   const candidateById = new Map(roleCandidates.map(row => [row.champion_id, row]));
@@ -83,9 +128,17 @@ export function suggestSoloDraftTurn(input: SoloDraftInput): SoloDraftSuggestion
     const id = canonical(e.champion_id), role = e.role === "ADC" ? "BOTTOM" : e.role;
     return id && observedRoles.has(role) ? [{ champion_id: id, roles: [role as import("./roster-scenario").RosterRole], score: 0, season: false }] : [];
   })];
+  const roleFeasible = (id: string) => canCoverRoles(picked, rolePool, id);
+  const rolesOf = (id: string) => [...new Set(rolePool.filter(row => row.champion_id === id).flatMap(row => row.roles))];
+  const select = (excluded: ReadonlySet<string>): SoloDraftSuggestion | null => {
+  // Exclusions only narrow availability; replay and Fearless legality stay in `legal`.
+  const available = (id: string) => !excluded.has(id) && legal(id);
+  const records = [...new Set([
+    ...frame.options.map(o => canonical(o.champion_id)).filter((id): id is string => !!id && priorityIds.has(id)),
+    ...priorities.map(p => canonical(p.champion_id)).filter((id): id is string => !!id),
+  ])].filter(available);
   // Current review-eligible meta first; season familiarity is a separate fallback, never patch strength.
   const expanded = [...new Set([...records.filter(id => metaSet.has(id)), ...metaIds, ...records, ...roleCandidates.map(row => row.champion_id)])].filter(available);
-  const roleFeasible = (id: string) => canCoverRoles(picked, rolePool, id);
   const record = turn.kind === "PICK" ? expanded.find(roleFeasible) ?? records.find(id => !repeatsRole(id)) ?? expanded[0] : records[0];
   const finish = (choice: SoloDraftSuggestion): SoloDraftSuggestion => {
     if (turn.kind !== "PICK") return choice;
@@ -108,4 +161,12 @@ export function suggestSoloDraftTurn(input: SoloDraftInput): SoloDraftSuggestion
   if (radar) return finish({ champion_id: radar, source: "RADAR", reason: "공개 레이더의 검토 가능 후보를 사용한 연습 선택입니다." });
   const fallback = [...canonicalIds.values()].sort(compare).find(available);
   return fallback ? finish({ champion_id: fallback, source: "FALLBACK", reason: "남은 기록 후보가 없어 고정 챔피언 목록 순서로 선택했습니다." }) : null;
+  };
+  // Read-only classification of an already-made choice; mirrors the branches above without affecting them.
+  const evidenceOf = (choice: SoloDraftSuggestion): SoloDraftEvidence => {
+    if (choice.source === "FALLBACK" || choice.source === "PLAYER_SEASON") return choice.source;
+    if (choice.source === "RADAR") return metaSet.has(choice.champion_id) ? "RADAR_META" : "RADAR_FRAME";
+    return priorityIds.has(choice.champion_id) || !candidateById.has(choice.champion_id) ? "TEAM_PRIORITY" : "PLAYER_CURRENT";
+  };
+  return { turn, target, replayLength: replay.length, select, rolesOf, evidenceOf, seasonEvidence: roleCandidates.some(row => row.season) };
 }

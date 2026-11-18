@@ -43,7 +43,8 @@ import { WorkspaceHeader } from "./workspace-header";
 import { DraftSharePanel } from "./draft-share-panel";
 import { DraftRoomPanel, type RoomControls } from "./draft-room-panel";
 import { useSoloSeasonHistory } from "./use-solo-season-history";
-import { suggestSoloDraftTurn } from "./solo-draft";
+import { explainSoloDraftTurn, suggestSoloDraftTurn } from "./solo-draft";
+import { SoloDraftExplanationPanel, soloAutoContext, soloAutoRecordMatches, type SoloAutoRecord } from "./solo-draft-explanation";
 import { DraftPositionStack } from "./draft-position-stack";
 import { emptyChampionRoles, championKey, teamPicks, type ChampionRoles, type RoleAssignments } from "./champion-roles";
 import { buildDraftPositionBoard, reconcileChampionRoles, moveChampionRole } from "./draft-position-board";
@@ -238,7 +239,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [timerRunning, setTimerRunning] = useState(false);
   const [soloEnabled, setSoloEnabled] = useState(false);
   const [manualSide, setManualSide] = useState<DraftSide>("BLUE");
-  const [lastAuto, setLastAuto] = useState<{ turn: number; champion_id: string; reason: string } | null>(null);
+  const [lastAuto, setLastAuto] = useState<SoloAutoRecord | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const [importing, setImporting] = useState(false);
   const [storageStatus, setStorageStatus] = useState<StorageStatus>({ code: "CHECKING" });
@@ -300,10 +301,16 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       setSeriesReport(current => current ?? structuredClone(report));
       setSelections(current => current === selections ? applyDraftSelection(current, autoChoice.champion_id, previousPicks, firstPickSide) : current);
       setPendingChampion(null); setInspected(null); setTimer(30); setTimerRunning(false);
-      setLastAuto({ turn: selections.length + 1, champion_id: autoChoice.champion_id, reason: autoChoice.reason });
+      // Explanation is computed once per real auto choice from the same pre-choice input, never per render.
+      const explained = explainSoloDraftTurn({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, manualSide, seasonHistory: soloSeason.history });
+      setLastAuto({ turn: selections.length + 1, champion_id: autoChoice.champion_id, reason: autoChoice.reason,
+        prefix: selections.map(s => s.champion_id), context: soloAutoContext(blueTeam?.team_id, redTeam?.team_id, firstPickSide, manualSide, previousPicks),
+        explanation: explained?.selected.champion_id === autoChoice.champion_id && explained.turn === selections.length + 1 ? explained : null });
     }, 600);
     return () => window.clearTimeout(timerId);
-  }, [autoChoice, canSelect, pendingReset, studioTab, room.active, report, selections, previousPicks, firstPickSide]);
+  }, [autoChoice, canSelect, pendingReset, studioTab, room.active, report, selections, previousPicks, firstPickSide, blueTeam, redTeam, manualSide, soloSeason.history]);
+  const autoContext = useMemo(() => soloAutoContext(blueTeam?.team_id, redTeam?.team_id, firstPickSide, manualSide, previousPicks),
+    [blueTeam?.team_id, redTeam?.team_id, firstPickSide, manualSide, previousPicks]);
   useEffect(() => {
     const pause = () => setSoloEnabled(false);
     window.addEventListener("hashchange", pause);
@@ -666,7 +673,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <p>{room.active ? "친구 방에서는 참가자가 직접 밴픽합니다." : soloEnabled ? "내 팀만 선택하면 상대는 공개 기록을 참고해 자기 차례를 진행합니다. 자동 선택은 연습용이며 실제 팀의 전략을 예측하지 않습니다." : "켜면 혼자서도 한 팀만 조작하며 끝까지 연습할 수 있어요. 끄면 양 팀을 직접 선택합니다."}</p>
       {soloEnabled && <p role="status">{soloSeason.loading ? "시즌 선수 기록을 확인하고 있어요…" : soloSeason.error ? "시즌 자료를 확인하지 못해 현재 팀 기록·메타 후보로 연습합니다." : "같은 팀의 현재 관측 선수 시즌 기록을 함께 참고합니다. 가상 로스터 변경은 자동 상대에 반영하지 않습니다."}</p>}
       {soloWaiting && !soloSeason.loading && <p role="status">{autoChoice ? "상대가 카드를 고르고 있어요…" : "자동 선택을 확인하지 못했습니다. 자동 밴픽을 끄고 직접 이어가세요."}</p>}
-      {lastAuto && selections.some(s => s.turn === lastAuto.turn && championAssetId(s.champion_id) === championAssetId(lastAuto.champion_id)) && <p className="solo-draft-last" role="status">마지막 상대 선택 · {nameOf(lastAuto.champion_id)} · {lastAuto.reason}</p>}
+      {soloAutoRecordMatches(lastAuto, selections, autoContext) && <SoloDraftExplanationPanel record={lastAuto} nameOf={nameOf} />}
     </section>
     <section className="draft-series" aria-label={t("draft.seriesLabel")} lang={lang.ui}>
       <label className="draft-first-selection">{t("draft.firstPick")}
