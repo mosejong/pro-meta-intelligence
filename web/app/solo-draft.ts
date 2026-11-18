@@ -1,15 +1,19 @@
 import { championAssetId } from "./champion-assets";
 import { applyDraftSelection, buildDraftAgentFrame, nextDraftTurn, type DraftSelection, type DraftSide } from "./draft-agent";
 import type { OpponentTeam, RadarReport } from "./radar-types";
+import type { SeasonHistory } from "./player-season-history";
+import { soloRoleCandidates, canCoverRoles } from "./solo-role-candidates";
 import { SHARE_CHAMPIONS } from "./share-champion-ids";
 
 export type SoloDraftSuggestion = {
   champion_id: string;
+  role_supported?: boolean;
   reason: string;
-  source: "TEAM_RECORD" | "RADAR" | "FALLBACK";
+  source: "TEAM_RECORD" | "PLAYER_SEASON" | "RADAR" | "FALLBACK";
 };
 
 export type SoloDraftInput = {
+  seasonHistory?: SeasonHistory | null;
   report: RadarReport;
   blueTeam: OpponentTeam | null;
   redTeam: OpponentTeam | null;
@@ -69,15 +73,39 @@ export function suggestSoloDraftTurn(input: SoloDraftInput): SoloDraftSuggestion
     ...frame.options.map(o => canonical(o.champion_id)).filter((id): id is string => !!id && priorityIds.has(id)),
     ...priorities.map(p => canonical(p.champion_id)).filter((id): id is string => !!id),
   ])].filter(available);
-  const record = turn.kind === "PICK" ? records.find(id => !repeatsRole(id)) ?? records[0] : records[0];
-  if (record) return { champion_id: record, source: "TEAM_RECORD", reason: turn.kind === "BAN"
+  const roleCandidates = soloRoleCandidates(acting, report, input.seasonHistory);
+  const picked = replay.filter(s => s.side === turn.side && s.kind === "PICK").map(s => s.champion_id);
+  const candidateById = new Map(roleCandidates.map(row => [row.champion_id, row]));
+  const metaRows = report.entries.filter(e => e.eligible_for_review).sort((a, b) => a.rank - b.rank || compare(a.champion_id, b.champion_id));
+  const metaIds = [...new Set(metaRows.map(e => canonical(e.champion_id)).filter((id): id is string => !!id))];
+  const metaSet = new Set(metaIds);
+  const rolePool = [...roleCandidates, ...metaRows.flatMap(e => {
+    const id = canonical(e.champion_id), role = e.role === "ADC" ? "BOTTOM" : e.role;
+    return id && observedRoles.has(role) ? [{ champion_id: id, roles: [role as import("./roster-scenario").RosterRole], score: 0, season: false }] : [];
+  })];
+  // Current review-eligible meta first; season familiarity is a separate fallback, never patch strength.
+  const expanded = [...new Set([...records.filter(id => metaSet.has(id)), ...metaIds, ...records, ...roleCandidates.map(row => row.champion_id)])].filter(available);
+  const roleFeasible = (id: string) => canCoverRoles(picked, rolePool, id);
+  const record = turn.kind === "PICK" ? expanded.find(roleFeasible) ?? records.find(id => !repeatsRole(id)) ?? expanded[0] : records[0];
+  const finish = (choice: SoloDraftSuggestion): SoloDraftSuggestion => {
+    if (turn.kind !== "PICK") return choice;
+    const supported = roleFeasible(choice.champion_id);
+    return { ...choice, role_supported: supported, reason: supported ? choice.reason : `${choice.reason} 남은 후보의 포지션 근거가 부족해 조합 구성을 보장하지 않습니다.` };
+  };
+  if (record && turn.kind === "PICK" && metaSet.has(record) && !priorityIds.has(record)) return finish({
+    champion_id: record, source: "RADAR", reason: "현재 레이더의 검토 가능 메타와 남은 포지션을 참고한 연습 픽입니다. 선수의 실제 선택을 예측하지 않습니다.",
+  });
+  if (record && turn.kind === "PICK" && candidateById.get(record)?.season) return finish({
+    champion_id: record, source: "PLAYER_SEASON", reason: "현재 관측 선수의 같은 팀·시즌 역할별 기록과 남은 포지션을 참고한 연습 픽입니다. 시즌 기록은 현재 패치의 강함을 뜻하지 않습니다.",
+  });
+  if (record) return finish({ champion_id: record, source: "TEAM_RECORD", reason: turn.kind === "BAN"
     ? "상대 팀의 공개 우선 픽 기록을 바탕으로 한 연습 밴입니다."
-    : "행동 팀의 공개 우선 픽 기록을 바탕으로 한 연습 픽입니다." };
+    : "행동 팀의 공개 우선 픽 기록을 바탕으로 한 연습 픽입니다." });
   const radar = [...new Set([
     ...frame.options.map(o => canonical(o.champion_id)),
     ...report.entries.filter(e => e.eligible_for_review).sort((a, b) => a.rank - b.rank || compare(canonical(a.champion_id) ?? a.champion_id, canonical(b.champion_id) ?? b.champion_id)).map(e => canonical(e.champion_id)),
   ])].find((id): id is string => !!id && available(id));
-  if (radar) return { champion_id: radar, source: "RADAR", reason: "공개 레이더의 검토 가능 후보를 사용한 연습 선택입니다." };
+  if (radar) return finish({ champion_id: radar, source: "RADAR", reason: "공개 레이더의 검토 가능 후보를 사용한 연습 선택입니다." });
   const fallback = [...canonicalIds.values()].sort(compare).find(available);
-  return fallback ? { champion_id: fallback, source: "FALLBACK", reason: "남은 기록 후보가 없어 고정 챔피언 목록 순서로 선택했습니다." } : null;
+  return fallback ? finish({ champion_id: fallback, source: "FALLBACK", reason: "남은 기록 후보가 없어 고정 챔피언 목록 순서로 선택했습니다." }) : null;
 }

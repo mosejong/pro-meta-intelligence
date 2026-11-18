@@ -20,6 +20,8 @@ import { SimulationPlayerEvidence } from "./simulation-player-evidence-panel";
 import "./simulation-readiness-panel.css";
 
 type SimulationReadinessPanelProps = {
+  roleAssignments?: Record<string, ChampionRoles>;
+  onRoleAssign?: (teamId: string, role: RosterRole, championId: string) => void;
   report: RadarReport;
   blueTeam: OpponentTeam | null;
   redTeam: OpponentTeam | null;
@@ -79,7 +81,7 @@ function FixedInputView({ snapshot, nameOf }: { snapshot: SimulationInputSnapsho
  * the fixed input lives in memory only. Replaying a file is display-only: it never changes the
  * draft, rosters, the A/B baseline or device storage. No outcome or winner is computed here.
  */
-export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, nameOf, publicationRoot = "./", disabled = false, defaultOpen = false, onReadyInputChange }: SimulationReadinessPanelProps) {
+export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, nameOf, publicationRoot = "./", disabled = false, defaultOpen = false, onReadyInputChange, roleAssignments, onRoleAssign }: SimulationReadinessPanelProps) {
   const [roleDraft, setRoleDraft] = useState<RoleDraft>({});
   const [open, setOpen] = useState(defaultOpen);
   const [fixed, setFixed] = useState<SimulationInputSnapshot | null>(null);
@@ -109,6 +111,7 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
     return result;
   }, [basis, blueTeam, redTeam, firstPickSide, games.length, selections]);
   const rolesOf = (teamId: string): ChampionRoles => {
+    if (roleAssignments) return roleAssignments[teamId] ?? emptyChampionRoles();
     const entry = roleDraft[teamId];
     return entry && entry.context === contexts[teamId] ? entry.roles : emptyChampionRoles();
   };
@@ -145,6 +148,7 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
   function assign(teamId: string, role: RosterRole, championId: string) {
     const context = contexts[teamId];
     if (!context || disabled) return;
+    if (roleAssignments) { onRoleAssign?.(teamId, role, championId); return; }
     setRoleDraft((current) => {
       const roles = { ...(current[teamId]?.context === context ? current[teamId].roles : emptyChampionRoles()) };
       // One champion per team occupies one role: choosing it again moves it here.

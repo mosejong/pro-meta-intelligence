@@ -9,8 +9,8 @@ import { basisKey, isRosterRole, playerKey, type RosterBasis, type RosterRole } 
  * Identity is the exact ID pair; names never join records and another team's games are never
  * added. A champion missing here is "not observed in this scope", never "cannot play". The file
  * is accepted only when its roster basis, cutoff and season match the current snapshot and its
- * source was retrieved no later than the cutoff. It feeds this display only — no recommendation,
- * ranking, prediction or simulation reads it.
+ * source was retrieved no later than the cutoff. It feeds evidence displays and the bounded solo-practice candidate pool. It does not
+ * establish current-patch strength, player ability or match outcome probabilities.
  */
 
 export const PLAYER_SEASON_ARTIFACT = "player-season-history";

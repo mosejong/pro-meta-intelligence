@@ -59,8 +59,8 @@ test("real feed: all twenty turns, both manual sides, both first sides, Fearless
 const tendency = (champion_id, role, game_rate = 0.8) => ({ champion_id, role, game_rate, game_count: 4,
   phase_1_count: 4, phase_2_count: 0, evidence_event_ids: [] });
 function fixture(blue = [], red = [], entries = []) {
-  return { ...base, report: { ...report, entries }, blueTeam: { ...base.blueTeam, priority_picks: blue },
-    redTeam: { ...base.redTeam, priority_picks: red } };
+  return { ...base, report: { ...report, entries }, blueTeam: { ...base.blueTeam, priority_picks: blue, player_profiles: [] },
+    redTeam: { ...base.redTeam, priority_picks: red, player_profiles: [] } };
 }
 function prefix(count, first = "BLUE") {
   let selections = [];
@@ -127,4 +127,16 @@ test("priority ties are stable under input reordering and frozen inputs are unto
   } };
   freeze(input);
   assert.deepEqual(suggest(input), expected);
+});
+
+
+test("eligible current meta precedes season/team fallback, and locked meta yields safely", () => {
+  const input = fixture([tendency("Akali", "MID")], [], [{ ...report.entries[0], champion_id: "Zyra", role: "SUPPORT", rank: 1, eligible_for_review: true }]);
+  const selections = prefix(6);
+  const choice = suggest({ ...input, selections });
+  assert.equal(choice.champion_id, "Zyra"); assert.equal(choice.source, "RADAR"); assert.equal(choice.role_supported, true);
+  const locked = suggest({ ...input, selections, previousPicks: ["Zyra"] });
+  assert.equal(locked.champion_id, "Akali"); assert.equal(locked.role_supported, true);
+  const sparse = suggest({ ...fixture(), selections });
+  assert.equal(sparse.role_supported, false); assert.match(sparse.reason, /포지션 근거가 부족/);
 });

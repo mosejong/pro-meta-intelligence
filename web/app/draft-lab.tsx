@@ -42,7 +42,12 @@ import "./draft-studio.css";
 import { WorkspaceHeader } from "./workspace-header";
 import { DraftSharePanel } from "./draft-share-panel";
 import { DraftRoomPanel, type RoomControls } from "./draft-room-panel";
+import { useSoloSeasonHistory } from "./use-solo-season-history";
 import { suggestSoloDraftTurn } from "./solo-draft";
+import { DraftPositionStack } from "./draft-position-stack";
+import { emptyChampionRoles, championKey, teamPicks, type ChampionRoles, type RoleAssignments } from "./champion-roles";
+import { buildDraftPositionBoard, reconcileChampionRoles, moveChampionRole } from "./draft-position-board";
+import { basisKey, rosterBasis, type RosterRole } from "./roster-scenario";
 import { DraftResultPanel } from "./draft-result-panel";
 
 type DraftLabProps = {
@@ -161,8 +166,13 @@ function TeamDraftColumn({
   staged,
   nameOf,
   inspected,
-  onInspect,
+  onInspect, assignments, unassigned, positionDisabled, onAssign, onConfirm,
 }: {
+  assignments: ChampionRoles;
+  unassigned: string[];
+  positionDisabled: boolean;
+  onAssign: (id: string, role: RosterRole | null) => void;
+  onConfirm: () => void;
   side: DraftSide;
   team: OpponentTeam | null;
   selections: DraftSelection[];
@@ -173,7 +183,6 @@ function TeamDraftColumn({
   onInspect: (slot: InspectedSlot) => void;
 }) {
   const bans = selectionsFor(selections, side, "BAN");
-  const picks = selectionsFor(selections, side, "PICK");
   const { locale, t, format } = useLocale();
   const lang = langAttrs(locale);
   const sideLabel = t(sideKey(side));
@@ -191,18 +200,7 @@ function TeamDraftColumn({
         </div>;
       })}
     </div>
-    <div className="draft-pick-stack">
-      {Array.from({ length: 5 }, (_, index) => {
-        const preview = staged?.side === side && staged.kind === "PICK" && staged.slot === index + 1 ? staged : null;
-        const confirmed = picks.find((item) => item.slot === index + 1) ?? null;
-        const selection = confirmed ?? preview;
-        return <article className={preview ? "staged" : selection ? "filled" : ""} key={index}
-          {...(confirmed ? inspectProps(confirmed, inspected, format("draft.inspect.PICK", { side: sideLabel, slot: index + 1, name: nameOf(confirmed.champion_id) }), onInspect) : {})}>
-          <b>{side === "BLUE" ? "B" : "R"}{index + 1}</b>
-          {selection ? <><img src={championImageUrl(selection.champion_id)} alt="" /><div><strong lang={lang.name}>{nameOf(selection.champion_id)}</strong><span>{preview ? t("draft.column.staged") : format("draft.column.confirmed", { turn: selection.turn })}</span></div></> : <div><strong>{t("draft.column.waiting")}</strong><span>{index < 3 ? t("draft.column.phase1Pick") : t("draft.column.phase2Pick")}</span></div>}
-        </article>;
-      })}
-    </div>
+    <DraftPositionStack team={team} side={side} selections={selections} staged={staged} assignments={assignments} unassigned={unassigned} disabled={positionDisabled} nameOf={nameOf} onAssign={onAssign} onConfirm={onConfirm} onInspect={onInspect} inspected={selections.find(item => inspected && sameSlot(item, inspected) && item.champion_id === inspected.champion_id) ?? null} />
   </section>;
 }
 
@@ -220,6 +218,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const defaultMatchup = useMemo(() => defaultDraftMatchup(teams), [teams]);
   const [blueTeamId, setBlueTeamId] = useState(defaultMatchup.blue?.team_id ?? "");
   const [redTeamId, setRedTeamId] = useState(defaultMatchup.red?.team_id ?? "");
+  const [positionState, setPositionState] = useState<{ context: string; roles: RoleAssignments; unassigned?: Record<string, string[]> }>({ context: "", roles: {} });
   const [selections, setSelections] = useState<DraftSelection[]>([]);
   const [firstPickSide, setFirstPickSide] = useState<DraftSide>("BLUE");
   const [query, setQuery] = useState("");
@@ -254,6 +253,24 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [readyInput, setReadyInput] = useState<SimulationInputSnapshot | null>(null);
   const blueTeam = teams.find((team) => team.team_id === blueTeamId) ?? null;
   const redTeam = teams.find((team) => team.team_id === redTeamId) ?? null;
+  const positionContext = JSON.stringify([basisKey(rosterBasis(report)), blueTeamId, redTeamId, firstPickSide, games, room.active]);
+  const positionUnassigned = positionState.context === positionContext ? positionState.unassigned ?? {} : {};
+  const positionRoles: RoleAssignments = {};
+  for (const [side, team] of [["BLUE", blueTeam], ["RED", redTeam]] as const) if (team) positionRoles[team.team_id] = reconcileChampionRoles(positionState.context === positionContext ? positionState.roles[team.team_id] ?? emptyChampionRoles() : emptyChampionRoles(), teamPicks(selections, side));
+  function assignPosition(side: DraftSide, id: string, role: RosterRole | null) {
+    const team = side === "BLUE" ? blueTeam : redTeam;
+    if (!team || room.active || !sessionReady || importing) return;
+    setPositionState(current => ({ context: positionContext, unassigned: { ...(current.context === positionContext ? current.unassigned : {}), [team.team_id]: [...(current.context === positionContext ? current.unassigned?.[team.team_id] ?? [] : []).filter(value => championKey(value) !== championKey(id)), ...(role === null ? [id] : [])] }, roles: { ...(current.context === positionContext ? current.roles : {}), [team.team_id]: moveChampionRole(current.context === positionContext ? current.roles[team.team_id] ?? emptyChampionRoles() : emptyChampionRoles(), id, role, teamPicks(selections, side)) } }));
+  }
+  function confirmPositions(side: DraftSide) {
+    const team = side === "BLUE" ? blueTeam : redTeam;
+    if (!team || room.active || !sessionReady || importing) return;
+    const board = buildDraftPositionBoard({ team, side, selections, assignments: positionRoles[team.team_id], unassigned: positionUnassigned[team.team_id] });
+    if (!board.canConfirm) return;
+    const roles = emptyChampionRoles();
+    for (const position of board.positions) roles[position.role] = position.champion_id;
+    setPositionState(current => ({ context: positionContext, unassigned: current.context === positionContext ? current.unassigned : {}, roles: { ...(current.context === positionContext ? current.roles : {}), [team.team_id]: roles } }));
+  }
   const turn = nextDraftTurn(selections, firstPickSide);
   const frame = useMemo(
     () => buildDraftAgentFrame(report, blueTeam, redTeam, selections, previousPicks, firstPickSide),
@@ -267,8 +284,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const roomHostReady = Boolean(room.role === "BLUE" && room.connected && !room.sending);
   const hasCurrentWork = selections.length > 0 || Boolean(pendingChampion);
 
-  const autoChoice = useMemo(() => soloEnabled && !room.active ? suggestSoloDraftTurn({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, manualSide }) : null,
-    [soloEnabled, room.active, report, blueTeam, redTeam, selections, previousPicks, firstPickSide, manualSide]);
+  const soloSeason = useSoloSeasonHistory(report, productRootHref(currentSpace), (soloEnabled || studioTab === "DETAILS") && !room.active);
+  const autoChoice = useMemo(() => soloEnabled && !room.active && !soloSeason.loading ? suggestSoloDraftTurn({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, manualSide, seasonHistory: soloSeason.history }) : null,
+    [soloEnabled, room.active, report, blueTeam, redTeam, selections, previousPicks, firstPickSide, manualSide, soloSeason.loading, soloSeason.history]);
   useEffect(() => {
     if (!autoChoice || !canSelect || pendingReset || studioTab !== "DRAFT" || room.active) return;
     const timerId = window.setTimeout(() => {
@@ -292,6 +310,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
   const restoreSession = useCallback((session: DraftSession) => {
     setSoloEnabled(false); setLastAuto(null);
+    setPositionState({ context: "", roles: {} });
     setSeriesReport(session.report);
     setBlueTeamId(session.blueTeamId);
     setRedTeamId(session.redTeamId);
@@ -438,6 +457,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   function resetDraft() {
     if (room.active) return;
     setLastAuto(null);
+    setPositionState({ context: "", roles: {} });
     setSelections([]);
     setPendingChampion(null);
     setInspected(null);
@@ -484,6 +504,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
   function undo() {
     if (room.active) return;
+    setPositionState({ context: "", roles: {} });
     setSelections((current) => soloEnabled ? current.slice(0, Math.max(0, current.findLastIndex(item => item.side === manualSide))) : current.slice(0, -1));
     setLastAuto(null);
     setPendingChampion(null);
@@ -621,7 +642,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         <label>내 진영<select aria-label="내 진영" value={manualSide} disabled={!canSelect || room.active} onChange={event => { if (event.target.value === "BLUE" || event.target.value === "RED") { setManualSide(event.target.value); setPendingChampion(null); setLastAuto(null); } }}><option value="BLUE">블루</option><option value="RED">레드</option></select></label>
       </div>
       <p>{room.active ? "친구 방에서는 참가자가 직접 밴픽합니다." : soloEnabled ? "내 팀만 선택하면 상대는 공개 기록을 참고해 자기 차례를 진행합니다. 자동 선택은 연습용이며 실제 팀의 전략을 예측하지 않습니다." : "켜면 혼자서도 한 팀만 조작하며 끝까지 연습할 수 있어요. 끄면 양 팀을 직접 선택합니다."}</p>
-      {soloWaiting && <p role="status">{autoChoice ? "상대가 카드를 고르고 있어요…" : "자동 선택을 확인하지 못했습니다. 자동 밴픽을 끄고 직접 이어가세요."}</p>}
+      {soloEnabled && <p role="status">{soloSeason.loading ? "시즌 선수 기록을 확인하고 있어요…" : soloSeason.error ? "시즌 자료를 확인하지 못해 현재 팀 기록·메타 후보로 연습합니다." : "같은 팀의 현재 관측 선수 시즌 기록을 함께 참고합니다. 가상 로스터 변경은 자동 상대에 반영하지 않습니다."}</p>}
+      {soloWaiting && !soloSeason.loading && <p role="status">{autoChoice ? "상대가 카드를 고르고 있어요…" : "자동 선택을 확인하지 못했습니다. 자동 밴픽을 끄고 직접 이어가세요."}</p>}
       {lastAuto && selections.some(s => s.turn === lastAuto.turn && championAssetId(s.champion_id) === championAssetId(lastAuto.champion_id)) && <p className="solo-draft-last" role="status">마지막 상대 선택 · {nameOf(lastAuto.champion_id)} · {lastAuto.reason}</p>}
     </section>
     <section className="draft-series" aria-label={t("draft.seriesLabel")} lang={lang.ui}>
@@ -640,7 +662,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         {!saveSnapshot && <small>{importing ? "파일을 불러오는 중이라 지금은 다시 저장할 수 없습니다." : "저장할 최신 밴픽이 아직 없습니다."}</small>}
         <small>현재 화면의 최신 밴픽만 다시 저장하며 이전 상태로 되돌리지 않습니다.</small>
       </div>}
-      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={next => { setRoom(next); if (next.active) { setSoloEnabled(false); setLastAuto(null); } }} onSnapshot={(session, reset) => {
+      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={next => { setRoom(next); if (next.active) { setSoloEnabled(false); setLastAuto(null); setPositionState({ context: "", roles: {} }); } }} onSnapshot={(session, reset) => {
         if (reset) setComparisonEpoch(epoch => epoch + 1);
         setSeriesReport(session.report); setBlueTeamId(session.blueTeamId); setRedTeamId(session.redTeamId);
         setGames(session.games); setSelections(session.selections); setFirstPickSide(session.firstPickSide);
@@ -660,7 +682,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
     {/* No lang on the stage/picker containers: their children set lang per control. */}
     <section className="draft-stage" aria-label={t("draft.stageLabel")} inert={!canSelect}>
-      <TeamDraftColumn side="BLUE" team={blueTeam} selections={selections} staged={staged} active={turn?.side === "BLUE"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
+      <TeamDraftColumn unassigned={blueTeam ? positionUnassigned[blueTeam.team_id] ?? [] : []} assignments={blueTeam ? positionRoles[blueTeam.team_id] : emptyChampionRoles()} positionDisabled={!canSelect || room.active} onAssign={(id, role) => assignPosition("BLUE", id, role)} onConfirm={() => confirmPositions("BLUE")} side="BLUE" team={blueTeam} selections={selections} staged={staged} active={turn?.side === "BLUE"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
       <section className="draft-control-room">
         <div className={`draft-clock ${timer <= 10 ? "urgent" : ""}`} lang={lang.ui}><span>{`TURN ${Math.min(selections.length + 1, STANDARD_DRAFT_SEQUENCE.length)} / ${STANDARD_DRAFT_SEQUENCE.length}`}</span><strong>{String(timer).padStart(2, "0")}</strong><button type="button" onClick={() => setTimerRunning((running) => !running)} disabled={!turn}>{timerRunning ? t("draft.timerPause") : t("draft.timerStart")}</button></div>
         <div className={`draft-current-turn ${turn?.side.toLowerCase() ?? "complete"}`} role="status" lang={lang.ui}><span>{phaseLabel}</span><h2>{turn ? format("draft.turnHeading", { team: frame.acting_team_name ?? "", side: t(sideKey(turn.side)) }) : t("draft.scenarioComplete")}</h2><p>{turn ? format(turnHintKey(turn.kind), { slot: turn.slot }) : t("draft.turnDoneHint")}</p>{room.active && <p className="draft-room-turn">{room.role === "SPECTATOR" ? "관전 중 · 선택할 수 없습니다" : room.role === "BLUE" ? "나는 블루" : room.role === "RED" ? "나는 레드" : "참여 확인 중"} · {room.ended ? "참여 종료" : !room.connected ? "연결 확인 중" : room.sending ? "선택 반영 중" : room.snapshot?.status === "WAITING" ? "레드 참가 대기" : turn ? `${turn.side === "BLUE" ? "블루" : "레드"} 차례` : "세트 완료"}</p>}{!turn && <button type="button" disabled={room.active && !roomHostReady} onClick={nextGame}>{t("draft.nextGame")}</button>}</div>
@@ -688,7 +710,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         <div className="draft-actions" lang={lang.ui}><button type="button" onClick={undo} disabled={room.active || (soloEnabled ? !selections.some(s => s.side === manualSide) : !selections.length)} lang={soloEnabled ? "ko" : undefined}>{soloEnabled ? "내 마지막 선택 되돌리기" : t("draft.undo")}</button><button type="button" onClick={() => setPendingReset("GAME")} disabled={room.active || !hasCurrentWork}>{t("draft.resetGame")}</button></div>
         <ol className="draft-sequence-mini" aria-label={t("draft.sequenceLabel")} lang={lang.ui}>{draftSequence(firstPickSide).map((item, index) => <li className={index < selections.length ? "done" : index === selections.length ? "current" : ""} key={index}><span>{index + 1}</span><b>{item.side === "BLUE" ? "B" : "R"}{item.kind === "BAN" ? "B" : "P"}{item.slot}</b></li>)}</ol>
       </section>
-      <TeamDraftColumn side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
+      <TeamDraftColumn unassigned={redTeam ? positionUnassigned[redTeam.team_id] ?? [] : []} assignments={redTeam ? positionRoles[redTeam.team_id] : emptyChampionRoles()} positionDisabled={!canSelect || room.active} onAssign={(id, role) => assignPosition("RED", id, role)} onConfirm={() => confirmPositions("RED")} side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
     </section>
     {selections.length === 20 && <DraftResultPanel report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} previousPicks={previousPicks} firstPickSide={firstPickSide} nameOf={nameOf} autoReveal={soloEnabled && studioTab === "DRAFT" && !room.active} disabled={!canSelect || room.active} onReplay={() => setPendingReset("GAME")} onNext={nextGame} />}
     </div>
@@ -705,7 +727,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     <div id={panelOf("DETAILS")} className="studio-details-panel" role="tabpanel" aria-labelledby={`${panelOf("DETAILS")}-tab`} hidden={studioTab !== "DETAILS"}>
     <nav className="draft-workspace-nav" aria-label="상세 분석 이동"><button type="button" onClick={() => showStudioTab("DRAFT")}>모의 밴픽으로</button><a href={productSpaceHref(currentSpace, "TEAM")}>선택한 두 팀 분석</a><a href={productSpaceHref(currentSpace, "PROOF")}>예측 검증 결과</a></nav>
     <div id="studio-champion-info" className="studio-champion-info" tabIndex={-1}>
-      <DraftChampionInfo focus={championFocus} report={report} blueTeam={blueTeam} redTeam={redTeam} nameOf={nameOf} onCloseInspect={() => setInspected(null)} />
+      <DraftChampionInfo seasonLoading={soloSeason.loading} seasonHistory={soloSeason.history} focus={championFocus} report={report} blueTeam={blueTeam} redTeam={redTeam} nameOf={nameOf} onCloseInspect={() => setInspected(null)} />
     </div>
     <p className="studio-details-staged" role="status">{pendingChampion ? `${nameOf(pendingChampion)} 올려놓음 · 확정은 모의 밴픽 탭에서 합니다.` : turn ? "올려놓은 챔피언이 없습니다. 아래 후보를 누르면 올려놓기만 하고 확정하지 않습니다." : "밴픽이 완료되었습니다."}</p>
     <section id="draft-preview" className="draft-response-preview" aria-label="확정 전 상대 픽 예상" aria-live="polite">
@@ -750,7 +772,11 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     <div id={panelOf("SIMULATION")} className="studio-simulation-panel" role="tabpanel" aria-labelledby={`${panelOf("SIMULATION")}-tab`} hidden={studioTab !== "SIMULATION"}>
     {/* Simulation input gate (with assigned-champion season records): explicit champion roles +
         current rosters; no outcome is computed. */}
-    <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} publicationRoot={productRootHref(currentSpace)} defaultOpen disabled={!canSelect} onReadyInputChange={setReadyInput} />
+    <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} publicationRoot={productRootHref(currentSpace)} defaultOpen disabled={!canSelect || room.active} roleAssignments={positionRoles} onRoleAssign={(teamId, role, id) => {
+      const side = teamId === blueTeamId ? "BLUE" : "RED";
+      if (id) assignPosition(side, id, role);
+      else { const current = positionRoles[teamId]?.[role]; if (current) assignPosition(side, current, null); }
+    }} onReadyInputChange={setReadyInput} />
     </div>
     </div>
     </div>

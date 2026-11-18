@@ -94,3 +94,23 @@ test("다른 탭에서는 자동 진행을 멈추고 밴픽 탭으로 돌아오�
   await page.waitForTimeout(900);
   await expect(progress(page)).toHaveAttribute("value", "2");
 });
+
+
+test("시즌 파일 실패에도 피어리스 3세트가 진행되고 양 팀 이전 픽을 다시 쓰지 않는다", async ({ page }) => {
+  await page.route("**/history/player-season-2026.json", route => route.fulfill({ status: 404, body: "unavailable" }));
+  await open(page);
+  await expect(solo(page)).toContainText("시즌 자료를 확인하지 못해");
+  const locked = new Set();
+  for (let game = 1; game <= 3; game++) {
+    await complete(page);
+    const picks = await page.locator(".draft-position-board article[data-champion-id]").evaluateAll(items => items.map(item => item.dataset.championId));
+    expect(picks).toHaveLength(10); expect(new Set(picks).size).toBe(10);
+    for (const id of picks) { expect(locked.has(id)).toBe(false); locked.add(id); }
+    if (game < 3) {
+      await page.getByRole("region", { name: "이번 밴픽 리포트", exact: true }).getByRole("button", { name: "피어리스 다음 세트", exact: true }).click();
+      await expect(progress(page)).toHaveAttribute("value", "0");
+      await expect(page.locator(".draft-series-locks > span")).toHaveCount(game * 10);
+    }
+  }
+  expect(locked.size).toBe(30);
+});
