@@ -6,6 +6,7 @@ import re
 from datetime import UTC, datetime
 from typing import Any
 
+from pro_meta_intelligence.creator import CreatorBriefBuilder
 from pro_meta_intelligence.temporal import parse_datetime
 
 
@@ -114,7 +115,7 @@ def assess_publication_watchdog(
 
     checks = [
         _publication_check(current_feed),
-        _creator_publication_check(creator_feed),
+        _creator_publication_check(creator_feed, current_feed),
         _paired_publication_check(current_feed, creator_feed),
         _history_artifact_check(history_status),
         _history_publication_pair_check(current_feed, history_status),
@@ -232,7 +233,10 @@ def _publication_check(current_feed: dict[str, Any] | None) -> dict[str, Any]:
     )
 
 
-def _creator_publication_check(creator_feed: dict[str, Any] | None) -> dict[str, Any]:
+def _creator_publication_check(
+    creator_feed: dict[str, Any] | None,
+    current_feed: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     schema_version = creator_feed.get("schema_version") if isinstance(creator_feed, dict) else None
     mode = creator_feed.get("mode") if isinstance(creator_feed, dict) else None
     publication_ready = (
@@ -245,30 +249,90 @@ def _creator_publication_check(creator_feed: dict[str, Any] | None) -> dict[str,
         creator_feed.get("source_snapshot") if isinstance(creator_feed, dict) else None
     )
     topics = creator_feed.get("topic_candidates") if isinstance(creator_feed, dict) else None
-    passed = (
+    header_ok = (
         schema_version == "1"
         and mode == "CREATOR"
         and publication_ready is False
         and human_review_required is True
         and isinstance(source_snapshot, dict)
         and isinstance(topics, list)
-        and bool(topics)
     )
+    if header_ok and topics:
+        creator_state = "TOPICS_AVAILABLE"
+    elif header_ok and _is_confirmed_empty_creator(creator_feed, current_feed):
+        creator_state = "EMPTY_CONFIRMED"
+    else:
+        creator_state = "NOT_READY"
     return _check(
         "CREATOR_FEED_READY",
-        passed,
+        creator_state != "NOT_READY",
         {
             "schema_version": schema_version,
             "mode": mode,
             "publication_ready": publication_ready,
             "human_review_required": human_review_required,
             "topic_count": len(topics) if isinstance(topics, list) else 0,
+            "creator_state": creator_state,
         },
         (
             "schema_version=1, mode=CREATOR, publication_ready=false, "
-            "human_review_required=true, source snapshot, and nonempty topics"
+            "human_review_required=true, source snapshot, and nonempty topics; or empty topics "
+            "exactly matching CreatorBriefBuilder output for a paired Radar whose entries all "
+            "have boolean eligible_for_review=false"
         ),
     )
+
+
+def _is_confirmed_empty_creator(
+    creator_feed: dict[str, Any] | None,
+    current_feed: dict[str, Any] | None,
+) -> bool:
+    """Accept an empty Creator feed only when it is the builder's legitimate no-candidate output.
+
+    The paired Radar must be versioned, non-fixture, and carry hashed source versions; every entry
+    must state ``eligible_for_review`` as an explicit boolean ``False``; and rebuilding the brief
+    from that Radar must reproduce the published Creator payload exactly, including the
+    ``NO_ELIGIBLE_CANDIDATES`` warning and source snapshot. Anything else stays unhealthy.
+    """
+
+    if not isinstance(creator_feed, dict) or not isinstance(current_feed, dict):
+        return False
+    if current_feed.get("schema_version") != "1" or current_feed.get("fixture_only") is not False:
+        return False
+    for key in ("patch_id", "cutoff"):
+        value = current_feed.get(key)
+        if not isinstance(value, str) or not value:
+            return False
+    entries = current_feed.get("entries")
+    if not isinstance(entries, list):
+        return False
+    for entry in entries:
+        if not isinstance(entry, dict) or not isinstance(entry.get("metrics"), dict):
+            return False
+        if entry.get("eligible_for_review") is not False:
+            return False
+    evidence_index = current_feed.get("evidence_index")
+    source_versions = (
+        evidence_index.get("source_versions") if isinstance(evidence_index, dict) else None
+    )
+    if not isinstance(source_versions, list) or not source_versions:
+        return False
+    for version in source_versions:
+        if not isinstance(version, dict):
+            return False
+        content_hash = version.get("content_hash")
+        if not isinstance(content_hash, str) or not re.fullmatch(
+            r"sha256:[0-9a-f]{64}", content_hash
+        ):
+            return False
+    warnings = creator_feed.get("warnings")
+    if not isinstance(warnings, list) or "NO_ELIGIBLE_CANDIDATES" not in warnings:
+        return False
+    try:
+        expected = CreatorBriefBuilder().build(current_feed).to_dict()
+    except (KeyError, TypeError, ValueError):
+        return False
+    return expected.get("topic_candidates") == [] and expected == creator_feed
 
 
 def _paired_publication_check(
