@@ -179,7 +179,10 @@ def test_hosted_oe_collector_restores_private_state_and_publishes_only_safe_head
     assert "oe-private-history-state-${{ github.run_id }}" in workflow
     assert "oe-sync-diagnostics-${{ github.run_id }}" in workflow
     assert "Preserve public-safe sync diagnostics on success or rejection" in workflow
-    assert "if: ${{ always() }}" in workflow
+    diagnostics = workflow.split("Preserve public-safe sync diagnostics on success or rejection", 1)
+    diagnostics = diagnostics[1].split("- name:", 1)[0]
+    # Default runs still upload on success or rejection; only history-only mode is excluded.
+    assert "if: ${{ always() && env.HISTORY_ONLY != 'true' }}" in diagnostics
     assert "outputs/oe-feed-jobs/latest.json" in workflow
     assert "if-no-files-found: warn" in workflow
     assert "retention-days: 14" in workflow
