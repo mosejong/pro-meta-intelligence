@@ -1,0 +1,14 @@
+.draft-series-recap { margin: 16px 0; border: 1px solid var(--studio-line, #343a40); background: var(--studio-panel, #16191c); overflow-wrap: anywhere; min-width: 0; }
+.draft-series-recap > summary { min-height: 44px; padding: 12px 16px; cursor: pointer; font-weight: 600; }
+.draft-series-recap-body { padding: 0 16px 16px; min-width: 0; }
+.draft-series-recap p, .draft-series-recap small { color: var(--studio-muted, #a7afb7); font-size: 12px; }
+.draft-series-recap-game { border-top: 1px solid var(--studio-line, #343a40); padding-top: 12px; margin-top: 12px; min-width: 0; }
+.draft-series-recap-game h3 { margin: 0 0 4px; font-size: 15px; }
+.draft-series-recap-teams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.draft-series-recap-teams article { min-width: 0; border-top: 2px solid var(--draft-blue, #86b9df); padding-top: 8px; }
+.draft-series-recap-teams article.red { border-color: var(--draft-red, #df9696); }
+.draft-series-recap h4 { margin: 0; font-size: 14px; }
+.draft-series-recap dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 8px; margin: 8px 0 0; font-size: 12px; }
+.draft-series-recap dt { color: var(--studio-muted, #a7afb7); }
+.draft-series-recap dd { margin: 0; min-width: 0; }
+@media (max-width: 720px) { .draft-series-recap-teams { grid-template-columns: 1fr; } }

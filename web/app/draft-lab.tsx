@@ -52,6 +52,7 @@ import { normalizeDraftPositions } from "./draft-position-session";
 import { DraftPracticeLibraryPanel } from "./draft-practice-library-panel";
 import { basisKey, rosterBasis, type RosterRole } from "./roster-scenario";
 import { DraftResultPanel } from "./draft-result-panel";
+import { DraftSeriesRecapPanel } from "./draft-series-recap-panel";
 
 type DraftLabProps = {
   currentSpace: ProductSpace;
@@ -291,6 +292,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const roomCanAct = (!room.active || Boolean(room.connected && !room.sending && room.snapshot?.status === "DRAFTING" && room.role === turn?.side)) && !soloWaiting;
   const roomHostReady = Boolean(room.role === "BLUE" && room.connected && !room.sending);
   const hasCurrentWork = selections.length > 0 || Boolean(pendingChampion);
+  // Only a finished current set joins the recap; its team IDs are the board's at completion.
+  const recapCurrent = useMemo<DraftGame | null>(() => selections.length === 20 ? { blue_team_id: blueTeamId, red_team_id: redTeamId, selections } : null,
+    [selections, blueTeamId, redTeamId]);
 
   const soloSeason = useSoloSeasonHistory(report, productRootHref(currentSpace), (soloEnabled || studioTab === "DETAILS") && !room.active);
   const autoChoice = useMemo(() => soloEnabled && !room.active && !soloSeason.loading ? suggestSoloDraftTurn({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, manualSide, seasonHistory: soloSeason.history }) : null,
@@ -745,6 +749,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <TeamDraftColumn unassigned={redTeam ? positionUnassigned[redTeam.team_id] ?? [] : []} assignments={redTeam ? positionRoles[redTeam.team_id] : emptyChampionRoles()} positionDisabled={!canSelect || room.active} onAssign={(id, role) => assignPosition("RED", id, role)} onConfirm={() => confirmPositions("RED")} side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
     </section>
     {selections.length === 20 && <DraftResultPanel report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} previousPicks={previousPicks} firstPickSide={firstPickSide} nameOf={nameOf} autoReveal={soloEnabled && studioTab === "DRAFT" && !room.active} disabled={!canSelect || room.active} onReplay={() => setPendingReset("GAME")} onNext={nextGame} />}
+    {!room.active && (games.length > 0 || selections.length === 20) && <DraftSeriesRecapPanel report={report} games={games} current={recapCurrent} nameOf={nameOf} />}
     </div>
 
     <div id={panelOf("ROSTER")} className="studio-roster-panel" role="tabpanel" aria-labelledby={`${panelOf("ROSTER")}-tab`} hidden={studioTab !== "ROSTER"}>

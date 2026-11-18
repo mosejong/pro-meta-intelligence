@@ -1,5 +1,11 @@
 # Pro Meta Intelligence — 개발일지
 
+## 2026-11-19 · 여러 세트 복기 및 반복 실패 메일 조사
+
+- 과거 자료 수집은 10:45 예약 전이라 임의 재요청하지 않았다. Claude가 완료 세트 복기를 구현했고 Codex 42세트 독립 검사에서 진영 교환·잠금 누적을 확인했다. 손상 팀 row 예외를 재현해 Claude가 수정했다. 최종 독립 웹 295개·타입·lint·Pages 4개·PC/모바일 복기 2개 및 기존 자동 선택 1,680회 일치. [검토](CODEX_SERIES_RECAP_REVIEW_2026-11-19.md).
+- 사용자의 반복 런타임 실패 메일 요청으로 Gmail 알림과 GitHub 로그를 대조했다. 주원인은 공식 정상 빈 일정의 파싱 실패, 별도 Creator 0후보 준비 오판이었다. 메일/구독 설정은 바꾸지 않고 Claude에 Python 소유 파일을 분리해 수정시켰다. 주석/문자열/비실행 스크립트 오인 독립 반례도 보완했다.
+- 최종 독립 Python 546개(main 기준 운영 분리 브랜치 545개), ruff 116개 파일 통과. 실제 실패 HTML 오프라인 재생·TypeScript 빈 snapshot 수용·기존 정상 2/38/40 경기 보존을 확인했다. [PR #126](https://github.com/mosejong/pro-meta-intelligence/pull/126)으로 운영 코드만 분리했다. 실제 공개 회복은 다음 일정/감시 후 확인해야 한다. [메일 검토](RUNTIME_FAILURE_MAIL_REVIEW_2026-11-19.md).
+
 ## 2026-11-18 · 운영 수집 연결 및 연도별 수용 도구
 
 - 운영 전용 PR #124 원격 CI 통과 후 main 통합(`4664d29b`). 웹 제품 변경은 포함하지 않았다. 서버 run 44319466632는 첫 복원에서 artifact HTTP 503, 재실행 attempt 2는 성공했다. 진단은 DEFERRED/새 요청 없음/배포 없음이며 암호화 원장 보존과 deploy skipped를 확인했다.
