@@ -113,6 +113,10 @@
 
 사용자 승인 범위에 따라 [PR #122](https://github.com/mosejong/pro-meta-intelligence/pull/122)의 CI 통과 뒤 main에 머지했다. 배포 커밋은 `a04f13a6`, [Pages 실행](https://github.com/mosejong/pro-meta-intelligence/actions/runs/44233536613)은 성공했다. 실제 https://mosejong.github.io/pro-meta-intelligence/ 에서 Chrome PC·모바일 폭 각각 한국어 화면·시즌 선택·구단 저장·새로고침 보관과 pageerror 0건을 확인했다. [배포 기록](KOREAN_PREVIEW_RELEASE_2026-11-18.md)에 로그·화면 위치를 남겼다. 실제 기기·중국 접속·일반 이용자 효용은 아직 확인하지 않았다. 직접 연락을 보내지 않았으며 사용자가 동료·지인에게 공유할 차례다.
 
+## 2026-11-18 · 공유 보류와 혼자 연습 흐름
+
+사용자가 기능과 흥미를 더 만든 뒤 공유하도록 순서를 수정했다. 기존 사이트는 유지하며 신규 변경은 로컬에서만 진행한다. 자동 상대 밴픽과 완료 리포트·내 선택 되돌리기·재도전/피어리스를 연결했다. 실제 경기 승패/선수 효과 모델은 붙이지 않았다. 최종 웹232/232·Pages4/4·타입/린트·혼자/공유14/14·방6/6·마지막 화면2/2를 확인했다. 방 상태와 개인 자동 저장도 분리했다. [작업 결과](SOLO_PRACTICE_RESULT_2026-11-18.md)에 실패와 검사 범위를 기록한다. 브랜치는 `feat/solo-draft-loop-20261118`이며 신규 배포/홍보는 하지 않았다. 실제 재미와 재방문 효과는 아직 미검증이다.
+
 ## 다음 기록 양식
 
 ```text

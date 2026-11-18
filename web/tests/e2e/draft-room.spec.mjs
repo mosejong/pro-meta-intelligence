@@ -3,6 +3,17 @@ import { test, expect } from "@playwright/test";
 // Parent runner supplies a real room endpoint through VITE_DRAFT_ROOM_ENDPOINT
 // and serves the existing application. These tests never fake room broadcasts.
 const root = "/pro-meta-intelligence/";
+async function savedDraft(page) {
+  return page.evaluate(() => new Promise((resolve, reject) => {
+    const opening = indexedDB.open("pro-meta-draft", 1);
+    opening.onerror = () => reject(opening.error);
+    opening.onsuccess = () => {
+      const db = opening.result, reading = db.transaction("sessions").objectStore("sessions").get("current");
+      reading.onerror = () => { db.close(); reject(reading.error); };
+      reading.onsuccess = () => { db.close(); resolve(reading.result ?? null); };
+    };
+  }));
+}
 const room = page => page.locator(".draft-room");
 const progress = page => page.locator(".draft-turn-progress");
 const confirm = page => page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ });
@@ -62,6 +73,7 @@ test("real blue, red and spectator sync turns; reconnect and explicit leave pres
     await expect(available(red)).toHaveCount(0); await expect(available(spectator)).toHaveCount(0);
     await expect(confirm(red)).toBeDisabled(); await expect(confirm(spectator)).toBeDisabled();
     for (const page of [blue, red, spectator]) {
+      await expect(page.getByRole("checkbox", { name: "상대 자동 밴픽", exact: true })).toBeDisabled();
       await page.locator(".draft-session-details summary").click();
       await expect(page.locator('.draft-session-controls input[type="file"]')).toBeDisabled();
       await expect(page.locator(".draft-first-selection select")).toBeDisabled();
@@ -98,6 +110,8 @@ test("real blue, red and spectator sync turns; reconnect and explicit leave pres
     }
     const previousPicks = await blue.locator(".draft-pick-stack article.filled strong").allTextContents();
     expect(previousPicks).toHaveLength(10);
+    // Room updates do not become a device-local personal draft until explicit leave.
+    for (const page of [blue, red, spectator]) expect(await savedDraft(page)).toBeNull();
     await blue.screenshot({ path: testInfo.outputPath("completed-draft.png"), fullPage: true });
     await spectator.screenshot({ path: testInfo.outputPath("spectator-draft.png"), fullPage: true });
     for (const page of [blue, red, spectator]) { await expect(available(page)).toHaveCount(0); await expect(confirm(page)).toBeDisabled(); }
@@ -119,6 +133,7 @@ test("real blue, red and spectator sync turns; reconnect and explicit leave pres
     await expect(progress(red)).toHaveAttribute("value", "0");
     await expect(red.locator(".draft-series > header")).toContainText("이전 세트 양 팀 픽 10개 자동 잠금");
     await expect(red.locator('.draft-session-controls input[type="file"]')).toBeEnabled();
+    await expect.poll(async () => { const text = await savedDraft(red); return text ? JSON.parse(text).previous_games.length : null; }).toBe(1);
     const retained = await red.evaluate(id => JSON.parse(sessionStorage.getItem("draft-room:" + id)), inviteData.id);
     expect(retained.role).toBe("RED");
   } finally { await Promise.all([blueContext.close(), redContext.close(), spectatorContext.close()]); }
