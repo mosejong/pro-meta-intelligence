@@ -9,6 +9,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: pages
@@ -17,6 +18,8 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.outcome.outputs.publish }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -26,10 +29,29 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install -e "."
-      - name: Fetch policy-gated official schedule and detect T1 changes
+      # Runners are ephemeral: the request budget lives in a state artifact of this workflow's
+      # main-branch runs. Restore fails closed (no request) when that state cannot be proven.
+      - name: Restore schedule request-attempt state from main
+        id: restore
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p outputs/schedule-diagnostics
+          python ops/schedule_attempt_state.py restore \
+            --repository "$GITHUB_REPOSITORY" \
+            --workflow-path .github/workflows/schedule-refresh.yml \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --archive-dir outputs/lolesports/raw \
+            --candidate-dir outputs/schedule-state/previous \
+            --work-dir "$RUNNER_TEMP/schedule-state-download" \
+            --report outputs/schedule-diagnostics/restore.json
+      # Never fails by itself, so the state below is always packed and uploaded first.
+      - name: Fetch policy-gated official schedule and detect T1 changes
+        id: fetch
+        shell: bash
+        run: |
           set +e
           python -m pro_meta_intelligence fetch-schedule \
             --league lck \
@@ -44,13 +66,57 @@ jobs:
             --watch-team T1 \
             --diagnostics-dir outputs/schedule-diagnostics | tee outputs/schedule-diagnostics/result.json
           status=${PIPESTATUS[0]}
-          set -e
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+      - name: Pack schedule request-attempt state
+        id: pack
+        if: always() && steps.fetch.outcome == 'success'
+        shell: bash
+        run: |
+          python ops/schedule_attempt_state.py pack \
+            --repository "$GITHUB_REPOSITORY" \
+            --workflow-path .github/workflows/schedule-refresh.yml \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --archive-dir outputs/lolesports/raw \
+            --fetch-status "${{ steps.fetch.outputs.status }}" \
+            --schedule web/public/feed/schedule.json \
+            --changes web/public/feed/schedule-changes.json \
+            --diagnostics-dir outputs/schedule-diagnostics \
+            --previous-candidate-dir outputs/schedule-state/previous \
+            --output-dir outputs/schedule-state/upload \
+            --report outputs/schedule-diagnostics/pack.json
+      - name: Preserve schedule request-attempt state
+        if: always() && steps.pack.outcome == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: schedule-attempt-state
+          path: outputs/schedule-state/upload/
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
+      - name: Apply schedule fetch result
+        id: outcome
+        shell: bash
+        env:
+          FETCH_STATUS: ${{ steps.fetch.outputs.status }}
+        run: |
+          status="$FETCH_STATUS"
+          case "$status" in
+            ''|*[!0-9]*) echo "::error::Schedule fetch did not report an exit status."; exit 1 ;;
+          esac
           if [ "$status" -eq 5 ]; then
             echo "::error::Schedule policy gate blocked collection. Review docs/SOURCE_REGISTRY.md and the registered source policies before renewing access. Published snapshots were preserved."
           fi
+          if [ "$status" -eq 6 ]; then
+            echo "::error::Schedule request-attempt state is invalid; no request was sent."
+          fi
           if [ "$status" -eq 3 ]; then
-            echo "Schedule source interval has not elapsed; keeping the published snapshot."
+            echo "Schedule source interval has not elapsed; keeping the published snapshot without rebuilding, pushing or deploying."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+          if [ "$status" -eq 0 ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
           fi
           exit "$status"
       - name: Preserve schedule failure diagnostics
@@ -62,13 +128,17 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - name: Validate public schedule artifacts
+        if: steps.outcome.outputs.publish == 'true'
         working-directory: web
         run: npm ci && npm run test:pages
       - uses: actions/configure-pages@v6
+        if: steps.outcome.outputs.publish == 'true'
       - uses: actions/upload-pages-artifact@v5
+        if: steps.outcome.outputs.publish == 'true'
         with:
           path: web/dist-pages
       - name: Publish changed schedule artifacts
+        if: steps.outcome.outputs.publish == 'true'
         shell: bash
         run: |
           if git diff --quiet -- web/public/feed/schedule.json web/public/feed/schedule-changes.json; then
@@ -87,6 +157,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: refresh
+    if: needs.refresh.outputs.publish == 'true'
     steps:
       - name: Deploy refreshed schedule to GitHub Pages
         id: deployment

@@ -1,8 +1,38 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
+import { createServer } from "vite";
+import { assertSchedulePublication } from "./schedule-publication-contract.mjs";
+
+const validatorServer = await createServer({ root: fileURLToPath(new URL("../", import.meta.url)),
+  configFile: false, publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+let isScheduleSnapshot;
+try { ({ isScheduleSnapshot } = await validatorServer.ssrLoadModule("/app/radar-types.ts")); }
+finally { await validatorServer.close(); }
 
 const root = new URL("../dist-pages/", import.meta.url);
+
+test("schedule copy accepts valid empty snapshots while rejecting damage and mismatched counts", async () => {
+  const source = JSON.parse(await readFile(new URL("../public/feed/schedule.json", import.meta.url), "utf8"));
+  const empty = { ...source, events: [], quality: { event_count: 0, tbd_participant_count: 0 } };
+  assert.doesNotThrow(() => assertSchedulePublication(empty, empty, isScheduleSnapshot));
+  const pending = { ...empty, events: [{ event_id: "fixture-pending", start_at: "2026-11-20T12:00:00Z",
+    league: "fixture", block: "fixture", best_of: 3, participants: [{ name: "TBD", code: "TBD" }, { name: "Team", code: "T" }] }],
+    quality: { event_count: 1, tbd_participant_count: 1 } };
+  assert.doesNotThrow(() => assertSchedulePublication(pending, pending, isScheduleSnapshot));
+  const wrongPendingCount = { ...pending, quality: { event_count: 1, tbd_participant_count: 0 } };
+  assert.throws(() => assertSchedulePublication(wrongPendingCount, wrongPendingCount, isScheduleSnapshot));
+  assert.throws(() => assertSchedulePublication({ ...empty, events: null }, empty, isScheduleSnapshot));
+  assert.throws(() => assertSchedulePublication({ ...empty, quality: { event_count: 1, tbd_participant_count: 0 } },
+    { ...empty, quality: { event_count: 1, tbd_participant_count: 0 } }, isScheduleSnapshot));
+  assert.throws(() => assertSchedulePublication({ ...empty, quality: undefined }, empty, isScheduleSnapshot));
+  const badSource = { ...empty, source_id: "unknown-source" };
+  assert.throws(() => assertSchedulePublication(badSource, badSource, isScheduleSnapshot));
+  assert.throws(() => assertSchedulePublication({ ...empty, content_hash: "sha256:" + "f".repeat(64) }, empty, isScheduleSnapshot));
+  assert.throws(() => assertSchedulePublication({ ...empty, retrieved_at: "invalid" },
+    { ...empty, retrieved_at: "invalid" }, isScheduleSnapshot));
+});
 
 function assertCreatorCandidates(creator, feed) {
   assert.equal(creator.mode, "CREATOR");
@@ -147,8 +177,8 @@ test("copies the same-origin feed and social card", async () => {
   assert.equal(aiValidation.ai_features_enabled, false);
   assert.equal(aiValidation.paired_holdout_case_count, 0);
   assert.equal(aiValidation.gates.length, 8);
-  assert.equal(schedule.artifact_type, "pro-schedule-snapshot");
-  assert.ok(schedule.events.length > 0);
+  assertSchedulePublication(schedule,
+    JSON.parse(await readFile(new URL("../public/feed/schedule.json", import.meta.url), "utf8")), isScheduleSnapshot);
   assert.equal(scheduleChanges.artifact_type, "pro-schedule-change-log");
   assert.equal(scheduleChanges.watched_team, "T1");
   assert.equal(scheduleChanges.current_snapshot.content_hash, schedule.content_hash);
