@@ -124,6 +124,63 @@ No hosted run can silently reset history. If no prior artifact exists, `workflow
 an encrypted `bootstrap_asset_id` or explicitly set `allow_fresh_start=true`. Scheduled runs always
 fail closed in that state.
 
+## Manual history-only acquisition (implemented, not deployed or executed)
+
+Status 2026-11-18: workflow and helper are implemented and tested offline only. No run of this
+mode has been dispatched, no provider request has been made from it, and it awaits independent
+review before any production use.
+
+`workflow_dispatch` accepts `history_only` (boolean, default `false`). Scheduled runs carry no
+inputs, so `HISTORY_ONLY` is `'true'` only when an operator explicitly dispatches with
+`history_only=true`. The default scheduled/manual current-season path is unchanged. No automatic
+historical schedule exists, and this mode does not choose between historical and current-season
+refresh on the operator's behalf: each dispatch is a deliberate choice to spend the shared
+provider interval on one past annual file instead of the current season.
+
+A history-only run:
+
+1. uses the same `pages` concurrency group, `OE_ARCHIVE_KEY` requirement and authenticated restore
+   as the normal run; a missing key, missing archive or failed restore stops before any provider
+   path, and `allow_fresh_start` is refused outright in this mode;
+2. runs `ops/hosted_history_acquisition.py`, which first requires an authenticated restore report,
+   a non-empty integrity-verified archive, a readable attempt ledger and an unexpired source policy
+   review (`policy_reviewed_at` + `review_interval_days`). Any failure is `BLOCKED_PRECONDITION`
+   and nothing is delegated;
+3. delegates exactly once to the existing `ops/player_career_archive.py --fetch-next` path, which
+   applies the shared public-record budget preflight, the persisted source-wide attempt ledger and
+   the 24-hour interval, and requests **at most one** missing reviewed past annual file through
+   `fetch-oe --historical-usage-only`. `sync-oe-feed` is never called first, so it cannot consume
+   the budget;
+4. uploads bounded diagnostics (`oe-history-diagnostics-<run_id>`, 14 days) without blocking
+   later steps on upload failure;
+5. repacks and uploads the encrypted rolling state, and keeps the two newest generations, after
+   success, budget deferral, rejection or a failed network attempt. The attempt ledger is written
+   before transport, so a failed request remains persisted and governs the next scheduled run;
+6. never runs current sync/health, scouting or season-history refresh, Pages build, Pages upload,
+   Git commit/push, collection-health notifications or the deploy job. Each of those steps is
+   explicitly guarded with `env.HISTORY_ONLY != 'true'`; the deploy job also excludes the mode; and
+7. reports the outcome in the step summary and fails the workflow after state preservation unless
+   the outcome is `ACQUIRED`, `NOTHING_MISSING` or `DEFERRED`.
+
+Outcomes are truthful: `DEFERRED` means the private ledger or published records say the interval
+has not elapsed and no new request was recorded. It is not acquisition success.
+`BLOCKED_PUBLIC_RECORDS` (unreadable or inconsistent published budget records), `SOURCE_UNAVAILABLE`
+and `FAILED` fail the run. The helper compares the attempt ledger before and after delegation, so
+an attempt recorded during an unexpected error is still reported.
+
+Because no public status is published in this mode, a historical attempt is visible only through
+the encrypted private ledger. The next scheduled run restores that ledger and its current-season
+sync is deferred for up to 24 hours. Plan for that tradeoff before dispatching.
+
+Archived is not validated history. A downloaded annual file sits in the private raw archive only.
+It is not complete coverage, validated player history or a public artifact until a separately
+reviewed build and publication step uses it.
+
+Shared ownership: the persisted ledger and published-record preflight are a conservative cross-check,
+not a distributed lock. While the hosted collector owns collection, stop all local provider
+downloads, including scheduled tasks, manual `fetch-oe` and local `--fetch-next`. A local request
+is not visible to the hosted ledger and could exceed the provider interval.
+
 ## First migration from the workstation
 
 Review without changing GitHub:

@@ -14,6 +14,11 @@ on:
         required: false
         default: false
         type: boolean
+      history_only:
+        description: "Manual history-only mode: restore, attempt at most one missing past annual file, repack. Never syncs, builds, pushes or deploys."
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   actions: write
@@ -33,6 +38,8 @@ jobs:
       archive_artifact_id: ${{ steps.archive-upload.outputs.artifact-id }}
       pages_ready: ${{ steps.pages-upload.outcome == 'success' }}
     env:
+      # 'true' only for an explicit manual dispatch; scheduled runs have no inputs and stay 'false'.
+      HISTORY_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.history_only == true }}
       OE_ARCHIVE_KEY: ${{ secrets.OE_ARCHIVE_KEY }}
       PRIVATE_STATE_DIR: outputs/hosted-oe-state
       PRIVATE_ARCHIVE_DIR: outputs/oracles-elixir/raw
@@ -85,6 +92,9 @@ jobs:
               "repos/$GITHUB_REPOSITORY/releases/assets/$BOOTSTRAP_ASSET_ID" \
               > "$PRIVATE_STATE_FILE"
             restore_source="BOOTSTRAP_RELEASE_ASSET:$BOOTSTRAP_ASSET_ID"
+          elif [[ "$ALLOW_FRESH_START" == "true" && "$HISTORY_ONLY" == "true" ]]; then
+            echo "History-only mode requires an authenticated restored history; a fresh start is refused." >&2
+            exit 1
           elif [[ "$ALLOW_FRESH_START" == "true" ]]; then
             restore_source="EXPLICIT_FRESH_START"
           else
@@ -100,8 +110,37 @@ jobs:
             rm -f "$PRIVATE_STATE_FILE"
           fi
           echo "restore_source=$restore_source" >> "$GITHUB_OUTPUT"
+      - name: Attempt at most one missing historical annual file (history-only mode)
+        id: history-acquisition
+        # Implicit success(): a missing key or failed restore skips this step, so no provider request.
+        if: env.HISTORY_ONLY == 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          python ops/hosted_history_acquisition.py \
+            --archive-dir "$PRIVATE_ARCHIVE_DIR" \
+            --restore-report "$PRIVATE_STATE_DIR/restore-report.json" \
+            --attempt-output "$PRIVATE_STATE_DIR/history-attempt.json" \
+            --report "$PRIVATE_STATE_DIR/history-acquisition.json" \
+            --public-feed web/public/feed/current.json \
+            --public-collection-status web/public/feed/collection-status.json
+      - name: Preserve history-only acquisition diagnostics
+        if: always() && env.HISTORY_ONLY == 'true'
+        # A diagnostics upload failure must never prevent the attempt ledger from being repacked.
+        continue-on-error: true
+        uses: actions/upload-artifact@v7
+        with:
+          name: oe-history-diagnostics-${{ github.run_id }}
+          path: |
+            outputs/hosted-oe-state/history-acquisition.json
+            outputs/hosted-oe-state/history-attempt.json
+            outputs/hosted-oe-state/restore-report.json
+          if-no-files-found: warn
+          retention-days: 14
       - name: Run policy-gated OE sync and fail-closed local health check
         id: sync-health
+        if: env.HISTORY_ONLY != 'true'
         continue-on-error: true
         shell: bash
         run: |
@@ -133,7 +172,8 @@ jobs:
             exit 1
           fi
       - name: Preserve public-safe sync diagnostics on success or rejection
-        if: ${{ always() }}
+        # Current-season only: in history mode a failure here would skip the encrypted repack.
+        if: ${{ always() && env.HISTORY_ONLY != 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: oe-sync-diagnostics-${{ github.run_id }}
@@ -180,7 +220,7 @@ jobs:
           fi
       - name: Refresh scouting packs from the accepted feed source
         id: scout-refresh
-        if: steps.sync-health.outcome == 'success'
+        if: steps.sync-health.outcome == 'success' && env.HISTORY_ONLY != 'true'
         # A scouting failure must not block the accepted feed; the previous packs stay published.
         continue-on-error: true
         run: >-
@@ -189,7 +229,7 @@ jobs:
           --archive-dir "$PRIVATE_ARCHIVE_DIR"
           --output-dir web/app/scouting
       - name: Keep the accepted scouting packs when their refresh failed
-        if: steps.scout-refresh.outcome == 'failure'
+        if: steps.scout-refresh.outcome == 'failure' && env.HISTORY_ONLY != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -198,7 +238,7 @@ jobs:
           echo "::warning::Scouting refresh failed; previously accepted packs were kept unchanged."
       - name: Refresh season player history from the accepted feed source
         id: season-history-refresh
-        if: steps.sync-health.outcome == 'success'
+        if: steps.sync-health.outcome == 'success' && env.HISTORY_ONLY != 'true'
         # A history failure must not block the accepted feed; the generator swaps atomically,
         # so the previously published file stays byte-for-byte unchanged on any failure.
         continue-on-error: true
@@ -209,17 +249,21 @@ jobs:
           --output web/public/history/player-season-2026.json
           --season 2026
       - name: Warn when the season player history refresh failed
-        if: steps.season-history-refresh.outcome == 'failure'
+        if: steps.season-history-refresh.outcome == 'failure' && env.HISTORY_ONLY != 'true'
         run: echo "::warning::Season player history refresh failed; the previous file was kept unchanged."
       - name: Validate and build the independent Pages artifact
+        if: env.HISTORY_ONLY != 'true'
         working-directory: web
         run: npm ci && npm run lint && npm run test:pages
       - uses: actions/configure-pages@v6
+        if: env.HISTORY_ONLY != 'true'
       - uses: actions/upload-pages-artifact@v5
         id: pages-upload
+        if: env.HISTORY_ONLY != 'true'
         with:
           path: web/dist-pages
       - name: Publish only the reviewed public feed heads
+        if: env.HISTORY_ONLY != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -259,7 +303,7 @@ jobs:
           git commit -m "chore(data): refresh hosted OE publication"
           git push origin HEAD:main
       - name: Preserve failed collection health after publishing its public status
-        if: always() && steps.sync-health.outcome != 'success'
+        if: always() && steps.sync-health.outcome != 'success' && env.HISTORY_ONLY != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -272,6 +316,23 @@ jobs:
             exit 0
           fi
           exit 1
+      - name: Report the history-only outcome after private state preservation
+        if: always() && env.HISTORY_ONLY == 'true'
+        env:
+          HISTORY_OUTCOME: ${{ steps.history-acquisition.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          report="$PRIVATE_STATE_DIR/history-acquisition.json"
+          outcome=UNKNOWN
+          if [[ -f "$report" ]]; then
+            outcome=$(python -c 'import json, sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("outcome", "UNKNOWN"))' "$report" || echo UNREADABLE)
+          fi
+          echo "History-only acquisition outcome: $outcome (step outcome: $HISTORY_OUTCOME). No public feed, Pages artifact or Git push was produced." >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$HISTORY_OUTCOME" != "success" ]]; then
+            echo "History-only acquisition did not succeed: $outcome" >&2
+            exit 1
+          fi
 
   deploy:
     environment:
@@ -279,7 +340,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: sync
-    if: always() && needs.sync.outputs.pages_ready == 'true'
+    if: always() && needs.sync.outputs.pages_ready == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.history_only == true)
     steps:
       - name: Deploy hosted OE publication to GitHub Pages
         id: deployment
