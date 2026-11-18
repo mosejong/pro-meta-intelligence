@@ -22,16 +22,19 @@ The system ranks candidates for review, not as automatic truths.
 ## Implemented Today
 
 - Public patch Radar with source evidence, sample guards and a fixed analysis cutoff.
-- T1/opponent briefs, role-level observed champions and official schedule monitoring.
+- Team/opponent briefs, role-level observed champions and official schedule monitoring.
 - Human-confirmed draft rehearsal with staged opponent previews, separate map side / first pick,
   Hard Fearless prior-pick locks, deterministic replay and device-local save/import/export.
 - Historical draft evaluation with preserved aggregates; production v2 remains the default.
 - Rule-based staff/creator briefs, printable demonstration flow and local human-review journals.
 - Device-local own-team practice input, isolated from public evidence and opponent answers.
+- Korean draft-studio preview with five work tabs, team/draft share links, guest clubs and
+  on-demand 2022/2026 season cards. Historical selections do not imply player effects or win predictions.
 
-The public source snapshot is currently dated August 31, 2026 (patch 16.16); source backoff and
-incomplete history remain visible. This is a working evidence-review prototype, not validated
-Worlds meta or a proven improvement in staff decision time. [Current work and gates](docs/RELEASE_BACKLOG.md).
+The November 18, 2026 Korean preview uses patch 16.20 publication data; read the shipped cutoff
+and coverage rather than treating this README date as a freshness guarantee. It is an evidence-review
+prototype, not a proven improvement in staff decision time or a real-match win predictor.
+[Preview and verified deployment scope](docs/KOREAN_PREVIEW_RELEASE_2026-11-18.md).
 
 ## Product Scope and Planned Capabilities
 

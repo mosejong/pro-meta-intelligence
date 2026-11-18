@@ -109,6 +109,10 @@
 
 시즌 연결 `6ab1a0d1`을 로컬 커밋하고 최신 `origin/main`을 `7c8388d3`에서 통합했다. 웹의 추천 후보 존재 가정6건을 고정 양성 자료/항상 실행되는 음성 경로로 분리했다. 긴 임시 경로의 Python12건 실패는 짧은 임시 경로에서385/385로 구분 확인했다. 통합 웹220/220·PC/모바일 시즌/공유14/14와 Pages4/4를 통과했다. [통합 기록](KOREAN_PREVIEW_RELEASE_2026-11-18.md). 아직 이 기록으로 PR CI·배포 성공을 주장하지 않는다.
 
+## 2026-11-18 · 한국어 지인 테스트판 배포 확인
+
+사용자 승인 범위에 따라 [PR #122](https://github.com/mosejong/pro-meta-intelligence/pull/122)의 CI 통과 뒤 main에 머지했다. 배포 커밋은 `a04f13a6`, [Pages 실행](https://github.com/mosejong/pro-meta-intelligence/actions/runs/44233536613)은 성공했다. 실제 https://mosejong.github.io/pro-meta-intelligence/ 에서 Chrome PC·모바일 폭 각각 한국어 화면·시즌 선택·구단 저장·새로고침 보관과 pageerror 0건을 확인했다. [배포 기록](KOREAN_PREVIEW_RELEASE_2026-11-18.md)에 로그·화면 위치를 남겼다. 실제 기기·중국 접속·일반 이용자 효용은 아직 확인하지 않았다. 직접 연락을 보내지 않았으며 사용자가 동료·지인에게 공유할 차례다.
+
 ## 다음 기록 양식
 
 ```text
