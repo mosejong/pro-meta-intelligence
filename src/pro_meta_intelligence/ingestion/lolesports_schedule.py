@@ -561,16 +561,37 @@ class LoLEsportsScheduleAdapter:
         *,
         locale: str = "en-US",
         last_retrieved_at: datetime | None = None,
+        last_attempted_at: datetime | None = None,
+        on_request_started: Callable[[datetime], None] | None = None,
     ) -> ScheduleSnapshot:
+        """Fetch one schedule page.
+
+        `last_attempted_at` (a persisted request start time) shares the source interval with
+        `last_retrieved_at`. `on_request_started` runs only after the policy gate, input
+        validation, and interval check pass, immediately before the network call; if it raises,
+        no request is made.
+        """
         registration = self._authorize("FETCH_SCHEDULE_HTML")
         normalized_slugs = self._validate_inputs(league_slugs, locale)
-        if last_retrieved_at is not None:
-            require_aware(last_retrieved_at, "last_retrieved_at")
-            retry_at = last_retrieved_at + timedelta(seconds=registration.minimum_interval_seconds)
-            if self.clock() < retry_at:
+        previous_times = []
+        for value, name in (
+            (last_retrieved_at, "last_retrieved_at"),
+            (last_attempted_at, "last_attempted_at"),
+        ):
+            if value is not None:
+                require_aware(value, name)
+                previous_times.append(value)
+        now = self.clock()
+        if previous_times:
+            retry_at = max(previous_times) + timedelta(
+                seconds=registration.minimum_interval_seconds
+            )
+            if now < retry_at:
                 raise ScheduleFetchIntervalError(retry_at)
         encoded_leagues = quote(",".join(normalized_slugs), safe="")
         url = f"{registration.base_urls[0].rstrip('/')}/{locale}/leagues/{encoded_leagues}"
+        if on_request_started is not None:
+            on_request_started(now)
         response = self.transport.fetch(
             url,
             maximum_bytes=registration.maximum_response_bytes,

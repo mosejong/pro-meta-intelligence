@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import inspect
 import json
 import platform
 from collections import Counter
@@ -79,10 +80,14 @@ from pro_meta_intelligence.radar import LeagueRegionMap, MetaRadar, MetaRadarCon
 from pro_meta_intelligence.sources import (
     SnapshotArchive,
     SourceAttemptLedger,
+    SourceAttemptLedgerError,
     SourcePolicyError,
     SourceRegistry,
 )
 from pro_meta_intelligence.temporal import parse_datetime
+
+SCHEDULE_FETCH_OPERATION = "FETCH_SCHEDULE_HTML"
+SCHEDULE_ATTEMPT_CLOCK_SKEW = timedelta(minutes=5)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -626,12 +631,57 @@ def _fetch_schedule(args: argparse.Namespace) -> int:
         default=None,
     )
     leagues = args.leagues or ["lck", "lec", "lpl", "lcs", "msi", "worlds"]
+    ledger = SourceAttemptLedger(args.archive_dir)
+    request_started: list[datetime] = []
+
+    def attempt_state_invalid(error: Exception) -> int:
+        payload = {
+            "schema_version": "1",
+            "status": "ATTEMPT_STATE_INVALID",
+            "source_id": adapter.source_id,
+            "network_collection_performed": False,
+            "error": str(error),
+            "existing_snapshot_preserved": args.output.is_file(),
+            "next_action": "REVIEW_SCHEDULE_ATTEMPT_STATE",
+        }
+        _emit(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", None)
+        return 6
+
+    def record_request(attempted_at: datetime) -> None:
+        # durable before the network call, so a failed request or later build still spends budget
+        try:
+            ledger.record(adapter.source_id, SCHEDULE_FETCH_OPERATION, attempted_at)
+        except (OSError, ValueError) as error:
+            raise SourceAttemptLedgerError("request-attempt ledger could not be written") from error
+        request_started.append(attempted_at)
+
     try:
-        snapshot = adapter.fetch(
-            leagues,
-            locale=args.locale,
-            last_retrieved_at=last_retrieved_at,
+        last_attempted_at = ledger.latest_attempted_at(adapter.source_id, SCHEDULE_FETCH_OPERATION)
+    except (SourceAttemptLedgerError, ValueError) as error:
+        return attempt_state_invalid(error)
+    now = getattr(adapter, "clock", lambda: datetime.now(UTC))()
+    if last_attempted_at is not None and last_attempted_at > now + SCHEDULE_ATTEMPT_CLOCK_SKEW:
+        return attempt_state_invalid(
+            SourceAttemptLedgerError("request-attempt ledger is in the future")
         )
+    fetch_kwargs: dict[str, Any] = {"locale": args.locale, "last_retrieved_at": last_retrieved_at}
+    if "on_request_started" in inspect.signature(adapter.fetch).parameters:
+        fetch_kwargs["last_attempted_at"] = last_attempted_at
+        fetch_kwargs["on_request_started"] = record_request
+    else:
+        # adapters without the request hook cannot prove when they touch the network;
+        # merge the ledger into the interval and conservatively spend budget up front
+        fetch_kwargs["last_retrieved_at"] = max(
+            (item for item in (last_retrieved_at, last_attempted_at) if item is not None),
+            default=None,
+        )
+    try:
+        if "on_request_started" not in fetch_kwargs:
+            record_request(now)
+        snapshot = adapter.fetch(leagues, **fetch_kwargs)
+    except SourceAttemptLedgerError as error:
+        # raised by the pre-request hook, so no request was sent
+        return attempt_state_invalid(error)
     except SourcePolicyError as error:
         payload = {
             "schema_version": "1",
@@ -662,6 +712,8 @@ def _fetch_schedule(args: argparse.Namespace) -> int:
             "error": str(error),
             "existing_snapshot_preserved": args.output.is_file(),
         }
+        if request_started:
+            payload["request_attempt_recorded_at"] = request_started[-1].isoformat()
         body = getattr(error, "body", None)
         if body is not None and args.diagnostics_dir is not None:
             args.diagnostics_dir.mkdir(parents=True, exist_ok=True)
