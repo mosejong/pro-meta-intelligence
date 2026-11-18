@@ -5,6 +5,12 @@ name: Refresh draft scouting packs
 # state, and only proposes the regenerated aggregate packs as a pull request for review.
 on:
   workflow_dispatch:
+    inputs:
+      refresh_scope:
+        description: "Scouting PR or derived season artifact only (no deploy/provider request)"
+        type: choice
+        options: [scouting, season-artifact]
+        default: scouting
 
 permissions:
   actions: read
@@ -17,6 +23,7 @@ concurrency:
 
 jobs:
   refresh:
+    if: inputs.refresh_scope != 'season-artifact'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -131,3 +138,81 @@ jobs:
               echo "Actions could not open the pull request (repository setting). Open it here: $compare"
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+
+
+  season-artifact:
+    if: inputs.refresh_scope == 'season-artifact'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+    env:
+      PRIVATE_STATE_DIR: outputs/season-restore
+      PRIVATE_ARCHIVE_DIR: outputs/oracles-elixir/raw
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install archive dependencies
+        run: python -m pip install -e ".[hosted-ops]"
+      - name: Restore authenticated archive without provider access
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OE_ARCHIVE_KEY: ${{ secrets.OE_ARCHIVE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$OE_ARCHIVE_KEY" ]]; then
+            echo "Required archive key is not configured." >&2
+            exit 1
+          fi
+          mkdir -p "$PRIVATE_STATE_DIR"
+          artifact_id=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" \
+            --jq '[.artifacts[] | select(.expired == false and (.name | startswith("oe-private-history-state-")))] | sort_by(.created_at) | reverse | .[0].id // empty')
+          test -n "$artifact_id"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" > "$PRIVATE_STATE_DIR/state.zip"
+          unzip -q "$PRIVATE_STATE_DIR/state.zip" -d "$PRIVATE_STATE_DIR/restored"
+          python -m pro_meta_intelligence restore-private-oe-archive \
+            --input "$PRIVATE_STATE_DIR/restored/oe-private-history-state.pmi" \
+            --archive-dir "$PRIVATE_ARCHIVE_DIR" \
+            --report "$PRIVATE_STATE_DIR/restore-report.json"
+      - name: Build only the accepted feed's season companion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python ops/build_player_season_history.py \
+            --feed web/public/feed/current.json \
+            --archive-dir "$PRIVATE_ARCHIVE_DIR" \
+            --output outputs/season-public-companion/player-season-2026.json \
+            --season 2026
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          feed = Path("web/public/feed/current.json")
+          season = Path("outputs/season-public-companion/player-season-2026.json")
+          data = json.loads(season.read_text(encoding="utf-8"))
+          manifest = {
+              "artifact_type": "season-companion-transfer",
+              "schema_version": 1,
+              "feed_sha256": hashlib.sha256(feed.read_bytes()).hexdigest(),
+              "season_sha256": hashlib.sha256(season.read_bytes()).hexdigest(),
+              "cutoff": data["cutoff"],
+              "source": data["source"],
+          }
+          season.with_name("manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+          PY
+      - name: Export only derived public aggregates
+        uses: actions/upload-artifact@v7
+        with:
+          name: season-public-companion-${{ github.run_id }}
+          path: |
+            outputs/season-public-companion/player-season-2026.json
+            outputs/season-public-companion/manifest.json
+          if-no-files-found: error
+          retention-days: 3
