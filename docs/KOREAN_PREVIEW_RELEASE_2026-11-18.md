@@ -20,4 +20,10 @@
 
 ## 배포 상태
 
-이 문서 작성 시 PR CI·실제 배포 URL 확인은 아직 대기다. 후속 확인은 개발일지에 PR/커밋·배포 결과·실제 URL과 함께 기록한다. 검증된 로컬 빌드를 실제 운영 반영으로 표현하지 않는다. 지인 연락은 보내지 않았다.
+후속 확인 완료: [PR #122](https://github.com/mosejong/pro-meta-intelligence/pull/122)의 Python·웹 CI가 통과했고 `a04f13a6120c2ef7f6d7a550dc6a2cd73cc09470`으로 main에 머지했다. [Pages 실행 44233536613](https://github.com/mosejong/pro-meta-intelligence/actions/runs/44233536613)이 success로 끝났다.
+
+공개 주소: https://mosejong.github.io/pro-meta-intelligence/
+
+실제 HTTPS 주소에서 독립 Chrome PC(1440px)·모바일 폭/터치(390px) 컨텍스트를 열어 한국어 화면, 2022 Nuguri 57경기 선택, 구단 저장·새로고침 후 보관을 확인했다. 두 화면 모두 pageerror 0건이었다. 실제 휴대폰·중국 지역 검증은 아니다. 지인 연락은 보내지 않았다.
+
+브라우저 로그: `outputs/korean-preview-public-verification-20261118.log`. 화면: `outputs/korean-public-{desktop,mobile}-20261118.png`, `outputs/korean-public-season-{desktop,mobile}-20261118.png`. 로컬 outputs이므로 GitHub에 이미지가 첨부됐다고 가정하지 않는다.
