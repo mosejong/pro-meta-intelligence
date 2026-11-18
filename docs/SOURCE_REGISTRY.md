@@ -285,6 +285,29 @@ The command marks authenticity as `UNVERIFIED_CALLER_SUPPLIED_FILE`: matching a 
 not prove that an arbitrary local file came from the provider. Use `--fail-on-rejected` in scheduled
 quality gates.
 
+## Historical OE annual-file review — November 18, 2026
+
+The user explicitly expanded the requested pro-match history to 2014 onward. The exact
+2014–2025 filenames and file IDs were read from their visible rows in the provider's
+[official public folder](https://drive.google.com/drive/folders/1gLSw0RLjBbtaNy0dgnGQDAZOHIgCe-HH)
+and recorded in `src/pro_meta_intelligence/config/oe_published_files.json`; the existing 2026
+entry is retained. This is a reviewed manifest expansion, not permission for automated folder
+enumeration, arbitrary URLs, new hosts, raw redistribution, or faster requests.
+
+The policy review timestamp and existing 86,400-second provider-wide interval are unchanged.
+The one actual historical acquisition was 2022, retrieved at
+`2026-11-18T00:45:22.279927Z`, SHA256
+`76b7cb8afc1c65c7e220053b1c5296c593e00c3a6dfaee4ef47373aa64b42a0a`.
+Other registered years are not thereby downloaded or complete. Failed manual downloads now
+also persist their attempt time. Current-feed caches and publication history are filtered by
+the requested annual file ID, so a newer historical acquisition cannot replace the current
+season cache. Rate checks still use all annual files plus the shared attempt ledger.
+
+The explicit `--historical-usage-only` contract accepts appearance columns in **past** annual
+files without requiring reliable first-pick or ban sequence fields. Current-season feed
+collection retains its full draft CSV contract. The separate career aggregate never creates
+pick/ban order from those sparse appearances. See `docs/HISTORICAL_PLAYER_SCENARIOS.md`.
+
 ## Deferred intentionally
 
 - Riot match, ranked, or tournament API calls
