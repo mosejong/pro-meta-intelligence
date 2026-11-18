@@ -1,5 +1,6 @@
 import { championAssetId } from "./champion-assets";
 import { applyDraftSelection, completeFearlessGame, DRAFT_MODEL_VERSION, fearlessLocks, isChampionLocked, nextDraftTurn, type DraftGame, type DraftSelection, type DraftSide } from "./draft-agent";
+import { parseDraftPositions, type DraftPositionRecord } from "./draft-position-session";
 import { isRadarReport, type RadarReport } from "./radar-types";
 
 export const MAX_DRAFT_FILE_BYTES = 16 * 1024 * 1024;
@@ -11,6 +12,8 @@ export type DraftSession = {
   selections: DraftSelection[];
   stagedChampion: string | null;
   firstPickSide: DraftSide;
+  /** Explicit current-game position work (schema v4, local practice only); absent when none. */
+  positions?: DraftPositionRecord;
 };
 /**
  * Stable parse-failure codes. `error` keeps the existing Korean text for current callers;
@@ -70,7 +73,9 @@ export function parseDraftSession(text: string): DraftSessionResult {
   if (new TextEncoder().encode(text).byteLength > MAX_DRAFT_FILE_BYTES) return fail("SIZE_LIMIT");
   let value: unknown;
   try { value = JSON.parse(text); } catch { return fail("INVALID_JSON"); }
-  if (!record(value) || value.artifact_type !== "public-draft-scenario" || (value.schema_version !== "2" && value.schema_version !== "3") || value.format !== "HARD_FEARLESS_5_BAN_5_PICK") return fail("UNSUPPORTED_FORMAT");
+  // v2: blue first, no roles. v3: chosen first-pick side, no roles. v4: v3 + required current-game positions.
+  if (!record(value) || value.artifact_type !== "public-draft-scenario" || !["2", "3", "4"].includes(value.schema_version as string) || value.format !== "HARD_FEARLESS_5_BAN_5_PICK") return fail("UNSUPPORTED_FORMAT");
+  if (value.schema_version === "4" ? !record(value.current_game_positions) : Object.hasOwn(value, "current_game_positions")) return fail("UNSUPPORTED_FORMAT");
   const firstPickSide = value.schema_version === "2" ? "BLUE" : value.first_pick_side;
   if (firstPickSide !== "BLUE" && firstPickSide !== "RED") return fail("INVALID_FIRST_PICK_SIDE");
   if (value.model_version !== DRAFT_MODEL_VERSION) return fail("MODEL_VERSION_MISMATCH");
@@ -92,7 +97,7 @@ export function parseDraftSession(text: string): DraftSessionResult {
   for (const game of value.previous_games) {
     if (!record(game) || ![blue.team_id, red.team_id].includes(String(game.blue_team_id)) ||
       ![blue.team_id, red.team_id].includes(String(game.red_team_id))) return fail("PREVIOUS_MATCHUP_MISMATCH");
-    const gameFirstSide = value.schema_version === "3" && Array.isArray(game.selections) && record(game.selections[0]) ? game.selections[0].side : "BLUE";
+    const gameFirstSide = value.schema_version !== "2" && Array.isArray(game.selections) && record(game.selections[0]) ? game.selections[0].side : "BLUE";
     if (gameFirstSide !== "BLUE" && gameFirstSide !== "RED") return fail("PREVIOUS_FIRST_PICK_SIDE");
     const selections = replaySelections(game.selections, fearlessLocks(games), gameFirstSide);
     if (!selections) return fail("PREVIOUS_SELECTIONS");
@@ -105,7 +110,10 @@ export function parseDraftSession(text: string): DraftSessionResult {
   if (!selections || value.game_number !== games.length + 1 || value.complete !== (selections.length === 20)) return fail("CURRENT_GAME");
   const stagedChampion = value.staged_champion ?? null;
   if (stagedChampion !== null && (!validChampion(stagedChampion) || !nextDraftTurn(selections) || isChampionLocked(selections, stagedChampion, locks))) return fail("STAGED_CHAMPION");
-  return { ok: true, session: { report, blueTeamId: blue.team_id, redTeamId: red.team_id, games, selections, stagedChampion, firstPickSide } };
+  // Reuses CURRENT_GAME (existing translated text): positions belong to the current game record.
+  const positions = value.schema_version === "4" ? parseDraftPositions(value.current_game_positions, { blueTeamId: blue.team_id, redTeamId: red.team_id, selections }) : {};
+  if (!positions) return fail("CURRENT_GAME");
+  return { ok: true, session: { report, blueTeamId: blue.team_id, redTeamId: red.team_id, games, selections, stagedChampion, firstPickSide, ...(Object.keys(positions).length ? { positions } : {}) } };
 }
 
 // IndexedDB accommodates the complete public snapshot without localStorage's small quota.

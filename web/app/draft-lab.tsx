@@ -47,6 +47,7 @@ import { suggestSoloDraftTurn } from "./solo-draft";
 import { DraftPositionStack } from "./draft-position-stack";
 import { emptyChampionRoles, championKey, teamPicks, type ChampionRoles, type RoleAssignments } from "./champion-roles";
 import { buildDraftPositionBoard, reconcileChampionRoles, moveChampionRole } from "./draft-position-board";
+import { normalizeDraftPositions } from "./draft-position-session";
 import { basisKey, rosterBasis, type RosterRole } from "./roster-scenario";
 import { DraftResultPanel } from "./draft-result-panel";
 
@@ -204,6 +205,11 @@ function TeamDraftColumn({
   </section>;
 }
 
+/** Position work is valid only for this exact basis, matchup, first-pick side, series and room mode. */
+function positionContextKey(report: RadarReport, blueTeamId: string, redTeamId: string, firstPickSide: DraftSide, games: DraftGame[], roomActive: boolean) {
+  return JSON.stringify([basisKey(rosterBasis(report)), blueTeamId, redTeamId, firstPickSide, games, roomActive]);
+}
+
 export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftLabProps) {
   const [room, setRoom] = useState<RoomControls>({ active: false, connected: false, sending: false, action: () => {} });
   const [seriesReport, setSeriesReport] = useState<RadarReport | null>(null);
@@ -253,7 +259,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [readyInput, setReadyInput] = useState<SimulationInputSnapshot | null>(null);
   const blueTeam = teams.find((team) => team.team_id === blueTeamId) ?? null;
   const redTeam = teams.find((team) => team.team_id === redTeamId) ?? null;
-  const positionContext = JSON.stringify([basisKey(rosterBasis(report)), blueTeamId, redTeamId, firstPickSide, games, room.active]);
+  const positionContext = positionContextKey(report, blueTeamId, redTeamId, firstPickSide, games, room.active);
   const positionUnassigned = positionState.context === positionContext ? positionState.unassigned ?? {} : {};
   const positionRoles: RoleAssignments = {};
   for (const [side, team] of [["BLUE", blueTeam], ["RED", redTeam]] as const) if (team) positionRoles[team.team_id] = reconcileChampionRoles(positionState.context === positionContext ? positionState.roles[team.team_id] ?? emptyChampionRoles() : emptyChampionRoles(), teamPicks(selections, side));
@@ -310,7 +316,13 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
   const restoreSession = useCallback((session: DraftSession) => {
     setSoloEnabled(false); setLastAuto(null);
-    setPositionState({ context: "", roles: {} });
+    // Saved explicit roles/unassigned picks (v4) come back for this exact local context; suggestions are never stored.
+    const saved = Object.entries(session.positions ?? {});
+    setPositionState(saved.length ? {
+      context: positionContextKey(session.report, session.blueTeamId, session.redTeamId, session.firstPickSide, session.games, false),
+      roles: Object.fromEntries(saved.map(([id, team]) => [id, { ...team.roles }])),
+      unassigned: Object.fromEntries(saved.map(([id, team]) => [id, [...team.unassigned]])),
+    } : { context: "", roles: {} });
     setSeriesReport(session.report);
     setBlueTeamId(session.blueTeamId);
     setRedTeamId(session.redTeamId);
@@ -343,10 +355,15 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     return () => { active = false; };
   }, [restoreSession]);
 
+  // Explicit local position work only (memoized; never part of share links or room messages).
+  const positionRecord = useMemo(() => {
+    if (room.active || positionState.context !== positionContext) return null;
+    return normalizeDraftPositions(positionState.roles, positionState.unassigned ?? {}, { blueTeamId, redTeamId, selections });
+  }, [room.active, positionState, positionContext, blueTeamId, redTeamId, selections]);
   const saveSnapshot = useMemo(() => {
     if (!sessionReady || !seriesReport || !blueTeam || !redTeam || importing || room.active) return null;
-    return serializeDraftScenario(seriesReport, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide);
-  }, [sessionReady, seriesReport, blueTeam, redTeam, selections, games, pendingChampion, importing, firstPickSide, room.active]);
+    return serializeDraftScenario(seriesReport, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide, positionRecord);
+  }, [sessionReady, seriesReport, blueTeam, redTeam, selections, games, pendingChampion, importing, firstPickSide, room.active, positionRecord]);
   // Memoized above, so timer ticks and status updates never resubmit; each committed change is written immediately.
   const retrySave = useDraftSave(saveSnapshot, setStorageStatus);
 
@@ -542,7 +559,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
   function downloadScenario() {
     if (!blueTeam || !redTeam) return;
-    const blob = new Blob([serializeDraftScenario(report, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide)], { type: "application/json" });
+    const blob = new Blob([serializeDraftScenario(report, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide, positionRecord)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
