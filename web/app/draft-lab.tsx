@@ -271,6 +271,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const rosterToken = useRef(0);
   /** Current ready simulation input (with explicit roles) reported by the readiness panel, or null. */
   const [readyInput, setReadyInput] = useState<SimulationInputSnapshot | null>(null);
+  // Past-season players: practice/saving/observation only, never assumption-experiment input.
+  const historicalPlayers = rosterMeta?.seasonPlayers ?? false;
+  const experimentReadyInput = historicalPlayers ? null : readyInput;
   const blueTeam = teams.find((team) => team.team_id === blueTeamId) ?? null;
   const redTeam = teams.find((team) => team.team_id === redTeamId) ?? null;
   const positionContext = positionContextKey(report, blueTeamId, redTeamId, firstPickSide, games, room.active);
@@ -845,7 +848,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
     <div id={panelOf("COMPARISON")} className="studio-comparison-panel" role="tabpanel" aria-labelledby={`${panelOf("COMPARISON")}-tab`} hidden={studioTab !== "COMPARISON"}>
     <DraftComparisonPanel key={comparisonEpoch} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf}
-      readyInput={readyInput} publicationRoot={productRootHref(currentSpace)}
+      readyInput={experimentReadyInput} publicationRoot={productRootHref(currentSpace)}
       onOpenRoleAssignment={() => showStudioTab("SIMULATION", () => {
         const target = document.querySelector<HTMLElement>(`#${panelOf("SIMULATION")} .simulation-readiness-team select:not(:disabled)`)
           ?? document.querySelector<HTMLElement>(`#${panelOf("SIMULATION")} .simulation-readiness > summary`);
@@ -861,9 +864,14 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       const side = teamId === blueTeamId ? "BLUE" : "RED";
       if (id) assignPosition(side, id, role);
       else { const current = positionRoles[teamId]?.[role]; if (current) assignPosition(side, current, null); }
-    }} onReadyInputChange={setReadyInput} />
-    {/* Assumption experiment on the validated ready input; runs only on its explicit button. */}
-    <ExperimentReplayPanel readyInput={readyInput} blocked={!canSelect || room.active} nameOf={nameOf} />
+    }} onReadyInputChange={setReadyInput} hasHistoricalPlayers={historicalPlayers}
+      onOpenRoster={() => showStudioTab("ROSTER", () => {
+        const target = document.getElementById(`${panelOf("ROSTER")}-tab`);
+        target?.focus();
+      })} />
+    {/* Assumption experiment on the validated ready input; runs only on its explicit button.
+        Past-season players are not experiment input, so a stale ready input is never passed on. */}
+    <ExperimentReplayPanel readyInput={experimentReadyInput} blocked={!canSelect || room.active} nameOf={nameOf} />
     </div>
     </div>
     </div>

@@ -233,8 +233,8 @@ test("simulation input readiness: explicit roles, current rosters, detached snap
       assert.match(html, /시뮬레이션 입력 준비/);
       assert.match(html, /현재 4\/20개/);
       assert.match(html, /역할은 사용자 배정/);
-      assert.match(html, /선수 근거는 현재 관측이며 연간 자료는 포함하지 않습니다/);
-      assert.match(html, /학습된 선수\/챔피언 효과·상성·룬·아이템·실제 승률은 아직 계산하지 않습니다/);
+      assert.match(html, /입력 표에는 현재 관측 선수를 표시하고, 별도 선수 근거에서 올해의 역할별 사용 기록을 확인할 수 있습니다/);
+      assert.match(html, /학습된 선수·과거 시즌 선수·챔피언 효과와 상성·룬·아이템·실제 승률은 아직 계산하지 않습니다/);
       const done = renderToStaticMarkup(createElement(SimulationReadinessPanel, { report, blueTeam: teamA, redTeam: teamB,
         selections: draft(), games: [], firstPickSide: "BLUE", roster: fullRoster(), nameOf }));
       assert.equal((done.match(/<select/g) ?? []).length, 10);
