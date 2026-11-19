@@ -76,3 +76,8 @@ Codex separately reproduced a real ordering defect: bubbled request error advanc
 Final related24/24, typecheck and changed-file lint passed. These remain fake-IDB/unit proofs, not actual-browser quota/eviction proof. No storage UI wiring or full-suite/browser rerun is claimed.
 Claude fix call ended with a real usage limit after edits: "You've hit your 5-hour limit · resets 7:40am (Asia/Seoul)". No further Claude calls were made. Final narrative completion report is absent; actual code was reviewed/tested by Codex. Stage3 remains unimplemented.
 The state-machine section above is superseded where it lists request error as settlement: request error is NONTERMINAL, only recorded until abort. The queue does not advance on that event.
+
+## Additional Codex native-browser evidence while Claude quota waits
+`node --test tests/solo-review-storage-browser-review.test.mjs` passed1/1 in actual Chrome/native IndexedDB (5.61s).
+Confirmed pair commit/read, same-board legacy sidecar deletion, mixed writer invocation ordering, real asynchronous ConstraintError rollback and board-only fallback, synchronous injected setup failure rollback, subsequent writer recovery.
+Errors were injected via actual browser IDB request APIs. This is NOT actual disk exhaustion, OS eviction, iOS Safari or two-device testing. No product source changes. Full restore UI still unwired.
