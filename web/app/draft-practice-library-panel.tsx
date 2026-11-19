@@ -27,8 +27,12 @@ export function DraftPracticeLibraryPanel({ scenario, roster = null, season = nu
   roster?: string | null;
   /** Season-player references verified against the loaded catalog for `roster`, or null. Saved only with the roster. */
   season?: SeasonPracticePart | null;
-  /** Loads the currently published season catalog (parsed + integrity-checked). Needed to restore season refs. */
-  loadSeasonCatalog?: ((signal: AbortSignal) => Promise<SeasonCardCatalog>) | null;
+  /**
+   * Loads the published season catalog (parsed + integrity-checked). Needed to restore season refs.
+   * `expected` is the saved catalog version; loaders may use it to fetch a preserved immutable copy.
+   * The result is still verified with exact catalog_id/cutoff matching here.
+   */
+  loadSeasonCatalog?: ((signal: AbortSignal, expected?: { catalog_id: string; cutoff: string }) => Promise<SeasonCardCatalog>) | null;
   /** Why the roster cannot be saved together (e.g. season players assigned), or null. */
   rosterBlocked?: string | null;
   /**
@@ -184,7 +188,7 @@ export function DraftPracticeLibraryPanel({ scenario, roster = null, season = nu
         setSeasonLoading(true);
         setStatus({ tone: "ok", text: "시즌 선수 자료를 확인하는 중입니다. 확인이 끝나기 전에는 아무것도 바꾸지 않습니다." });
         let catalog: SeasonCardCatalog | null = null;
-        try { catalog = await loader(controller.signal); } catch { catalog = null; }
+        try { catalog = await loader(controller.signal, { catalog_id: savedSeason.catalog_id, cutoff: savedSeason.cutoff }); } catch { catalog = null; }
         if (!current(token)) return;
         const afterCatalog = gate.current!.check(ticket);
         if (afterCatalog !== "OK") { setStatus({ tone: "error", text: PRACTICE_GATE_TEXT[afterCatalog] }); return; }

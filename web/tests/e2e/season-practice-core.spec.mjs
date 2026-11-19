@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { createHash } from "node:crypto";
 import { showPanel } from "./studio-panels.mjs";
 
 test("season practice restores Nuguri and draft together; cancelling delayed catalog preserves new work", async ({ page }) => {
@@ -31,8 +32,16 @@ test("season practice restores Nuguri and draft together; cancelling delayed cat
   await showPanel(page, "DRAFT");
   await pickTurn();
   const load = library.getByRole("button", { name: "시즌 선수 복원 확인 열기", exact: true });
+  const canonical = x => Array.isArray(x) ? x.map(canonical) : x && typeof x === "object" ? Object.fromEntries(Object.keys(x).sort().map(k => [k, canonical(x[k])])) : x;
+  const updated = structuredClone(catalog);
+  updated.cards = updated.cards.slice(1);
+  updated.catalog_id = createHash("sha256").update(JSON.stringify(canonical(updated.cards))).digest("hex");
+  expect(updated.catalog_id).not.toBe(catalog.catalog_id);
+  await page.route("**/history/season-player-cards.json", route => route.fulfill({ json: updated }));
+  const archiveResponse = page.waitForResponse(r => new URL(r.url()).pathname.endsWith(`/history/catalogs/${catalog.catalog_id}.json`));
   await load.click();
   await library.getByRole("alertdialog").getByRole("button", { name: "바꾸기", exact: true }).click();
+  expect((await archiveResponse).status()).toBe(200);
   await expect(library.getByRole("status")).toContainText("시즌 선수 구성도 복원");
   await expect(page.locator(".draft-turn-progress")).toHaveAttribute("value", "1");
   await showPanel(page, "ROSTER");

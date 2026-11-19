@@ -138,3 +138,20 @@ Claude 정상완료 세션4fbcadaa-d015-4881-90ec-d7719747abad, is_error=false. 
 ## Codex 이름변경 통합 확인
 
 관련21개 중 첫20개통과/마지막60ms abort시험이JSON검증보다먼저timeout돼실패했다. 테스트 timeout을1초/의도지연1.5초로분리한뒤신규6개모두통과. 제품timeout상수변경없음. JSX Escape핸들러를form에서input으로옮겨접근성lint통과. 타입통과,실제PC Enter적용/Escape취소/현재밴픽유지1개통과. 신규테스트등록. 전체369수치는이름변경직전통합이며이번변경후전체재실행은하지않았다.
+
+
+## 다음 작업 연속 실행: 서버 보관본 카드 사전생성
+
+제품이름변경edc10a0b와연도선택6907420b후멈추지않고운영전용worktree outputs/hosted-history-integration의feat/cached-season-cards-20261119에서Claude CLI9033을실행중. 기존cached감사workflow에defaultfalse선택형카드생성만추가한다. 결과 outputs/claude-cached-cards-20261119-result.json. 공급자추가요청/공개갱신/제품push없음. 실제서버생성은구현검토/CI후판단한다. automation4는완료마다다음준비작업을같은실행에서계속하도록갱신했고알림은실패시에만설정했다.
+
+
+## 서버 파생 카드 실제 생성 및 보존 병합 검토
+
+운영PR130은4개CI통과후머지, 실행44450983596에서추가공급자요청없이성공했다. 파생파일884,232바이트/422카드(2015 140,2026 282). 원본대신이집계파생본만로컬로받았다. 서버보관본에2022가없어이파일로기존카탈로그를통째교체하면2022기록이사라진다. 그래서기존1,184카드와출처를보존하고2015카드140개와해당출처만추가한검토본1,324카드를outputs/season-cards-2015-merged-preview.json에만만들었다. 기존카드내용불변및실제웹파서/해시검증통과. 아직web/public반영없음.
+
+2015관측: MaRin TOP114/Faker MID77/Bengi JUNGLE97/Bang BOTTOM114/Wolf SUPPORT102. 정확한source/player ID를보존한관측기록이며강함/완전시즌/실전승률이아니다. 새자료때옛연습카탈로그가없어지는문제를피하려고Claude CLI74565에서동일사이트불변버전fallback을구현중이다. 결과outputs/claude-catalog-version-20261119-result.json. 기대id/cutoff정확일치검증은완화하지않는다. 제품배포없음.
+
+
+## 자료 버전 복원 Codex 확인
+
+기대 catalog_id/cutoff를정확검증하는동일사이트보존본fallback구현. 핵심15개/타입통과. 실제PC에서현재카탈로그만다른유효버전으로응답시켜보존본HTTP200을거쳐기존연습복원·취소유지1개통과. 첫실패는prepare-public.ts허용목록에보존파일이없어발생했고검토된기존집계카탈로그1개만명시추가해수정했다. raw나폴더통째공개없음. 보존JSON은기존공개카탈로그와바이트동일. 병합2015검토본은아직현재카탈로그로채택하지않음; 구단저장호환을추가확인한다.

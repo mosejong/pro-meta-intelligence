@@ -415,7 +415,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     ? "시즌 선수 자료가 불러와지지 않았거나 저장된 시즌 선수를 현재 자료에서 확인하지 못해 선수 구성은 함께 저장할 수 없습니다. 밴픽만 저장하거나 시즌 자료를 다시 불러와 주세요."
     : null;
   const seasonRoot = productRootHref(currentSpace);
-  const loadSeasonCatalog = useCallback((signal: AbortSignal) => loadPublishedSeasonCatalog(seasonRoot, signal), [seasonRoot]);
+  const loadSeasonCatalog = useCallback((signal: AbortSignal, expected?: { catalog_id: string; cutoff: string }) => loadPublishedSeasonCatalog(seasonRoot, signal, expected), [seasonRoot]);
   // Practice library gate: any board/context/mode change invalidates a pending or in-flight library load.
   const practiceBoardKey = useMemo(() => JSON.stringify([seriesReport ? [seriesReport.patch_id, seriesReport.cutoff] : null,
     blueTeamId, redTeamId, firstPickSide, games, selections, pendingChampion, positionRecord, room.active, importing, sessionReady]),

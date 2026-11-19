@@ -21,6 +21,8 @@ const publishedFiles = [
   // Derived per-player season aggregate only (no raw rows); loaded on demand by the draft studio.
   "history/player-season-2026.json",
   "history/season-player-cards.json",
+  // Reviewed immutable aggregate retained for saved-practice restoration (never raw archives).
+  "history/catalogs/b0f5e81bc19120632147dec7913ffd2c772aa17e63590e8b5570392a4e04c304.json",
 ];
 
 export function preparePublishedAssets() {
