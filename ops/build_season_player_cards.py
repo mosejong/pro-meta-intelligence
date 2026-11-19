@@ -95,8 +95,14 @@ def transform_career_history(career: dict) -> dict:
     }
 
 
-def discover_candidate_ids(feed: dict, archive_dir: Path, *, cutoff: datetime) -> tuple[str, ...]:
+def discover_candidate_ids(
+    feed: dict, archive_dir: Path, *, cutoff: datetime, candidate_years: tuple[int, ...] = (2022,)
+) -> tuple[str, ...]:
     """Discover identities only; all appearance counts come from the career builder."""
+    if not candidate_years or any(
+        type(year) is not int or not 2014 <= year <= 2026 for year in candidate_years
+    ):
+        raise ValueError("candidate years must be between 2014 and 2026")
     ids = {NUGURI_ID}
 
     def visit(value):
@@ -113,25 +119,28 @@ def discover_candidate_ids(feed: dict, archive_dir: Path, *, cutoff: datetime) -
 
     visit(feed["opponent_prep"])
     _, inspection = inspect_plan(archive_dir, now=cutoff)
-    for snapshot in archive_for_year(inspection, 2022).snapshots:
-        if snapshot.retrieved_at > cutoff:
-            continue
-        with snapshot.data_path.open(encoding="utf-8-sig", newline="") as handle:
-            for row in csv.DictReader(handle):
-                if (
-                    row.get("year") == "2022"
-                    and row.get("league") in LEAGUES
-                    and row.get("position") in ROLES
-                    and row.get("playerid")
-                ):
-                    ids.add(row["playerid"])
+    for year in sorted(set(candidate_years)):
+        for snapshot in archive_for_year(inspection, year).snapshots:
+            if snapshot.retrieved_at > cutoff:
+                continue
+            with snapshot.data_path.open(encoding="utf-8-sig", newline="") as handle:
+                for row in csv.DictReader(handle):
+                    if (
+                        row.get("year") == str(year)
+                        and row.get("league") in LEAGUES
+                        and row.get("position") in ROLES
+                        and row.get("playerid")
+                    ):
+                        ids.add(row["playerid"])
     return tuple(sorted(ids))
 
 
-def build(archive_dir: Path, feed_path: Path, output: Path) -> dict:
+def build(
+    archive_dir: Path, feed_path: Path, output: Path, *, candidate_years: tuple[int, ...] = (2022,)
+) -> dict:
     cutoff = datetime.now(UTC)
     feed = json.loads(feed_path.read_text(encoding="utf-8"))
-    ids = discover_candidate_ids(feed, archive_dir, cutoff=cutoff)
+    ids = discover_candidate_ids(feed, archive_dir, cutoff=cutoff, candidate_years=candidate_years)
     career = build_archive_history(
         archive_dir,
         player_ids=ids,
@@ -170,8 +179,28 @@ def main() -> int:
     parser.add_argument("--archive-dir", type=Path, default=DEFAULT_ARCHIVE)
     parser.add_argument("--feed", type=Path, default=DEFAULT_FEED)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--candidate-season",
+        type=int,
+        action="append",
+        choices=range(2014, 2027),
+        help=(
+            "Discover stable player IDs from this archived season "
+            "(repeatable; default 2022). No collection."
+        ),
+    )
     args = parser.parse_args()
-    print(json.dumps(build(args.archive_dir, args.feed, args.output), ensure_ascii=False))
+    print(
+        json.dumps(
+            build(
+                args.archive_dir,
+                args.feed,
+                args.output,
+                candidate_years=tuple(args.candidate_season or (2022,)),
+            ),
+            ensure_ascii=False,
+        )
+    )
     return 0
 
 
