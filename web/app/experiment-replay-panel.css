@@ -50,4 +50,10 @@ main.draft-lab.draft-studio .experiment-replay-event-nav button { min-height: 44
 main.draft-lab.draft-studio .experiment-result-share { display: grid; gap: 6px; min-width: 0; }
 main.draft-lab.draft-studio .experiment-result-share button { justify-self: start; min-height: 44px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 main.draft-lab.draft-studio .experiment-result-share p { margin: 0; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-input-link > summary { min-height: 44px; }
+main.draft-lab.draft-studio .experiment-input-link { min-width: 0; }
+main.draft-lab.draft-studio .experiment-input-link :is(p, li) { overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-input-link > * + * { margin-top: 8px; }
+main.draft-lab.draft-studio .experiment-input-link-incoming { display: grid; gap: 6px; min-width: 0; }
+main.draft-lab.draft-studio .experiment-input-link-incoming button { justify-self: start; min-height: 44px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 main.draft-lab.draft-studio .experiment-result-share textarea { box-sizing: border-box; width: 100%; max-width: 100%; min-height: 44px; padding: 6px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-bg); color: var(--studio-text); font: inherit; font-size: 12px; resize: vertical; }

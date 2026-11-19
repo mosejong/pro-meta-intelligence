@@ -170,8 +170,13 @@ test("fixed-draft assumption experiment: adapter, mapping, frames and playback",
       assert.match(html, /실제 LoL 승률이나 실제 경기 재현이 아니며/);
       assert.match(html, /<button type="submit" disabled="">가정 실험 실행/);
       assert.doesNotMatch(html, /모델 내부 결과/);
-      assert.match(html, /실행 원본과 재생 입력은 이 브라우저 화면에만 있고 저장·링크 공유되지 않아 페이지를 떠나면 사라집니다/);
-      assert.match(html, /끝까지 재생한 실행은 요약 글만 복사할 수 있습니다/);
+      assert.match(html, /실행 원본과 재생 입력은 이 브라우저 화면에만 있고 저장되지 않아 페이지를 떠나면 사라집니다/);
+      assert.match(html, /가정값·시드만 담은 링크를 복사할 수 있습니다/);
+      assert.match(html, /실행 원본·밴픽·선수·역할·분석자료는 링크에 들어가지 않습니다/);
+      assert.doesNotMatch(html, /저장·링크 공유되지 않아/, "old wording no longer matches the assumption-only link");
+      assert.match(html, /<summary>가정값만 공유<\/summary>/);
+      assert.match(html, /<button type="button" disabled=""[^>]*>가정값 링크 복사<\/button>/);
+      assert.match(html, /<button type="button" disabled=""[^>]*>가정값 적용<\/button>/);
       assert.doesNotMatch(html, /실행은 이 화면 메모리에만 있으며 저장·공유되지 않습니다/);
       const ready = renderToStaticMarkup(createElement(ExperimentReplayPanel, { readyInput: snapshot, blocked: false, nameOf: (id) => id }));
       assert.match(ready, /<button type="submit">가정 실험 실행/);
