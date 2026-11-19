@@ -41,4 +41,21 @@ test("old Nuguri club survives catalog expansion and 2015 MaRin is selectable", 
   await top.selectOption(marin);
   await expect(top.locator("..").locator("..")).toContainText("2015 MaRin");
   await expect(top.locator("..").locator("..")).toContainText("114경기");
+  const observed = season.getByLabel("관측 팀", { exact: true });
+  const skt = await observed.locator("option").evaluateAll(options => options.find(o => o.textContent.includes("2015 SK Telecom T1"))?.value);
+  expect(skt).toBeTruthy();
+  await observed.selectOption(skt);
+  const preset = season.getByRole("group", { name: "역할별 최다 출전 구성", exact: true });
+  await preset.getByRole("button", { name: "BLUE에 적용", exact: true }).click();
+  const expected = { 탑: "MaRin", 정글: "Bengi", 미드: "Faker", 바텀: "Bang", 서포터: "Wolf" };
+  for (const [role, name] of Object.entries(expected)) {
+    const select = season.getByLabel(`BLUE ${role} 시즌 선수`, { exact: true });
+    await expect(select.locator("option:checked")).toContainText(name);
+  }
+  const snapshot = () => page.locator(".roster-workshop select").evaluateAll(selects => selects.map(s => [s.getAttribute("aria-label"), s.value]));
+  const before = await snapshot();
+  await preset.getByRole("button", { name: "RED에 적용", exact: true }).click();
+  await expect(page.locator(".roster-workshop-status").filter({ hasText: "구성을 적용하지 않았습니다." })).toBeVisible();
+  expect(await snapshot()).toEqual(before);
+
 });

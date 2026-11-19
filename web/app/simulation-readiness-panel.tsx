@@ -212,7 +212,7 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
   return <details className="simulation-readiness" lang="ko" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
     <summary>시뮬레이션 입력 준비 <small>{summaryState}</small></summary>
     <div className="simulation-readiness-body">
-      <p className="simulation-readiness-note" role="note">역할은 사용자 배정입니다. 선수 근거는 현재 관측이며 연간 자료는 포함하지 않습니다. 학습된 선수/챔피언 효과·상성·룬·아이템·실제 승률은 아직 계산하지 않습니다.</p>
+      <p className="simulation-readiness-note" role="note">역할은 사용자 배정입니다. 입력 표에는 현재 관측 선수를 표시하고, 별도 선수 근거에서 올해의 역할별 사용 기록을 확인할 수 있습니다. 학습된 선수·과거 시즌 선수·챔피언 효과와 상성·룬·아이템·실제 승률은 아직 계산하지 않습니다.</p>
       {!complete && <p className="simulation-readiness-pending" role="status">밴픽 20개를 완료하면 각 팀 픽 5개를 역할에 배정할 수 있습니다. 현재 {selections.length}/20개입니다.</p>}
       {complete && blueTeam && redTeam && <div className="simulation-readiness-teams">{SIDES.map((side) => {
         const team = side === "BLUE" ? blueTeam : redTeam;

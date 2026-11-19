@@ -28,7 +28,7 @@ import type { LiveRoster } from "./roster-comparison";
 import { PlayerPoolPanel } from "./player-pool-panel";
 import { GuestClubPanel } from "./guest-club-panel";
 import { SeasonLineupPanel } from "./season-lineup-panel";
-import { emptySeasonSlots, validateSeasonLineup, type SeasonCardCatalog, type TeamSeasonSlots, type SeasonCardRef } from "./season-player-cards";
+import { emptySeasonSlots, validateSeasonLineup, type SeasonCardCatalog, type TeamSeasonSlots, type SeasonCardRef, type SeasonSlots } from "./season-player-cards";
 import { poolBasis, type PoolBasis, type PoolSelection } from "./player-pool-evidence";
 import type { SeasonPracticePart } from "./practice-roster-bundle";
 import "./roster-workshop.css";
@@ -244,6 +244,21 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
     } catch (e) { setEditStatus(e instanceof Error ? e.message : "시즌 선수를 배정하지 못했습니다."); }
   }
 
+  // Whole-team season preset: the target's five current slots are emptied and all five season refs set
+  // together. Validated as one unit against the opponent's current/season players; any failure applies nothing.
+  function applySeasonPreset(teamId: string, slots: SeasonSlots) {
+    if (disabled || reading || !restored) return;
+    if (!teamIds.includes(teamId) || ROSTER_ROLES.some((role) => !slots[role])) { setEditStatus("다섯 역할이 모두 정해진 구성만 한 번에 배정할 수 있습니다."); return; }
+    const nextRosters = structuredClone(rosters);
+    nextRosters[teamId] = { TOP: null, JUNGLE: null, MID: null, BOTTOM: null, SUPPORT: null };
+    const next: TeamSeasonSlots = { ...seasonLineups, [teamId]: structuredClone(slots) };
+    try {
+      for (const [id, teamSlots] of Object.entries(next)) validateSeasonLineup(teamSlots, nextRosters, id, seasonCatalog, next);
+    } catch (e) { setEditStatus(`구성을 적용하지 않았습니다. ${e instanceof Error ? e.message : ""}`.trim()); return; }
+    setSeasonLineups(next); commit(nextRosters);
+    setEditStatus(`${teamName(teamId)}에 역할별 최다 출전 구성을 배정했습니다. 현재 선수 5자리는 비웠습니다.`);
+  }
+
   function teamName(teamId: string) {
     return teamId === blueTeam.team_id ? blueTeam.team_name : teamId === redTeam.team_id ? redTeam.team_name : teamId;
   }
@@ -289,7 +304,7 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
     <summary>가상 로스터·포지션 <small>원관측과 다른 슬롯 {changedCount} · 빈칸 {emptyCount}</small></summary>
     {open && <div className="roster-workshop-body">
       <GuestClubPanel publicationRoot={publicationRoot} basis={basis} index={index} rosters={rosters} seasonLineups={seasonLineups} seasonCatalog={seasonCatalog} onSeasonApply={(teamId, slots) => setSeasonLineups(current => ({ ...current, [teamId]: slots }))} blueTeamId={blueTeam.team_id} redTeamId={redTeam.team_id} disabled={disabled || reading || !restored} onApply={(next) => { commit(next); setEditStatus("저장한 구단의 선수 구성을 적용했습니다."); }} />
-      <SeasonLineupPanel catalog={seasonCatalog} onCatalog={setSeasonCatalog} lineups={seasonLineups} teams={[{ id: blueTeam.team_id, name: blueTeam.team_name, side: "BLUE" }, { id: redTeam.team_id, name: redTeam.team_name, side: "RED" }]} publicationRoot={publicationRoot} disabled={disabled || reading || !restored} onChoose={chooseSeason} />
+      <SeasonLineupPanel catalog={seasonCatalog} onCatalog={setSeasonCatalog} lineups={seasonLineups} teams={[{ id: blueTeam.team_id, name: blueTeam.team_name, side: "BLUE" }, { id: redTeam.team_id, name: redTeam.team_name, side: "RED" }]} publicationRoot={publicationRoot} disabled={disabled || reading || !restored} onChoose={chooseSeason} onApplyPreset={applySeasonPreset} />
       <p className="roster-workshop-note" role="note"><b>기존 추천 순위·예측/시뮬레이션에는 로스터 변경이 아직 반영되지 않습니다.</b> 변경은 아래 선수 근거·남은 관측 챔프 표시와 A/B 비교의 현재 B 로스터에만 반영되며, 이미 고정된 기준 A는 소급 변경되지 않습니다. 같은 공개 스냅샷에서 관측된 선수만 고를 수 있으며, CURRENT는 자료상의 관측 표시일 뿐 공식 최신 소속이 아닙니다. 역할 관측이 하나로 정해지지 않으면 빈칸으로 둡니다.</p>
       <div className="roster-workshop-teams">
         <RosterTeam side="BLUE" team={blueTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} />

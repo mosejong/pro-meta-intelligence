@@ -1,17 +1,23 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useChampionNames } from "./champion-names";
 import { fetchJsonWithTimeout } from "./publication-loader";
-import { emptySeasonSlots, parseSeasonCardCatalog, verifySeasonCardIntegrity, resolveSeasonRef, type SeasonCardCatalog, type SeasonCardRef, type TeamSeasonSlots } from "./season-player-cards";
+import { emptySeasonSlots, parseSeasonCardCatalog, verifySeasonCardIntegrity, resolveSeasonRef, type SeasonCardCatalog, type SeasonCardRef, type SeasonSlots, type TeamSeasonSlots } from "./season-player-cards";
+import { observedSeasonTeams, presetBlockReason, seasonPresetSlots } from "./season-team-preset";
 import { ROSTER_ROLES, type RosterRole } from "./roster-scenario";
 const roles: Record<RosterRole, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
-export function SeasonLineupPanel({ catalog, onCatalog, lineups, teams, publicationRoot, disabled, onChoose }: {
+export function SeasonLineupPanel({ catalog, onCatalog, lineups, teams, publicationRoot, disabled, onChoose, onApplyPreset }: {
   catalog: SeasonCardCatalog | null; onCatalog: (c: SeasonCardCatalog) => void; lineups: TeamSeasonSlots; teams: { id: string; name: string; side: string }[]; publicationRoot: string; disabled: boolean;
   onChoose: (teamId: string, role: RosterRole, ref: SeasonCardRef | null) => void;
+  onApplyPreset: (teamId: string, slots: SeasonSlots) => void;
 }) {
   const { nameOf } = useChampionNames();
   const [busy, setBusy] = useState(false), [message, setMessage] = useState("");
   const [year, setYear] = useState(2022), [query, setQuery] = useState("");
+  const [presetKey, setPresetKey] = useState("");
+  const presetTeams = useMemo(() => catalog ? observedSeasonTeams(catalog, year) : [], [catalog, year]);
+  const preset = presetTeams.find(t => t.key === presetKey) ?? null;
+  const presetBlocked = preset ? presetBlockReason(preset) : null;
   const request = useRef<AbortController | null>(null);
   useEffect(() => () => request.current?.abort(), []);
   async function load() {
@@ -35,7 +41,20 @@ export function SeasonLineupPanel({ catalog, onCatalog, lineups, teams, publicat
       <div className="guest-club-fields">
         <label>선수 시즌<select aria-label="선수 시즌" value={year} onChange={e => setYear(Number(e.target.value))}>{catalog.seasons.map(y => <option key={y.season} value={y.season} disabled={y.status !== "LOADED"}>{y.season}{y.status === "NOT_LOADED" ? " · 자료 미확보" : ""}</option>)}</select></label>
         <label>시즌 선수 검색<input value={query} onChange={e => setQuery(e.target.value)} placeholder="Nuguri, Faker…" /></label>
+        <label>관측 팀<select aria-label="관측 팀" value={preset ? preset.key : ""} onChange={e => setPresetKey(e.target.value)}><option value="">팀 선택 안 함</option>{presetTeams.map(t => <option key={t.key} value={t.key}>{t.season} {t.team_names.join(" / ")}{t.status === "READY" ? "" : " · 직접 선택 필요"}</option>)}</select></label>
       </div>
+      {preset && <div role="group" aria-label="역할별 최다 출전 구성">
+        <p><strong>역할별 최다 출전 구성</strong> · {preset.season} {preset.team_names.join(" / ")}<br />
+          {ROSTER_ROLES.map(role => { const c = preset.picks[role]; return `${roles[role]} ${c ? `${c.player_name} ${c.game_count}경기` : "—"}`; }).join(" · ")}<br />
+          <small>당시 출전 수 기준이며 공식 선발·강함을 뜻하지 않습니다.</small></p>
+        {presetBlocked && <p role="alert">{presetBlocked}</p>}
+        {teams.map(team => <button key={team.id} type="button" disabled={disabled || !!presetBlocked} onClick={() => {
+          if (!catalog) return;
+          const result = seasonPresetSlots(preset, catalog);
+          if (result.ok) { setMessage(""); onApplyPreset(team.id, result.slots); } else setMessage(result.error);
+        }}>{team.side}에 적용</button>)}
+        <small> 적용하면 해당 팀의 현재 선수 5자리를 이 구성으로 대체합니다.</small>
+      </div>}
       <div className="roster-workshop-teams">{teams.map(team => <section key={team.id} aria-label={`${team.side} 시즌 라인업`}>
         <h4>{team.side} · {team.name}</h4>
         {ROSTER_ROLES.map(role => {
