@@ -522,3 +522,12 @@ Claude가 golddiffat15를 같은리그·역할·정확패치의 이전기록과�
 신규ops/benchmark_metric_context_cohort.py만부분작성됐고 테스트/문서는아직없다. lint통과/format미통과,
 실제CLI미실행. Codex는제품소스를대신수정하지않았고 유료/모델/계정우회없음.
 인수인계 docs/CLAUDE_CONTEXT_COHORT_HANDOFF_2026-11-19.md. 미완료소스는미커밋으로보존한다.
+
+## Claude 한도 대기 중 독립 검증
+
+Codex가미완료모듈을수정하지않고독립검증을추가해관련11개통과및실제원본시험실행을완료했다.
+전체878기준선은이전all과완전히같고 지원198/미지원680집계도이전연결검증과같았다.
+지원198의Elo Brier0.251480은고정0.5의0.25보다나빴고 Blue Laplace는0.246299였다.
+표본선택차이일뿐선수feature개선이아니다. 정식테스트/format/문서는아직Claude재개후남은작업이다.
+코드해시·예비산출물·검증한계는 CONTEXT_COHORT_PRELIMINARY_REVIEW_2026-11-19.md.
+한도초기화전Claude호출·우회없음, 20:25재개예약유지.

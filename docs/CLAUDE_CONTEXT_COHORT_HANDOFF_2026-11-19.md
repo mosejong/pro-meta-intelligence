@@ -43,3 +43,14 @@
 
 기존 OE24시간/공식일정6시간 원장을 지키고 이번 재개 때문에 수집작업을 만들지 않는다.
 목표는 active로 유지한다. 서비스한도는 이번 처음 확인된 것이며 blocked를 성급하게 표시하지 않는다.
+
+## 한도 대기 중 Codex 검증 후속 (기존 미실행 항목 갱신)
+
+클로드 재호출/제품 소스 수정 없이 Codex가 예비CLI를 실제 보관원본으로 실행했다.
+신규정식테스트/문서가없고format미통과인것은변함없다. 위 '실제CLI미실행'은이후실행으로갱신한다.
+상세 docs/CONTEXT_COHORT_PRELIMINARY_REVIEW_2026-11-19.md를 먼저읽는다.
+전체878partition과기존all이정확히같고 support/query집계198/8780/2422/5733/625도이전과동일했다.
+지원198경기Elo Brier0.251480/Blue Laplace0.246299/고정0.5는0.25. 개선입증이나새모델아님.
+Codex독립 tests/test_metric_context_cohort_review.py(1개)+기존10개=11통과. 별도보존.
+Claude가최종동작을바꾸면새출력으로재실행, 원예비산출물덮어쓰기금지.
+미완료module/독립test는아직미커밋이며, Codex가Claude담당정식test/doc를대신구현하지않았다.
