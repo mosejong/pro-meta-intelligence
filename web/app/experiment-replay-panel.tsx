@@ -23,6 +23,7 @@ import {
   type ExperimentRun,
 } from "./experiment-replay";
 import { ExperimentComparisonPanel } from "./experiment-comparison-panel";
+import { eventNavigation } from "./experiment-event-navigation";
 import "./experiment-replay-panel.css";
 
 type ExperimentReplayPanelProps = {
@@ -67,6 +68,13 @@ export function ExperimentReplayPanel({ readyInput, blocked, nameOf }: Experimen
   const canRun = Boolean(readyInput) && !blocked && validation.ok;
 
   const frame = useMemo(() => run ? replayFrame(run, playback.runId === run.runId ? playback.cursor : 0) : null, [run, playback.runId, playback.cursor]);
+  const navigation = useMemo(() => run && frame ? eventNavigation(run, frame.minute) : null, [run, frame]);
+  // PAUSE then SEEK: the existing SEEK keeps playing, so stop first to show a held position.
+  const jumpTo = (minute: number | null) => {
+    if (minute === null) return;
+    dispatch({ type: "PAUSE" });
+    dispatch({ type: "SEEK", minute });
+  };
   const sameInput = run && readyInput ? sameSimulationInput(run.snapshot, readyInput) : false;
   const sameAssumptions = run && sameInput && validation.ok && run.seed === validation.seed &&
     CORE_TEAM_IDS.every((core) => draftsEqual(currentDrafts[run.teams[core].sourceId], run.teams[core].assumptions));
@@ -168,6 +176,15 @@ export function ExperimentReplayPanel({ readyInput, blocked, nameOf }: Experimen
         <input type="range" min={0} max={MAX_MINUTE} step={1} value={frame.minute} aria-valuetext={`${frame.minute}분`}
           onChange={(event) => dispatch({ type: "SEEK", minute: Number(event.target.value) })} />
       </label>
+      {navigation && <details className="experiment-replay-event-nav">
+        <summary>사건 단위로 이동</summary>
+        <p>고정 실행의 표시 위치만 이동하며 다시 계산하지 않습니다.</p>
+        <div className="experiment-replay-controls" role="group" aria-label="사건 단위 이동">
+          <button type="button" disabled={navigation.previousMinute === null} onClick={() => jumpTo(navigation.previousMinute)}>이전 사건</button>
+          <button type="button" disabled={navigation.nextMinute === null} onClick={() => jumpTo(navigation.nextMinute)}>다음 사건</button>
+          <button type="button" disabled={navigation.endMinute === null || frame.minute >= navigation.endMinute} onClick={() => jumpTo(navigation.endMinute)}>결과까지 이동</button>
+        </div>
+      </details>}
 
       <div className="experiment-replay-states">{CORE_TEAM_IDS.map((core) => {
         const team = teamOf(core);

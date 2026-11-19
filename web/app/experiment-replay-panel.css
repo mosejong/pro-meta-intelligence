@@ -40,6 +40,9 @@ main.draft-lab.draft-studio .experiment-replay-log { display: grid; gap: 4px; pa
 main.draft-lab.draft-studio .experiment-replay-log li { display: flex; gap: 8px; padding: 4px 8px; border-top: 1px solid var(--studio-line); overflow-wrap: anywhere; }
 main.draft-lab.draft-studio .experiment-replay-log li span { flex: none; width: 36px; color: var(--studio-muted); font-variant-numeric: tabular-nums; }
 main.draft-lab.draft-studio .experiment-replay-outcome { padding: 8px 10px; border: 1px solid #f0d6ae; color: var(--studio-text); }
+main.draft-lab.draft-studio .experiment-replay-event-nav > summary { min-height: 44px; }
+main.draft-lab.draft-studio .experiment-replay-event-nav p { margin-bottom: 8px; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-replay-event-nav button { min-height: 44px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 @media (max-width: 720px) {
   main.draft-lab.draft-studio :is(.experiment-replay-teams, .experiment-replay-states) { grid-template-columns: minmax(0, 1fr); }
 }

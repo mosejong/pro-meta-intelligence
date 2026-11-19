@@ -175,3 +175,39 @@ test("ready input → explicit run → pause/step/speed/seek/reset → later dra
   await page.screenshot({ path: testInfo.outputPath("experiment-replay.png"), fullPage: true });
   expect(errors).toEqual([]);
 });
+
+
+test("event navigation moves only within the fixed run and pauses playback", async ({ page }, testInfo) => {
+  await openStudio(page); await finishDraft(page); await fillRoster(page);
+  await showPanel(page, "SIMULATION"); await openDetails(readiness(page));
+  for (const side of ["blue", "red"]) for (const [i, role] of ROLES.entries()) await roleSlot(page, side, role).selectOption({ index: i + 1 });
+  await expect(runButton(page)).toBeEnabled(); await runButton(page).click();
+  const result = panel(page).locator(".experiment-replay-result");
+  const nav = result.locator("details").filter({ has: page.locator("summary", { hasText: "사건 단위로 이동" }) });
+  await expect(nav).not.toHaveAttribute("open", ""); await nav.locator(":scope > summary").click();
+  const previous = nav.getByRole("button", { name: "이전 사건", exact: true });
+  const next = nav.getByRole("button", { name: "다음 사건", exact: true });
+  const end = nav.getByRole("button", { name: "결과까지 이동", exact: true });
+  await expect(previous).toBeDisabled(); await expect(next).toBeEnabled();
+  await next.click(); const first = await minuteText(page); expect(first).toBeGreaterThan(0);
+  await next.click(); const second = await minuteText(page); expect(second).toBeGreaterThan(first);
+  await previous.click(); expect(await minuteText(page)).toBe(first);
+  await result.getByRole("button", { name: "재생", exact: true }).click();
+  await expect(result.getByRole("button", { name: "일시정지", exact: true })).toBeVisible();
+  await next.click(); const held = await minuteText(page);
+  await expect(result.getByRole("button", { name: "재생", exact: true })).toBeVisible();
+  await page.waitForTimeout(800); expect(await minuteText(page)).toBe(held);
+  await end.click(); const finalOutcome = await result.locator(".experiment-replay-outcome").innerText();
+  const finalStats = await result.locator("[data-stat]").allTextContents();
+  await expect(end).toBeDisabled();
+  await previous.click(); await expect(result.locator(".experiment-replay-outcome")).toHaveCount(0);
+  await panel(page).getByLabel("재현 번호 (시드)", { exact: true }).fill("98765");
+  await end.click();
+  expect(await result.locator(".experiment-replay-outcome").innerText()).toBe(finalOutcome);
+  expect(await result.locator("[data-stat]").allTextContents()).toEqual(finalStats);
+  await expect(result.locator(".experiment-replay-identity")).toContainText("실행 #1");
+  await expect(result.locator(".experiment-replay-identity")).toContainText("다름");
+  await noHorizontalOverflow(page);
+  const box = await next.boundingBox(); expect(box.height).toBeGreaterThanOrEqual(44);
+  await nav.screenshot({ path: testInfo.outputPath("experiment-event-navigation.png") });
+});
