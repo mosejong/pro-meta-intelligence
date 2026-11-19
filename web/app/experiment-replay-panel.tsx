@@ -92,8 +92,8 @@ export function ExperimentReplayPanel({ readyInput, blocked, nameOf }: Experimen
     setDrafts((current) => ({ ...current, [teamId]: { ...(current[teamId] ?? NEUTRAL_DRAFT), [field]: value } }));
   }
 
-  /** Link apply: only the two linked teams' assumption texts and the seed text. No run, no other state. */
-  function applyLink(plan: { seedText: string; drafts: Record<string, AssumptionDraft> }) {
+  /** Link apply / baseline A load: only the two teams' assumption texts and the seed text. No run, no other state. */
+  function applyAssumptionInputs(plan: { seedText: string; drafts: Record<string, AssumptionDraft> }) {
     setSeedText(plan.seedText);
     setDrafts((current) => ({ ...current, ...plan.drafts }));
   }
@@ -124,7 +124,7 @@ export function ExperimentReplayPanel({ readyInput, blocked, nameOf }: Experimen
       <summary>모델 설명</summary>
       <p>각 팀의 라인·운영·한타 가정(-1~1, 기본 0 중립)과 시드로 작성된 규칙(assumption-manager-v1)을 한 번 실행합니다. 계수는 작성자 규칙이며 학습된 효과가 아닙니다. 모델 자원은 실제 경기 골드가 아니고, 오브젝트는 추상 진행 단계입니다. 같은 입력·시드는 항상 같은 결과를 냅니다. 실행 원본과 재생 입력은 이 브라우저 화면에만 있고 저장되지 않아 페이지를 떠나면 사라집니다. 끝까지 재생한 실행은 요약 글과, 아래 &apos;가정값만 공유&apos;의 가정값·시드만 담은 링크를 복사할 수 있습니다. 실행 원본·밴픽·선수·역할·분석자료는 링크에 들어가지 않습니다.</p>
     </details>
-    <ExperimentInputLinkPanel run={run} shownMinute={frame ? frame.minute : null} readyInput={readyInput} blocked={blocked} onApply={applyLink} />
+    <ExperimentInputLinkPanel run={run} shownMinute={frame ? frame.minute : null} readyInput={readyInput} blocked={blocked} onApply={applyAssumptionInputs} />
 
     {/* The parser is the single authority; native constraint checks must never silently block a valid run. */}
     <form className="experiment-replay-inputs" noValidate onSubmit={(event) => { event.preventDefault(); execute(); }} aria-label="실험 가정 입력">
@@ -232,7 +232,8 @@ export function ExperimentReplayPanel({ readyInput, blocked, nameOf }: Experimen
       </p> : <p className="experiment-replay-pending">재생이 끝나면 모델 내부 결과를 표시합니다.</p>}
       <ExperimentResultSharePanel run={run} shownMinute={frame.minute} />
     </section>}
-    {run && frame && <ExperimentComparisonPanel run={run} shownMinute={frame.minute} readyInput={readyInput} />}
+    {run && frame && <ExperimentComparisonPanel run={run} shownMinute={frame.minute} readyInput={readyInput}
+      blocked={blocked} onLoadBaselineInputs={applyAssumptionInputs} />}
   </section>;
 }
 

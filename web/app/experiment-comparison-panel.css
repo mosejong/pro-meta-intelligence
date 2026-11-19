@@ -18,6 +18,7 @@ main.draft-lab.draft-studio .experiment-comparison-share { display: grid; gap: 6
 main.draft-lab.draft-studio .experiment-comparison-share button { justify-self: start; min-height: 44px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 main.draft-lab.draft-studio .experiment-comparison-share p { margin: 0; overflow-wrap: anywhere; }
 main.draft-lab.draft-studio .experiment-comparison-share textarea { box-sizing: border-box; width: 100%; max-width: 100%; min-height: 44px; padding: 6px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-bg); color: var(--studio-text); font: inherit; font-size: 12px; resize: vertical; }
+main.draft-lab.draft-studio .experiment-replay .experiment-comparison-actions button.experiment-comparison-load { min-height: 44px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
 @media (max-width: 720px) {
   main.draft-lab.draft-studio .experiment-comparison :is(th, td) { padding: 4px; font-size: 11px; }
 }

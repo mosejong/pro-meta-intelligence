@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { sameSimulationInput, type SimulationInputSnapshot } from "./simulation-scenario";
-import { ASSUMPTION_FIELDS, CORE_TEAM_IDS, type AssumptionField, type ExperimentRun } from "./experiment-replay";
+import { ASSUMPTION_FIELDS, CORE_TEAM_IDS, type AssumptionDraft, type AssumptionField, type ExperimentRun } from "./experiment-replay";
+import { planBaselineInputs } from "./experiment-baseline-inputs";
 import { compareExperimentRuns, freezeBaseline, OUTCOME_STATS, type OutcomeStat } from "./experiment-comparison";
 import { ExperimentBatchPanel } from "./experiment-batch-panel";
 import { ExperimentComparisonSharePanel } from "./experiment-comparison-share-panel";
@@ -15,6 +16,10 @@ type ExperimentComparisonPanelProps = {
   /** Minute of `run` currently on screen. */
   shownMinute: number;
   readyInput: SimulationInputSnapshot | null;
+  /** Parent's current block (room/restore/loading). Missing → treated as blocked. */
+  blocked?: boolean;
+  /** Fills only the seed text and the two teams' assumption texts. Missing → load button disabled. */
+  onLoadBaselineInputs?: (plan: { seedText: string; drafts: Record<string, AssumptionDraft> }) => void;
 };
 
 const fieldLabels: Record<AssumptionField, string> = { lane: "라인", tempo: "운영", teamfight: "한타" };
@@ -34,11 +39,12 @@ function labeler(names: { sourceId: string; name: string }[]) {
  * Optional A/B of two explicit assumption runs, collapsed by default. A lives only in this
  * component's memory; keeping, replacing or clearing it never changes the draft, run or playback.
  */
-export function ExperimentComparisonPanel({ run, shownMinute, readyInput }: ExperimentComparisonPanelProps) {
+export function ExperimentComparisonPanel({ run, shownMinute, readyInput, blocked = true, onLoadBaselineInputs }: ExperimentComparisonPanelProps) {
   const [baseline, setBaseline] = useState<ExperimentRun | null>(null);
   const [message, setMessage] = useState("");
   const [focusRequest, setFocusRequest] = useState(0);
   const statusRef = useRef<HTMLParagraphElement>(null);
+  const loadReasonId = `${useId()}-load-reason`;
   const complete = shownMinute >= run.endMinute;
   const isBaseline = baseline?.runId === run.runId;
 
@@ -57,6 +63,18 @@ export function ExperimentComparisonPanel({ run, shownMinute, readyInput }: Expe
     setMessage("기준 A를 해제했습니다. 현재 밴픽·실행·재생은 그대로입니다.");
     setFocusRequest((n) => n + 1);
   }
+  /** Numbers only: re-checked against the current props at click time; A, run and playback untouched. */
+  function loadBaselineInputs() {
+    if (!baseline || !onLoadBaselineInputs) return;
+    const plan = planBaselineInputs(baseline, readyInput, blocked);
+    if (!plan.ok) { setMessage(plan.message); setFocusRequest((n) => n + 1); return; }
+    onLoadBaselineInputs({ seedText: plan.seedText, drafts: plan.drafts });
+    setMessage(`기준 A(실행 #${baseline.runId})의 시드와 두 팀 가정값만 입력란에 불러왔습니다. 결과를 보려면 직접 실행하세요.`);
+    setFocusRequest((n) => n + 1);
+  }
+  const loadPlan = baseline ? planBaselineInputs(baseline, readyInput, blocked) : null;
+  const loadReason = !baseline ? "" : !onLoadBaselineInputs ? "이 화면에서는 기준 A 가정값 불러오기를 사용할 수 없습니다."
+    : loadPlan && !loadPlan.ok ? loadPlan.message : "";
 
   const comparison = baseline && !isBaseline ? compareExperimentRuns(baseline, run, shownMinute) : null;
   const label = labeler(CORE_TEAM_IDS.map((core) => run.teams[core]));
@@ -72,7 +90,10 @@ export function ExperimentComparisonPanel({ run, shownMinute, readyInput }: Expe
         {!baseline && <button type="button" disabled={!complete} onClick={keep}>이 실행을 비교 기준 A로 보관</button>}
         {baseline && !isBaseline && <button type="button" disabled={!complete} onClick={keep}>현재 실행 #{run.runId}로 기준 A 바꾸기</button>}
         {baseline && <button type="button" onClick={clear}>기준 A 해제</button>}
+        {baseline && <button type="button" className="experiment-comparison-load" disabled={Boolean(loadReason)}
+          aria-describedby={loadReason ? loadReasonId : undefined} onClick={loadBaselineInputs}>기준 A의 가정값 불러오기</button>}
       </div>
+      {loadReason && <p id={loadReasonId} className="experiment-comparison-hint experiment-comparison-load-reason">{loadReason}</p>}
       {!complete && (!baseline || !isBaseline) && <p className="experiment-comparison-hint">현재 실행을 끝까지 재생하면 {baseline ? "기준을 바꾸거나 결과를 비교할" : "기준 A로 보관할"} 수 있습니다.</p>}
       <p ref={statusRef} tabIndex={-1} className="experiment-comparison-status" role="status">{message}</p>
 
