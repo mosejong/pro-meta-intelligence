@@ -23,6 +23,7 @@ const publishedFiles = [
   "history/season-player-cards.json",
   // Reviewed immutable aggregate retained for saved-practice restoration (never raw archives).
   "history/catalogs/b0f5e81bc19120632147dec7913ffd2c772aa17e63590e8b5570392a4e04c304.json",
+  "history/catalogs/f2c8e725b267ad9fb0ff1ca5770888008c07b341c8cb2a17e53703d3ee5a8621.json",
 ];
 
 export function preparePublishedAssets() {

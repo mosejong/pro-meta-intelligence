@@ -24,8 +24,8 @@ function fixture() {
 test("actual offline catalog passes structural and cryptographic integrity; Nuguri has 57 games", async () => {
   await S.verifySeasonCardIntegrity(catalog);
   assert.equal(nuguri().game_count, 57); assert.equal(nuguri().champions.reduce((n, c) => n + c.games, 0), 57);
-  assert.deepEqual(catalog.seasons.filter(y => y.status === "LOADED").map(y => y.season), [2022, 2026]);
-  assert.equal(catalog.seasons.find(y => y.season === 2015).status, "NOT_LOADED");
+  assert.deepEqual(catalog.seasons.filter(y => y.status === "LOADED").map(y => y.season), [2015, 2022, 2026]);
+  assert.equal(catalog.seasons.find(y => y.season === 2015).status, "LOADED");
   assert.notEqual(catalog.cards, raw.cards);
 });
 test("hash verification rejects internally plausible card edits and identity substitution", async () => {
@@ -35,7 +35,7 @@ test("hash verification rejects internally plausible card edits and identity sub
   await assert.rejects(S.verifySeasonCardIntegrity(identities));
 });
 test("invalid source, future retrieval, duplicate card, wrong role, wrong counts reject", () => {
-  for (const mutate of [x => x.sources[0].source_id = "unknown", x => x.sources[0].retrieved_at = "2099-01-01T00:00:00Z", x => x.cards.push(x.cards[0]), x => x.cards[0].role = "COACH", x => x.cards[0].game_count++, x => x.cards[0].source_hashes = ["0".repeat(64)], x => x.seasons.find(y => y.season === 2015).status = "LOADED"]) {
+  for (const mutate of [x => x.sources[0].source_id = "unknown", x => x.sources[0].retrieved_at = "2099-01-01T00:00:00Z", x => x.cards.push(x.cards[0]), x => x.cards[0].role = "COACH", x => x.cards[0].game_count++, x => x.cards[0].source_hashes = ["0".repeat(64)], x => x.seasons.find(y => y.season === 2014).status = "LOADED"]) {
     const x = structuredClone(raw); mutate(x); assert.throws(() => S.parseSeasonCardCatalog(x));
   }
 });

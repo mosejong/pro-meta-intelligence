@@ -68,3 +68,29 @@ export async function loadPublishedSeasonCatalog(publicationRoot: string, signal
   if (!matches(archived, expected)) throw new Error("보존된 시즌 선수 자료가 저장 당시 버전과 정확히 일치하지 않습니다.");
   return archived;
 }
+
+/**
+ * Load one preserved catalog by catalog_id only (guest clubs v2 store no cutoff, so no cutoff or
+ * "was published at save time" claim is made). The id is validated before any request; exactly one
+ * request to history/catalogs/<catalog_id>.json under the same publication root, then the same
+ * bounded fetch, strict parse and sha-256 check, and the verified catalog_id must match exactly.
+ * Abort is rethrown as-is.
+ */
+export async function loadPreservedSeasonCatalogById(publicationRoot: string, catalogId: string, signal: AbortSignal, options: SeasonCatalogLoaderOptions = {}): Promise<SeasonCardCatalog> {
+  if (!isCardHash(catalogId)) throw new Error("저장된 시즌 선수 자료 버전 정보가 올바르지 않아 불러오지 않았습니다.");
+  if (signal.aborted) throw aborted();
+  const base = options.baseHref ?? window.location.href;
+  const root = new URL(publicationRoot.endsWith("/") ? publicationRoot : publicationRoot + "/", base);
+  const archiveUrl = new URL(`history/catalogs/${catalogId}.json`, root);
+  if (archiveUrl.origin !== root.origin || !archiveUrl.pathname.startsWith(root.pathname)) throw new Error("저장 당시 시즌 선수 자료 위치를 확인하지 못했습니다.");
+  let data: unknown;
+  try {
+    data = await fetchRaw(archiveUrl, signal, options);
+  } catch (error) {
+    if (isAbort(error, signal)) throw error;
+    throw new Error("저장 당시 버전의 시즌 선수 자료를 찾지 못했습니다. 현재 로스터는 그대로 유지합니다.");
+  }
+  const archived = await verify(data, signal);
+  if (archived.catalog_id !== catalogId) throw new Error("보존된 시즌 선수 자료가 저장 당시 버전과 정확히 일치하지 않습니다.");
+  return archived;
+}

@@ -1,14 +1,20 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { migrateClubSeasonSlots, savedSeasonCatalogId } from "./club-season-compat";
 import { CLUB_STORAGE_KEY, MAX_CLUBS, applyGuestClub, deleteGuestClub, parseClubLibrary, saveGuestClub, withClubWriteLock, type GuestClub } from "./guest-club";
-import { ROSTER_ROLES, playerKey, type RosterBasis, type RosterIndex, type RosterState } from "./roster-scenario";
+import { ROSTER_ROLES, basisKey, playerKey, type RosterBasis, type RosterIndex, type RosterState } from "./roster-scenario";
+import { loadPreservedSeasonCatalogById } from "./season-catalog-loader";
 import { emptySeasonSlots, resolveSeasonRef, type SeasonSlots, type SeasonCardCatalog, type TeamSeasonSlots } from "./season-player-cards";
 import "./guest-club.css";
 
-export function GuestClubPanel({ basis, index, rosters, blueTeamId, redTeamId, disabled, onApply, seasonLineups, seasonCatalog, onSeasonApply }: {
+const isAbortError = (e: unknown) => e instanceof DOMException && e.name === "AbortError";
+
+export function GuestClubPanel({ basis, index, rosters, blueTeamId, redTeamId, disabled, onApply, seasonLineups, seasonCatalog, onSeasonApply, publicationRoot = "./" }: {
   basis: RosterBasis; index: RosterIndex; rosters: RosterState; blueTeamId: string; redTeamId: string; disabled: boolean; onApply: (next: RosterState) => void;
-  seasonLineups: TeamSeasonSlots; seasonCatalog: SeasonCardCatalog | null; onSeasonApply: (teamId: string, slots: SeasonSlots) => void;
+  seasonLineups: TeamSeasonSlots; seasonCatalog: SeasonCardCatalog | null; onSeasonApply: (teamId: string, slots: SeasonSlots) => void; publicationRoot?: string;
 }) {
+  // In-flight preserved-catalog read for a load confirmation; aborted whenever its inputs go stale.
+  const job = useRef<{ controller: AbortController | null }>({ controller: null });
   const [clubs, setClubs] = useState<GuestClub[]>([]);
   const [name, setName] = useState("");
   const [head, setHead] = useState("");
@@ -18,6 +24,7 @@ export function GuestClubPanel({ basis, index, rosters, blueTeamId, redTeamId, d
   const [status, setStatus] = useState("");
   const [failure, setFailure] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [loadingSaved, setLoadingSaved] = useState(false);
   const [pending, setPending] = useState<{ kind: "LOAD" | "DELETE"; club: GuestClub } | null>(null);
   useEffect(() => {
     const read = () => {
@@ -25,11 +32,20 @@ export function GuestClubPanel({ basis, index, rosters, blueTeamId, redTeamId, d
       catch (e) { setReady(false); setStatus(e instanceof Error ? e.message : "이 기기 저장소를 사용할 수 없습니다."); setFailure(true); }
     };
     const timer = window.setTimeout(read, 0);
-    const changed = (event: StorageEvent) => { if (event.key === CLUB_STORAGE_KEY || event.key === null) { setPending(null); read(); } };
+    const box = job.current;
+    const changed = (event: StorageEvent) => { if (event.key === CLUB_STORAGE_KEY || event.key === null) { box.controller?.abort(); setPending(null); read(); } };
     window.addEventListener("storage", changed);
     return () => { window.clearTimeout(timer); window.removeEventListener("storage", changed); };
   }, []);
   const teamId = side === "BLUE" ? blueTeamId : redTeamId;
+  const basisToken = basisKey(basis);
+  // Team, side, basis, rosters, season lineups/catalog, room start (disabled) or unmount: a late
+  // preserved-catalog result must never apply, so the in-flight read is aborted.
+  useLayoutEffect(() => {
+    const box = job.current;
+    return () => { box.controller?.abort(); };
+  }, [teamId, side, basisToken, rosters, seasonLineups, seasonCatalog, disabled, publicationRoot, index]);
+  function cancelPending() { job.current.controller?.abort(); setPending(null); }
   function error(e: unknown) { setFailure(true); setStatus(e instanceof Error ? e.message : "저장소를 사용할 수 없습니다. 기존 구단과 로스터를 유지합니다."); }
   async function save() {
     if (!ready || disabled || busy) return;
@@ -46,10 +62,14 @@ export function GuestClubPanel({ basis, index, rosters, blueTeamId, redTeamId, d
   async function confirm() {
     if (!pending || disabled || !ready || busy) return;
     setBusy(true);
-    try {
-      const current = parseClubLibrary(window.localStorage.getItem(CLUB_STORAGE_KEY));
-      const club = current.clubs.find(c => c.id === pending.club.id);
+    let controller: AbortController | null = null;
+    const storedUnchanged = () => {
+      const club = parseClubLibrary(window.localStorage.getItem(CLUB_STORAGE_KEY)).clubs.find(c => c.id === pending.club.id);
       if (!club || JSON.stringify(club) !== JSON.stringify(pending.club)) throw new Error("저장된 구단이 바뀌었습니다. 목록을 다시 확인해 주세요.");
+      return club;
+    };
+    try {
+      const club = storedUnchanged();
       if (pending.kind === "DELETE") {
         const next = await withClubWriteLock(() => {
           const fresh = parseClubLibrary(window.localStorage.getItem(CLUB_STORAGE_KEY)).clubs.find(c => c.id === club.id);
@@ -58,12 +78,36 @@ export function GuestClubPanel({ basis, index, rosters, blueTeamId, redTeamId, d
         });
         setClubs(next.clubs); setStatus("저장된 구단을 삭제했습니다. 현재 로스터는 유지합니다.");
       } else {
-        const next = applyGuestClub(club, teamId, rosters, basis, index, seasonCatalog, seasonLineups);
-        onApply(next); onSeasonApply(teamId, structuredClone(club.seasonSlots ?? emptySeasonSlots())); setName(club.name); setHead(club.headCoach); setAssistant(club.assistantCoach);
-        setStatus(`${club.name} 구단을 ${side === "BLUE" ? "블루" : "레드"} 로스터로 불러왔습니다. 밴픽은 유지합니다.`);
+        // Runtime-only copy: the stored club (id, revision, createdAt, refs) is never rewritten.
+        let runtime = club;
+        const savedId = savedSeasonCatalogId(club);
+        if (seasonCatalog && savedId && savedId !== seasonCatalog.catalog_id) {
+          controller = new AbortController();
+          job.current.controller = controller;
+          setLoadingSaved(true);
+          setStatus("저장 당시 시즌 선수 자료를 확인하는 중입니다. 취소할 수 있습니다."); setFailure(false);
+          const saved = await loadPreservedSeasonCatalogById(publicationRoot, savedId, controller.signal);
+          if (controller.signal.aborted) throw new DOMException("aborted", "AbortError");
+          storedUnchanged();
+          runtime = migrateClubSeasonSlots(club, saved, seasonCatalog);
+        }
+        // Validate everything first, then apply both roster and season slots in one go.
+        const next = applyGuestClub(runtime, teamId, rosters, basis, index, seasonCatalog, seasonLineups);
+        const slots = structuredClone(runtime.seasonSlots ?? emptySeasonSlots());
+        if (controller?.signal.aborted) throw new DOMException("aborted", "AbortError");
+        if (job.current.controller === controller) job.current.controller = null;
+        onApply(next); onSeasonApply(teamId, slots); setName(club.name); setHead(club.headCoach); setAssistant(club.assistantCoach);
+        setStatus(`${club.name} 구단을 ${side === "BLUE" ? "블루" : "레드"} 로스터로 불러왔습니다. 밴픽은 유지합니다.${runtime !== club ? " 저장 당시와 내용이 완전히 같은 시즌 카드만 현재 자료 버전으로 맞춰 적용했고, 저장된 구단은 바꾸지 않았습니다." : ""}`);
       }
       setFailure(false); setPending(null);
-    } catch (e) { setPending(null); error(e); } finally { setBusy(false); }
+    } catch (e) {
+      setPending(null);
+      if (isAbortError(e) || controller?.signal.aborted) { setFailure(false); setStatus("구단 불러오기를 취소했습니다. 기존 로스터를 유지합니다."); }
+      else error(e);
+    } finally {
+      if (controller && job.current.controller === controller) job.current.controller = null;
+      setLoadingSaved(false); setBusy(false);
+    }
   }
   return <section className="guest-club" lang="ko" aria-label="내 구단">
     <header><h3>내 구단</h3><small>{clubs.length} / {MAX_CLUBS}</small></header>
@@ -91,7 +135,7 @@ export function GuestClubPanel({ basis, index, rosters, blueTeamId, redTeamId, d
         try { if (ref) { const c = resolveSeasonRef(ref, role, seasonCatalog); seasonName = `${c.season} ${c.player_name} · ${c.game_count}경기`; } } catch { /* Confirmation remains explicit; apply refuses unavailable references. */ }
         return <li key={role}>{role} · {ref ? seasonName : p ? index.players.get(playerKey(p.source_team_id, p.player_id))?.player_name ?? "현재 자료에 없는 선수" : "빈 자리"}</li>;
       })}</ul>}
-      <button type="button" disabled={busy} onClick={() => setPending(null)}>취소</button><button type="button" disabled={disabled || busy || !ready} onClick={() => void confirm()}>{pending.kind === "LOAD" ? "불러오기 확정" : "삭제 확정"}</button>
+      <button type="button" disabled={busy && !loadingSaved} onClick={cancelPending}>취소</button><button type="button" disabled={disabled || busy || !ready} onClick={() => void confirm()}>{pending.kind === "LOAD" ? "불러오기 확정" : "삭제 확정"}</button>
     </div>}
     {status && <p role={failure ? "alert" : "status"}>{status}</p>}
   </section>;
