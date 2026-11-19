@@ -190,3 +190,10 @@ Claude구현/수정과Codex독립검증으로숫자가정·시드전용링크를
 현재patch·두팀·readiness·blocked관문을유지하며 명시적용후에도직접실행해야한다. 기존draft v1불변.
 관련26/타입/lint/Pages5/PC2·모바일2/전체웹495통과. Python전체798은직전연구CLI검증시점이며이번에재실행하지않았다.
 일반입력모바일캡처 outputs/assumption-input-link-normal-mobile-20261120.png. 제품원격게시없음.
+
+## 모델 자원 흐름 체크포인트
+
+현재표시시각까지의고정자원그래프/분별표를Claude가구현하고Codex가독립검증했다.
+관련23/타입/lint/Pages5/전체웹507통과. 실제PC·모바일에서발견한44px/범례CSS충돌도Claude가수정,
+최종CSS후빌드/실제브라우저2개통과. 미래정보출력·새모델실행·현재입력과고정run의혼합없음.
+원격게시없으며실전골드/승률이아니다. 상세 EXPERIMENT_RESOURCE_HISTORY_2026-11-20.md.

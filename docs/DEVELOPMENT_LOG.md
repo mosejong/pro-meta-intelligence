@@ -558,3 +558,13 @@ source의완료고정run 숫자/시드만별도#experiment링크로보내고 수
 Claude구현·동일세션lintfixture수정, Codex관련26·타입/lint·Pages5·PC2/모바일2·전체웹495통과.
 새브라우저왕복, MIN_VALUE, 기존run/A/로스터/주소보존, 늦은copy무효를독립검사했다.
 모바일정상캡처와극소수stress캡처구분. 외부공개·배포없음. 상세 EXPERIMENT_INPUT_LINK_2026-11-20.md.
+
+## 현재 재생시각까지의 자원 흐름 그래프
+
+Claude가고정모델기록의0분~현재표시분자원을SVG와분별표로보는기본접힘기능을구현했다.
+미래point·종료분·winner·미래y최대값을내보내지않고기존replayFrame만재사용한다. Codex관련23·
+타입/lint/Pages5·PC/모바일확인. 실제40px클릭영역실패와범례grid충돌을발견해동일Claude에게돌렸고
+각기능선택자만수정해최종PC/모바일2개통과했다. 전체웹507통과후최종범례CSS만손봐서빌드/브라우저재검증했다.
+최종캡처 outputs/model-resource-history-mobile-20261120.png. 현재입력편집이기존graph를바꾸지않고
+새run교체가0분부터시작하며보관A가유지됨을확인했다. 실전골드/승률아니며원격게시없음.
+상세 EXPERIMENT_RESOURCE_HISTORY_2026-11-20.md.

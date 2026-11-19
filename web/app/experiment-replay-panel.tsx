@@ -26,6 +26,7 @@ import { ExperimentComparisonPanel } from "./experiment-comparison-panel";
 import { eventNavigation } from "./experiment-event-navigation";
 import { ExperimentResultSharePanel } from "./experiment-result-share-panel";
 import { ExperimentInputLinkPanel } from "./experiment-input-link-panel";
+import { ExperimentResourceHistoryPanel } from "./experiment-resource-history-panel";
 import "./experiment-replay-panel.css";
 
 type ExperimentReplayPanelProps = {
@@ -216,6 +217,7 @@ export function ExperimentReplayPanel({ readyInput, blocked, nameOf }: Experimen
           <meter min={0} max={100} value={state.base} aria-label={`${team.name} 모델 기지 내구도`} />
         </div>;
       })}</div>
+      <ExperimentResourceHistoryPanel run={run} shownMinute={frame.minute} />
 
       <ol className="experiment-replay-log" aria-label="지금까지의 모델 사건">{frame.log.length ? frame.log.slice(-8).map((event, index) => {
         const actor = teamOf(event.actor as CoreTeamId).name;

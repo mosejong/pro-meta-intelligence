@@ -56,4 +56,21 @@ main.draft-lab.draft-studio .experiment-input-link :is(p, li) { overflow-wrap: a
 main.draft-lab.draft-studio .experiment-input-link > * + * { margin-top: 8px; }
 main.draft-lab.draft-studio .experiment-input-link-incoming { display: grid; gap: 6px; min-width: 0; }
 main.draft-lab.draft-studio .experiment-input-link-incoming button { justify-self: start; min-height: 44px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-resource-history { min-width: 0; }
+main.draft-lab.draft-studio .experiment-replay details.experiment-resource-history > summary, main.draft-lab.draft-studio .experiment-replay details.experiment-resource-history-values > summary { min-height: 44px; }
+main.draft-lab.draft-studio .experiment-resource-history :is(p, li, caption) { overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-resource-history > * + * { margin-top: 8px; }
+main.draft-lab.draft-studio .experiment-replay details ul.experiment-resource-history-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 0; list-style: none; color: var(--studio-text); min-width: 0; }
+main.draft-lab.draft-studio .experiment-replay details ul.experiment-resource-history-legend > li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
+main.draft-lab.draft-studio .experiment-resource-history-chart { display: block; width: 100%; max-width: 640px; height: auto; }
+main.draft-lab.draft-studio .experiment-resource-history .axis { stroke: var(--studio-line); stroke-width: 1; }
+main.draft-lab.draft-studio .experiment-resource-history .tick { fill: var(--studio-muted); font-size: 10px; }
+main.draft-lab.draft-studio .experiment-resource-history .line { fill: none; stroke-width: 2; }
+main.draft-lab.draft-studio .experiment-resource-history .line.team_a, main.draft-lab.draft-studio .experiment-resource-history .dot.team_a { stroke: #8fb8e8; fill: none; }
+main.draft-lab.draft-studio .experiment-resource-history .line.team_b, main.draft-lab.draft-studio .experiment-resource-history .dot.team_b { stroke: #f0d6ae; fill: none; }
+main.draft-lab.draft-studio .experiment-resource-history .dot { stroke-width: 2; }
+main.draft-lab.draft-studio .experiment-resource-history-scroll { max-width: 100%; overflow-x: auto; margin-bottom: 8px; }
+main.draft-lab.draft-studio .experiment-resource-history-scroll table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+main.draft-lab.draft-studio .experiment-resource-history-scroll :is(th, td) { padding: 2px 10px; border-top: 1px solid var(--studio-line); text-align: right; white-space: nowrap; color: var(--studio-text); }
+main.draft-lab.draft-studio .experiment-resource-history-scroll caption { text-align: left; color: var(--studio-muted); }
 main.draft-lab.draft-studio .experiment-result-share textarea { box-sizing: border-box; width: 100%; max-width: 100%; min-height: 44px; padding: 6px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-bg); color: var(--studio-text); font: inherit; font-size: 12px; resize: vertical; }
