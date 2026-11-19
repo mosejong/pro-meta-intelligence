@@ -127,3 +127,39 @@ def test_candidate_feed_ids_and_exact_nuguri_without_network(tmp_path):
             }
         )
     )
+
+
+def test_explicit_candidate_seasons_discover_2015_without_reading_unrequested_years(
+    tmp_path, monkeypatch
+):
+    from ops import build_season_player_cards as module
+
+    files = {}
+    for year in (2015, 2022):
+        path = tmp_path / f"{year}.csv"
+        path.write_text(
+            f"year,league,position,playerid\n{year},LCK,top,player-{year}\n2021,LCK,top,wrong-year\n",
+            encoding="utf-8",
+        )
+        files[year] = SimpleNamespace(data_path=path, retrieved_at=CUTOFF)
+    requested = []
+    monkeypatch.setattr(module, "inspect_plan", lambda *a, **kw: ({}, object()))
+
+    def annual(inspection, year):
+        requested.append(year)
+        return SimpleNamespace(snapshots=[files[year]])
+
+    monkeypatch.setattr(module, "archive_for_year", annual)
+    result = discover_candidate_ids(
+        {"opponent_prep": {}}, tmp_path, cutoff=CUTOFF, candidate_years=(2022, 2015, 2015)
+    )
+    assert requested == [2015, 2022]
+    assert set(result) == {NUGURI_ID, "player-2015", "player-2022"}
+
+
+@pytest.mark.parametrize("years", [(), (2013,), (2027,), (True,), (2015.0,)])
+def test_invalid_candidate_seasons_are_rejected_before_archive_access(tmp_path, years):
+    with pytest.raises(ValueError, match="candidate years"):
+        discover_candidate_ids(
+            {"opponent_prep": {}}, tmp_path, cutoff=CUTOFF, candidate_years=years
+        )
