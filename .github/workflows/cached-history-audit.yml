@@ -13,6 +13,11 @@ on:
         default: "2015"
         type: choice
         options: ["2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"]
+      build_cards:
+        description: "Also build review-only season cards offline when the year is admitted"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -133,4 +138,48 @@ jobs:
             outputs/cached-history-audit/admission.json
             outputs/cached-history-audit/restore-report.json
           if-no-files-found: warn
+          retention-days: 14
+      - name: Confirm requested year admission before card generation
+        if: ${{ success() && inputs.build_cards }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'ADMISSION'
+          import json
+          import os
+
+          year = int(os.environ["AUDIT_YEAR"])
+          path = "outputs/cached-history-audit/admission.json"
+          with open(path, encoding="utf-8") as handle:
+              report = json.load(handle)
+          entries = [e for e in report.get("years", []) if e.get("season") == year]
+          status = entries[0].get("status") if len(entries) == 1 else None
+          if report.get("requested_years") != [year] or status not in {"USABLE", "USABLE_WITH_REJECTIONS"}:
+              raise SystemExit(f"Year {year} is not admitted for card generation: {status}")
+          print(json.dumps({"season": year, "admission": status}))
+          ADMISSION
+      - name: Build review-only season cards offline from restored archive
+        if: ${{ success() && inputs.build_cards }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=outputs/cached-season-cards
+          mkdir -p "$out"
+          python -m ops.build_season_player_cards \
+            --archive-dir outputs/private-audit-state/raw \
+            --feed web/public/feed/current.json \
+            --candidate-season 2022 \
+            --candidate-season "$AUDIT_YEAR" \
+            --output "$out/season-player-cards.json" \
+            > "$out/build-report.partial"
+          mv "$out/build-report.partial" "$out/build-report.json"
+      - name: Preserve review-only season cards
+        if: ${{ success() && inputs.build_cards }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: cached-season-cards-${{ inputs.year }}-${{ github.run_id }}
+          path: |
+            outputs/cached-season-cards/season-player-cards.json
+            outputs/cached-season-cards/build-report.json
+          if-no-files-found: error
           retention-days: 14
