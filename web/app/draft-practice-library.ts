@@ -124,6 +124,19 @@ function defaultId() {
 const summaryOf = (session: DraftSession): PracticeSummary =>
   ({ patch_id: session.report.patch_id, game_number: session.games.length + 1, selections: session.selections.length, positions: Boolean(session.positions) });
 
+type StoredCheck = { ok: true; entry: PracticeEntry; content: Extract<PracticeContentResult, { ok: true }> } | { ok: false; error: PracticeError };
+/** Entry metadata must parse, match the id and agree with the re-validated stored body (shared by read/rename). */
+function verifyStored(id: string, rawEntry: unknown, rawScenario: unknown): StoredCheck {
+  const entry = parsePracticeEntry(rawEntry);
+  if (!entry || entry.id !== id || typeof rawScenario !== "string") return { ok: false, error: new PracticeError("CORRUPT") };
+  const content = parsePracticeContent(rawScenario);
+  if (!content.ok) return { ok: false, error: contentError(content) };
+  const expected = summaryOf(content.session);
+  const summaryOk = (Object.keys(expected) as (keyof PracticeSummary)[]).every((key) => entry.summary[key] === expected[key]);
+  if (!summaryOk || entryHasRoster(entry) !== (content.roster !== null) || entryHasSeason(entry) !== (content.season !== null)) return { ok: false, error: new PracticeError("CORRUPT") };
+  return { ok: true, entry, content };
+}
+
 export function createPracticeLibrary(options: LibraryOptions = {}) {
   const factory = options.indexedDB ?? (() => (typeof indexedDB === "undefined" ? undefined : indexedDB));
   const timeoutMs = options.timeoutMs ?? PRACTICE_TIMEOUT_MS;
@@ -252,14 +265,48 @@ export function createPracticeLibrary(options: LibraryOptions = {}) {
       scenarioRequest.onsuccess = () => { result.scenario = scenarioRequest.result; set(result); };
     });
     if (raw.entry === undefined && raw.scenario === undefined) throw new PracticeError("NOT_FOUND");
-    const entry = parsePracticeEntry(raw.entry);
-    if (!entry || entry.id !== id || typeof raw.scenario !== "string") throw new PracticeError("CORRUPT");
-    const content = parsePracticeContent(raw.scenario);
-    if (!content.ok) throw contentError(content);
-    const expected = summaryOf(content.session);
-    const summaryOk = (Object.keys(expected) as (keyof PracticeSummary)[]).every((key) => entry.summary[key] === expected[key]);
-    if (!summaryOk || entryHasRoster(entry) !== (content.roster !== null) || entryHasSeason(entry) !== (content.season !== null)) throw new PracticeError("CORRUPT");
+    const checked = verifyStored(id, raw.entry, raw.scenario);
+    if (!checked.ok) throw checked.error;
+    const { entry, content } = checked;
     return { entry, session: content.session, roster: content.roster, season: content.season };
+  }
+
+  /**
+   * Rename only: one readwrite transaction reads the entry, its stored body and all other entries,
+   * re-validates the entry + body exactly like `read`, rejects names used by another valid entry
+   * (NFC/case/trim, same rule as `save`) and rewrites `entry.name` alone. The body, id, created_at,
+   * summary and schema version are untouched; no slot is used. Damaged/missing items are never
+   * overwritten. Readwrite transactions on the same stores serialize, so a concurrent save/rename
+   * in another tab cannot create a duplicate name.
+   */
+  async function rename(id: string, rawName: string): Promise<PracticeEntry> {
+    if (typeof id !== "string" || !ID_PATTERN.test(id)) throw new PracticeError("NOT_FOUND");
+    const nameCheck = validatePracticeName(rawName);
+    if (!nameCheck.ok) throw new PracticeError(nameCheck.code);
+    const nextName = nameCheck.name;
+    return run<PracticeEntry>("readwrite", (tx, set, abort) => {
+      const entries = tx.objectStore(ENTRIES);
+      const allRequest = entries.getAll();
+      const scenarioRequest = tx.objectStore(SCENARIOS).get(id);
+      let pendingRequests = 2;
+      const proceed = () => {
+        if (--pendingRequests > 0) return;
+        const all: unknown[] = Array.isArray(allRequest.result) ? allRequest.result : [];
+        const rawEntry = all.find((item) => record(item) && item.id === id);
+        const rawScenario: unknown = scenarioRequest.result;
+        if (rawEntry === undefined && rawScenario === undefined) { abort("NOT_FOUND"); return; }
+        const checked = verifyStored(id, rawEntry, rawScenario);
+        if (!checked.ok) { abort(checked.error.code); return; }
+        const others = all.filter((item) => item !== rawEntry).map(parsePracticeEntry)
+          .filter((item): item is PracticeEntry => item !== null).map((item) => item.name);
+        if (!validatePracticeName(nextName, others).ok) { abort("NAME_DUPLICATE"); return; }
+        const renamed: PracticeEntry = { ...checked.entry, name: nextName };
+        if (checked.entry.name !== nextName) entries.put(renamed);
+        set(renamed);
+      };
+      allRequest.onsuccess = proceed;
+      scenarioRequest.onsuccess = proceed;
+    });
   }
 
   /** Delete one practice (entry and scenario together). Damaged entries with an ID are deletable. */
@@ -272,7 +319,7 @@ export function createPracticeLibrary(options: LibraryOptions = {}) {
     });
   }
 
-  return { list, save, read, remove };
+  return { list, save, read, remove, rename };
 }
 
 export type PracticeLibrary = ReturnType<typeof createPracticeLibrary>;

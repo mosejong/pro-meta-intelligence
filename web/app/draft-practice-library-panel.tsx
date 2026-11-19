@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { DraftSession } from "./draft-session";
 import type { RosterScenario } from "./roster-scenario";
-import { createPracticeLibrary, createPracticeLoadGate, entryHasRoster, entryHasSeason, PRACTICE_GATE_TEXT, type PracticeLoadTicket,PRACTICE_LIMIT, PRACTICE_NAME_MAX, practiceErrorText, validatePracticeName, PRACTICE_ERROR_TEXT, type PracticeEntry, type PracticeLibrary } from "./draft-practice-library";
+import { createPracticeLibrary, createPracticeLoadGate, entryHasRoster, entryHasSeason, PRACTICE_GATE_TEXT, type PracticeLoadTicket,PRACTICE_LIMIT, PRACTICE_NAME_MAX, practiceErrorText, validatePracticeName, PRACTICE_ERROR_TEXT, PracticeError, type PracticeEntry, type PracticeLibrary } from "./draft-practice-library";
 import { verifySeasonPart, type SeasonPracticePart } from "./practice-roster-bundle";
 import type { SeasonCardCatalog, TeamSeasonSlots } from "./season-player-cards";
 import "./draft-practice-library.css";
@@ -12,6 +12,7 @@ const defaultLibrary = createPracticeLibrary();
 
 type Pending = { kind: "LOAD" | "DELETE"; id: string; name: string; ticket: PracticeLoadTicket; roster?: boolean; season?: boolean } | null;
 type Status = { tone: "ok" | "error"; text: string } | null;
+type Renaming = { id: string; original: string; value: string; ticket: PracticeLoadTicket } | null;
 /** Season part verified against the live catalog it was checked with. */
 export type VerifiedPracticeSeason = { catalog: SeasonCardCatalog; lineups: TeamSeasonSlots };
 const SEASON_CANCELLED = "불러오기를 취소했습니다. 현재 밴픽과 선수 구성은 그대로 유지합니다.";
@@ -61,12 +62,19 @@ export function DraftPracticeLibraryPanel({ scenario, roster = null, season = nu
   const [pendingState, setPending] = useState<Pending>(null);
   // Render-time adjustment: any lock transition clears every confirmation (it cannot revive on
   // unlock); a board change clears a load confirmation. The gate below re-checks on confirm too.
+  // Inline rename editor (one entry at a time); hidden by default and never written until applied.
+  const [renamingState, setRenaming] = useState<Renaming>(null);
   const [seen, setSeen] = useState({ boardKey, locked });
   if (seen.boardKey !== boardKey || seen.locked !== locked) {
     setSeen({ boardKey, locked });
     if (pendingState && (seen.locked !== locked || pendingState.kind === "LOAD")) setPending(null);
+    // Team/board/room changes discard an open rename editor (nothing was written).
+    if (renamingState) setRenaming(null);
   }
   const pending = locked ? null : pendingState;
+  const renaming = locked ? null : renamingState;
+  const renameInputRef = useRef<HTMLInputElement>(null);
+  const renameReturnFocus = useRef<HTMLElement | null>(null);
   const generation = useRef(0);
   const gate = useRef<ReturnType<typeof createPracticeLoadGate> | null>(null);
   if (gate.current === null) gate.current = createPracticeLoadGate();
@@ -85,6 +93,8 @@ export function DraftPracticeLibraryPanel({ scenario, roster = null, season = nu
   useEffect(() => { seasonAbort.current?.abort(); }, [boardKey, locked]);
   useEffect(() => () => { generation.current++; seasonAbort.current?.abort(); }, []);
   useEffect(() => { if (pending) cancelRef.current?.focus(); }, [pending]);
+  const renamingId = renaming?.id ?? null;
+  useEffect(() => { if (renamingId) renameInputRef.current?.focus(); }, [renamingId]);
   // Escape cancels the confirmation while focus is inside it. Listener exists only while a
   // confirmation is shown and is scoped to the dialog element.
   const hasPending = pending !== null;
@@ -202,6 +212,7 @@ export function DraftPracticeLibraryPanel({ scenario, roster = null, season = nu
   function requestLoad(entry: PracticeEntry, trigger: HTMLElement) {
     if (locked || busy) return;
     const ticket = gate.current!.ticket();
+    setRenaming(null);
     if (!hasWork) { void load(entry.id, ticket); return; }
     returnFocus.current = trigger;
     setPending({ kind: "LOAD", id: entry.id, name: entry.name, ticket, roster: entryHasRoster(entry), season: entryHasSeason(entry) });
@@ -210,7 +221,54 @@ export function DraftPracticeLibraryPanel({ scenario, roster = null, season = nu
   function requestDelete(id: string, label: string, trigger: HTMLElement) {
     if (locked || busy) return;
     returnFocus.current = trigger;
+    setRenaming(null);
     setPending({ kind: "DELETE", id, name: label, ticket: gate.current!.ticket() });
+  }
+
+  /** Opens the inline editor; any open load/delete confirmation is closed first (no overlap). */
+  function startRename(entry: PracticeEntry, trigger: HTMLElement) {
+    if (locked || busy) return;
+    renameReturnFocus.current = trigger;
+    setPending(null);
+    setStatus(null);
+    setRenaming({ id: entry.id, original: entry.name, value: entry.name, ticket: gate.current!.ticket() });
+  }
+
+  /** Cancel never touches storage. */
+  function cancelRename() {
+    setRenaming(null);
+    window.setTimeout(() => renameReturnFocus.current?.focus(), 0);
+  }
+
+  async function applyRename() {
+    const target = renaming;
+    if (!target || locked || busy) return;
+    const before = gate.current!.check(target.ticket);
+    if (before !== "OK") { setRenaming(null); setStatus({ tone: "error", text: PRACTICE_GATE_TEXT[before] }); return; }
+    const others = entries?.filter((entry) => entry.id !== target.id).map((entry) => entry.name) ?? [];
+    const check = validatePracticeName(target.value, others);
+    if (!check.ok) { setStatus({ tone: "error", text: PRACTICE_ERROR_TEXT[check.code] }); return; }
+    if (check.name === target.original) { cancelRename(); return; }
+    const token = begin();
+    setStatus(null);
+    try {
+      const entry = await library.rename(target.id, check.name);
+      if (!current(token)) return;
+      setRenaming(null);
+      // Committed in IDB. A delayed result after a board/lock change shows no stale success text;
+      // the refreshed list below still reflects what was stored.
+      if (gate.current!.check(target.ticket) === "OK") {
+        setStatus({ tone: "ok", text: `“${target.original}” 연습 이름을 “${entry.name}”(으)로 바꿨습니다. 저장된 밴픽과 선수 구성은 그대로입니다.` });
+        renameReturnFocus.current = null;
+      }
+    } catch (error) {
+      if (!current(token)) return;
+      // Original name stays; a name problem keeps the editor open for correction.
+      const code = error instanceof PracticeError ? error.code : "FAILED";
+      if (!code.startsWith("NAME_")) setRenaming(null);
+      setStatus({ tone: "error", text: practiceErrorText(error) });
+    }
+    if (current(token)) await refresh(token);
   }
 
   async function remove(id: string) {
@@ -267,8 +325,26 @@ export function DraftPracticeLibraryPanel({ scenario, roster = null, season = nu
           </div>
           <div className="draft-practice-actions">
             <button type="button" onClick={(event) => requestLoad(entry, event.currentTarget)} disabled={locked || busy} aria-label={`${entry.name} 열기`}>열기</button>
+            <button type="button" onClick={(event) => startRename(entry, event.currentTarget)} disabled={locked || busy || renaming?.id === entry.id} aria-label={`${entry.name} 이름 바꾸기`}>이름 바꾸기</button>
             <button type="button" onClick={(event) => requestDelete(entry.id, entry.name, event.currentTarget)} disabled={locked || busy} aria-label={`${entry.name} 삭제`}>삭제</button>
           </div>
+          {renaming?.id === entry.id && (() => {
+            const check = validatePracticeName(renaming.value, entries.filter((other) => other.id !== entry.id).map((other) => other.name));
+            const hintId = `draft-practice-rename-hint-${entry.id}`;
+            return <form className="draft-practice-save" style={{ flexBasis: "100%" }}
+              onSubmit={(event) => { event.preventDefault(); void applyRename(); }}>
+              <label htmlFor={`draft-practice-rename-${entry.id}`}>새 이름</label>
+              <div>
+                <input id={`draft-practice-rename-${entry.id}`} ref={renameInputRef} value={renaming.value} disabled={busy}
+                  onKeyDown={(event) => { if (event.key === "Escape" && !busy) { event.preventDefault(); event.stopPropagation(); cancelRename(); } }}
+                  onChange={(event) => { const value = event.currentTarget.value; setRenaming((prev) => prev && prev.id === entry.id ? { ...prev, value } : prev); }}
+                  autoComplete="off" placeholder={`${PRACTICE_NAME_MAX}자 이내`} aria-invalid={!check.ok} aria-describedby={hintId} />
+                <button type="submit" disabled={busy || !check.ok}>적용</button>
+                <button type="button" onClick={cancelRename} disabled={busy}>취소</button>
+              </div>
+              <small id={hintId}>{check.ok ? "Enter로 적용, Esc로 취소합니다. 이름만 바뀌고 저장된 밴픽은 그대로입니다." : PRACTICE_ERROR_TEXT[check.code]}</small>
+            </form>;
+          })()}
         </li>)}
         {damaged.map((id, index) => <li key={`damaged-${id || index}`} className="damaged">
           <div className="draft-practice-meta"><b>손상되었거나 지원하지 않는 항목</b><small>열 수 없습니다. 삭제하면 자리가 비워집니다.</small></div>
