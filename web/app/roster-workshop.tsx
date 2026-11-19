@@ -20,7 +20,9 @@ import {
   type RosterIndex,
   type RosterPlayer,
   type RosterRole,
+  type RosterScenario,
   type RosterState,
+  validateRosters,
 } from "./roster-scenario";
 import type { LiveRoster } from "./roster-comparison";
 import { PlayerPoolPanel } from "./player-pool-panel";
@@ -55,11 +57,21 @@ type RosterWorkshopProps = {
    * pair, or null while none is ready. Must be a stable function (e.g. a state setter).
    */
   onRosterChange?: (roster: LiveRoster | null) => void;
+  /**
+   * Explicit restore of an already validated roster (e.g. from the practice library). Applied once
+   * per token, only by the editor whose basis and pair match, and always wins over the device copy.
+   */
+  restoreRequest?: RosterRestoreRequest | null;
+  /** Small meta for the parent: whether season players are assigned (null while no editor). Stable function. */
+  onRosterMeta?: (meta: RosterMeta | null) => void;
 };
+export type RosterRestoreRequest = { token: number; roster: RosterScenario };
+export type RosterMeta = { seasonPlayers: boolean };
 
 const NO_SELECTIONS: readonly PoolSelection[] = [];
 const NO_PICKS: readonly string[] = [];
 const IGNORE_ROSTER = () => {};
+const IGNORE_META = () => {};
 
 /**
  * Collapsible virtual roster editor next to the team setup. Remounts per snapshot basis and
@@ -67,22 +79,25 @@ const IGNORE_ROSTER = () => {};
  * its own observations. It never touches the draft or analysis; its live roster becomes the
  * A/B comparison's current B, and an already frozen A is never changed retroactively.
  */
-export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null, publicationRoot = "./", defaultOpen = false, onRosterChange = IGNORE_ROSTER }: RosterWorkshopProps) {
+export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null, publicationRoot = "./", defaultOpen = false, onRosterChange = IGNORE_ROSTER, restoreRequest = null, onRosterMeta = IGNORE_META }: RosterWorkshopProps) {
   const basis = useMemo(() => rosterBasis(report), [report]);
   const pool = useMemo(() => poolBasis(report), [report]);
+  // Survives editor remounts, so one request is applied at most once.
+  const consumedRef = useRef(0);
   if (!blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) return null;
   return <RosterWorkshopBody key={`${basisKey(basis)}|${pairKey([blueTeam.team_id, redTeam.team_id])}`}
     basis={basis} patchId={report.patch_id} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={disabled}
     pool={pool} selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} publicationRoot={publicationRoot}
-    defaultOpen={defaultOpen} onRosterChange={onRosterChange} />;
+    defaultOpen={defaultOpen} onRosterChange={onRosterChange} restoreRequest={restoreRequest} consumedRef={consumedRef} onRosterMeta={onRosterMeta} />;
 }
 
 type Status = { tone: "info" | "error"; text: string } | null;
 
-function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled, pool, selections, previousPicks, focusChampionId, publicationRoot, defaultOpen, onRosterChange }: {
+function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled, pool, selections, previousPicks, focusChampionId, publicationRoot, defaultOpen, onRosterChange, restoreRequest, consumedRef, onRosterMeta }: {
   basis: RosterBasis; patchId: string; teams: OpponentTeam[]; blueTeam: OpponentTeam; redTeam: OpponentTeam; disabled: boolean;
   pool: PoolBasis; selections: readonly PoolSelection[]; previousPicks: readonly string[]; focusChampionId: string | null; publicationRoot: string;
   onRosterChange: (roster: LiveRoster | null) => void;
+  restoreRequest: RosterRestoreRequest | null; consumedRef: { current: number }; onRosterMeta: (meta: RosterMeta | null) => void;
   defaultOpen: boolean;
 }) {
   const season = useMemo(() => ({ basis, publicationRoot }), [basis, publicationRoot]);
@@ -100,6 +115,8 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   // The device copy is checked once per editor (basis + pair); until then nothing is published,
   // so the comparison never captures an unrestored default lineup.
   const [restored, setRestored] = useState(false);
+  // Bumped by an explicit restore so an identical roster is still republished after the parent withdrew it.
+  const [publishTick, setPublishTick] = useState(0);
   const restoreDone = useRef(false);
   const mounted = useRef(false);
 
@@ -108,9 +125,35 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
     return () => { mounted.current = false; };
   }, []);
 
+  // Explicit restore (validated by the caller, re-checked here). Declared before the device-copy
+  // restore so its timer runs first and a stale localStorage roster can never overwrite it later.
+  useEffect(() => {
+    if (!restoreRequest || restoreRequest.token <= consumedRef.current) return;
+    const { token, roster } = restoreRequest;
+    if (basisKey(roster.basis) !== basisKey(basis) || pairKey(roster.team_ids) !== pairKey(teamIds)) return;
+    const timer = window.setTimeout(() => {
+      if (!mounted.current || token <= consumedRef.current) return;
+      consumedRef.current = token;
+      restoreDone.current = true;
+      setRestored(true);
+      const checked = validateRosters(roster.rosters, teamIds, index);
+      if (!checked.ok) { setStorage({ tone: "error", text: `보관함의 선수 구성을 적용하지 못했습니다: ${checked.error}` }); setPublishTick((tick) => tick + 1); return; }
+      setSeasonLineups({});
+      setRosters(checked.value);
+      setPublishTick((tick) => tick + 1);
+      setEditStatus("");
+      try {
+        window.localStorage.setItem(ROSTER_STORAGE_KEY, serializeRosterScenario({ basis, team_ids: teamIds, rosters: checked.value }, index));
+        setStorage({ tone: "info", text: "연습 보관함에 함께 저장된 선수 구성을 복원했습니다." });
+      } catch { setStorage({ tone: "info", text: "연습 보관함의 선수 구성을 복원했습니다. 이 기기 로스터 저장은 실패했습니다." }); }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [restoreRequest, consumedRef, basis, teamIds, index]);
+
   useEffect(() => {
     if (restoreDone.current) return;
     const restore = window.setTimeout(() => {
+      if (restoreDone.current) return;
       restoreDone.current = true;
       setRestored(true);
       let saved: string | null = null;
@@ -129,9 +172,12 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   // Publish the actual roster state (not a recomputed default) for the A/B comparison's B.
   useEffect(() => {
     if (restored) onRosterChange({ basis, teamIds, rosters });
-  }, [restored, basis, teamIds, rosters, onRosterChange]);
+  }, [restored, basis, teamIds, rosters, onRosterChange, publishTick]);
   // A remount (new pair/basis) or removal withdraws this editor's roster before the next one publishes.
   useEffect(() => () => onRosterChange(null), [onRosterChange]);
+  const seasonAssigned = Object.values(seasonLineups).some(slots => Object.values(slots).some(Boolean));
+  useEffect(() => { onRosterMeta({ seasonPlayers: seasonAssigned }); }, [seasonAssigned, onRosterMeta]);
+  useEffect(() => () => onRosterMeta(null), [onRosterMeta]);
 
   function serialize(state: RosterState) {
     return serializeRosterScenario({ basis, team_ids: teamIds, rosters: state }, index);
@@ -207,7 +253,7 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   const all = [...statuses("BLUE", blueTeam), ...statuses("RED", redTeam)];
   const changedCount = all.filter((item) => item.status.changed).length;
   const emptyCount = all.filter((item) => !item.status.player).length;
-  const hasSeasonPlayers = Object.values(seasonLineups).some(slots => Object.values(slots).some(Boolean));
+  const hasSeasonPlayers = seasonAssigned;
 
   return <details className="roster-workshop" lang="ko" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
     <summary>가상 로스터·포지션 <small>원관측과 다른 슬롯 {changedCount} · 빈칸 {emptyCount}</small></summary>

@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { DraftSession } from "./draft-session";
-import { createPracticeLibrary, createPracticeLoadGate, PRACTICE_GATE_TEXT, type PracticeLoadTicket,PRACTICE_LIMIT, PRACTICE_NAME_MAX, practiceErrorText, validatePracticeName, PRACTICE_ERROR_TEXT, type PracticeEntry, type PracticeLibrary } from "./draft-practice-library";
+import type { RosterScenario } from "./roster-scenario";
+import { createPracticeLibrary, createPracticeLoadGate, entryHasRoster, PRACTICE_GATE_TEXT, type PracticeLoadTicket,PRACTICE_LIMIT, PRACTICE_NAME_MAX, practiceErrorText, validatePracticeName, PRACTICE_ERROR_TEXT, type PracticeEntry, type PracticeLibrary } from "./draft-practice-library";
 import "./draft-practice-library.css";
 
 const defaultLibrary = createPracticeLibrary();
 
-type Pending = { kind: "LOAD" | "DELETE"; id: string; name: string; ticket: PracticeLoadTicket } | null;
+type Pending = { kind: "LOAD" | "DELETE"; id: string; name: string; ticket: PracticeLoadTicket; roster?: boolean } | null;
 type Status = { tone: "ok" | "error"; text: string } | null;
 
 /**
@@ -15,7 +16,11 @@ type Status = { tone: "ok" | "error"; text: string } | null;
  * Loading goes through `onLoad` (the caller's existing restore path) only after validation and,
  * when there is work in progress, an explicit confirmation.
  */
-export function DraftPracticeLibraryPanel({ scenario, boardKey, hasWork, locked, onLoad, library = defaultLibrary }: {
+export function DraftPracticeLibraryPanel({ scenario, roster = null, rosterBlocked = null, boardKey: draftBoardKey, hasWork, locked, onLoad, library = defaultLibrary }: {
+  /** Ready current-player roster-scenario v1 text for this exact board, or null. */
+  roster?: string | null;
+  /** Why the roster cannot be saved together (e.g. season players assigned), or null. */
+  rosterBlocked?: string | null;
   /**
    * Small identity of the current board and context (selections, previous sets, staged champion,
    * matchup, first pick, explicit positions, analysis basis, room/import mode). Any change
@@ -28,9 +33,15 @@ export function DraftPracticeLibraryPanel({ scenario, boardKey, hasWork, locked,
   hasWork: boolean;
   /** Friend room active, session not ready or another import running. */
   locked: boolean;
-  onLoad: (session: DraftSession) => void;
+  /** Called once, after validation and confirmation, with the draft and its saved roster (or null). */
+  onLoad: (session: DraftSession, roster: RosterScenario | null) => void;
   library?: PracticeLibrary;
 }) {
+  // Explicit choice; defaults to on only while a safely prepared roster exists.
+  const [includePref, setIncludePref] = useState<boolean | null>(null);
+  const includeRoster = roster !== null && (includePref ?? true);
+  // Roster edits and the checkbox are part of the gate: they invalidate pending/in-flight loads.
+  const boardKey = JSON.stringify([draftBoardKey, roster, includeRoster]);
   const [open, setOpen] = useState(false);
   const [entries, setEntries] = useState<PracticeEntry[] | null>(null);
   const [damaged, setDamaged] = useState<string[]>([]);
@@ -106,11 +117,11 @@ export function DraftPracticeLibraryPanel({ scenario, boardKey, hasWork, locked,
     const token = begin();
     setStatus(null);
     try {
-      const entry = await library.save(name, scenario);
+      const entry = await library.save(name, scenario, includeRoster ? roster : null);
       if (!current(token)) return;
       setName("");
       // Shown only after the transaction completed.
-      setStatus({ tone: "ok", text: `“${entry.name}” 연습을 이 기기에 저장했습니다.` });
+      setStatus({ tone: "ok", text: `“${entry.name}” 연습을 이 기기에 저장했습니다.${entryHasRoster(entry) ? " 현재 선수 구성도 함께 저장했습니다." : " 선수 구성은 포함하지 않았습니다."}` });
     } catch (error) {
       if (current(token)) setStatus({ tone: "error", text: practiceErrorText(error) });
     }
@@ -131,13 +142,13 @@ export function DraftPracticeLibraryPanel({ scenario, boardKey, hasWork, locked,
     setPending(null);
     setStatus(null);
     try {
-      const { entry, session } = await library.read(id);
+      const { entry, session, roster: savedRoster } = await library.read(id);
       if (!current(token)) return;
       // Re-check against the latest committed board/lock: newer work always wins over a late read.
       const after = gate.current!.check(ticket);
       if (after !== "OK") { setStatus({ tone: "error", text: PRACTICE_GATE_TEXT[after] }); return; }
-      onLoadRef.current(session);
-      setStatus({ tone: "ok", text: `“${entry.name}” 연습을 불러왔습니다. 저장 당시의 분석 기준을 그대로 사용합니다.` });
+      onLoadRef.current(session, savedRoster);
+      setStatus({ tone: "ok", text: `“${entry.name}” 연습을 불러왔습니다. 저장 당시의 분석 기준을 그대로 사용합니다.${savedRoster ? " 함께 저장한 선수 구성도 복원합니다." : " 이 연습에는 선수 구성이 포함되어 있지 않아 현재 로스터를 유지합니다."}` });
     } catch (error) {
       if (current(token)) setStatus({ tone: "error", text: practiceErrorText(error) });
     } finally { if (current(token)) setBusy(false); }
@@ -148,7 +159,7 @@ export function DraftPracticeLibraryPanel({ scenario, boardKey, hasWork, locked,
     const ticket = gate.current!.ticket();
     if (!hasWork) { void load(entry.id, ticket); return; }
     returnFocus.current = trigger;
-    setPending({ kind: "LOAD", id: entry.id, name: entry.name, ticket });
+    setPending({ kind: "LOAD", id: entry.id, name: entry.name, ticket, roster: entryHasRoster(entry) });
   }
 
   function requestDelete(id: string, label: string, trigger: HTMLElement) {
@@ -178,7 +189,7 @@ export function DraftPracticeLibraryPanel({ scenario, boardKey, hasWork, locked,
 
   return <details className="draft-practice-library" lang="ko" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
     <summary>내 연습 보관함{entries !== null ? ` · ${total}/${PRACTICE_LIMIT}` : ""}</summary>
-    <p className="draft-practice-note">이 기기에만 최대 {PRACTICE_LIMIT}개 보관합니다. 밴픽·이전 세트·직접 배정한 포지션은 저장되고, 가상 선수·감독/코치·시즌 라인업은 저장되지 않습니다.</p>
+    <p className="draft-practice-note">이 기기에만 최대 {PRACTICE_LIMIT}개 보관합니다. 밴픽·이전 세트·직접 배정한 포지션은 저장되고, 선택하면 현재 공개 스냅샷 선수로 짠 가상 로스터도 함께 저장됩니다. 감독/코치·시즌 선수·가정 실험·기준 A는 저장되지 않습니다.</p>
     <form className="draft-practice-save" onSubmit={(event) => { event.preventDefault(); void save(); }}>
       <label htmlFor="draft-practice-name">연습 이름</label>
       <div>
@@ -186,12 +197,14 @@ export function DraftPracticeLibraryPanel({ scenario, boardKey, hasWork, locked,
           autoComplete="off" placeholder={`${PRACTICE_NAME_MAX}자 이내`} aria-invalid={Boolean(name) && !nameCheck.ok} aria-describedby="draft-practice-hint" />
         <button type="submit" disabled={!canSave}>이 연습 저장</button>
       </div>
+      <label><input type="checkbox" checked={includeRoster} disabled={locked || busy || roster === null} onChange={(event) => setIncludePref(event.currentTarget.checked)} aria-describedby="draft-practice-roster-hint" /> 현재 선수 구성도 함께 저장</label>
+      <small id="draft-practice-roster-hint">{roster === null ? (rosterBlocked ?? "선수 구성이 아직 준비되지 않아 밴픽만 저장합니다.") : includeRoster ? "현재 가상 로스터를 밴픽과 함께 저장합니다." : "밴픽만 저장합니다."}</small>
       <small id="draft-practice-hint">{hint}</small>
     </form>
     {status && <p role={status.tone === "error" ? "alert" : "status"} className={`draft-practice-status ${status.tone}`}>{status.text}</p>}
     {pending && <div className="draft-practice-confirm" role="alertdialog" aria-labelledby="draft-practice-confirm-text" ref={confirmRef}>
       <p id="draft-practice-confirm-text">{pending.kind === "LOAD"
-        ? `진행 중인 밴픽을 “${pending.name}” 연습으로 바꿀까요? 현재 화면의 밴픽은 이 연습으로 대체됩니다.`
+        ? `진행 중인 밴픽을 “${pending.name}” 연습으로 바꿀까요? 현재 화면의 밴픽은 이 연습으로 대체됩니다.${pending.roster ? " 현재 가상 로스터도 저장된 선수 구성으로 바뀝니다." : ""}`
         : `“${pending.name}” 연습을 삭제할까요? 되돌릴 수 없습니다.`}</p>
       <div>
         <button type="button" onClick={() => pending.kind === "LOAD" ? void load(pending.id, pending.ticket) : void remove(pending.id)} disabled={busy || locked}>{pending.kind === "LOAD" ? "바꾸기" : "삭제"}</button>
@@ -204,7 +217,7 @@ export function DraftPracticeLibraryPanel({ scenario, boardKey, hasWork, locked,
         {entries.map((entry) => <li key={entry.id}>
           <div className="draft-practice-meta">
             <b>{entry.name}</b>
-            <small>{new Date(entry.created_at).toLocaleString("ko-KR")} · 패치 {entry.summary.patch_id} · {entry.summary.game_number}세트 {entry.summary.selections}/20{entry.summary.positions ? " · 포지션 포함" : ""}</small>
+            <small>{new Date(entry.created_at).toLocaleString("ko-KR")} · 패치 {entry.summary.patch_id} · {entry.summary.game_number}세트 {entry.summary.selections}/20{entry.summary.positions ? " · 포지션 포함" : ""}{entryHasRoster(entry) ? " · 선수 구성 포함" : ""}</small>
           </div>
           <div className="draft-practice-actions">
             <button type="button" onClick={(event) => requestLoad(entry, event.currentTarget)} disabled={locked || busy} aria-label={`${entry.name} 열기`}>열기</button>
