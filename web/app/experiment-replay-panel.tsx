@@ -22,6 +22,7 @@ import {
   type CoreTeamId,
   type ExperimentRun,
 } from "./experiment-replay";
+import { ExperimentComparisonPanel } from "./experiment-comparison-panel";
 import "./experiment-replay-panel.css";
 
 type ExperimentReplayPanelProps = {
@@ -195,6 +196,7 @@ export function ExperimentReplayPanel({ readyInput, blocked, nameOf }: Experimen
         <b>모델 내부 결과:</b> {teamOf(frame.outcome.winner).name} · {frame.outcome.minute}분 · {reasonLabel[frame.outcome.reason]}. 사용자 가정과 작성 규칙의 결과이며 실제 승패·승률 예측이 아닙니다.
       </p> : <p className="experiment-replay-pending">재생이 끝나면 모델 내부 결과를 표시합니다.</p>}
     </section>}
+    {run && frame && <ExperimentComparisonPanel run={run} shownMinute={frame.minute} readyInput={readyInput} />}
   </section>;
 }
 

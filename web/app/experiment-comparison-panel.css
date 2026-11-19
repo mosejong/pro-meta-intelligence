@@ -1,0 +1,19 @@
+/* Optional A/B of assumption runs inside the experiment panel; inherits the replay panel's details/button tone. */
+main.draft-lab.draft-studio .experiment-comparison-body { display: grid; gap: 8px; min-width: 0; }
+main.draft-lab.draft-studio .experiment-comparison-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+main.draft-lab.draft-studio .experiment-comparison-status:empty { display: none; }
+main.draft-lab.draft-studio .experiment-comparison-status { color: var(--studio-text); }
+main.draft-lab.draft-studio .experiment-comparison-status:focus-visible { outline: 2px solid #f0d6ae; outline-offset: 2px; }
+main.draft-lab.draft-studio .experiment-comparison-baseline, main.draft-lab.draft-studio .experiment-comparison-result { display: grid; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-comparison-result { padding-top: 6px; border-top: 1px solid var(--studio-line); }
+main.draft-lab.draft-studio .experiment-comparison-refused { padding: 8px 10px; border: 1px solid #e58b8b; color: var(--studio-text); display: grid; gap: 4px; }
+main.draft-lab.draft-studio .experiment-comparison-kind { color: var(--studio-text); }
+main.draft-lab.draft-studio .experiment-comparison-scroll { max-width: 100%; overflow-x: auto; display: grid; gap: 4px; }
+main.draft-lab.draft-studio .experiment-comparison table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+main.draft-lab.draft-studio .experiment-comparison caption { text-align: left; padding-bottom: 4px; color: var(--studio-text); font-weight: 600; }
+main.draft-lab.draft-studio .experiment-comparison :is(th, td) { padding: 4px 6px; border-top: 1px solid var(--studio-line); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-comparison th { color: var(--studio-text); font-weight: 600; }
+main.draft-lab.draft-studio .experiment-comparison td[data-changed] { color: var(--studio-text); font-weight: 600; }
+@media (max-width: 720px) {
+  main.draft-lab.draft-studio .experiment-comparison :is(th, td) { padding: 4px; font-size: 11px; }
+}

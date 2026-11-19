@@ -161,7 +161,29 @@ export function buildExperimentRun(runId: number, snapshot: SimulationInputSnaps
   if (!sameState || !final.complete || result.events.at(-1)?.kind !== "END") {
     return { ok: false, issues: [{ field: "team", message: "재생 상태가 모델 최종 상태와 맞지 않아 실행 결과를 표시하지 않습니다." }] };
   }
-  return { ok: true, run: deepFreeze(run) };
+  const frozen = deepFreeze(run);
+  TRUSTED_RUNS.add(frozen);
+  return { ok: true, run: frozen };
+}
+
+/**
+ * Provenance of in-memory runs: only deep-frozen runs made by `buildExperimentRun` above, and
+ * detached clones of them made by `cloneTrustedRun`, are members. Because every member is deeply
+ * frozen, membership means "unchanged since the explicit run". Structured clones, JSON copies or
+ * hand-built objects are never members, even with identical content; there is no file import here.
+ */
+const TRUSTED_RUNS = new WeakSet<object>();
+
+export function isTrustedRun(value: unknown): value is ExperimentRun {
+  return value !== null && typeof value === "object" && TRUSTED_RUNS.has(value);
+}
+
+/** Detached, deep-frozen copy of a trusted run (no model call). Untrusted input → null. */
+export function cloneTrustedRun(value: unknown): ExperimentRun | null {
+  if (!isTrustedRun(value)) return null;
+  const copy = deepFreeze(structuredClone(value));
+  TRUSTED_RUNS.add(copy);
+  return copy;
 }
 
 export type ReplayFrame = {
