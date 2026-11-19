@@ -268,3 +268,11 @@ PR #127 서버 실행44425299926은 쿨다운 성공·제공처 요청0·빌드/
 - 별도Codex조사에이전트Kepler가스토브리그12항목을정리했다. 원문직검과플랫폼미러를나누고,원문효력일·stableID미검증항목의production채택을금지했다. 너구리실제복귀미확인. 기존관측소속과별도event층설계만작성.
 
 제품코드A/B초안은미완료작업트리로보존,검증된C감사도구와문서만별도커밋한다. 제품push/배포/신규원본다운로드없음. 근거: PARALLEL_DELIVERY_PLAN_2026-11-19.md, PARALLEL_REVIEW_HANDOFF_2026-11-19.md, outputs/parallel-python-review-20261119.log, outputs/parallel-related-review-20261119.log, outputs/parallel-core-browser-review-20261119.log, outputs/room-path-expanded-review-20261119.log.
+
+## 2026-11-19 · 10:20 실제 재개 및 구현 우선 전환
+
+09:55 예약 등록 뒤 실제 Claude 작업이 실행되지 않았음을 사용자 상태 질문 때 확인했다. 10:20 기존 A/B 세션을 실제 재개했고 정상 완료·파일 수정을 확인했다. 중복 방지를 위해 automation-4만 비활성화했으며 작업/10:45·14:45 후속은 유지했다. 실행되지 않은 이유는 미확인이다.
+
+자동 선택 현재 세트 전체 복기와 명시 opt-in 친구 방 파일 복원을 통합했다. 독립 반례(공개 빌드 경로, junction, 사용자 지정 root의 ..cache 하위 경로), 타입 오류, 잘못된 진영 테스트 기대를 수정했다. 마지막 기존 검사 묶음은 웹341·타입/lint·Pages5·PC/모바일6 통과. localhost EACCES 첫 실패는 환경 제한으로 정상 권한에서 재검사했다. [상세](PARALLEL_IMPLEMENTATION_CHECKPOINT_2026-11-19.md).
+
+사용자는 구현 속도를 높이고 검증을 필요한 시점에 묶으라고 지시했다. IMPLEMENTATION_CADENCE_2026-11-19.md로 진행 방식을 바꿨다. 현재 새 Claude 작업은 여러 시드 가정 A/B 비교와 밴픽 결과 PNG 저장이며 파일 소유를 분리했다. 새 기능은 미완료이며 아직 실제 선수/챔피언 효과를 계산하지 않는다. 추가 전수 검사·제품 공개는 하지 않는다.

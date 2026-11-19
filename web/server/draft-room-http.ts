@@ -1,10 +1,13 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { DraftRoomStore, RoomError } from "./draft-room-store";
+import type { DraftRoomPersistence } from "./draft-room-persistence";
 import type { RadarReport } from "../app/radar-types";
 
 type Options = {
   report: RadarReport; allowedOrigins: string[]; clock?: () => number; ttlMs?: number;
   maxRooms?: number; maxListeners?: number; maxCreatesPerHour?: number;
+  /** Explicit opt-in single-process file backend; omitted means ephemeral memory only. */
+  persistence?: DraftRoomPersistence;
 };
 const json = (response: ServerResponse, status: number, data: unknown) => {
   if (response.destroyed || response.writableEnded) return;
@@ -28,7 +31,7 @@ const token = (request: IncomingMessage) => {
   return value?.startsWith("Bearer ") ? value.slice(7) : null;
 };
 
-/** Ephemeral standalone prototype. Bind to loopback unless a deployment is separately reviewed. */
+/** Standalone prototype (ephemeral unless `persistence` is given). Bind to loopback unless a deployment is separately reviewed. */
 export function createDraftRoomServer(options: Options) {
   const origins = new Set(options.allowedOrigins);
   if (origins.has("*") || [...origins].some(origin => {
@@ -52,7 +55,7 @@ export function createDraftRoomServer(options: Options) {
       const url = new URL(request.url ?? "/", "http://localhost");
       if (url.search) throw new RoomError(400, "QUERY_NOT_ALLOWED", "참여 정보는 링크나 요청 주소에 넣을 수 없습니다.");
       if (url.pathname === "/health" && request.method === "GET") {
-        json(response, 200, { status: "ok", protocol: 1, storage: "ephemeral" }); return;
+        json(response, 200, { status: "ok", protocol: 1, storage: store.storage }); return;
       }
       if (url.pathname === "/v1/rooms" && request.method === "POST") {
         const now = options.clock?.() ?? Date.now(), key = request.socket.remoteAddress ?? "unknown";

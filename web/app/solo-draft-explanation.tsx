@@ -45,22 +45,38 @@ function ChoiceLine({ choice, kind, team, nameOf }: { choice: SoloDraftExplained
   </>;
 }
 
+const teamLabel = (e: SoloDraftExplanation) => `${e.record_scope === "OPPOSING_TEAM" ? "상대 팀" : "행동 팀"}(${e.record_team})`;
+
+/** One-line summary of a recorded auto choice (shared by the last-choice line and the review list). */
+export function SoloAutoSummary({ record }: { record: SoloAutoRecord }) {
+  const e = record.explanation;
+  // With an explanation, the summary is derived from the evidence that actually produced the choice;
+  // the legacy suggestion reason (unchanged API) is only shown when no explanation exists.
+  return e
+    ? <>연습 {e.kind === "BAN" ? "밴" : "픽"} · 근거: {evidenceLabel(e.selected.evidence, teamLabel(e))}. 실제 선택을 예측하지 않습니다.
+        {e.selected.evidence === "PLAYER_SEASON" && " 시즌 기록은 현재 패치의 강함을 뜻하지 않습니다."}
+        {e.kind === "PICK" && e.selected.role_supported === false && <> <em>포지션 근거 부족: 조합 구성을 보장하지 않음</em></>}</>
+    : <>{record.reason}</>;
+}
+
 export function SoloDraftExplanationPanel({ record, nameOf }: { record: SoloAutoRecord; nameOf: (id: string) => string }) {
   const e = record.explanation;
-  const team = e ? `${e.record_scope === "OPPOSING_TEAM" ? "상대 팀" : "행동 팀"}(${e.record_team})` : "";
-  // Evidence that actually produced the shown candidates; lookup targets without rows are not listed here.
-  const used = e ? [...new Set([e.selected, ...e.alternatives].map(c => c.evidence))].filter(x => x !== "FALLBACK") : [];
-  if (e?.kind === "PICK" && e.season_evidence && !used.includes("PLAYER_SEASON")) used.push("PLAYER_SEASON");
   return <div className="solo-explain">
-    {/* With an explanation, the summary is derived from the evidence that actually produced the choice;
-        the legacy suggestion reason (unchanged API) is only shown when no explanation exists. */}
-    <p className="solo-draft-last" role="status">마지막 상대 선택 · {nameOf(record.champion_id)} · {e
-      ? <>연습 {e.kind === "BAN" ? "밴" : "픽"} · 근거: {evidenceLabel(e.selected.evidence, team)}. 실제 선택을 예측하지 않습니다.
-          {e.selected.evidence === "PLAYER_SEASON" && " 시즌 기록은 현재 패치의 강함을 뜻하지 않습니다."}
-          {e.kind === "PICK" && e.selected.role_supported === false && <> <em>포지션 근거 부족: 조합 구성을 보장하지 않음</em></>}</>
-      : record.reason}</p>
+    <p className="solo-draft-last" role="status">마지막 상대 선택 · {nameOf(record.champion_id)} · <SoloAutoSummary record={record} /></p>
     {e && <details>
       <summary>선택 이유와 다른 후보</summary>
+      <SoloDraftExplanationBody explanation={e} nameOf={nameOf} />
+    </details>}
+  </div>;
+}
+
+/** Read-only body of a frozen pre-choice explanation. */
+export function SoloDraftExplanationBody({ explanation: e, nameOf }: { explanation: SoloDraftExplanation; nameOf: (id: string) => string }) {
+  const team = teamLabel(e);
+  // Evidence that actually produced the shown candidates; lookup targets without rows are not listed here.
+  const used = [...new Set([e.selected, ...e.alternatives].map(c => c.evidence))].filter(x => x !== "FALLBACK");
+  if (e.kind === "PICK" && e.season_evidence && !used.includes("PLAYER_SEASON")) used.push("PLAYER_SEASON");
+  return <>
       <p>{e.turn}번째 차례({e.kind === "BAN" ? "밴" : "픽"}) 선택 직전 상태 기준입니다. 연습용 규칙 설명이며 실제 대응·상성 우위·승률 예측이 아닙니다.</p>
       <p>확인 대상(조회 범위이며 선택 순서가 아님) · {team} 공개 우선 픽 기록 · {e.kind === "PICK" ? "현재 레이더 메타 · 현재 관측 선수 기록 · 기준이 맞는 현재 선수 시즌 기록" : "공개 레이더 후보"}</p>
       <p>근거 범위 · {used.length ? used.map(x => evidenceLabel(x, team)).join(" · ") : "사용할 수 있는 기록 없음"}</p>
@@ -71,6 +87,5 @@ export function SoloDraftExplanationPanel({ record, nameOf }: { record: SoloAuto
         <p>같은 직전 상태에서 앞 후보를 제외하면 같은 규칙이 고르는 합법 후보</p>
         <ol>{e.alternatives.map(choice => <li key={choice.champion_id}><ChoiceLine choice={choice} kind={e.kind} team={team} nameOf={nameOf} /></li>)}</ol>
       </> : <p>같은 규칙으로 고를 다른 합법 후보가 없습니다.</p>}
-    </details>}
-  </div>;
+  </>;
 }
