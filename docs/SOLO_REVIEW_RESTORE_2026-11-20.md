@@ -87,3 +87,6 @@ This builds on the codec (`ae7d2105`, `docs/SOLO_REVIEW_CODEC_2026-11-20.md`) an
 - Mobile screenshot outputs/solo-review-restored-mobile-20261120.png visually inspected. No horizontal overflow; note label/readable fallback visible.
 - Not newly verified: real iOS/mobile hardware, actual disk exhaustion/eviction, interrupted startup digest against live friend-room entry, file-import path with notes. Unit/source/other existing protocol tests are not represented as browser proof of those cases. No public deployment/admission claim.
 - Product source implemented/fixed by Claude only; Codex wrote independent tests/docs. No new source collection/API, push/merge/deploy.
+
+## Remaining import/reset boundary verified
+Independent actualPC/mobile2/2 passed: export scenario contains no review sidecar schema/key; current-game reset deletes notes; re-import restores board only; further reload keeps notes absent. Combined with previous12 this is14 distinct PC/mobile checks on unchanged product code. No full-suite repetition for test-only addition. Live room/delayed startup hash remains outside this browser proof.

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 
 const root = "/pro-meta-intelligence/";
 const solo = page => page.getByRole("region", { name: "혼자 밴픽 연습", exact: true });
@@ -132,6 +133,33 @@ test("accepting an identical shared draft clears private autosave notes", async 
   const href = await page.getByLabel("복사할 밴픽 링크", { exact: true }).inputValue();
   await page.evaluate(value => { location.hash = new URL(value).hash; }, href);
   await page.getByRole("button", { name: "이 밴픽 불러오기", exact: true }).click();
+  await expect(progress(page)).toHaveAttribute("value", "4");
+  await expect(review(page)).toHaveCount(0);
+  await expect.poll(() => sidecar(page)).toBeNull();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await expect(progress(page)).toHaveAttribute("value", "4");
+  await expect(review(page)).toHaveCount(0);
+});
+
+test("reset clears saved notes and scenario import restores only the board", async ({ page }) => {
+  await start(page, "BLUE");
+  const tools = page.locator(".draft-session-details");
+  if (await tools.getAttribute("open") === null) await tools.locator(":scope > summary").click();
+  const pending = page.waitForEvent("download");
+  await page.locator(".draft-session-controls").getByRole("button", { name: "시리즈 JSON 저장", exact: true }).click();
+  const download = await pending;
+  const filePath = await download.path();
+  const exported = await readFile(filePath, "utf8");
+  expect(exported).not.toContain("solo-review-retention");
+  expect(exported).not.toContain("current-solo-review");
+  await page.getByRole("button", { name: "현재 세트 초기화", exact: true }).click();
+  await page.getByRole("dialog", { name: "현재 세트를 초기화할까요?", exact: true })
+    .getByRole("button", { name: "초기화", exact: true }).click();
+  await expect(progress(page)).toHaveAttribute("value", "0");
+  await expect(review(page)).toHaveCount(0);
+  await expect.poll(() => sidecar(page)).toBeNull();
+  await page.locator('.draft-session-controls input[type="file"]').setInputFiles(filePath);
   await expect(progress(page)).toHaveAttribute("value", "4");
   await expect(review(page)).toHaveCount(0);
   await expect.poll(() => sidecar(page)).toBeNull();
