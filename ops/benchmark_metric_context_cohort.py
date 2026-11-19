@@ -32,7 +32,7 @@ import json
 import sys
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Sequence
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -163,6 +163,21 @@ def _check_bucket(bucket: dict) -> None:
         raise ValueError("target accounting is not an exact cover")
 
 
+@dataclass(frozen=True, slots=True)
+class ContextQueryResult:
+    """One evaluated target query, kept in-process only (never serialized or logged).
+
+    ``side`` is the raw row side (lowercased) of a target that passed ``_game_issue``, so it has
+    already been checked against the adapter's blue/red team IDs. ``position_fraction`` is the
+    unchanged helper value (None unless ``status`` is available).
+    """
+
+    match_id: str
+    side: str
+    status: str
+    position_fraction: float | None
+
+
 def assess_context_support_with_ids(
     raw: bytes,
     matches: Iterable,
@@ -173,6 +188,24 @@ def assess_context_support_with_ids(
     """Aggregate context-support counts plus the supported target IDs (in-process only).
 
     The ID set links to predictions inside this process and must never be serialized.
+    """
+    report, supported, _ = assess_context_support_with_queries(
+        raw, matches, expected_hash=expected_hash, cohort=cohort
+    )
+    return report, supported
+
+
+def assess_context_support_with_queries(
+    raw: bytes,
+    matches: Iterable,
+    *,
+    expected_hash: str,
+    cohort: BaselineConfig = DEFAULT_CONFIG,
+) -> tuple[dict, frozenset[str], tuple[ContextQueryResult, ...]]:
+    """Same support pass, also returning every evaluated query in target order (in-process only).
+
+    The report and ID set are exactly those of ``assess_context_support_with_ids``; the query
+    tuple exposes the per-query status/fraction already computed there, never recomputed.
     """
     if hashlib.sha256(raw).hexdigest() != expected_hash:
         raise ValueError("snapshot bytes do not match the verified content hash")
@@ -219,6 +252,7 @@ def assess_context_support_with_ids(
     overall = _new_bucket()
     leagues: dict[str, dict] = defaultdict(_new_bucket)
     supported: set[str] = set()
+    queries: list[ContextQueryResult] = []
     for record in targets:
         buckets = (overall, leagues[record.league])
         for bucket in buckets:
@@ -244,11 +278,20 @@ def assess_context_support_with_ids(
                 patch_id=record.patch_id.strip(),
                 cutoff=record.observed_at,
             )
-            status = build_metric_context(
+            context = build_metric_context(
                 indexed.get((record.league, query.role), ()), query, league=record.league
-            )["status"]
+            )
+            status = context["status"]
             if status not in CONTEXT_STATUSES:
                 raise ValueError("unexpected metric context status")
+            queries.append(
+                ContextQueryResult(
+                    match_id=record.match_id,
+                    side=(row.get("side") or "").strip().lower(),
+                    status=status,
+                    position_fraction=context["position"]["position_fraction"],
+                )
+            )
             all_available &= status == STATUS_AVAILABLE
             for bucket in buckets:
                 bucket["queries"] += 1
@@ -286,7 +329,7 @@ def assess_context_support_with_ids(
         "overall": _finish_bucket(overall),
         "by_league": {league: _finish_bucket(b) for league, b in sorted(leagues.items())},
     }
-    return report, frozenset(supported)
+    return report, frozenset(supported), tuple(queries)
 
 
 def assess_context_cohort(
