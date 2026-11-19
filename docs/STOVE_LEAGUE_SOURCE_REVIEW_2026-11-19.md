@@ -8,7 +8,7 @@
 
 8건의 등급을 **OFFICIAL_CONTENT_VIA_PLATFORM_MIRROR**로 정정한다. Sina에서 NS_RedForce 공식 계정 인증 문구·게시자·발표 본문을 실제 읽은 기록은 보존하지만, 원래 Weibo permalink와 공식 원문을 직접 검증한 것은 아니다. 기존 source URL·요약·날짜·source_access는 삭제하지 않았다. JSON의 confirmed는 원문 직접 검증 기준으로 false로 정정했다. 언론 제목이나 현황판의 Confirmed 배지는 공식 원문 직검 근거가 아니다.
 
-**원래 Weibo permalink 미검증·신원 stable ID 미연결·프로덕션 채택 금지.** 모든 항목은 연구 검토 전용이며 자동등록·소속 갱신·로스터·프로덕션 사실 카드에 채택하지 않는다. 부모의 독립 web open에서 Sina 2건/Sheep Esports 1건 접근 실패로 재현되지 않았다는 사용자 보고를 기록했다. 개별 실패 URL은 전달되지 않아 특정 행에 배정하지 않으며, 접근 실패를 자료 부재나 과거 열람 부재로 해석하지 않는다.
+**원래 Weibo permalink 미검증·신원 stable ID 미연결·프로덕션 채택 금지.** 모든 항목은 연구 검토 전용이며 자동등록·소속 갱신·로스터·프로덕션 사실 카드에 채택하지 않는다. 부모 Codex의 독립 web open에서 SL-01·SL-03의 Sina URL과 SL-09의 Sheep Esports URL에 접근하지 못해 본문을 재검증하지 못했다. 이는 사용자의 사실 확인이나 해당 사건이 없다는 뜻이 아니며, 별도 조사 에이전트의 열람 기록과 구분한다.
 
 ## 최대 15건 검토표
 
