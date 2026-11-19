@@ -211,3 +211,63 @@ test("event navigation moves only within the fixed run and pauses playback", asy
   const box = await next.boundingBox(); expect(box.height).toBeGreaterThanOrEqual(44);
   await nav.screenshot({ path: testInfo.outputPath("experiment-event-navigation.png") });
 });
+
+
+async function readySummaryExperiment(page) {
+  await openStudio(page); await finishDraft(page); await fillRoster(page);
+  await showPanel(page, "SIMULATION"); await openDetails(readiness(page));
+  for (const side of ["blue", "red"]) for (const [i, role] of ROLES.entries()) await roleSlot(page, side, role).selectOption({ index: i + 1 });
+  await panel(page).getByLabel("재현 번호 (시드)", { exact: true }).fill("12345");
+  await expect(runButton(page)).toBeEnabled(); await runButton(page).click();
+  const result = panel(page).locator(".experiment-replay-result");
+  const nav = result.locator("details.experiment-replay-event-nav");
+  await nav.locator(":scope > summary").click();
+  return { result, nav, share: result.locator(".experiment-result-share"), slider: result.locator('.experiment-replay-seek input[type="range"]') };
+}
+
+test("completed experiment summary copies frozen values and discards stale text on seek and new run", async ({ page }, testInfo) => {
+  await page.addInitScript(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => { throw new Error("denied"); } } }));
+  const { result, nav, share, slider } = await readySummaryExperiment(page);
+  const copy = share.getByRole("button", { name: "가정 실험 요약 복사", exact: true });
+  const text = share.getByLabel("가정 실험 요약 글 (직접 복사)", { exact: true });
+  await expect(copy).toBeDisabled(); await expect(text).toHaveCount(0);
+  await nav.getByRole("button", { name: "결과까지 이동", exact: true }).click();
+  const states = await result.locator("[data-stat]").allTextContents();
+  await copy.click(); await expect(text).toBeVisible();
+  const original = await text.inputValue();
+  expect(original).toContain("실행 #1"); expect(original).toContain("고정 시드 12345");
+  expect(original).toContain("모델 내부 승자"); expect(original).toContain("실제 LoL 승패·승률 예측이 아닙니다");
+  expect(original).not.toContain("oe:player:"); expect(original).not.toContain("schema_version");
+  expect(await result.locator("[data-stat]").allTextContents()).toEqual(states);
+  await panel(page).getByLabel("재현 번호 (시드)", { exact: true }).fill("98765");
+  await expect(result.locator(".experiment-replay-identity")).toContainText("다름");
+  expect(await text.inputValue()).toBe(original);
+  await slider.focus(); await slider.press("Home"); await expect(copy).toBeDisabled(); await expect(text).toHaveCount(0);
+  await nav.getByRole("button", { name: "결과까지 이동", exact: true }).click();
+  await expect(copy).toBeEnabled(); await expect(text).toHaveCount(0);
+  await copy.click(); expect(await text.inputValue()).toBe(original);
+  await runButton(page).click(); await expect(copy).toBeDisabled(); await expect(text).toHaveCount(0);
+  await nav.getByRole("button", { name: "결과까지 이동", exact: true }).click();
+  await copy.click(); const fresh = await text.inputValue();
+  expect(fresh).toContain("실행 #2"); expect(fresh).toContain("고정 시드 98765"); expect(fresh).not.toContain("고정 시드 12345");
+  await noHorizontalOverflow(page);
+  expect((await copy.boundingBox()).height).toBeGreaterThanOrEqual(44);
+  await share.screenshot({ path: testInfo.outputPath("experiment-result-readable-copy.png") });
+});
+
+test("late experiment clipboard completion stays hidden after seeking back and returning to the end", async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: () => new Promise(resolve => { window.__releaseExperimentCopy = resolve; }) } }));
+  const { nav, share, slider } = await readySummaryExperiment(page);
+  const copy = share.getByRole("button", { name: "가정 실험 요약 복사", exact: true });
+  await nav.getByRole("button", { name: "결과까지 이동", exact: true }).click();
+  await copy.click(); await expect(copy).toBeDisabled();
+  await slider.focus(); await slider.press("Home");
+  await nav.getByRole("button", { name: "결과까지 이동", exact: true }).click();
+  await expect(copy).toBeEnabled();
+  await page.evaluate(() => window.__releaseExperimentCopy());
+  await expect(share).not.toContainText("복사했");
+  await expect(share.getByRole("status")).toHaveText("");
+  await expect(share.locator("textarea")).toHaveCount(0);
+  await copy.click(); await page.evaluate(() => window.__releaseExperimentCopy());
+  await expect(share.getByRole("status")).toContainText("복사했어요");
+});
