@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { ExperimentRun } from "./experiment-replay";
 import {
   BATCH_DEFAULT_PAIRS,
@@ -11,7 +11,17 @@ import {
   type BatchResult,
   type Spread,
 } from "./experiment-batch";
+import { buildBatchSummaryText } from "./experiment-batch-summary";
 import "./experiment-batch-panel.css";
+
+/** Copy state tied to the exact result object and A/B ids it was made for. */
+type CopyState = {
+  status: "copying" | "copied" | "manual";
+  result: BatchResult;
+  baselineRunId: number;
+  candidateRunId: number;
+  text: string;
+};
 
 type ExperimentBatchPanelProps = {
   baseline: ExperimentRun;
@@ -36,6 +46,32 @@ export function ExperimentBatchPanel({ baseline, run, shownMinute, ready, label 
   const [message, setMessage] = useState("");
   const parsed = parsePairCount(pairsText);
   const matches = batchMatchesTarget(result, baseline.runId, run.runId);
+  const [copy, setCopy] = useState<CopyState | null>(null);
+  /** Bumped whenever A, B or the result changes and on unmount; a copy finishing later is ignored. */
+  const copyToken = useRef(0);
+
+  useLayoutEffect(() => {
+    copyToken.current += 1;
+    return () => { copyToken.current += 1; };
+  }, [result, baseline.runId, run.runId]);
+
+  // Only show a copy state made for exactly the current result and A/B (guards the render before the effect).
+  const shownCopy = copy && result && matches && copy.result === result
+    && copy.baselineRunId === baseline.runId && copy.candidateRunId === run.runId ? copy : null;
+
+  async function copySummary() {
+    if (!result || !matches) return;
+    const text = buildBatchSummaryText(result, label);
+    const token = ++copyToken.current;
+    const base = { result, baselineRunId: baseline.runId, candidateRunId: run.runId, text };
+    const writeText = typeof navigator !== "undefined" ? navigator.clipboard?.writeText?.bind(navigator.clipboard) : undefined;
+    if (!writeText) { setCopy({ ...base, status: "manual" }); return; }
+    setCopy({ ...base, status: "copying" });
+    let ok = false;
+    try { await writeText(text); ok = true; } catch { ok = false; }
+    if (copyToken.current !== token) return; // A/B/result changed or unmounted meanwhile.
+    setCopy({ ...base, status: ok ? "copied" : "manual" });
+  }
 
   function start() {
     if (!parsed.ok) { setMessage(parsed.message); return; }
@@ -69,6 +105,16 @@ export function ExperimentBatchPanel({ baseline, run, shownMinute, ready, label 
         </li>)}
         <li>모델 종료 분 B−A {spread(result.summary.minute)}</li>
       </ul>
+      <div className="experiment-batch-actions">
+        <button type="button" disabled={!matches || shownCopy?.status === "copying"} onClick={copySummary}
+          aria-describedby={!matches ? "experiment-batch-copy-reason" : undefined}>비교 요약을 쉬운 글로 복사</button>
+      </div>
+      {!matches && <p id="experiment-batch-copy-reason" className="experiment-batch-hint">현재 A/B와 다른 이전 결과라서 복사할 수 없습니다. 현재 A/B로 다시 실행하면 복사할 수 있습니다.</p>}
+      <p className="experiment-batch-status" role="status">
+        {shownCopy?.status === "copying" ? "복사하는 중…" : shownCopy?.status === "copied" ? "비교 요약을 클립보드에 복사했습니다." : shownCopy?.status === "manual" ? "자동 복사를 할 수 없습니다. 아래 글을 직접 선택해 복사하세요." : ""}
+      </p>
+      {shownCopy?.status === "manual" && <textarea readOnly value={shownCopy.text} rows={12} style={{ width: "100%" }}
+        aria-label="비교 요약 (직접 복사)" onFocus={(e) => e.currentTarget.select()} />}
       <details>
         <summary>쌍별 상세 ({result.rows.length}행)</summary>
         <div className="experiment-batch-scroll">
