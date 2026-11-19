@@ -27,11 +27,11 @@ export function SeasonLineupPanel({ catalog, onCatalog, lineups, teams, publicat
   }
   return <details className="season-lineup" lang="ko">
     <summary>과거 시즌 선수로 구성하기</summary>
-    <p>2014년 이후 자료를 순차 확보 중이며, 연도·대회별 수집 범위와 누락이 있을 수 있습니다. 시즌 선수는 가상 구단에 저장하며, 현재 선수 자리와 구분합니다. 아직 밴픽 추천·A/B의 선수 효과·시뮬레이션에는 연결하지 않습니다.</p>
+    <p>2014년 이후 자료를 순차 확보 중이며, 연도·대회별 수집 범위와 누락이 있을 수 있습니다. 시즌 선수는 내 구단에 저장하거나 밴픽과 함께 내 연습 보관함에 저장할 수 있으며, 현재 선수 자리와 구분합니다. 아직 밴픽 추천·A/B의 선수 효과·시뮬레이션에는 연결하지 않습니다.</p>
     {!catalog && <button type="button" disabled={busy || disabled} onClick={() => void load()}>{busy ? "시즌 자료 확인 중" : "시즌 선수 자료 불러오기"}</button>}
     {message && <p role="alert">{message}</p>}
     {catalog && <>
-      <p>선수 기록 기준 {catalog.cutoff.slice(0, 10)} · 사용 횟수는 당시 관측이며 현재 숙련도가 아닙니다. 시즌 선택은 위의 구단 저장 버튼으로 보관하세요.</p>
+      <p>선수 기록 기준 {catalog.cutoff.slice(0, 10)} · 사용 횟수는 당시 관측이며 현재 숙련도가 아닙니다. 선수 구성만 보관하려면 위의 구단 저장을, 밴픽과 함께 보관하려면 내 연습 보관함을 이용하세요.</p>
       <div className="guest-club-fields">
         <label>선수 시즌<select aria-label="선수 시즌" value={year} onChange={e => setYear(Number(e.target.value))}>{catalog.seasons.map(y => <option key={y.season} value={y.season} disabled={y.status !== "LOADED"}>{y.season}{y.status === "NOT_LOADED" ? " · 자료 미확보" : ""}</option>)}</select></label>
         <label>시즌 선수 검색<input value={query} onChange={e => setQuery(e.target.value)} placeholder="Nuguri, Faker…" /></label>

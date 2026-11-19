@@ -1,0 +1,58 @@
+import { test, expect } from "@playwright/test";
+import { showPanel } from "./studio-panels.mjs";
+
+test("season practice restores Nuguri and draft together; cancelling delayed catalog preserves new work", async ({ page }) => {
+  await page.goto("/pro-meta-intelligence/");
+  const pickTurn = async () => {
+    await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
+    await page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ }).click();
+  };
+  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await pickTurn();
+  await showPanel(page, "ROSTER");
+  const season = page.locator("details.season-lineup");
+  await season.locator(":scope > summary").click();
+  const response = page.waitForResponse(r => new URL(r.url()).pathname.endsWith("/history/season-player-cards.json"));
+  await season.getByRole("button", { name: "시즌 선수 자료 불러오기", exact: true }).click();
+  const catalog = await (await response).json();
+  const card = catalog.cards.find(c => c.season === 2022 && c.player_name === "Nuguri" && c.role === "TOP");
+  expect(card).toBeTruthy();
+  const slot = season.getByLabel("BLUE 탑 시즌 선수", { exact: true });
+  await slot.selectOption(card.id);
+  await showPanel(page, "DRAFT");
+  const library = page.locator("details.draft-practice-library");
+  await library.locator(":scope > summary").click();
+  await expect(library.getByRole("checkbox")).toBeChecked();
+  await library.getByLabel("연습 이름", { exact: true }).fill("시즌 선수 복원 확인");
+  await library.getByRole("button", { name: "이 연습 저장", exact: true }).click();
+  await expect(library.getByRole("status")).toContainText("시즌 선수 선택");
+  await showPanel(page, "ROSTER");
+  await slot.selectOption("");
+  await showPanel(page, "DRAFT");
+  await pickTurn();
+  const load = library.getByRole("button", { name: "시즌 선수 복원 확인 열기", exact: true });
+  await load.click();
+  await library.getByRole("alertdialog").getByRole("button", { name: "바꾸기", exact: true }).click();
+  await expect(library.getByRole("status")).toContainText("시즌 선수 구성도 복원");
+  await expect(page.locator(".draft-turn-progress")).toHaveAttribute("value", "1");
+  await showPanel(page, "ROSTER");
+  await expect(slot).toHaveValue(card.id);
+  await slot.selectOption("");
+  await showPanel(page, "DRAFT");
+  await pickTurn();
+  let release;
+  const barrier = new Promise(resolve => { release = resolve; });
+  await page.route("**/history/season-player-cards.json", async route => {
+    await barrier;
+    await route.fulfill({ json: catalog }).catch(() => {});
+  });
+  await load.click();
+  await library.getByRole("alertdialog").getByRole("button", { name: "바꾸기", exact: true }).click();
+  await library.getByRole("button", { name: "불러오기 취소", exact: true }).click();
+  release();
+  await expect(library.getByRole("alert")).toContainText("취소했습니다. 현재 밴픽과 선수 구성은 그대로 유지");
+  await expect(page.locator(".draft-turn-progress")).toHaveAttribute("value", "2");
+  await expect(library.getByRole("button", { name: "불러오기 취소", exact: true })).toHaveCount(0);
+  await showPanel(page, "ROSTER");
+  await expect(slot).toHaveValue("");
+});
