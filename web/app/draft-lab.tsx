@@ -34,6 +34,8 @@ import { DraftComparisonPanel } from "./draft-comparison-panel";
 import { PartnershipPlacement } from "./partnership-placement";
 import { RosterWorkshop, type RosterMeta, type RosterRestoreRequest } from "./roster-workshop";
 import { SimulationReadinessPanel } from "./simulation-readiness-panel";
+import { SimulationExamplePanel } from "./simulation-example-panel";
+import { buildSimulationExample, exampleBlockReason } from "./simulation-example";
 import { ExperimentReplayPanel } from "./experiment-replay-panel";
 import type { LiveRoster } from "./roster-comparison";
 import type { SimulationInputSnapshot } from "./simulation-scenario";
@@ -548,6 +550,26 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     setInspected(null);
   }
 
+  const exampleGuard = exampleBlockReason({ canSelect, roomActive: room.active, selections: selections.length, games: games.length, pendingChampion: Boolean(pendingChampion), hasHistoricalPlayers: historicalPlayers });
+  // Explicit "use the example" click: re-checks the current values, then sets the authored draft and
+  // roles once on an empty first set. Readiness re-validates and publishes the input; nothing runs.
+  function applySimulationExample() {
+    if (exampleGuard) return;
+    const example = buildSimulationExample({ report, blueTeam, redTeam, firstPickSide, roster: liveRoster, hasHistoricalPlayers: historicalPlayers });
+    if (!example.ok) return;
+    // Same series lock as a first manual choice: the displayed report becomes the fixed series report.
+    if (!seriesReport) setSeriesReport(structuredClone(report));
+    setSelections(example.selections);
+    setPositionState({ context: positionContext, unassigned: {}, roles: Object.fromEntries(Object.entries(example.roles).map(([id, roles]) => [id, { ...roles }])) });
+    setPendingChampion(null);
+    setInspected(null);
+    setLastAuto(null);
+    setAutoHistory([]);
+    setTimer(30);
+    setTimerRunning(false);
+    setQuery("");
+  }
+
   function confirmChampion() {
     if (!roomCanAct || !canSelect || !turn || !pendingChampion || !blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) return;
     if (room.active) { room.action("SELECT", pendingChampion); return; }
@@ -860,6 +882,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     <div id={panelOf("SIMULATION")} className="studio-simulation-panel" role="tabpanel" aria-labelledby={`${panelOf("SIMULATION")}-tab`} hidden={studioTab !== "SIMULATION"}>
     {/* Simulation input gate (with assigned-champion season records): explicit champion roles +
         current rosters; no outcome is computed. */}
+    <SimulationExamplePanel report={report} blueTeam={blueTeam} redTeam={redTeam} firstPickSide={firstPickSide} roster={liveRoster} hasHistoricalPlayers={historicalPlayers} nameOf={nameOf} blockReason={exampleGuard} onApply={applySimulationExample} />
     <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} publicationRoot={productRootHref(currentSpace)} defaultOpen disabled={!canSelect || room.active} roleAssignments={positionRoles} onRoleAssign={(teamId, role, id) => {
       const side = teamId === blueTeamId ? "BLUE" : "RED";
       if (id) assignPosition(side, id, role);
