@@ -513,3 +513,12 @@ Claude가 golddiffat15를 같은리그·역할·정확패치의 이전기록과�
 새 독립검증은 후속관문이다. 외부사전등록이아닌 로컬사양임을 Claude가설명수정했다.
 원시 평균/개별 위치는 파일로내보내지않고 지원집계만검증했다. 제품연결·원격게시없음.
 상세 PREGAME_METRIC_CONTEXT_2026-11-19.md.
+
+## Claude 한도 인수인계
+
+실제 Claude 세션 e335ca8a-a3b2-4e10-9b8a-68c4e9e9f146이 usage_limit_reached429로 종료했다.
+표시된 초기화는2026-11-19 20:20 Asia/Seoul. 같은 세션재개를20:25KST에 기존automation-4로예약했고
+도구성공응답과 저장된ACTIVE/20:25일일시각을확인했다. 실행성공은아직아니며 실제성공시15분점검으로복원한다.
+신규ops/benchmark_metric_context_cohort.py만부분작성됐고 테스트/문서는아직없다. lint통과/format미통과,
+실제CLI미실행. Codex는제품소스를대신수정하지않았고 유료/모델/계정우회없음.
+인수인계 docs/CLAUDE_CONTEXT_COHORT_HANDOFF_2026-11-19.md. 미완료소스는미커밋으로보존한다.
