@@ -14,6 +14,10 @@ main.draft-lab.draft-studio .experiment-comparison caption { text-align: left; p
 main.draft-lab.draft-studio .experiment-comparison :is(th, td) { padding: 4px 6px; border-top: 1px solid var(--studio-line); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
 main.draft-lab.draft-studio .experiment-comparison th { color: var(--studio-text); font-weight: 600; }
 main.draft-lab.draft-studio .experiment-comparison td[data-changed] { color: var(--studio-text); font-weight: 600; }
+main.draft-lab.draft-studio .experiment-comparison-share { display: grid; gap: 6px; min-width: 0; }
+main.draft-lab.draft-studio .experiment-comparison-share button { justify-self: start; min-height: 44px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-comparison-share p { margin: 0; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-comparison-share textarea { box-sizing: border-box; width: 100%; max-width: 100%; min-height: 44px; padding: 6px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-bg); color: var(--studio-text); font: inherit; font-size: 12px; resize: vertical; }
 @media (max-width: 720px) {
   main.draft-lab.draft-studio .experiment-comparison :is(th, td) { padding: 4px; font-size: 11px; }
 }
