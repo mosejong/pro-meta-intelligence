@@ -4,7 +4,7 @@ import type { RosterRole } from "./roster-scenario";
 import type { SoloDraftEvidence, SoloDraftExplainedChoice, SoloDraftExplanation } from "./solo-draft";
 import "./solo-draft-explanation.css";
 
-/** In-memory record of the last real auto choice; never persisted or shared. */
+/** In-memory record of the last real auto choice; only an explicit plain-text copy is allowed, never persisted, linked or sent to a room. */
 export type SoloAutoRecord = {
   turn: number;
   champion_id: string;

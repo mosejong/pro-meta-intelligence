@@ -117,11 +117,13 @@ test("late season data never rewrites an earlier frozen entry", () => {
   assert.equal(JSON.stringify(frozen), before, "copy is detached from the source record");
 });
 
-test("review panel is collapsed, read-only, lists each auto turn and reuses the explanation body", () => {
+test("review panel is collapsed, preserves draft read-only semantics and provides explicit text copy", () => {
   const { h } = play({ ...base, seasonHistory: history }, 20);
-  const html = renderToStaticMarkup(createElement(panel.SoloDraftHistoryPanel, { history: h, nameOf: id => id }));
+  const html = renderToStaticMarkup(createElement(panel.SoloDraftHistoryPanel, { history: h, nameOf: id => id, patchId: report.opponent_prep.patch_id, cutoff: report.opponent_prep.cutoff }));
   assert.match(html, /^<details class="solo-history">/); assert.doesNotMatch(html, /<details[^>]* open/);
-  assert.doesNotMatch(html, /<button|<input|<select|<a /);
+  assert.doesNotMatch(html, /<input|<select|<a /);
+  assert.equal((html.match(/<button/g) ?? []).length, 1);
+  assert.match(html, /자동 선택 복기 복사/);
   assert.match(html, /이번 세트 자동 선택 복기 \(10\)/);
   assert.equal((html.match(/<li>/g) ?? []).length, 10 + h.reduce((n, r) => n + (r.explanation?.alternatives.length ?? 0), 0));
   for (const r of h) assert.ok(html.includes(`${r.turn}번째 차례 · ${r.champion_id}`));

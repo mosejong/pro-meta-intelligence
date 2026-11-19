@@ -5,7 +5,7 @@ import { soloAutoRecordMatches, type SoloAutoRecord } from "./solo-draft-explana
  * Memory-only review list of the opponent's real auto-confirmed turns in the current set.
  * Each entry is a frozen copy of the record built immediately before its confirmation; nothing here
  * re-derives an explanation later (late season data, report refreshes, etc. never rewrite it).
- * Never persisted, shared, linked or sent to a room.
+ * Only an explicit plain-text copy by the user is allowed; never persisted, linked or sent to a room.
  */
 export type SoloAutoHistory = readonly SoloAutoRecord[];
 

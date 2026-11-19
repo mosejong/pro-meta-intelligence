@@ -9,3 +9,10 @@
 .solo-history li details { padding-left: 4px; }
 .solo-history em,
 .solo-explain em { font-style: normal; color: var(--studio-action, #debc86); }
+
+.solo-history-share { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--studio-line, #343a40); min-width: 0; }
+.solo-history-share button { min-height: 44px; min-width: 44px; padding: 10px 14px; border: 1px solid var(--studio-line, #343a40); border-radius: 4px; background: var(--studio-panel, #16191c); color: var(--studio-text, #eee); font: inherit; cursor: pointer; }
+.solo-history-share button:hover:not(:disabled) { border-color: var(--studio-action, #debc86); }
+.solo-history-share button:disabled { opacity: .5; cursor: default; }
+.solo-history-share button:focus-visible, .solo-history-share textarea:focus-visible { outline: 2px solid var(--studio-action, #debc86); outline-offset: 3px; }
+.solo-history-share textarea { display: block; box-sizing: border-box; max-width: 100%; min-height: 12rem; padding: 12px; border: 1px solid var(--studio-line, #343a40); border-radius: 4px; background: var(--studio-panel, #16191c); color: var(--studio-text, #eee); font: inherit; line-height: 1.6; resize: vertical; }

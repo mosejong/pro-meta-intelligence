@@ -33,7 +33,8 @@ test("접힌 복기 목록은 실제 자동 차례만 순서대로 보여주고 
   await items.nth(0).locator("summary").click();
   await expect(items.nth(0)).toContainText("2번째 차례(밴) 선택 직전 상태 기준");
   await expect(items.nth(0)).toContainText("예측이 아닙니다");
-  await expect(review(page).locator("button, input, select, a")).toHaveCount(0);
+  await expect(review(page).locator("input, select, a")).toHaveCount(0);
+  await expect(review(page).getByRole("button", { name: "자동 선택 복기 복사", exact: true })).toBeVisible();
   // The last-choice explanation still shows only the latest auto turn.
   await expect(solo(page).locator(".solo-explain .solo-draft-last")).toContainText("마지막 상대 선택");
   await solo(page).locator(".solo-explain summary").click();

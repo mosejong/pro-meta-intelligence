@@ -721,7 +721,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       {soloEnabled && <p role="status">{soloSeason.loading ? "시즌 선수 기록을 확인하고 있어요…" : soloSeason.error ? "시즌 자료를 확인하지 못해 현재 팀 기록·메타 후보로 연습합니다." : "같은 팀의 현재 관측 선수 시즌 기록을 함께 참고합니다. 가상 로스터 변경은 자동 상대에 반영하지 않습니다."}</p>}
       {soloWaiting && !soloSeason.loading && <p role="status">{autoChoice ? "상대가 카드를 고르고 있어요…" : "자동 선택을 확인하지 못했습니다. 자동 밴픽을 끄고 직접 이어가세요."}</p>}
       {soloAutoRecordMatches(lastAuto, selections, autoContext) && <SoloDraftExplanationPanel record={lastAuto} nameOf={nameOf} />}
-      {!room.active && <SoloDraftHistoryPanel history={prunedHistory} nameOf={nameOf} />}
+      {!room.active && <SoloDraftHistoryPanel history={prunedHistory} nameOf={nameOf} patchId={report.patch_id} cutoff={report.cutoff ?? ""} />}
     </section>
     <section className="draft-series" aria-label={t("draft.seriesLabel")} lang={lang.ui}>
       <label className="draft-first-selection">{t("draft.firstPick")}
