@@ -1,0 +1,5 @@
+# 병렬 A: 자동 상대 전체 선택 복기
+Claude Opus 5.5 medium. 기존 프로젝트의 좁은 후속 구현이다. 루트는 현재 cwd. 먼저 docs/CODEX_EXPERIMENT_COMPARISON_REVIEW_2026-11-19.md는 경계만 읽고 아래 파일만 필요한 만큼 읽는다.
+목표: 마지막 한 턴 설명을 재사용해 현재 세트에서 실제 자동으로 확정한 모든 턴의 근거/합법 대안을 접힌 복기 목록에서 볼 수 있게 한다. 마지막 선택 설명은 유지한다. 추천 규칙/선택 결과는 바꾸지 않는다. 설명을 사후 추정하지 말고 확정 직전 생성된 기록만 동결 복사한다. 수동 선택은 자동으로 표시하지 않는다. undo/다시선택/리셋/팀변경/진영/선픽/이전세트/자료기준 변경 시 잘못된 기록이 남지 않도록 검증한다. 과거 prefix가 바뀌면 그 이후 기록은 버린다. 시즌 자료 늦은 로딩으로 과거 기록을 재작성하지 않는다. 메모리 전용, 기존 저장/파일/링크/방 계약은 변경하지 않는다. 완료 세트 기록 보존은 현 구조에서 안전할 때만 하고 범위를 문서화한다.
+소유: web/app/draft-lab.tsx, web/app/solo-draft-explanation.tsx, web/app/solo-draft-explanation.css, 신규 web/app/solo-draft-history.ts 및 필요 신규 history panel/css, 신규 web/tests/solo-draft-history.test.mjs, 신규 web/tests/e2e/solo-draft-history.spec.mjs, docs/CLAUDE_PARALLEL_DRAFT_RESULT_2026-11-19.md. 다른 파일 수정 금지. package.json은 부모가 등록한다. 기존 lastAuto 동작/컴포넌트 재사용. 다른 Claude가 server/*와 ops/*를 수정하므로 해당 diff를 되돌리지 않는다.
+관련 단위만 실행, 가능하면 타입. 전체 npm/build/브라우저/패키지설치/깃/네트워크/다른에이전트 금지. 결과에는 실제 검사/미완료만 짧게. 토큰 한도면 우회/재호출하지 않는다.

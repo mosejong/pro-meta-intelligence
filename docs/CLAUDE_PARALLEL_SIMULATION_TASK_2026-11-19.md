@@ -1,0 +1,5 @@
+# 병렬 C: 시뮬레이션용 관측 자료 수용 감사
+Claude Opus 5.5 medium. 현재 assumption-manager-v1의 추상 가정을 실제 선수 효과로 오해하지 않게 유지하면서 다음 모델에 쓸 관측의 가용성을 검증하는 오프라인 audit를 구현한다. 모델 효과/승률/점수/UI/새출처는 이번 범위 아님.
+읽기: ops/audit_player_career_archive.py, src/pro_meta_intelligence/opponent/player_career.py, ops/draft_outcome_baseline.py, models.py, docs/SIMULATION_DATA_CONTRACT.md 필요한 부분. 기존 archive검증/정책/해시/연도/선수 안정ID/충돌 poisoning을 최대한 재사용. 소유: 신규 ops/audit_simulation_features.py, 신규 tests/test_simulation_feature_audit.py, docs/CLAUDE_PARALLEL_SIMULATION_RESULT_2026-11-19.md. 기존 파일 수정금지.
+작은 CLI로 --archive-dir/--year 반복/--cutoff/--output을 받아 해당 시점 로컬 승인 원본에서 관측 가능한 입력만 집계한다. 미수집연도/경계후 취득/정책/해시불일치/충돌경기는 수용감사 결과를 보존. 가능한 항목은 선수-챔프-역할 사용량, 팀/패치/리그 표본, available_at 기반 과거검증가능 여부. 경기 전 feature로 경기 결과/해당 경기 KDA/gold/damage가 쓰이지 않게 명시적 금지목록. 실제 gold등 수집 안 된 필드는 MISSING/UNSUPPORTED, 0으로 채우거나 스킬 점수로 만들지 않는다. 결과는 집계+sourcehash만, rawrows/토큰/개인경로 공개 금지. 시점사용가능과 모의publication-delay를 구분. 이미 준비된 MatchRecord에 없는 통계를 수집한 척하지 않는다. 모든연도수집/실제강함/인과/완성모델 주장금지.
+미니fixture와 손상/누락/미래/충돌 테스트만 실행. 실제 대용량 raw 전체 스캔은 부모가한다. 네트워크/새다운로드/설치/깃/fulltests/다른에이전트 금지. 인터페이스와 실제 결과만 짧게 기록. 한도오류 우회금지.
