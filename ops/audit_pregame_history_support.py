@@ -156,6 +156,26 @@ def assess_support(
     history_config: HistoryConfig = HISTORY_CONFIG,
 ) -> dict:
     """Aggregate support counts. ``raw`` must be the exact verified bytes. Inputs not mutated."""
+    report, _ = assess_support_with_ids(
+        raw, matches, expected_hash=expected_hash, cohort=cohort, history_config=history_config
+    )
+    return report
+
+
+def assess_support_with_ids(
+    raw: bytes,
+    matches: Iterable,
+    *,
+    expected_hash: str,
+    cohort: BaselineConfig = DEFAULT_CONFIG,
+    history_config: HistoryConfig = HISTORY_CONFIG,
+) -> tuple[dict, frozenset[str]]:
+    """Same computation as ``assess_support``; also returns the supported target match IDs.
+
+    A target is supported when all 10 queries met the minimum games AND every metric had a valid
+    raw mean (the ``games_all_10_all_metrics_raw_mean_valid`` count). The ID set is for in-process
+    linkage only and must never be written to any report, log or metadata.
+    """
     if hashlib.sha256(raw).hexdigest() != expected_hash:
         raise ValueError("snapshot bytes do not match the verified content hash")
     matches = tuple(matches)
@@ -200,6 +220,7 @@ def assess_support(
 
     overall = _new_bucket()
     leagues: dict[str, dict] = defaultdict(_new_bucket)
+    supported: set[str] = set()
     for record in targets:
         buckets = (overall, leagues[record.league])
         for bucket in buckets:
@@ -244,8 +265,10 @@ def assess_support(
         for bucket in buckets:
             bucket["games_all_10_min_games_met"] += game_min_met
             bucket["games_all_10_all_metrics_raw_mean_valid"] += game_all_metrics
+        if game_min_met and game_all_metrics:
+            supported.add(record.match_id)
 
-    return {
+    report = {
         "status": STATUS_OK if overall["target_games"] else STATUS_EMPTY,
         "cohort_scope": {
             **cohort.describe(),
@@ -281,6 +304,7 @@ def assess_support(
         "overall": _finish_bucket(overall),
         "by_league": {league: _finish_bucket(b) for league, b in sorted(leagues.items())},
     }
+    return report, frozenset(supported)
 
 
 # --------------------------------------------------------------------------------------------
