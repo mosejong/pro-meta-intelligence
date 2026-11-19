@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import test from "node:test";
@@ -18,6 +19,21 @@ import {
 
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
 const runnerPath = path.resolve(testsDir, "..", "scripts", "run-unit-tests.mjs");
+
+test("npm test explicitly names existing unique test files", () => {
+  const webRoot = path.resolve(testsDir, "..");
+  const manifest = JSON.parse(readFileSync(path.join(webRoot, "package.json"), "utf8"));
+  const marker = "node scripts/run-unit-tests.mjs ";
+  assert.ok(manifest.scripts.test.includes(marker));
+  const files = manifest.scripts.test.split(marker)[1].trim().split(/\s+/);
+  assert.equal(new Set(files).size, files.length, "duplicate test entries");
+  for (const file of files) {
+    assert.match(file, /^tests\/[\w-]+\.test\.mjs$/, `invalid test path: ${file}`);
+    assert.ok(statSync(path.join(webRoot, file)).isFile(), `missing test: ${file}`);
+  }
+  assert.ok(files.includes("tests/experiment-baseline-inputs.test.mjs"));
+  assert.ok(files.includes("tests/experiment-comparison.test.mjs"));
+});
 
 function countTimeouts() {
   return process.getActiveResourcesInfo().filter((name) => name === "Timeout").length;
