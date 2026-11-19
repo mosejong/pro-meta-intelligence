@@ -114,7 +114,7 @@ export function ExperimentReplayPanel({ readyInput, blocked, nameOf }: Experimen
     </header>
     <details className="experiment-replay-help">
       <summary>모델 설명</summary>
-      <p>각 팀의 라인·운영·한타 가정(-1~1, 기본 0 중립)과 시드로 작성된 규칙(assumption-manager-v1)을 한 번 실행합니다. 계수는 작성자 규칙이며 학습된 효과가 아닙니다. 모델 자원은 실제 경기 골드가 아니고, 오브젝트는 추상 진행 단계입니다. 같은 입력·시드는 항상 같은 결과를 냅니다. 실행은 이 화면 메모리에만 있으며 저장·공유되지 않습니다.</p>
+      <p>각 팀의 라인·운영·한타 가정(-1~1, 기본 0 중립)과 시드로 작성된 규칙(assumption-manager-v1)을 한 번 실행합니다. 계수는 작성자 규칙이며 학습된 효과가 아닙니다. 모델 자원은 실제 경기 골드가 아니고, 오브젝트는 추상 진행 단계입니다. 같은 입력·시드는 항상 같은 결과를 냅니다. 실행 원본과 재생 입력은 이 브라우저 화면에만 있고 저장·링크 공유되지 않아 페이지를 떠나면 사라집니다. 끝까지 재생한 실행은 요약 글만 복사할 수 있습니다.</p>
     </details>
 
     {/* The parser is the single authority; native constraint checks must never silently block a valid run. */}

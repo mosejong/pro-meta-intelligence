@@ -65,7 +65,7 @@ export function ExperimentComparisonPanel({ run, shownMinute, readyInput }: Expe
   return <details className="experiment-comparison">
     <summary>가정 비교 (기준 A ↔ 실행 B){baseline ? ` · 기준 A 실행 #${baseline.runId}` : ""}</summary>
     <div className="experiment-comparison-body">
-      <p className="experiment-comparison-boundary" role="note">같은 밴픽·로스터·역할·자료·재현 번호에서 가정값만 바꾼 두 실행의 <b>모델 내부 차이</b>입니다. 실제 승률·선수 기여도·인과 효과가 아니며, 이 화면 메모리에만 있습니다.</p>
+      <p className="experiment-comparison-boundary" role="note">같은 밴픽·로스터·역할·자료·재현 번호에서 가정값만 바꾼 두 실행의 <b>모델 내부 차이</b>입니다. 실제 승률·선수 기여도·인과 효과가 아니며, 두 실행은 이 브라우저 화면에만 있어 페이지를 떠나면 사라지며, 비교 요약 글만 복사할 수 있습니다.</p>
 
       <div className="experiment-comparison-actions">
         {!baseline && <button type="button" disabled={!complete} onClick={keep}>이 실행을 비교 기준 A로 보관</button>}

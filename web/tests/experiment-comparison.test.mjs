@@ -197,6 +197,7 @@ test("assumption experiment A/B comparison", async (t) => {
       assert.match(middle, /<details class="experiment-comparison">/);
       assert.match(middle, /<button type="button" disabled="">이 실행을 비교 기준 A로 보관/);
       assert.match(middle, /실제 승률·선수 기여도·인과 효과가 아니며/);
+      assert.match(middle, /두 실행은 이 브라우저 화면에만 있어 페이지를 떠나면 사라지며, 비교 요약 글만 복사할 수 있습니다/);
       assert.doesNotMatch(middle, /모델 내부 차이 \(B − A\)|<table/);
       const done = renderToStaticMarkup(createElement(ExperimentComparisonPanel, { run, shownMinute: run.endMinute, readyInput: snapshot }));
       assert.match(done, /<button type="button">이 실행을 비교 기준 A로 보관/);
