@@ -20,14 +20,75 @@ const shareRefusalText: Record<SoloHistoryTextRefusal, string> = {
 type NameOf = (id: string) => string;
 type CopyState = { history: SoloAutoHistory; nameOf: NameOf; patchId: string; cutoff: string; text: string; status: "copying" | "copied" | "manual" };
 
+/** Fixed ASCII file name and MIME for the explicit readable download (no team/player names or IDs). */
+export const SOLO_HISTORY_FILE_NAME = "draft-choice-review.txt";
+export const SOLO_HISTORY_FILE_TYPE = "text/plain;charset=utf-8";
+export type SoloHistoryDownloadResult = "REQUESTED" | "UNAVAILABLE" | "FAILED";
+type DownloadEnv = {
+  doc?: Pick<Document, "createElement" | "body">;
+  urls?: Pick<typeof URL, "createObjectURL" | "revokeObjectURL">;
+  makeBlob?: (parts: BlobPart[], options: BlobPropertyBag) => Blob;
+  schedule?: (run: () => void) => void;
+};
+
+/**
+ * Asks the browser to download `text` as a file through a Blob URL and one explicit anchor click.
+ * "REQUESTED" only means the browser accepted the request; whether the OS actually saved the file is
+ * unknown to the page. The anchor is always removed and the URL always revoked (later on success,
+ * immediately on failure). Nothing here touches app storage, URL, history or selections.
+ */
+export function requestSoloHistoryDownload(text: string, env: DownloadEnv = {}): SoloHistoryDownloadResult {
+  const doc = env.doc ?? (typeof document !== "undefined" ? document : undefined);
+  const urls = env.urls ?? (typeof URL !== "undefined" ? URL : undefined);
+  const makeBlob = env.makeBlob ?? (typeof Blob === "function" ? (parts: BlobPart[], options: BlobPropertyBag) => new Blob(parts, options) : undefined);
+  const schedule = env.schedule ?? ((run: () => void) => { setTimeout(run, 1000); });
+  if (typeof text !== "string" || !text || !doc?.body || typeof doc.createElement !== "function" || !makeBlob
+    || typeof urls?.createObjectURL !== "function" || typeof urls.revokeObjectURL !== "function") return "UNAVAILABLE";
+  let anchor: HTMLAnchorElement;
+  try {
+    anchor = doc.createElement("a");
+    if (typeof anchor.download !== "string" || typeof anchor.click !== "function") return "UNAVAILABLE";
+  } catch { return "UNAVAILABLE"; }
+  let url: string;
+  try { url = urls.createObjectURL(makeBlob([text], { type: SOLO_HISTORY_FILE_TYPE })); } catch { return "FAILED"; }
+  const revoke = () => { try { urls.revokeObjectURL(url); } catch { /* already gone */ } };
+  let clicked = false;
+  try {
+    anchor.href = url; anchor.download = SOLO_HISTORY_FILE_NAME; anchor.rel = "noopener"; anchor.style.display = "none";
+    doc.body.appendChild(anchor);
+    anchor.click();
+    clicked = true;
+  } catch { clicked = false; } finally {
+    try { anchor.remove(); } catch { /* not attached */ }
+  }
+  if (!clicked) { revoke(); return "FAILED"; }
+  try { schedule(revoke); } catch { revoke(); }
+  return "REQUESTED";
+}
+
+type SaveState = { history: SoloAutoHistory; nameOf: NameOf; patchId: string; cutoff: string; status: SoloHistoryDownloadResult };
+const saveStatusText: Record<SoloHistoryDownloadResult, string> = {
+  REQUESTED: `브라우저에 ${SOLO_HISTORY_FILE_NAME} 저장을 요청했어요. 실제 저장 여부와 위치는 브라우저에서 확인하세요.`,
+  UNAVAILABLE: "이 브라우저에서는 파일 저장을 요청할 수 없어요. 복사 버튼을 이용하세요.",
+  FAILED: "파일 저장 요청에 실패했어요. 다시 시도하거나 복사 버튼을 이용하세요.",
+};
+
 /**
  * Collapsed, read-only review of every real auto-confirmed opponent turn still on the current board.
- * The only way out is an explicit plain-text copy of the records already on screen (no persistence,
- * room or link); copying never re-runs a suggestion or explanation.
+ * The only ways out are explicit, human-readable exports of the same validated text already built
+ * here: a plain-text copy or a .txt download requested by the user. The app never stores or restores
+ * this review (no app storage, room or link), and exporting never re-runs a suggestion or explanation.
  */
 export function SoloDraftHistoryPanel({ history, nameOf, patchId, cutoff }: { history: SoloAutoHistory; nameOf: NameOf; patchId: string; cutoff: string }) {
   const share = useMemo(() => buildSoloHistoryText({ history, patchId, cutoff, nameOf }), [history, patchId, cutoff, nameOf]);
   const [copy, setCopy] = useState<CopyState | null>(null);
+  const [save, setSave] = useState<SaveState | null>(null);
+  // Download status shows only for exactly the current inputs, so any history/basis/name change clears it.
+  const shownSave = save && save.history === history && save.nameOf === nameOf && save.patchId === patchId && save.cutoff === cutoff ? save : null;
+  function saveText() {
+    if (!share.ok) return; // same refusal gates as copy: never a partial file
+    setSave({ history, nameOf, patchId, cutoff, status: requestSoloHistoryDownload(share.text) });
+  }
   /** Bumped whenever history/nameOf/patch/cutoff change and on unmount; a copy finishing later is ignored. */
   const copyToken = useRef(0);
   useLayoutEffect(() => {
@@ -62,8 +123,11 @@ export function SoloDraftHistoryPanel({ history, nameOf, patchId, cutoff }: { hi
     </li>)}</ol>
     <div className="solo-history-share">
       <button type="button" disabled={!share.ok || shownCopy?.status === "copying"} onClick={copyText}
-        aria-describedby={!share.ok ? "solo-history-share-reason" : undefined}>자동 선택 복기 복사</button>
+        aria-describedby={!share.ok ? "solo-history-share-reason" : undefined}>자동 선택 복기 복사</button>{" "}
+      <button type="button" disabled={!share.ok} onClick={saveText}
+        aria-describedby={!share.ok ? "solo-history-share-reason" : undefined}>자동 선택 복기 저장</button>
       {!share.ok && <p id="solo-history-share-reason">{shareRefusalText[share.reason]}</p>}
+      <p role="status">{shownSave ? saveStatusText[shownSave.status] : ""}</p>
       <p role="status">{shownCopy?.status === "copying" ? "복사하는 중…" : shownCopy?.status === "copied" ? "자동 선택 복기를 클립보드에 복사했어요."
         : shownCopy?.status === "manual" ? "자동 복사를 할 수 없어요. 아래 글을 직접 선택해 복사하세요." : ""}</p>
       {shownCopy?.status === "manual" && <textarea readOnly value={shownCopy.text} rows={12} style={{ width: "100%" }}

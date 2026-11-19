@@ -179,15 +179,80 @@ test("names are cleaned of control/newline/bidi and bounded; a throwing or empty
   const tr = ok(team); assert.equal(tr.ok, true); assert.doesNotMatch(tr.text, /\u2066/);
 });
 
-test("SSR: collapsed panel shows the copy button only with entries; refused text disables it with a reason", () => {
+test("SSR: collapsed panel shows copy and save buttons only with entries; refused text disables both with a reason", () => {
   const h = play({ ...base, seasonHistory: season });
   const html = renderToStaticMarkup(createElement(panel.SoloDraftHistoryPanel, { history: h, nameOf: id => id, patchId: PATCH, cutoff: CUTOFF }));
   assert.match(html, /^<details class="solo-history">/); assert.doesNotMatch(html, /<details[^>]* open/);
-  assert.equal((html.match(/<button/g) ?? []).length, 1);
+  assert.equal((html.match(/<button/g) ?? []).length, 2);
   assert.match(html, /<button type="button">자동 선택 복기 복사<\/button>/);
+  assert.match(html, /<button type="button">자동 선택 복기 저장<\/button>/);
   assert.doesNotMatch(html, /<textarea/);
+  assert.doesNotMatch(html, /저장을 요청했어요|요청할 수 없어요|요청에 실패했어요/, "no download status before an explicit click");
   assert.equal(renderToStaticMarkup(createElement(panel.SoloDraftHistoryPanel, { history: [], nameOf: id => id, patchId: PATCH, cutoff: CUTOFF })), "");
   const refused = renderToStaticMarkup(createElement(panel.SoloDraftHistoryPanel, { history: h, nameOf: id => id, patchId: "", cutoff: CUTOFF }));
   assert.match(refused, /<button type="button" disabled=""[^>]*>자동 선택 복기 복사<\/button>/);
+  assert.match(refused, /<button type="button" disabled=""[^>]*>자동 선택 복기 저장<\/button>/);
+  assert.equal((refused.match(/aria-describedby="solo-history-share-reason"/g) ?? []).length, 2);
   assert.match(refused, /기준 패치나 자료 시각을 확인하지 못해/);
+  const invalid = thaw(h); invalid[1].context = "other";
+  const mixed = renderToStaticMarkup(createElement(panel.SoloDraftHistoryPanel, { history: invalid, nameOf: id => id, patchId: PATCH, cutoff: CUTOFF }));
+  assert.match(mixed, /<button type="button" disabled=""[^>]*>자동 선택 복기 저장<\/button>/);
+});
+
+/** Fake browser pieces recording every call; nothing touches a real DOM. */
+function fakeEnv({ clickThrows = false, createThrows = false, noDownload = false } = {}) {
+  const log = [], attached = new Set();
+  const anchor = { style: {}, ...(noDownload ? {} : { download: "" }), href: "", rel: "",
+    click() { log.push(["click", this.href, this.download]); if (clickThrows) throw new Error("blocked"); },
+    remove() { attached.delete(this); log.push(["remove"]); } };
+  const env = {
+    doc: { body: { appendChild(node) { attached.add(node); log.push(["append"]); } }, createElement(tag) { log.push(["create", tag]); return anchor; } },
+    urls: { createObjectURL(blob) { if (createThrows) throw new Error("no"); log.push(["url", blob]); return "blob:x"; }, revokeObjectURL(u) { log.push(["revoke", u]); } },
+    makeBlob(parts, options) { return { parts, options }; },
+    pending: [],
+  };
+  env.schedule = run => env.pending.push(run);
+  return { env, log, attached, anchor };
+}
+
+test("download helper: exact validated text, fixed name/MIME, anchor removed and URL revoked after dispatch", () => {
+  const r = ok(play({ ...base, seasonHistory: null }));
+  assert.equal(r.ok, true);
+  const { env, log, attached } = fakeEnv();
+  assert.equal(panel.requestSoloHistoryDownload(r.text, env), "REQUESTED");
+  const [, blob] = log.find(([k]) => k === "url");
+  assert.deepEqual(blob.parts, [r.text], "file content is exactly the clipboard text");
+  assert.equal(blob.options.type, "text/plain;charset=utf-8");
+  assert.deepEqual(log.find(([k]) => k === "click"), ["click", "blob:x", "draft-choice-review.txt"]);
+  assert.equal(panel.SOLO_HISTORY_FILE_NAME, "draft-choice-review.txt");
+  assert.match(panel.SOLO_HISTORY_FILE_NAME, /^[A-Za-z0-9._-]+$/);
+  assert.equal(attached.size, 0, "anchor removed");
+  assert.ok(!log.some(([k]) => k === "revoke"), "revoked only after dispatch");
+  env.pending.forEach(run => run());
+  assert.deepEqual(log.at(-1), ["revoke", "blob:x"]);
+});
+
+test("download helper: unavailable APIs and failures are reported, never thrown; failed click revokes at once", () => {
+  assert.equal(panel.requestSoloHistoryDownload("x", { ...fakeEnv().env, doc: { body: null, createElement() { return {}; } } }), "UNAVAILABLE");
+  assert.equal(panel.requestSoloHistoryDownload("x", { ...fakeEnv().env, urls: {} }), "UNAVAILABLE");
+  if (typeof document === "undefined") assert.equal(panel.requestSoloHistoryDownload("x", { ...fakeEnv().env, doc: undefined }), "UNAVAILABLE", "SSR/node: no document");
+  assert.equal(panel.requestSoloHistoryDownload("x", fakeEnv({ noDownload: true }).env), "UNAVAILABLE");
+  assert.equal(panel.requestSoloHistoryDownload("", fakeEnv().env), "UNAVAILABLE", "no empty file");
+  const created = fakeEnv({ createThrows: true });
+  assert.equal(panel.requestSoloHistoryDownload("x", created.env), "FAILED");
+  assert.ok(!created.log.some(([k]) => k === "click"));
+  const blocked = fakeEnv({ clickThrows: true });
+  assert.equal(panel.requestSoloHistoryDownload("x", blocked.env), "FAILED");
+  assert.equal(blocked.attached.size, 0);
+  assert.deepEqual(blocked.log.at(-1), ["revoke", "blob:x"]);
+  assert.equal(blocked.env.pending.length, 0);
+});
+
+test("source comments describe explicit readable export, not session persistence", async () => {
+  const read = name => readFile(new URL(`../app/${name}`, import.meta.url), "utf8");
+  const [h, t, p] = await Promise.all([read("solo-draft-history.ts"), read("solo-draft-history-text.ts"), read("solo-draft-history-panel.tsx")]);
+  assert.match(h, /\.txt download/); assert.match(h, /never stores or restores/); assert.match(h, /reload loses it/);
+  assert.match(t, /\.txt download/); assert.match(t, /no app\s+\*\s+storage\/restore/);
+  assert.match(p, /never stores or restores/);
+  assert.doesNotMatch(p, /localStorage|indexedDB|history\.replaceState|location\.hash/, "panel touches no app storage or URL");
 });

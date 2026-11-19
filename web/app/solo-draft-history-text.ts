@@ -1,10 +1,11 @@
 import type { SoloDraftEvidence } from "./solo-draft";
 
 /**
- * Plain Korean text of the current set's frozen auto-choice review, for an explicit user copy only.
- * Reads the already-frozen records as they are: no re-suggest/explain/simulate, no model call, no
- * persistence, link or room. Raw context/prefix/reason strings, player ids and JSON are never emitted.
- * Any inconsistency refuses the whole text instead of copying a partial review.
+ * Plain Korean text of the current set's frozen auto-choice review, for an explicit user export only
+ * (clipboard copy or a user-requested .txt download of exactly this text).
+ * Reads the already-frozen records as they are: no re-suggest/explain/simulate, no model call, no app
+ * storage/restore, link or room. Raw context/prefix/reason strings, player ids and JSON are never emitted.
+ * Any inconsistency refuses the whole text instead of exporting a partial review.
  */
 export type SoloHistoryTextRefusal =
   | "EMPTY" | "INVALID_BASIS" | "INVALID_HISTORY" | "MIXED_CONTEXT" | "INCONSISTENT_ORDER"
