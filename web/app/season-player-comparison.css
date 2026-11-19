@@ -1,0 +1,17 @@
+/* Season player observed-champion comparison: collapsed, cards (no wide table), mobile single column. */
+.season-compare { border: 1px solid var(--studio-line, #3a3a3a); padding: 0 10px; margin-top: 8px; min-width: 0; }
+.season-compare > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+.season-compare > summary:focus-visible { outline: 2px solid #f0d6ae; outline-offset: 3px; }
+.season-compare-body { display: grid; gap: 8px; padding-bottom: 10px; min-width: 0; overflow-wrap: anywhere; }
+.season-compare-body :is(p, ul, ol, h4) { margin: 0; }
+.season-compare-rows { display: grid; gap: 8px; padding: 0; list-style: none; }
+.season-compare-card { display: grid; gap: 6px; min-width: 0; padding: 8px; border: 1px solid var(--studio-line, #3a3a3a); }
+.season-compare-card h4 { font-size: 12px; }
+.season-compare-card ul { padding-left: 16px; }
+.season-compare-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.season-compare-side { display: grid; gap: 2px; min-width: 0; padding: 6px; background: var(--studio-bg, transparent); }
+.season-compare-side ol { display: flex; flex-wrap: wrap; gap: 2px 10px; padding: 0; list-style: none; }
+.season-compare-side small { color: var(--studio-muted, inherit); }
+@media (max-width: 720px) {
+  .season-compare-sides { grid-template-columns: minmax(0, 1fr); }
+}

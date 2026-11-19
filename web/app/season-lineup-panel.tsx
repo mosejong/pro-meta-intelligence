@@ -7,6 +7,7 @@ import { observedSeasonTeams, presetBlockReason, seasonPresetSlots } from "./sea
 import { ROSTER_ROLES, type RosterRole } from "./roster-scenario";
 import type { PoolSelection } from "./player-pool-evidence";
 import { seasonPoolContext, seasonPoolStateLabel } from "./season-pool-context";
+import { SeasonPlayerComparisonPanel } from "./season-player-comparison-panel";
 const roles: Record<RosterRole, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
 const NO_SELECTIONS: readonly PoolSelection[] = [];
 const NO_PICKS: readonly string[] = [];
@@ -98,6 +99,7 @@ export function SeasonLineupPanel({ catalog, onCatalog, lineups, teams, publicat
           </div>;
         })}
       </section>)}</div>
+      <SeasonPlayerComparisonPanel catalog={catalog} lineups={lineups} teams={teams} selections={selections} previousPicks={previousPicks} nameOf={nameOf} />
       <p>시즌 선수를 배정하면 해당 현재 선수 슬롯은 비웁니다. 시즌 선정을 해제해도 이전 선수를 자동 복원하지 않습니다.</p>
     </>}
   </details>;
