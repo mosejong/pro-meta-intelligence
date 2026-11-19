@@ -6,6 +6,7 @@ import { ASSUMPTION_FIELDS, CORE_TEAM_IDS, type AssumptionField, type Experiment
 import { compareExperimentRuns, freezeBaseline, OUTCOME_STATS, type OutcomeStat } from "./experiment-comparison";
 import { ExperimentBatchPanel } from "./experiment-batch-panel";
 import { ExperimentComparisonSharePanel } from "./experiment-comparison-share-panel";
+import { ExperimentComparisonHistoryPanel } from "./experiment-comparison-history-panel";
 import "./experiment-comparison-panel.css";
 
 type ExperimentComparisonPanelProps = {
@@ -120,6 +121,7 @@ export function ExperimentComparisonPanel({ run, shownMinute, readyInput }: Expe
             </table>
             <p>모델 종료: A {comparison.outcome.end.a.minute}분 {reasonLabel[comparison.outcome.end.a.reason]} → B {comparison.outcome.end.b.minute}분 {reasonLabel[comparison.outcome.end.b.reason]} ({signed(comparison.outcome.end.minuteDelta)}분). 모델 자원은 실제 골드가 아닙니다.</p>
           </div> : <p className="experiment-comparison-pending">실행 B 재생이 끝나면 결과 비교를 표시합니다.</p>}
+          {comparison.outcome && <ExperimentComparisonHistoryPanel key={`${baseline!.runId}-${run.runId}`} baseline={baseline!} run={run} shownMinute={shownMinute} />}
         </>}
       </section>}
 

@@ -568,3 +568,12 @@ Claude가고정모델기록의0분~현재표시분자원을SVG와분별표로보
 최종캡처 outputs/model-resource-history-mobile-20261120.png. 현재입력편집이기존graph를바꾸지않고
 새run교체가0분부터시작하며보관A가유지됨을확인했다. 실전골드/승률아니며원격게시없음.
 상세 EXPERIMENT_RESOURCE_HISTORY_2026-11-20.md.
+
+## 같은 시각 A/B 자원 차이 흐름
+
+Claude가같은팀의B실행모델자원-A실행모델자원을공통진행구간까지만보는그래프/분별표를구현했다.
+기존비교gate와단일resourceHistory/표시view를재사용하고모델을재실행하지않는다. Codex관련33/
+타입/lint/Pages5/PC3·모바일3/전체웹517통과. 실제42분vs33분fixture의0~33각분을원본A/B표로검산했다.
+중간B/되감기/기준교체/해제/seed불일치에이전차트없고 NONE은0, 기존단일그래프도유지했다.
+최종캡처 outputs/ab-resource-difference-mobile-20261120.png. 실전승률/선수효과아니며원격게시없음.
+상세 EXPERIMENT_COMPARISON_HISTORY_2026-11-20.md.

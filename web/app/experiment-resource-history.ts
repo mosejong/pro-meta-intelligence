@@ -78,20 +78,27 @@ export type ResourceChartGeometry = {
   current: Record<CoreTeamId, { x: number; y: number }>;
   xTicks: { minute: number; x: number }[];
   yTicks: { value: number; y: number }[];
+  /** Only with `includeZero`: y of the 0 baseline (always inside the plot). */
+  zeroY?: number;
 };
+
+/** Any per-minute two-team series in the history shape (a ResourceHistory is one). */
+export type ResourceChartSeries = Pick<ResourceHistory, "shownMinute" | "points" | "minGold" | "maxGold">;
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
 /**
  * Chart coordinates for a history. The x axis spans only 0..shownMinute (minute 0 → a single point at
  * the left edge) and the y axis only the shown values; equal values get a fixed band. All coordinates
- * are finite; no division by zero.
+ * are finite; no division by zero. `includeZero` (signed series only) widens the y range to contain 0
+ * and returns its baseline `zeroY`; without it the result is exactly as before.
  */
-export function resourceChartGeometry(history: ResourceHistory, width = 320, height = 160): ResourceChartGeometry {
+export function resourceChartGeometry(history: ResourceChartSeries, width = 320, height = 160, options: { includeZero?: boolean } = {}): ResourceChartGeometry {
   const plot = { left: 52, right: width - 12, top: 12, bottom: height - 24 };
   const span = history.shownMinute;
   const xOf = (minute: number) => round(span > 0 ? plot.left + (minute / span) * (plot.right - plot.left) : plot.left);
-  const lo = history.minGold, hi = history.maxGold;
+  const zero = options.includeZero === true;
+  const lo = zero ? Math.min(history.minGold, 0) : history.minGold, hi = zero ? Math.max(history.maxGold, 0) : history.maxGold;
   const flat = !(hi > lo);
   const yOf = (value: number) => round(flat ? (plot.top + plot.bottom) / 2 : plot.bottom - ((value - lo) / (hi - lo)) * (plot.bottom - plot.top));
   const lines = {} as Record<CoreTeamId, string>;
@@ -103,5 +110,7 @@ export function resourceChartGeometry(history: ResourceHistory, width = 320, hei
   }
   const xTicks = span > 0 ? [{ minute: 0, x: xOf(0) }, { minute: span, x: xOf(span) }] : [{ minute: 0, x: xOf(0) }];
   const yTicks = flat ? [{ value: lo, y: yOf(lo) }] : [{ value: lo, y: yOf(lo) }, { value: hi, y: yOf(hi) }];
-  return { width, height, plot, lines, current, xTicks, yTicks };
+  if (!zero) return { width, height, plot, lines, current, xTicks, yTicks };
+  if (!yTicks.some((tick) => tick.value === 0)) yTicks.splice(1, 0, { value: 0, y: yOf(0) });
+  return { width, height, plot, lines, current, xTicks, yTicks, zeroY: yOf(0) };
 }
