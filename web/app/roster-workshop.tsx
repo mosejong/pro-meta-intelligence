@@ -30,6 +30,7 @@ import { GuestClubPanel } from "./guest-club-panel";
 import { SeasonLineupPanel } from "./season-lineup-panel";
 import { emptySeasonSlots, validateSeasonLineup, type SeasonCardCatalog, type TeamSeasonSlots, type SeasonCardRef } from "./season-player-cards";
 import { poolBasis, type PoolBasis, type PoolSelection } from "./player-pool-evidence";
+import type { SeasonPracticePart } from "./practice-roster-bundle";
 import "./roster-workshop.css";
 
 /** Device copy of the latest edited roster scenario (small, separate from the draft session). */
@@ -65,8 +66,13 @@ type RosterWorkshopProps = {
   /** Small meta for the parent: whether season players are assigned (null while no editor). Stable function. */
   onRosterMeta?: (meta: RosterMeta | null) => void;
 };
-export type RosterRestoreRequest = { token: number; roster: RosterScenario };
-export type RosterMeta = { seasonPlayers: boolean };
+/** `season` (optional) was verified by the caller against the live catalog it carries; re-checked here. */
+export type RosterRestoreRequest = { token: number; roster: RosterScenario; season?: { catalog: SeasonCardCatalog; lineups: TeamSeasonSlots } | null };
+/**
+ * `season` is the savable season part: present only when season players are assigned, a catalog is
+ * loaded and every reference still resolves in it under the shared lineup rules; otherwise null.
+ */
+export type RosterMeta = { seasonPlayers: boolean; season: SeasonPracticePart | null };
 
 const NO_SELECTIONS: readonly PoolSelection[] = [];
 const NO_PICKS: readonly string[] = [];
@@ -129,7 +135,7 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   // restore so its timer runs first and a stale localStorage roster can never overwrite it later.
   useEffect(() => {
     if (!restoreRequest || restoreRequest.token <= consumedRef.current) return;
-    const { token, roster } = restoreRequest;
+    const { token, roster, season: savedSeason = null } = restoreRequest;
     if (basisKey(roster.basis) !== basisKey(basis) || pairKey(roster.team_ids) !== pairKey(teamIds)) return;
     const timer = window.setTimeout(() => {
       if (!mounted.current || token <= consumedRef.current) return;
@@ -138,14 +144,29 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
       setRestored(true);
       const checked = validateRosters(roster.rosters, teamIds, index);
       if (!checked.ok) { setStorage({ tone: "error", text: `보관함의 선수 구성을 적용하지 못했습니다: ${checked.error}` }); setPublishTick((tick) => tick + 1); return; }
-      setSeasonLineups({});
+      const lineups: TeamSeasonSlots = {};
+      if (savedSeason) {
+        // Same shared rules as manual assignment; on failure nothing (roster or season) is applied.
+        try {
+          for (const teamId of teamIds) Object.defineProperty(lineups, teamId, { value: structuredClone(savedSeason.lineups[teamId] ?? emptySeasonSlots()), enumerable: true, writable: true, configurable: true });
+          if (Object.keys(savedSeason.lineups).some((teamId) => !teamIds.includes(teamId))) throw new Error("team");
+          for (const teamId of teamIds) validateSeasonLineup(lineups[teamId], checked.value, teamId, savedSeason.catalog, lineups);
+        } catch {
+          setStorage({ tone: "error", text: "보관함의 시즌 선수 구성을 확인하지 못해 선수 구성을 적용하지 않았습니다. 기존 구성을 유지합니다." });
+          setPublishTick((tick) => tick + 1);
+          return;
+        }
+        setSeasonCatalog(savedSeason.catalog);
+      }
+      setSeasonLineups(lineups);
       setRosters(checked.value);
       setPublishTick((tick) => tick + 1);
       setEditStatus("");
+      const restoredText = savedSeason ? "연습 보관함에 함께 저장된 현재 선수·시즌 선수 구성을 복원했습니다. 시즌 선수는 이 기기 로스터 사본에는 저장되지 않습니다." : "연습 보관함에 함께 저장된 선수 구성을 복원했습니다.";
       try {
         window.localStorage.setItem(ROSTER_STORAGE_KEY, serializeRosterScenario({ basis, team_ids: teamIds, rosters: checked.value }, index));
-        setStorage({ tone: "info", text: "연습 보관함에 함께 저장된 선수 구성을 복원했습니다." });
-      } catch { setStorage({ tone: "info", text: "연습 보관함의 선수 구성을 복원했습니다. 이 기기 로스터 저장은 실패했습니다." }); }
+        setStorage({ tone: "info", text: restoredText });
+      } catch { setStorage({ tone: "info", text: `${restoredText} 이 기기 로스터 저장은 실패했습니다.` }); }
     }, 0);
     return () => window.clearTimeout(timer);
   }, [restoreRequest, consumedRef, basis, teamIds, index]);
@@ -176,7 +197,16 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   // A remount (new pair/basis) or removal withdraws this editor's roster before the next one publishes.
   useEffect(() => () => onRosterChange(null), [onRosterChange]);
   const seasonAssigned = Object.values(seasonLineups).some(slots => Object.values(slots).some(Boolean));
-  useEffect(() => { onRosterMeta({ seasonPlayers: seasonAssigned }); }, [seasonAssigned, onRosterMeta]);
+  // Savable season part: only refs that still resolve in the loaded catalog under the shared rules.
+  const seasonPart = useMemo<SeasonPracticePart | null>(() => {
+    if (!seasonAssigned || !seasonCatalog) return null;
+    if (Object.keys(seasonLineups).some((teamId) => !teamIds.includes(teamId))) return null;
+    const lineups: TeamSeasonSlots = Object.fromEntries(teamIds.map((teamId) => [teamId, structuredClone(seasonLineups[teamId] ?? emptySeasonSlots())]));
+    try { for (const teamId of teamIds) validateSeasonLineup(lineups[teamId], rosters, teamId, seasonCatalog, lineups); }
+    catch { return null; }
+    return { catalog_id: seasonCatalog.catalog_id, cutoff: seasonCatalog.cutoff, lineups };
+  }, [seasonAssigned, seasonCatalog, seasonLineups, rosters, teamIds]);
+  useEffect(() => { onRosterMeta({ seasonPlayers: seasonAssigned, season: seasonPart }); }, [seasonAssigned, seasonPart, onRosterMeta]);
   useEffect(() => () => onRosterMeta(null), [onRosterMeta]);
 
   function serialize(state: RosterState) {
@@ -273,7 +303,7 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
         <button type="button" disabled={disabled || hasSeasonPlayers} onClick={download}>로스터 파일 저장</button>
         <label className="roster-workshop-file">로스터 파일 열기<input type="file" accept=".json,application/json" disabled={disabled || reading || hasSeasonPlayers} onChange={(event) => void openFile(event.currentTarget)} /></label>
       </div>
-      {hasSeasonPlayers && <p>시즌 선수가 배정된 자리는 현재 관측 로스터에서 비워 두었습니다. 시즌 선택은 내 구단에 저장하세요. 기존 로스터 파일은 시즌 선정을 해제한 뒤 이용할 수 있습니다.</p>}
+      {hasSeasonPlayers && <p>시즌 선수가 배정된 자리는 현재 관측 로스터에서 비워 두었습니다. 시즌 선택은 내 구단 또는 연습 보관함(밴픽과 함께)에 저장하세요. 기존 로스터 파일은 시즌 선정을 해제한 뒤 이용할 수 있습니다.</p>}
       {storage && <p className="roster-workshop-status" role={storage.tone === "error" ? "alert" : "status"}>{storage.text}</p>}
       {fileStatus && <p className="roster-workshop-status" role={fileStatus.tone === "error" ? "alert" : "status"}>{fileStatus.text}</p>}
     </div>}

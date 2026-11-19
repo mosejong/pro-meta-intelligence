@@ -53,6 +53,7 @@ import { emptyChampionRoles, championKey, teamPicks, type ChampionRoles, type Ro
 import { buildDraftPositionBoard, reconcileChampionRoles, moveChampionRole } from "./draft-position-board";
 import { normalizeDraftPositions } from "./draft-position-session";
 import { DraftPracticeLibraryPanel } from "./draft-practice-library-panel";
+import { loadPublishedSeasonCatalog } from "./season-catalog-loader";
 import { basisKey, buildRosterIndex, pairKey, rosterBasis, serializeRosterScenario, type RosterRole } from "./roster-scenario";
 import { DraftResultPanel } from "./draft-result-panel";
 import { DraftSeriesRecapPanel } from "./draft-series-recap-panel";
@@ -400,16 +401,21 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     return serializeDraftScenario(seriesReport, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide, positionRecord);
   }, [sessionReady, seriesReport, blueTeam, redTeam, selections, games, pendingChampion, importing, firstPickSide, room.active, positionRecord]);
   // Current-player roster for the practice library: only when the editor's live roster belongs to this
-  // exact frozen basis and pair, and no season players are assigned (those are never saved as current players).
+  // exact frozen basis and pair. Season players are never saved as current players: they travel as
+  // separate catalog references, and only when every reference still resolves in the loaded catalog.
   const practiceRoster = useMemo(() => {
-    if (!saveSnapshot || !seriesReport || !liveRoster || !rosterMeta || rosterMeta.seasonPlayers) return null;
+    if (!saveSnapshot || !seriesReport || !liveRoster || !rosterMeta || (rosterMeta.seasonPlayers && !rosterMeta.season)) return null;
     const teamIds = [blueTeamId, redTeamId].sort() as [string, string];
     if (basisKey(liveRoster.basis) !== basisKey(rosterBasis(seriesReport)) || pairKey(liveRoster.teamIds) !== pairKey(teamIds)) return null;
+    if (rosterMeta.season && pairKey(Object.keys(rosterMeta.season.lineups)) !== pairKey(teamIds)) return null;
     return serializeRosterScenario({ basis: liveRoster.basis, team_ids: teamIds, rosters: liveRoster.rosters }, buildRosterIndex(seriesReport.opponent_prep?.teams ?? []));
   }, [saveSnapshot, seriesReport, liveRoster, rosterMeta, blueTeamId, redTeamId]);
-  const practiceRosterBlocked = rosterMeta?.seasonPlayers
-    ? "시즌 선수가 배정되어 있어 선수 구성은 함께 저장할 수 없습니다. 밴픽만 저장하거나 시즌 선택은 구단 저장을 이용하세요."
+  const practiceSeason = practiceRoster !== null ? rosterMeta?.season ?? null : null;
+  const practiceRosterBlocked = rosterMeta?.seasonPlayers && !rosterMeta.season
+    ? "시즌 선수 자료가 불러와지지 않았거나 저장된 시즌 선수를 현재 자료에서 확인하지 못해 선수 구성은 함께 저장할 수 없습니다. 밴픽만 저장하거나 시즌 자료를 다시 불러와 주세요."
     : null;
+  const seasonRoot = productRootHref(currentSpace);
+  const loadSeasonCatalog = useCallback((signal: AbortSignal) => loadPublishedSeasonCatalog(seasonRoot, signal), [seasonRoot]);
   // Practice library gate: any board/context/mode change invalidates a pending or in-flight library load.
   const practiceBoardKey = useMemo(() => JSON.stringify([seriesReport ? [seriesReport.patch_id, seriesReport.cutoff] : null,
     blueTeamId, redTeamId, firstPickSide, games, selections, pendingChampion, positionRecord, room.active, importing, sessionReady]),
@@ -739,12 +745,14 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <DraftSharePanel outgoing={shareSession} liveReport={liveReport} ready={canSelect && !room.active} incomingReady={!room.active && sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onAccept={(session) => { if (room.active) return; setComparisonEpoch((epoch) => epoch + 1); setPendingReset(null); restoreSession(session); }} />
       <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={() => setPendingReset("SERIES")} disabled={room.active || (!games.length && !hasCurrentWork)}>{t("draft.resetSeries")}</button></div>
       {/* Named local practices: separate database; loading reuses the file-import reset path. */}
-      <DraftPracticeLibraryPanel scenario={saveSnapshot} roster={practiceRoster} rosterBlocked={practiceRosterBlocked} boardKey={practiceBoardKey} hasWork={hasCurrentWork || games.length > 0} locked={room.active || !sessionReady || importing}
-        onLoad={(session, roster) => {
+      <DraftPracticeLibraryPanel scenario={saveSnapshot} roster={practiceRoster} season={practiceSeason} rosterBlocked={practiceRosterBlocked} boardKey={practiceBoardKey} hasWork={hasCurrentWork || games.length > 0} locked={room.active || !sessionReady || importing}
+        loadSeasonCatalog={loadSeasonCatalog}
+        onLoad={(session, roster, season) => {
           if (room.active) return;
           setComparisonEpoch((epoch) => epoch + 1); setPendingReset(null); restoreSession(session);
           // Withdraw the old roster until the editor applies the saved one, so A/B and simulation never capture a mixed state.
-          if (roster) { setLiveRoster(null); setRosterRequest({ token: ++rosterToken.current, roster }); }
+          // Draft, current roster and season refs arrive together, already fully verified by the panel.
+          if (roster) { setLiveRoster(null); setRosterRequest({ token: ++rosterToken.current, roster, season }); }
         }} />
       <details className="draft-session-details"><summary lang="ko">고급 설정 · 파일 저장·불러오기</summary>
       <p>{format("draft.sessionInfo", { state: t(seriesReport ? "draft.sessionInfo.locked" : "draft.sessionInfo.pending"), patch: report.patch_id, cutoff: report.cutoff ?? "", model: DRAFT_MODEL_VERSION })}</p>

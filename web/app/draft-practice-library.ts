@@ -1,6 +1,6 @@
 import type { DraftSession, DraftSessionErrorCode } from "./draft-session";
 import type { RosterErrorCode, RosterScenario } from "./roster-scenario";
-import { buildPracticeContent, parsePracticeContent, type PracticeContentResult } from "./practice-roster-bundle";
+import { buildPracticeContent, parsePracticeContent, type PracticeContentResult, type SeasonPracticePart } from "./practice-roster-bundle";
 
 /**
  * Named local practice library ("내 연습 보관함"). Separate database from the autosave
@@ -16,6 +16,8 @@ export const PRACTICE_TIMEOUT_MS = 10_000;
 export const PRACTICE_SCHEMA_VERSION = 1;
 /** v2 entries record whether a current-player roster bundle is stored with the draft. */
 export const PRACTICE_SCHEMA_VERSION_ROSTER = 2;
+/** v3 entries additionally record season-player references (bundle v2). */
+export const PRACTICE_SCHEMA_VERSION_SEASON = 3;
 const ENTRIES = "entries";
 const SCENARIOS = "scenarios";
 
@@ -33,12 +35,19 @@ export type PracticeEntry = {
   name: string;
   created_at: string;
   summary: PracticeSummary & { roster: boolean };
+} | {
+  schema_version: typeof PRACTICE_SCHEMA_VERSION_SEASON;
+  id: string;
+  name: string;
+  created_at: string;
+  summary: PracticeSummary & { roster: true; season: true };
 };
-export const entryHasRoster = (entry: PracticeEntry) => entry.schema_version === PRACTICE_SCHEMA_VERSION_ROSTER && entry.summary.roster;
+export const entryHasRoster = (entry: PracticeEntry) => entry.schema_version === PRACTICE_SCHEMA_VERSION_SEASON || (entry.schema_version === PRACTICE_SCHEMA_VERSION_ROSTER && entry.summary.roster);
+export const entryHasSeason = (entry: PracticeEntry) => entry.schema_version === PRACTICE_SCHEMA_VERSION_SEASON;
 export type PracticeErrorCode =
   | "NAME_EMPTY" | "NAME_TOO_LONG" | "NAME_INVALID_CHARS" | "NAME_DUPLICATE" | "LIMIT"
   | "INVALID_SCENARIO" | "TOO_LARGE" | "QUOTA" | "BLOCKED" | "TIMEOUT" | "UNAVAILABLE"
-  | "NOT_FOUND" | "CORRUPT" | "FAILED" | "INVALID_ROSTER";
+  | "NOT_FOUND" | "CORRUPT" | "FAILED" | "INVALID_ROSTER" | "INVALID_SEASON";
 export class PracticeError extends Error {
   constructor(readonly code: PracticeErrorCode, readonly sessionCode?: DraftSessionErrorCode, readonly rosterCode?: RosterErrorCode) { super(code); }
 }
@@ -74,21 +83,25 @@ export function validatePracticeName(raw: unknown, existingNames: readonly strin
 export function parsePracticeEntry(value: unknown): PracticeEntry | null {
   if (!record(value) || !exactKeys(value, ["schema_version", "id", "name", "created_at", "summary"])) return null;
   const version = value.schema_version;
-  if ((version !== PRACTICE_SCHEMA_VERSION && version !== PRACTICE_SCHEMA_VERSION_ROSTER) || typeof value.id !== "string" || !ID_PATTERN.test(value.id)) return null;
+  if ((version !== PRACTICE_SCHEMA_VERSION && version !== PRACTICE_SCHEMA_VERSION_ROSTER && version !== PRACTICE_SCHEMA_VERSION_SEASON) || typeof value.id !== "string" || !ID_PATTERN.test(value.id)) return null;
   const name = validatePracticeName(value.name);
   if (!name.ok || name.name !== value.name) return null;
   if (typeof value.created_at !== "string" || Number.isNaN(Date.parse(value.created_at)) || new Date(value.created_at).toISOString() !== value.created_at) return null;
   const summary = value.summary;
-  const summaryKeys = version === PRACTICE_SCHEMA_VERSION ? ["patch_id", "game_number", "selections", "positions"] : ["patch_id", "game_number", "selections", "positions", "roster"];
+  const summaryKeys = version === PRACTICE_SCHEMA_VERSION ? ["patch_id", "game_number", "selections", "positions"]
+    : version === PRACTICE_SCHEMA_VERSION_ROSTER ? ["patch_id", "game_number", "selections", "positions", "roster"]
+      : ["patch_id", "game_number", "selections", "positions", "roster", "season"];
   if (!record(summary) || !exactKeys(summary, summaryKeys) || (version === PRACTICE_SCHEMA_VERSION_ROSTER && typeof summary.roster !== "boolean") ||
+    (version === PRACTICE_SCHEMA_VERSION_SEASON && (summary.roster !== true || summary.season !== true)) ||
     typeof summary.patch_id !== "string" || summary.patch_id.length > 80 ||
     !Number.isSafeInteger(summary.game_number) || (summary.game_number as number) < 1 || (summary.game_number as number) > 100 ||
     !Number.isSafeInteger(summary.selections) || (summary.selections as number) < 0 || (summary.selections as number) > 20 ||
     typeof summary.positions !== "boolean") return null;
   const base = { patch_id: summary.patch_id, game_number: summary.game_number as number, selections: summary.selections as number, positions: summary.positions };
-  return version === PRACTICE_SCHEMA_VERSION
-    ? { schema_version: PRACTICE_SCHEMA_VERSION, id: value.id, name: name.name, created_at: value.created_at, summary: base }
-    : { schema_version: PRACTICE_SCHEMA_VERSION_ROSTER, id: value.id, name: name.name, created_at: value.created_at, summary: { ...base, roster: summary.roster as boolean } };
+  const meta = { id: value.id, name: name.name, created_at: value.created_at };
+  if (version === PRACTICE_SCHEMA_VERSION) return { schema_version: PRACTICE_SCHEMA_VERSION, ...meta, summary: base };
+  if (version === PRACTICE_SCHEMA_VERSION_ROSTER) return { schema_version: PRACTICE_SCHEMA_VERSION_ROSTER, ...meta, summary: { ...base, roster: summary.roster as boolean } };
+  return { schema_version: PRACTICE_SCHEMA_VERSION_SEASON, ...meta, summary: { ...base, roster: true, season: true } };
 }
 
 const damagedId = (value: unknown) => record(value) && typeof value.id === "string" && ID_PATTERN.test(value.id) ? value.id : null;
@@ -194,18 +207,20 @@ export function createPracticeLibrary(options: LibraryOptions = {}) {
    * Without `roster` the legacy v1 entry + verbatim draft string is written; with a roster-scenario
    * v1 string it is strictly validated against the draft's basis/pair/index and stored as a v2 bundle.
    */
-  async function save(rawName: string, scenario: string, roster: string | null = null): Promise<PracticeEntry> {
+  async function save(rawName: string, scenario: string, roster: string | null = null, season: SeasonPracticePart | null = null): Promise<PracticeEntry> {
     const nameCheck = validatePracticeName(rawName);
     if (!nameCheck.ok) throw new PracticeError(nameCheck.code);
     if (typeof scenario !== "string") throw new PracticeError("TOO_LARGE");
-    const content = buildPracticeContent(scenario, roster);
+    const content = buildPracticeContent(scenario, roster, season);
     if (!content.ok) throw contentError(content);
     const id = newId();
     if (!ID_PATTERN.test(id)) throw new PracticeError("FAILED");
     const meta = { id, name: nameCheck.name, created_at: now().toISOString() };
-    const entry: PracticeEntry = content.roster
-      ? { schema_version: PRACTICE_SCHEMA_VERSION_ROSTER, ...meta, summary: { ...summaryOf(content.session), roster: true } }
-      : { schema_version: PRACTICE_SCHEMA_VERSION, ...meta, summary: summaryOf(content.session) };
+    const entry: PracticeEntry = content.season
+      ? { schema_version: PRACTICE_SCHEMA_VERSION_SEASON, ...meta, summary: { ...summaryOf(content.session), roster: true, season: true } }
+      : content.roster
+        ? { schema_version: PRACTICE_SCHEMA_VERSION_ROSTER, ...meta, summary: { ...summaryOf(content.session), roster: true } }
+        : { schema_version: PRACTICE_SCHEMA_VERSION, ...meta, summary: summaryOf(content.session) };
     const stored = content.text;
     return run<PracticeEntry>("readwrite", (tx, set, abort) => {
       const entries = tx.objectStore(ENTRIES);
@@ -227,7 +242,7 @@ export function createPracticeLibrary(options: LibraryOptions = {}) {
    * Read + validate one practice; nothing is applied here. `roster` is the validated current-player
    * roster for v2 bundles, otherwise null. Metadata must agree with the stored content.
    */
-  async function read(id: string): Promise<{ entry: PracticeEntry; session: DraftSession; roster: RosterScenario | null }> {
+  async function read(id: string): Promise<{ entry: PracticeEntry; session: DraftSession; roster: RosterScenario | null; season: SeasonPracticePart | null }> {
     if (typeof id !== "string" || !ID_PATTERN.test(id)) throw new PracticeError("NOT_FOUND");
     const raw = await run<{ entry: unknown; scenario: unknown }>("readonly", (tx, set) => {
       const result: { entry: unknown; scenario: unknown } = { entry: undefined, scenario: undefined };
@@ -243,8 +258,8 @@ export function createPracticeLibrary(options: LibraryOptions = {}) {
     if (!content.ok) throw contentError(content);
     const expected = summaryOf(content.session);
     const summaryOk = (Object.keys(expected) as (keyof PracticeSummary)[]).every((key) => entry.summary[key] === expected[key]);
-    if (!summaryOk || entryHasRoster(entry) !== (content.roster !== null)) throw new PracticeError("CORRUPT");
-    return { entry, session: content.session, roster: content.roster };
+    if (!summaryOk || entryHasRoster(entry) !== (content.roster !== null) || entryHasSeason(entry) !== (content.season !== null)) throw new PracticeError("CORRUPT");
+    return { entry, session: content.session, roster: content.roster, season: content.season };
   }
 
   /** Delete one practice (entry and scenario together). Damaged entries with an ID are deletable. */
@@ -309,6 +324,7 @@ export const PRACTICE_ERROR_TEXT: Record<PracticeErrorCode, string> = {
   NOT_FOUND: "이 연습을 찾을 수 없습니다. 다른 탭에서 삭제되었을 수 있습니다.",
   CORRUPT: "보관 항목이 손상되어 불러오지 않았습니다.",
   INVALID_ROSTER: "함께 저장된 선수 구성이 이 밴픽의 자료 기준·팀 조합과 맞지 않거나 올바르지 않아 전체를 불러오지 않았습니다.",
+  INVALID_SEASON: "함께 저장된 시즌 선수 구성이 올바르지 않거나 현재 선수와 겹쳐 전체를 처리하지 않았습니다. 현재 밴픽과 선수 구성은 그대로 유지합니다.",
   FAILED: "보관함 작업에 실패했습니다. 기존 항목은 그대로 있습니다.",
 };
 export const practiceErrorText = (error: unknown) => PRACTICE_ERROR_TEXT[error instanceof PracticeError ? error.code : "FAILED"];
