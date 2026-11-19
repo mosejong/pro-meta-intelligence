@@ -7,10 +7,10 @@
   "boundary": "Collection availability only; excludes raw rows, local paths, provider URLs, and predictive-quality claims.",
   "last_attempt": {
     "exit_code": 0,
-    "finished_at": "2026-11-18T16:25:56.110935+00:00",
+    "finished_at": "2026-11-19T01:10:58.097809+00:00",
     "job_status": "SUCCEEDED",
     "network_request_performed": false,
-    "started_at": "2026-11-18T16:24:22.487202+00:00"
+    "started_at": "2026-11-19T01:08:49.187708+00:00"
   },
   "publication": {
     "head_accepted": true,
@@ -26,5 +26,5 @@
     "source_id": "oracles-elixir-match-data"
   },
   "state": "CURRENT",
-  "updated_at": "2026-11-18T16:25:56.110935+00:00"
+  "updated_at": "2026-11-19T01:10:58.097809+00:00"
 }
