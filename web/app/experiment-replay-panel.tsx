@@ -36,6 +36,12 @@ type ExperimentReplayPanelProps = {
 };
 
 const fieldLabels: Record<AssumptionField, string> = { lane: "라인", tempo: "운영", teamfight: "한타" };
+// Plain-language effect of each assumption inside the abstract model only (no coefficients, no real stats).
+const fieldHelp: Record<AssumptionField, string> = {
+  lane: "모델 자원이 분마다 늘어나는 양에 반영됩니다.",
+  tempo: "모델 자원 증가와 모델 교전 점수 양쪽에 반영됩니다.",
+  teamfight: "모델 교전 점수에 반영됩니다.",
+};
 const roleLabels: Record<RosterRole, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
 const sideLabel = (side: "BLUE" | "RED") => side === "BLUE" ? "블루" : "레드";
 const reasonLabel = { BASE_DESTROYED: "모델 기지 내구도 0", TIME_LIMIT: `${MAX_MINUTE}분 제한 도달 (기지·자원 점수)` } as const;
@@ -124,8 +130,9 @@ export function ExperimentReplayPanel({ readyInput, blocked, nameOf }: Experimen
             return <div key={field} className="experiment-replay-field">
               <label htmlFor={inputId}>{fieldLabels[field]}</label>
               <input id={inputId} type="number" inputMode="decimal" min={-1} max={1} step="any" value={currentDrafts[id][field]}
-                aria-invalid={issue ? true : undefined} aria-describedby={issue ? `${inputId}-issue` : undefined}
+                aria-invalid={issue ? true : undefined} aria-describedby={`${inputId}-help${issue ? ` ${inputId}-issue` : ""}`}
                 onChange={(event) => edit(id, field, event.target.value)} />
+              <small id={`${inputId}-help`} className="experiment-replay-field-help">{fieldHelp[field]}</small>
               {issue && <small id={`${inputId}-issue`} className="experiment-replay-issue">{issue}</small>}
             </div>;
           })}

@@ -20,6 +20,7 @@ main.draft-lab.draft-studio .experiment-replay-field { display: grid; gap: 3px; 
 main.draft-lab.draft-studio .experiment-replay-field label { color: var(--studio-text); }
 main.draft-lab.draft-studio .experiment-replay input[type="number"] { min-width: 0; width: 100%; min-height: 36px; padding: 2px 6px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-bg); color: var(--studio-text); font: inherit; font-size: 12px; }
 main.draft-lab.draft-studio .experiment-replay input[aria-invalid="true"] { border-color: #e58b8b; }
+main.draft-lab.draft-studio .experiment-replay-field-help { color: var(--studio-muted); font-size: 11px; line-height: 1.35; overflow-wrap: anywhere; }
 main.draft-lab.draft-studio .experiment-replay-issue { color: #e58b8b; font-size: 11px; }
 main.draft-lab.draft-studio .experiment-replay-run { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 12px; }
 main.draft-lab.draft-studio .experiment-replay-run .experiment-replay-field { width: min(180px, 100%); }

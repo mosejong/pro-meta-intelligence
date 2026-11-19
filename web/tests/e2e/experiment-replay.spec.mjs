@@ -85,13 +85,29 @@ test("ready input → explicit run → pause/step/speed/seek/reset → later dra
   const inputs = panel(page).locator('.experiment-replay-team input[type="number"]');
   await expect(inputs).toHaveCount(6);
   for (let i = 0; i < 6; i += 1) await expect(inputs.nth(i)).toHaveValue("0");
+  const helpIds = new Set();
+  for (let i = 0; i < 6; i += 1) {
+    const input = inputs.nth(i);
+    const id = await input.getAttribute("id");
+    await expect(input).toHaveAttribute("aria-describedby", `${id}-help`);
+    await expect(panel(page).locator(`[id="${id}-help"]`)).toBeVisible();
+    helpIds.add(`${id}-help`);
+  }
+  expect(helpIds.size).toBe(6);
+  await noHorizontalOverflow(page);
   await expect(runButton(page)).toBeEnabled();
   await inputs.nth(0).fill("2");
   await expect(inputs.nth(0)).toHaveAttribute("aria-invalid", "true");
+  const firstInputId = await inputs.nth(0).getAttribute("id");
+  await expect(inputs.nth(0)).toHaveAttribute("aria-describedby", `${firstInputId}-help ${firstInputId}-issue`);
+  await expect(panel(page).locator(`[id="${firstInputId}-issue"]`)).toBeVisible();
+  await expect(panel(page).locator(`[id="${firstInputId}-help"]`)).toBeVisible();
   await expect(runButton(page)).toBeDisabled();
   await inputs.nth(0).fill("");
   await expect(runButton(page)).toBeDisabled();
   await inputs.nth(0).fill("0.25");
+  await expect(inputs.nth(0)).toHaveAttribute("aria-describedby", `${firstInputId}-help`);
+  await expect(inputs.nth(0)).not.toHaveAttribute("aria-invalid");
   await inputs.nth(5).fill("-0.3");
   // Finer-than-0.1 decimals accepted by the parser are not blocked by native step validation.
   expect(await inputs.nth(0).evaluate((el) => el.validity.valid)).toBe(true);

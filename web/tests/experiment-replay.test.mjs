@@ -174,6 +174,25 @@ test("fixed-draft assumption experiment: adapter, mapping, frames and playback",
       assert.match(ready, /<button type="submit">가정 실험 실행/);
       assert.equal((ready.match(/value="0"/g) ?? []).length, 6, "six neutral assumptions");
       assert.doesNotMatch(ready, /가정 실험 재생|모델 내부 결과/, "no run before the explicit click");
+      const expectedHelp = { lane: "모델 자원이 분마다 늘어나는 양에 반영됩니다.", tempo: "모델 자원 증가와 모델 교전 점수 양쪽에 반영됩니다.", teamfight: "모델 교전 점수에 반영됩니다." };
+      const assumptionInputs = [...ready.matchAll(/<input id="(experiment-(lane|tempo|teamfight)-[A-Za-z0-9_-]+)"[^>]*>/g)];
+      assert.equal(assumptionInputs.length, 6, "six assumption inputs");
+      const helpIds = new Set();
+      for (const [tag, inputId, field] of assumptionInputs) {
+        const describedBy = tag.match(/aria-describedby="([^"]+)"/)?.[1];
+        assert.equal(describedBy, `${inputId}-help`, `${inputId} is described by its own help`);
+        assert.doesNotMatch(tag, /aria-invalid/, "neutral values are valid");
+        helpIds.add(describedBy);
+        const help = ready.match(new RegExp(`<small id="${describedBy}"[^>]*>([^<]*)</small>`));
+        assert.ok(help, `help element ${describedBy} is rendered`);
+        assert.equal(help[1], expectedHelp[field]);
+        assert.doesNotMatch(help[1], /승률|능력치|챔피언/, "help stays inside the abstract model");
+      }
+      assert.equal(helpIds.size, 6, "help IDs are unique per input");
+      assert.match(ready, /<label for="experiment-lane-[^"]+">라인<\/label>/);
+      assert.match(ready, /실제 LoL 승률이나 실제 경기 재현이 아니며, 챔피언·선수·시즌 기록은 모델 계산에 들어가지 않습니다/);
+      assert.match(ready, /aria-describedby="experiment-seed-help"/);
+      assert.match(ready, /<form[^>]*novalidate=""/i);
       const blocked = renderToStaticMarkup(createElement(ExperimentReplayPanel, { readyInput: snapshot, blocked: true, nameOf: (id) => id }));
       assert.match(blocked, /<button type="submit" disabled="">/);
       assert.match(blocked, /자료 로딩 중에는 새 실행을 할 수 없습니다/);
