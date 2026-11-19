@@ -148,7 +148,7 @@ export function decodeState(text: string, context: { report: RadarReport; identi
 }
 
 /** Directory names that are (or are built into) statically served output in this project or common hosts. */
-const PUBLIC_SEGMENT = /^(public|static|www|htdocs|_site|build|out|dist(-.*)?|\.next|\.output|\.vercel|\.netlify)$/i;
+const PUBLIC_SEGMENT = /^(public|static|static-site|\.site-public|www|htdocs|_site|build|out|dist(-.*)?|\.next|\.output|\.vercel|\.netlify)$/i;
 const fold = (value: string) => process.platform === "win32" ? value.toLowerCase() : value;
 const inside = (root: string, path: string) => {
   const rel = relative(fold(root), fold(path));

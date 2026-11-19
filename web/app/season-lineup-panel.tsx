@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useChampionNames } from "./champion-names";
 import { fetchJsonWithTimeout } from "./publication-loader";
 import { emptySeasonSlots, parseSeasonCardCatalog, verifySeasonCardIntegrity, resolveSeasonRef, type SeasonCardCatalog, type SeasonCardRef, type SeasonSlots, type TeamSeasonSlots } from "./season-player-cards";
@@ -25,17 +25,29 @@ export function SeasonLineupPanel({ catalog, onCatalog, lineups, teams, publicat
   const preset = presetTeams.find(t => t.key === presetKey) ?? null;
   const presetBlocked = preset ? presetBlockReason(preset) : null;
   const request = useRef<AbortController | null>(null);
-  useEffect(() => () => request.current?.abort(), []);
+  // Latest committed props; a pending manual read applies only through these, never through a stale closure.
+  const live = useRef({ catalog, disabled, onCatalog });
+  useLayoutEffect(() => { live.current = { catalog, disabled, onCatalog }; });
+  // Any committed catalog change (e.g. a practice-library restore into this same mounted editor),
+  // a disabled transition, or unmount invalidates a manual read that is still in flight.
+  useLayoutEffect(() => () => invalidate(), [catalog, disabled]);
+  function invalidate() {
+    const pending = request.current; request.current = null;
+    if (pending) { pending.abort(); setBusy(false); }
+  }
   async function load() {
-    request.current?.abort(); const controller = new AbortController(); request.current = controller; setBusy(true); setMessage("");
+    if (live.current.catalog || live.current.disabled) return;
+    invalidate(); const controller = new AbortController(); request.current = controller; setBusy(true); setMessage("");
+    const startCatalog = live.current.catalog;
+    const valid = () => request.current === controller && !controller.signal.aborted && live.current.catalog === startCatalog && !live.current.disabled;
     try {
       const url = new URL(`${publicationRoot.endsWith("/") ? publicationRoot : publicationRoot + "/"}history/season-player-cards.json`, window.location.href);
       const data = await fetchJsonWithTimeout(url, { signal: controller.signal, timeoutMs: 15000 });
       const parsed = parseSeasonCardCatalog(data);
       await verifySeasonCardIntegrity(parsed);
-      if (!controller.signal.aborted) { onCatalog(parsed); if (!parsed.cards.some(c => c.season === year)) setYear(parsed.cards[0]?.season ?? 2022); }
-    } catch { if (!controller.signal.aborted) setMessage("시즌 선수 자료를 불러오지 못했습니다. 현재 구단과 선수 구성은 유지합니다."); }
-    finally { if (!controller.signal.aborted) setBusy(false); }
+      if (valid()) { live.current.onCatalog(parsed); setYear(y => parsed.cards.some(c => c.season === y) ? y : parsed.cards[0]?.season ?? 2022); }
+    } catch { if (valid()) setMessage("시즌 선수 자료를 불러오지 못했습니다. 현재 구단과 선수 구성은 유지합니다."); }
+    finally { if (request.current === controller) { request.current = null; setBusy(false); } }
   }
   return <details className="season-lineup" lang="ko">
     <summary>과거 시즌 선수로 구성하기</summary>

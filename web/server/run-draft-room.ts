@@ -11,7 +11,7 @@ const allowedOrigins = (process.env.DRAFT_ROOM_ALLOWED_ORIGINS ?? "http://127.0.
 // Opt-in only. The state file holds live room credentials: keep it server-only (never public/dist/static).
 const stateFile = process.env.DRAFT_ROOM_STATE_FILE;
 const persistence = stateFile === undefined ? undefined
-  : createFileRoomPersistence(stateFile, { forbiddenRoots: [...["public", "dist", "dist-pages", "dist-room-pages", ".next"].map(folder => resolve(folder)), dirname(feedPath)] });
+  : createFileRoomPersistence(stateFile, { forbiddenRoots: [...["public", "static-site", ".site-public", "dist", "dist-pages", "dist-room-pages", ".next"].map(folder => resolve(folder)), dirname(feedPath)] });
 const app = createDraftRoomServer({ report, allowedOrigins, persistence });
 // The state path and credentials are intentionally never logged.
 app.server.listen(port, "127.0.0.1", () => { console.log(`Draft room prototype listening on 127.0.0.1:${port} (${app.store.storage})`); });

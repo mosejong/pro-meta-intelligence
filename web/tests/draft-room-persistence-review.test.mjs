@@ -12,7 +12,7 @@ test("room credentials cannot use built-public folders or a junction alias of on
   const root = await mkdtemp(join(tmpdir(), "pmi-room-path-review-"));
   try {
     const { createFileRoomPersistence } = await vite.ssrLoadModule("/server/draft-room-persistence.ts");
-    for (const folder of ["public", "dist-pages", "dist-room-pages", ".next"]) {
+    for (const folder of ["public", "dist-pages", "dist-room-pages", ".next", ".site-public", "static-site"]) {
       await t.test(folder, () => assert.throws(() => createFileRoomPersistence(join(root, folder, "state.json")),
         /PUBLIC_PATH/, `built public folder ${folder} must be refused`));
     }

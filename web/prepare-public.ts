@@ -1,10 +1,10 @@
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const webRoot = dirname(fileURLToPath(import.meta.url));
 const sourceRoot = resolve(webRoot, "public");
-const targetRoot = resolve(webRoot, ".site-public");
+const stagingRoot = resolve(webRoot, ".site-public");
 const publishedFiles = [
   "meta-radar-hero-v2.png",
   "og.png",
@@ -27,6 +27,10 @@ const publishedFiles = [
 ];
 
 export function preparePublishedAssets() {
+  // Never reuse the staging directory itself: old packaging bundles or other files there
+  // are not publication inputs. Each build receives only this explicit allowlist.
+  mkdirSync(stagingRoot, { recursive: true });
+  const targetRoot = mkdtempSync(resolve(stagingRoot, "build-"));
   for (const relativePath of publishedFiles) {
     const source = resolve(sourceRoot, relativePath);
     if (!existsSync(source)) continue;

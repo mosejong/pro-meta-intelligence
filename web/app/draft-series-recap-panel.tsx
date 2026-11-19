@@ -1,7 +1,8 @@
 "use client";
-import { useMemo } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { DraftGame } from "./draft-agent";
-import { buildSeriesRecap, type SeriesRecapSide, type SeriesRecapUnsupported } from "./draft-series-recap";
+import { buildSeriesRecap, type SeriesRecap, type SeriesRecapSide, type SeriesRecapUnsupported } from "./draft-series-recap";
+import { buildSeriesRecapText, type SeriesRecapTextRefusal } from "./draft-series-recap-text";
 import type { RadarReport } from "./radar-types";
 import "./draft-series-recap.css";
 
@@ -14,11 +15,44 @@ const reasonText: Record<SeriesRecapUnsupported, string> = {
   DEPENDS_ON_UNVERIFIED: "앞 세트를 확인하지 못해 이 세트의 잠금도 확인할 수 없어요.",
 };
 
+const shareRefusalText: Record<SeriesRecapTextRefusal, string> = {
+  NO_FINISHED_GAME: "완료한 세트가 없어 복사할 수 없어요.",
+  UNSUPPORTED_GAME: "확인하지 못한 세트가 있어 여러 세트 글 전체를 복사하지 않아요.",
+  UNVERIFIED_TOTAL: "전체 잠금 수가 미확인이라 여러 세트 글을 복사하지 않아요.",
+  INVALID_RECAP: "복기 형식을 확인하지 못해 복사하지 않아요.",
+};
+type CopyState = { recap: SeriesRecap; nameOf: (id: string) => string; patchId: string; cutoff: string; text: string; status: "copying" | "copied" | "manual" };
+
 /** Collapsed, read-only recap of finished Fearless games. No winners, rates, scores or auto-choice reasons. */
 export function DraftSeriesRecapPanel({ report, games, current, nameOf }: {
   report: RadarReport; games: DraftGame[]; current: DraftGame | null; nameOf: (id: string) => string;
 }) {
   const recap = useMemo(() => buildSeriesRecap({ report, games, current }), [report, games, current]);
+  const patchId = report?.opponent_prep?.patch_id ?? "";
+  const cutoff = report?.opponent_prep?.cutoff ?? "";
+  // Built from the recap already on screen; copying never re-runs the recap or the result builder.
+  const share = useMemo(() => buildSeriesRecapText({ recap, patchId, cutoff, nameOf }), [recap, patchId, cutoff, nameOf]);
+  const [copy, setCopy] = useState<CopyState | null>(null);
+  /** Bumped whenever recap/nameOf/patch/cutoff change and on unmount; a copy finishing later is ignored. */
+  const copyToken = useRef(0);
+  useLayoutEffect(() => {
+    copyToken.current += 1;
+    return () => { copyToken.current += 1; };
+  }, [recap, nameOf, patchId, cutoff]);
+  // Show a copy state only for exactly the current inputs (guards the render before the effect runs).
+  const shownCopy = copy && copy.recap === recap && copy.nameOf === nameOf && copy.patchId === patchId && copy.cutoff === cutoff ? copy : null;
+  async function copyText() {
+    if (!share.ok) return;
+    const token = ++copyToken.current;
+    const base = { recap, nameOf, patchId, cutoff, text: share.text };
+    const writeText = typeof navigator !== "undefined" ? navigator.clipboard?.writeText?.bind(navigator.clipboard) : undefined;
+    if (!writeText) { setCopy({ ...base, status: "manual" }); return; }
+    setCopy({ ...base, status: "copying" });
+    let ok = false;
+    try { await writeText(share.text); ok = true; } catch { ok = false; }
+    if (copyToken.current !== token) return; // inputs changed or unmounted meanwhile
+    setCopy({ ...base, status: ok ? "copied" : "manual" });
+  }
   if (!recap.games.length) return null;
   const names = (ids: string[]) => ids.length ? ids.map(nameOf).join(" · ") : "없음";
   const side = (team: SeriesRecapSide) => <article key={team.side} className={team.side.toLowerCase()}>
@@ -44,6 +78,15 @@ export function DraftSeriesRecapPanel({ report, games, current, nameOf }: {
       </section>)}
       <p>{recap.total_locks ? `지금까지 잠긴 챔피언 ${recap.total_locks.length}개` : "확인하지 못한 세트가 있어 전체 잠금 수는 미확인이에요."}</p>
       <p>현재 공개 자료의 우선 픽 요약과 대조한 기록일 뿐이에요. 기록에 없으면 0회가 아니라 미확인이며, 경기 승패·승률·픽의 가치나 자동 상대가 고른 이유를 나타내지 않아요.</p>
+      <div className="draft-series-recap-share">
+        <button type="button" disabled={!share.ok || shownCopy?.status === "copying"} onClick={copyText}
+          aria-describedby={!share.ok ? "draft-series-recap-share-reason" : undefined}>여러 세트 밴픽 복사</button>
+        {!share.ok && <p id="draft-series-recap-share-reason">{shareRefusalText[share.reason]}</p>}
+        <p role="status">{shownCopy?.status === "copying" ? "복사하는 중…" : shownCopy?.status === "copied" ? "여러 세트 밴픽을 클립보드에 복사했어요."
+          : shownCopy?.status === "manual" ? "자동 복사를 할 수 없어요. 아래 글을 직접 선택해 복사하세요." : ""}</p>
+        {shownCopy?.status === "manual" && <textarea readOnly value={shownCopy.text} rows={12} style={{ width: "100%" }}
+          aria-label="여러 세트 밴픽 글 (직접 복사)" onFocus={(e) => e.currentTarget.select()} />}
+      </div>
     </div>
   </details>;
 }
