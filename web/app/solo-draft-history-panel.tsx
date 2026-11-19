@@ -73,13 +73,17 @@ const saveStatusText: Record<SoloHistoryDownloadResult, string> = {
   FAILED: "파일 저장 요청에 실패했어요. 다시 시도하거나 복사 버튼을 이용하세요.",
 };
 
+/** Shown while any record restored from this device's local practice notes is still on the board. */
+export const SOLO_HISTORY_RESTORED_NOTE = "이 기기에 저장된 연습 메모에서 불러온 설명입니다. 증명 자료나 예측 근거가 아닙니다.";
+
 /**
  * Collapsed, read-only review of every real auto-confirmed opponent turn still on the current board.
- * The only ways out are explicit, human-readable exports of the same validated text already built
- * here: a plain-text copy or a .txt download requested by the user. The app never stores or restores
- * this review (no app storage, room or link), and exporting never re-runs a suggestion or explanation.
+ * User exports are explicit, human-readable copies of the same validated text already built here:
+ * a plain-text copy or a .txt download requested by the user. This panel itself never stores or restores
+ * anything (no app storage, room or link); draft-lab autosaves the frozen records locally with the board
+ * and restores them only for the same exact board. Exporting never re-runs a suggestion or explanation.
  */
-export function SoloDraftHistoryPanel({ history, nameOf, patchId, cutoff }: { history: SoloAutoHistory; nameOf: NameOf; patchId: string; cutoff: string }) {
+export function SoloDraftHistoryPanel({ history, nameOf, patchId, cutoff, restored = false }: { history: SoloAutoHistory; nameOf: NameOf; patchId: string; cutoff: string; restored?: boolean }) {
   const share = useMemo(() => buildSoloHistoryText({ history, patchId, cutoff, nameOf }), [history, patchId, cutoff, nameOf]);
   const [copy, setCopy] = useState<CopyState | null>(null);
   const [save, setSave] = useState<SaveState | null>(null);
@@ -114,6 +118,7 @@ export function SoloDraftHistoryPanel({ history, nameOf, patchId, cutoff }: { hi
   return <details className="solo-history">
     <summary>{`이번 세트 자동 선택 복기 (${ordered.length})`}</summary>
     <p>상대가 자동으로 확정한 차례만 표시합니다. 각 설명은 확정 직전에 만든 기록이며 이후 자료로 다시 계산하지 않습니다.</p>
+    {restored && <p className="solo-history-restored" role="note">{SOLO_HISTORY_RESTORED_NOTE}</p>}
     <ol>{ordered.map(record => <li key={record.turn}>
       <details>
         <summary>{`${record.turn}번째 차례 · ${nameOf(record.champion_id)}`}</summary>

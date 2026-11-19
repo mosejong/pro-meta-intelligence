@@ -104,7 +104,12 @@ test("draft lab submits saves through useDraftSave without a debounce window (st
   // Static evidence only: guards against restoring the old cancellable 300ms timer or
   // leaving the hook commented out. It does not prove browser runtime behaviour.
   const source = await readFile(new URL("../app/draft-lab.tsx", import.meta.url), "utf8");
-  assert.match(source, /^\s*const retrySave = useDraftSave\(saveSnapshot, setStorageStatus\);/m, "hook must be called, not commented out");
+  // The hook receives the memoized board + local-notes request; saveSnapshot itself stays the raw board string.
+  assert.match(source, /^\s*const retrySave = useDraftSave\(autosaveRequest, setStorageStatus\);/m, "hook must be called, not commented out");
+  const request = source.match(/const autosaveRequest = useMemo<DraftAutosaveRequest \| null>\(\(\) => saveSnapshot === null \? null : \{ scenario: saveSnapshot, manualSide, records: prunedHistory \},\s*\[([^\]]*)\]\);/);
+  assert.ok(request, "autosave request is memoized and null exactly when saveSnapshot is null");
+  assert.deepEqual(request[1].split(",").map(dep => dep.trim()), ["saveSnapshot", "manualSide", "prunedHistory"], "only board/side/notes changes resubmit");
+  assert.doesNotMatch(source, /readLocalDraft\b|readLocalDraftWithReview/, "startup restore goes through the notes adapter");
   // The retry button is user-triggered only and reuses the hook (latest snapshot), never an older text.
   assert.match(source, /storageStatus\.code === "SAVE_FAILED"[\s\S]{0,400}onClick=\{retrySave\} disabled=\{!saveSnapshot\}/);
   assert.equal((source.match(/retrySave/g) ?? []).length, 2, "retry is only wired to the button");

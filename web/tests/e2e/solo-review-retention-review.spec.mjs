@@ -83,3 +83,60 @@ test("corrupt saved notes are dropped while the saved board still reloads", asyn
   await expect(solo(page).getByRole("checkbox", { name: "상대 자동 밴픽", exact: true })).not.toBeChecked();
   await expect.poll(() => sidecar(page)).toBeNull();
 });
+
+test("undo and manual-side changes prune restored notes permanently across further reloads", async ({ page }) => {
+  await start(page, "BLUE");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await expect(progress(page)).toHaveAttribute("value", "4");
+  await page.locator(".draft-actions").getByRole("button", { name: /되돌리기/ }).click();
+  await expect(progress(page)).toHaveAttribute("value", "3");
+  await expect.poll(async () => {
+    const saved = await sidecar(page);
+    return typeof saved === "string" ? JSON.parse(saved).records.map(r => r.turn) : null;
+  }).toEqual([2]);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await expect(progress(page)).toHaveAttribute("value", "3");
+  await expect(review(page).locator(":scope > summary")).toContainText("(1)");
+  await solo(page).getByLabel("내 진영", { exact: true }).selectOption("RED");
+  await expect(review(page)).toHaveCount(0);
+  await expect.poll(() => sidecar(page)).toBeNull();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await expect(progress(page)).toHaveAttribute("value", "3");
+  await expect(review(page)).toHaveCount(0);
+});
+
+test("reopening an identical named practice clears private autosave notes", async ({ page }) => {
+  await start(page, "BLUE");
+  const library = page.locator("details.draft-practice-library");
+  await library.locator(":scope > summary").click();
+  await library.getByLabel("연습 이름").fill("복기 분리 확인");
+  await library.getByRole("button", { name: "이 연습 저장", exact: true }).click();
+  await expect(library.getByRole("status")).toContainText("저장했습니다");
+  await library.getByRole("button", { name: "복기 분리 확인 열기", exact: true }).click();
+  await library.getByRole("alertdialog").getByRole("button", { name: "바꾸기", exact: true }).click();
+  await expect(progress(page)).toHaveAttribute("value", "4");
+  await expect(review(page)).toHaveCount(0);
+  await expect.poll(() => sidecar(page)).toBeNull();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await expect(progress(page)).toHaveAttribute("value", "4");
+  await expect(review(page)).toHaveCount(0);
+});
+
+test("accepting an identical shared draft clears private autosave notes", async ({ page }) => {
+  await start(page, "BLUE");
+  await page.getByRole("button", { name: "밴픽 링크 복사", exact: true }).click();
+  const href = await page.getByLabel("복사할 밴픽 링크", { exact: true }).inputValue();
+  await page.evaluate(value => { location.hash = new URL(value).hash; }, href);
+  await page.getByRole("button", { name: "이 밴픽 불러오기", exact: true }).click();
+  await expect(progress(page)).toHaveAttribute("value", "4");
+  await expect(review(page)).toHaveCount(0);
+  await expect.poll(() => sidecar(page)).toBeNull();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await expect(progress(page)).toHaveAttribute("value", "4");
+  await expect(review(page)).toHaveCount(0);
+});

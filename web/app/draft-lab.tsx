@@ -24,8 +24,9 @@ import {
   type DraftGame,
 } from "./draft-agent";
 import { productRootHref, productSpaceHref, type ProductSpace } from "./product-space";
-import { isDraftSessionErrorCode, MAX_DRAFT_FILE_BYTES, parseDraftSession, readLocalDraft, type DraftSession, type DraftSessionErrorCode } from "./draft-session";
+import { isDraftSessionErrorCode, MAX_DRAFT_FILE_BYTES, parseDraftSession, type DraftSession, type DraftSessionErrorCode } from "./draft-session";
 import { useDraftSave } from "./use-draft-save";
+import { readLocalDraftForRestore, type DraftAutosaveRequest } from "./solo-review-autosave";
 import type { OpponentTeam, RadarReport } from "./radar-types";
 import { TeamChooser } from "./team-chooser";
 import { defaultDraftMatchup } from "./team-defaults";
@@ -247,8 +248,14 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [soloEnabled, setSoloEnabled] = useState(false);
   const [manualSide, setManualSide] = useState<DraftSide>("BLUE");
   const [lastAuto, setLastAuto] = useState<SoloAutoRecord | null>(null);
-  // Memory-only review of every real auto turn in the current set (frozen pre-choice records).
+  // Review of every real auto turn in the current set (frozen pre-choice records). Autosaved with the board
+  // as local practice notes and restored only on the initial local restore of the same exact board.
   const [autoHistory, setAutoHistory] = useState<SoloAutoHistory>([]);
+  // Identity of records that came from the local notes sidecar (provenance for the panel note only).
+  const [restoredNotes, setRestoredNotes] = useState<SoloAutoHistory>([]);
+  // Bumped by every accepted board replacement (restore/import/share/library/room), so a slower startup
+  // read or hash can never apply over a board accepted meanwhile.
+  const restoreGeneration = useRef(0);
   const [sessionReady, setSessionReady] = useState(false);
   const [importing, setImporting] = useState(false);
   const [storageStatus, setStorageStatus] = useState<StorageStatus>({ code: "CHECKING" });
@@ -335,11 +342,13 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const autoContext = useMemo(() => soloAutoContext(blueTeam?.team_id, redTeam?.team_id, firstPickSide, manualSide, previousPicks),
     [blueTeam?.team_id, redTeam?.team_id, firstPickSide, manualSide, previousPicks]);
   const reportBasis = useMemo(() => basisKey(rosterBasis(report)), [report]);
-  const historyContext = soloHistoryContext(autoContext, reportBasis);
+  const historyContext = useMemo(() => soloHistoryContext(autoContext, reportBasis), [autoContext, reportBasis]);
   // Adjust-during-render: entries no longer on the board (undo/reselect/reset/team/side/first pick/
   // next set/basis change, room mode or a lost race) are dropped for good, so a later manual choice of
   // the same champion on the same turn is never shown as automatic. Same for the last-choice record.
-  const prunedHistory = room.active ? [] : pruneSoloAutoHistory(autoHistory, selections, historyContext);
+  // Memoized so the autosave request only changes with the board/notes, not on timer/status renders.
+  const prunedHistory = useMemo(() => room.active ? [] : pruneSoloAutoHistory(autoHistory, selections, historyContext),
+    [room.active, autoHistory, selections, historyContext]);
   if (prunedHistory !== autoHistory && (prunedHistory.length || autoHistory.length)) setAutoHistory(prunedHistory);
   if (lastAuto && !soloAutoRecordMatches(lastAuto, selections, autoContext)) setLastAuto(null);
   useEffect(() => {
@@ -354,7 +363,10 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   }, [pendingReset]);
 
   const restoreSession = useCallback((session: DraftSession) => {
-    setSoloEnabled(false); setLastAuto(null); setAutoHistory([]);
+    restoreGeneration.current += 1;
+    // Every restore path clears notes (a fresh empty list, so autosave deletes any sidecar even for an
+    // identical board string). Only the initial local restore re-applies validated notes afterwards.
+    setSoloEnabled(false); setLastAuto(null); setAutoHistory([]); setRestoredNotes([]);
     // Any other restore path drops a not-yet-applied practice roster request.
     setRosterRequest(null);
     // Saved explicit roles/unassigned picks (v4) come back for this exact local context; suggestions are never stored.
@@ -380,18 +392,25 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
   useEffect(() => {
     let active = true;
-    readLocalDraft().then((saved) => {
-      if (!active) return;
-      if (saved) {
-        const result = parseDraftSession(saved);
-        if (result.ok) {
-          setComparisonEpoch((epoch) => epoch + 1);
-          restoreSession(result.session);
-          setStorageStatus({ code: "RESTORED" });
-        } else setStorageStatus({ code: "RESTORE_FAILED", reason: sessionReason(result) });
-      } else setStorageStatus({ code: "IDLE" });
+    const generation = restoreGeneration.current;
+    // One read + parse + optional hash/codec promise; nothing applies after unmount or after another
+    // board was accepted meanwhile. Note failures restore the board alone and are never RESTORE_FAILED.
+    readLocalDraftForRestore().then((saved) => {
+      if (!active || generation !== restoreGeneration.current) return;
+      if (saved.kind === "RESTORED") {
+        setComparisonEpoch((epoch) => epoch + 1);
+        restoreSession(saved.session);
+        if (saved.notes) {
+          // Frozen records exactly as saved; automatic opponent play stays off and nothing is re-suggested/explained.
+          setManualSide(saved.notes.manualSide);
+          setAutoHistory(saved.notes.records);
+          setRestoredNotes(saved.notes.records);
+        }
+        setStorageStatus({ code: "RESTORED" });
+      } else if (saved.kind === "INVALID") setStorageStatus({ code: "RESTORE_FAILED", reason: sessionReason(saved.result) });
+      else setStorageStatus({ code: "IDLE" });
     }).catch(() => {
-      if (active) setStorageStatus({ code: "UNAVAILABLE" });
+      if (active && generation === restoreGeneration.current) setStorageStatus({ code: "UNAVAILABLE" });
     }).finally(() => { if (active) setSessionReady(true); });
     return () => { active = false; };
   }, [restoreSession]);
@@ -425,8 +444,13 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const practiceBoardKey = useMemo(() => JSON.stringify([seriesReport ? [seriesReport.patch_id, seriesReport.cutoff] : null,
     blueTeamId, redTeamId, firstPickSide, games, selections, pendingChampion, positionRecord, room.active, importing, sessionReady]),
   [seriesReport, blueTeamId, redTeamId, firstPickSide, games, selections, pendingChampion, positionRecord, room.active, importing, sessionReady]);
+  // saveSnapshot stays the raw board string (the practice library uses it). The autosave request adds the
+  // pruned local notes and manual side; null exactly when saveSnapshot is null (not ready/import/room).
+  // A notes or manual-side change resubmits even for identical board bytes; an empty list deletes the sidecar.
+  const autosaveRequest = useMemo<DraftAutosaveRequest | null>(() => saveSnapshot === null ? null : { scenario: saveSnapshot, manualSide, records: prunedHistory },
+    [saveSnapshot, manualSide, prunedHistory]);
   // Memoized above, so timer ticks and status updates never resubmit; each committed change is written immediately.
-  const retrySave = useDraftSave(saveSnapshot, setStorageStatus);
+  const retrySave = useDraftSave(autosaveRequest, setStorageStatus);
 
   const shareSession = useMemo(() => ({ report, blueTeamId, redTeamId, games, selections, stagedChampion: pendingChampion, firstPickSide }),
     [report, blueTeamId, redTeamId, games, selections, pendingChampion, firstPickSide]);
@@ -743,7 +767,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       {soloEnabled && <p role="status">{soloSeason.loading ? "시즌 선수 기록을 확인하고 있어요…" : soloSeason.error ? "시즌 자료를 확인하지 못해 현재 팀 기록·메타 후보로 연습합니다." : "같은 팀의 현재 관측 선수 시즌 기록을 함께 참고합니다. 가상 로스터 변경은 자동 상대에 반영하지 않습니다."}</p>}
       {soloWaiting && !soloSeason.loading && <p role="status">{autoChoice ? "상대가 카드를 고르고 있어요…" : "자동 선택을 확인하지 못했습니다. 자동 밴픽을 끄고 직접 이어가세요."}</p>}
       {soloAutoRecordMatches(lastAuto, selections, autoContext) && <SoloDraftExplanationPanel record={lastAuto} nameOf={nameOf} />}
-      {!room.active && <SoloDraftHistoryPanel history={prunedHistory} nameOf={nameOf} patchId={report.patch_id} cutoff={report.cutoff ?? ""} />}
+      {!room.active && <SoloDraftHistoryPanel history={prunedHistory} nameOf={nameOf} patchId={report.patch_id} cutoff={report.cutoff ?? ""}
+        restored={restoredNotes.length > 0 && prunedHistory.some(record => restoredNotes.includes(record))} />}
     </section>
     <section className="draft-series" aria-label={t("draft.seriesLabel")} lang={lang.ui}>
       <label className="draft-first-selection">{t("draft.firstPick")}
@@ -761,7 +786,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         {!saveSnapshot && <small>{importing ? "파일을 불러오는 중이라 지금은 다시 저장할 수 없습니다." : "저장할 최신 밴픽이 아직 없습니다."}</small>}
         <small>현재 화면의 최신 밴픽만 다시 저장하며 이전 상태로 되돌리지 않습니다.</small>
       </div>}
-      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={next => { setRoom(next); if (next.active) { setSoloEnabled(false); setLastAuto(null); setAutoHistory([]); setPositionState({ context: "", roles: {} }); } }} onSnapshot={(session, reset) => {
+      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={next => { setRoom(next); if (next.active) { restoreGeneration.current += 1; setSoloEnabled(false); setLastAuto(null); setAutoHistory([]); setRestoredNotes([]); setPositionState({ context: "", roles: {} }); } }} onSnapshot={(session, reset) => {
+        restoreGeneration.current += 1;
         if (reset) setComparisonEpoch(epoch => epoch + 1);
         setSeriesReport(session.report); setBlueTeamId(session.blueTeamId); setRedTeamId(session.redTeamId);
         setGames(session.games); setSelections(session.selections); setFirstPickSide(session.firstPickSide);

@@ -248,10 +248,24 @@ test("download helper: unavailable APIs and failures are reported, never thrown;
   assert.equal(blocked.env.pending.length, 0);
 });
 
-test("source comments describe explicit readable export, not session persistence", async () => {
+test("SSR: restored local-notes label only when requested; same buttons and no other copy change", () => {
+  const h = play({ ...base, seasonHistory: null });
+  const props = { history: h, nameOf: id => id, patchId: PATCH, cutoff: CUTOFF };
+  const plain = renderToStaticMarkup(createElement(panel.SoloDraftHistoryPanel, props));
+  const restored = renderToStaticMarkup(createElement(panel.SoloDraftHistoryPanel, { ...props, restored: true }));
+  const note = "이 기기에 저장된 연습 메모에서 불러온 설명입니다. 증명 자료나 예측 근거가 아닙니다.";
+  assert.equal(panel.SOLO_HISTORY_RESTORED_NOTE, note);
+  assert.ok(!plain.includes(note));
+  assert.equal(restored.split(note).length, 2, "label shown once");
+  assert.equal(restored.replace(`<p class="solo-history-restored" role="note">${note}</p>`, ""), plain, "only the label is added");
+  assert.equal((restored.match(/<button/g) ?? []).length, 2);
+});
+
+test("source comments describe explicit readable export and same-board local notes, not file/link/room persistence", async () => {
   const read = name => readFile(new URL(`../app/${name}`, import.meta.url), "utf8");
   const [h, t, p] = await Promise.all([read("solo-draft-history.ts"), read("solo-draft-history-text.ts"), read("solo-draft-history-panel.tsx")]);
-  assert.match(h, /\.txt download/); assert.match(h, /never stores or restores/); assert.match(h, /reload loses it/);
+  assert.match(h, /\.txt download/); assert.match(h, /This module itself has no storage/); assert.match(h, /reload loses it/);
+  assert.match(h, /same exact board/); assert.match(h, /never put in scenario files,\s+\*\s+the practice library, share links or rooms/);
   assert.match(t, /\.txt download/); assert.match(t, /no app\s+\*\s+storage\/restore/);
   assert.match(p, /never stores or restores/);
   assert.doesNotMatch(p, /localStorage|indexedDB|history\.replaceState|location\.hash/, "panel touches no app storage or URL");

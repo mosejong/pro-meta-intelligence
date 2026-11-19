@@ -4,7 +4,11 @@ import type { RosterRole } from "./roster-scenario";
 import type { SoloDraftEvidence, SoloDraftExplainedChoice, SoloDraftExplanation } from "./solo-draft";
 import "./solo-draft-explanation.css";
 
-/** In-memory record of the last real auto choice; only an explicit plain-text copy is allowed, never persisted, linked or sent to a room. */
+/**
+ * Frozen record of one real auto choice. The last-choice record is memory-only. History entries may be
+ * autosaved as local practice notes next to the same board (solo-review-autosave.ts); records are never
+ * put in files, links or rooms, and a restored record is not proof or prediction evidence.
+ */
 export type SoloAutoRecord = {
   turn: number;
   champion_id: string;

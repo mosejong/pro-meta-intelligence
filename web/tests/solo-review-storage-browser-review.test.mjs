@@ -12,7 +12,8 @@ test("native browser IndexedDB commits matching pairs, rolls back aborts and cle
     await vite.listen();
     const origin = vite.resolvedUrls.local[0];
     browser = await chromium.launch({ channel: "chrome", headless: true });
-    const page = await browser.newPage();
+    const context = await browser.newContext();
+    const page = await context.newPage();
     await page.route("**/__codex_storage_review", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Native storage review</title>" }));
     await page.goto(new URL("/__codex_storage_review", origin).href);
     const result = await page.evaluate(async () => {
@@ -65,6 +66,29 @@ test("native browser IndexedDB commits matching pairs, rolls back aborts and cle
     assert.equal(result.setupRejected, true);
     assert.deepEqual(result.rollback, result.fallback, "failed setup cannot commit its queued board put");
     assert.deepEqual(result.recovered, { scenario: "board-7", review: "review-7" });
+
+    // Two real pages share native storage but have separate module instances / writer queues.
+    const peer = await page.context().newPage();
+    await peer.route("**/__codex_storage_review", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Peer storage review</title>" }));
+    await peer.goto(new URL("/__codex_storage_review", origin).href);
+    assert.deepEqual(await peer.evaluate(async () => (await import("/app/draft-session.ts")).readLocalDraftWithReview()), result.recovered);
+    await page.evaluate(async () => (await import("/app/draft-session.ts")).writeLocalDraftWithReview("initial", "note:initial"));
+    const observations = await Promise.all([page, peer].map((tab, index) => tab.evaluate(async writer => {
+      const storage = await import("/app/draft-session.ts");
+      const mismatches = [];
+      for (let turn = 0; turn < 15; turn++) {
+        const scenario = `${writer}:${turn}`;
+        await storage.writeLocalDraftWithReview(scenario, `note:${scenario}`);
+        const pair = await storage.readLocalDraftWithReview();
+        if (pair.review !== `note:${pair.scenario}`) mismatches.push(pair);
+      }
+      return mismatches;
+    }, index)));
+    assert.deepEqual(observations, [[], []], "concurrent readers never combine one tab's board with another tab's note");
+    const shared = await peer.evaluate(async () => (await import("/app/draft-session.ts")).readLocalDraftWithReview());
+    await page.evaluate(async scenario => (await import("/app/draft-session.ts")).writeLocalDraft(scenario), shared.scenario);
+    assert.deepEqual(await peer.evaluate(async () => (await import("/app/draft-session.ts")).readLocalDraftWithReview()),
+      { scenario: shared.scenario, review: null }, "same-board legacy write clears notes seen by another tab");
   } finally {
     await browser?.close();
     await vite.close();

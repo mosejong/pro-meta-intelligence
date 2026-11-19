@@ -2,12 +2,14 @@ import type { DraftSelection } from "./draft-agent";
 import { soloAutoRecordMatches, type SoloAutoRecord } from "./solo-draft-explanation";
 
 /**
- * Memory-only review list of the opponent's real auto-confirmed turns in the current set.
+ * Review list of the opponent's real auto-confirmed turns in the current set.
  * Each entry is a frozen copy of the record built immediately before its confirmation; nothing here
  * re-derives an explanation later (late season data, report refreshes, etc. never rewrite it).
- * Only an explicit human-readable export by the user (plain-text copy or .txt download of the validated
- * review text) is allowed. The app never stores or restores it (no app storage/session persistence, so a
- * reload loses it), and it is never linked or sent to a room.
+ * User exports are explicit and human-readable (plain-text copy or .txt download of the validated
+ * review text). This module itself has no storage. draft-lab autosaves the list as local practice notes
+ * in a sidecar next to the board (solo-review-autosave.ts) and restores it after a reload only when the
+ * sidecar matches the same exact board; otherwise a reload loses it. It is never put in scenario files,
+ * the practice library, share links or rooms, and a restored note is not proof or prediction evidence.
  */
 export type SoloAutoHistory = readonly SoloAutoRecord[];
 
