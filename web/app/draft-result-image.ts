@@ -1,10 +1,17 @@
 import { championAssetId } from "./champion-assets";
+import { championKey, roleLabel } from "./champion-roles";
 import type { DraftSelection } from "./draft-agent";
+import { parseDraftPositions, type DraftPositionRecord } from "./draft-position-session";
 import type { DraftResultReport } from "./draft-result-report";
+import { ROSTER_ROLES } from "./roster-scenario";
 import { SHARE_CHAMPIONS } from "./share-champion-ids";
 
 /** Text-only, client-side PNG summary of a READY draft result. No network, no images, no scores. */
-export type DraftResultImageSide = { side: "BLUE" | "RED"; side_label: string; team_lines: string[]; picks: string[]; bans: string[] };
+export type DraftResultImageSide = {
+  side: "BLUE" | "RED"; side_label: string; team_lines: string[]; picks: string[]; bans: string[];
+  /** Only when a position record was passed: user-assigned role label per pick (same order), or "미배정". */
+  pick_roles?: string[];
+};
 export type DraftResultImageModel = {
   title: string; notice: string; sides: DraftResultImageSide[];
   patch_line: string; cutoff_line: string; boundary_lines: string[];
@@ -12,7 +19,14 @@ export type DraftResultImageModel = {
 export type DraftResultImageInput = {
   result: DraftResultReport; selections: DraftSelection[]; patchId: string; dataCutoff: string | null | undefined;
   nameOf: (id: string) => string;
+  /**
+   * Optional explicit position work of the current game (keyed by team ID). Omitted (undefined) keeps the
+   * legacy model exactly. Anything passed is strictly re-validated against the result's two teams and this
+   * game's own picks; an invalid record shows every pick as unassigned. Observed roles are never used.
+   */
+  positionRecord?: DraftPositionRecord | null;
 };
+export const UNASSIGNED_ROLE = "미배정";
 
 export const IMAGE_WIDTH = 1080;
 export const TEAM_LINE_CHARS = 16;
@@ -66,11 +80,18 @@ export function buildDraftResultImageModel(input: DraftResultImageInput): DraftR
   const { result, selections, patchId, dataCutoff, nameOf } = input;
   if (!result || result.status !== "READY" || !Array.isArray(result.sides) || result.sides.length !== 2) throw new Error("NOT_READY");
   if (!Array.isArray(selections) || selections.length !== 20) throw new Error("NOT_READY");
+  const withRoles = input.positionRecord !== undefined;
+  const positions = withRoles ? explicitPositions(input.positionRecord, result, selections) : null;
   const sides = result.sides.map((team): DraftResultImageSide => {
     const bans = selections.filter((s) => s.side === team.side && s.kind === "BAN").map((s) => champion(nameOf, canonical(s.champion_id)));
     const picks = team.picks.map((p) => champion(nameOf, p.champion_id));
     if (picks.length !== 5 || bans.length !== 5) throw new Error("NOT_READY");
-    return { side: team.side, side_label: team.side === "BLUE" ? "블루" : "레드", team_lines: wrapTeamName(team.team_name), picks, bans };
+    const side: DraftResultImageSide = { side: team.side, side_label: team.side === "BLUE" ? "블루" : "레드", team_lines: wrapTeamName(team.team_name), picks, bans };
+    if (withRoles) {
+      const byChampion = positions?.get(team.team_id);
+      side.pick_roles = team.picks.map((p) => byChampion?.get(championKey(p.champion_id)) ?? UNASSIGNED_ROLE);
+    }
+    return side;
   });
   return {
     title: "밴픽 결과",
@@ -80,16 +101,42 @@ export function buildDraftResultImageModel(input: DraftResultImageInput): DraftR
     cutoff_line: `자료 기준일 ${cutoffDate(dataCutoff)}`,
     boundary_lines: [
       "공개 경기 기록을 바탕으로 한 연습 밴픽입니다.",
-      "승률·점수·실력·포지션은 계산하거나 확정하지 않습니다.",
+      withRoles ? "승률·점수·실력은 계산하지 않고, 포지션은 직접 배정한 것만 표시합니다."
+        : "승률·점수·실력·포지션은 계산하거나 확정하지 않습니다.",
     ],
   };
+}
+
+/**
+ * Team ID → (champion key → Korean role label) of explicit assignments only, re-validated with the
+ * existing strict parser against the result's two current teams and this game's own picks.
+ * Any foreign team, unknown role or non-own pick rejects the whole record (nothing is guessed).
+ */
+function explicitPositions(raw: unknown, result: DraftResultReport, selections: DraftSelection[]): Map<string, Map<string, string>> | null {
+  const blue = result.sides.find((s) => s.side === "BLUE");
+  const red = result.sides.find((s) => s.side === "RED");
+  if (!blue || !red || raw === null || raw === undefined) return null;
+  const parsed = parseDraftPositions(raw, { blueTeamId: blue.team_id, redTeamId: red.team_id, selections });
+  if (!parsed) return null;
+  const out = new Map<string, Map<string, string>>();
+  for (const teamId of [blue.team_id, red.team_id]) {
+    if (!Object.hasOwn(parsed, teamId)) continue;
+    const labels = new Map<string, string>();
+    for (const role of ROSTER_ROLES) {
+      const id = parsed[teamId].roles[role];
+      if (id) labels.set(championKey(id), roleLabel[role]);
+    }
+    out.set(teamId, labels);
+  }
+  return out;
 }
 
 /** Deterministic serialization of the display model (stable key order). */
 export function serializeDraftResultImageModel(model: DraftResultImageModel): string {
   return JSON.stringify({
     title: model.title, notice: model.notice,
-    sides: model.sides.map((s) => ({ side: s.side, side_label: s.side_label, team_lines: [...s.team_lines], picks: [...s.picks], bans: [...s.bans] })),
+    sides: model.sides.map((s) => ({ side: s.side, side_label: s.side_label, team_lines: [...s.team_lines], picks: [...s.picks], bans: [...s.bans],
+      ...(s.pick_roles ? { pick_roles: [...s.pick_roles] } : {}) })),
     patch_line: model.patch_line, cutoff_line: model.cutoff_line, boundary_lines: [...model.boundary_lines],
   });
 }
@@ -105,9 +152,13 @@ type CanvasLike = { width: number; height: number; getContext(type: "2d"): Ctx |
 const PAD = 64, ROW = 52, FONT = "'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif";
 const COLORS = { bg: "#0f1420", card: "#182033", text: "#f2f4f8", muted: "#a9b2c6", BLUE: "#5aa2ff", RED: "#ff6b6b", line: "#2a3550" };
 
+const ROLE_ROW = 36;
+const pickRow = (s: DraftResultImageSide) => s.pick_roles ? ROW + ROLE_ROW : ROW;
+const sideBlockHeight = (s: DraftResultImageSide) => 40 + s.team_lines.length * 58 + 24 + 44 + 5 * pickRow(s) + 20 + 44 + 5 * ROW + 40;
+
 export function draftResultImageHeight(model: DraftResultImageModel): number {
   let h = PAD + 70 + 56 + 32;
-  for (const s of model.sides) h += 40 + s.team_lines.length * 58 + 24 + 44 + 5 * ROW + 20 + 44 + 5 * ROW + 40 + 32;
+  for (const s of model.sides) h += sideBlockHeight(s) + 32;
   return h + 44 * 2 + model.boundary_lines.length * 40 + PAD;
 }
 
@@ -137,14 +188,19 @@ export function renderDraftResultImage(model: DraftResultImageModel, canvas: Can
   text(model.notice, PAD, y, 34, COLORS.muted, 600); y += 56 + 32;
   for (const s of model.sides) {
     const color = s.side === "BLUE" ? COLORS.BLUE : COLORS.RED;
-    const blockH = 40 + s.team_lines.length * 58 + 24 + 44 + 5 * ROW + 20 + 44 + 5 * ROW + 40;
+    const blockH = sideBlockHeight(s);
     ctx.fillStyle = COLORS.card; ctx.fillRect(PAD - 24, y - 20, max + 48, blockH);
     ctx.fillStyle = color; ctx.fillRect(PAD - 24, y - 20, 10, blockH);
     text(s.side_label, PAD, y, 30, color, 700); y += 40;
     for (const line of s.team_lines) { text(line, PAD, y, 48, COLORS.text, 800); y += 58; }
     y += 24;
     text("픽", PAD, y, 30, color, 700); y += 44;
-    s.picks.forEach((name, i) => { text(`${i + 1}. ${name}`, PAD + 16, y, 36, COLORS.text, 600, max - 16); y += ROW; });
+    s.picks.forEach((name, i) => {
+      text(`${i + 1}. ${name}`, PAD + 16, y, 36, COLORS.text, 600, max - 16);
+      const role = s.pick_roles?.[i];
+      if (role !== undefined) text(`포지션 ${role}`, PAD + 56, y + 46, 26, role === UNASSIGNED_ROLE ? COLORS.muted : color, 600, max - 56);
+      y += pickRow(s);
+    });
     y += 20;
     text("밴", PAD, y, 30, COLORS.muted, 700); y += 44;
     s.bans.forEach((name, i) => { text(`${i + 1}. ${name}`, PAD + 16, y, 34, COLORS.muted, 500, max - 16); y += ROW; });

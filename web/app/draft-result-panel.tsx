@@ -5,12 +5,15 @@ import { championImageUrl } from "./champion-assets";
 import { buildDraftResultImageModel, createDraftResultPng, downloadBlob, draftResultImageFileName } from "./draft-result-image";
 import { buildDraftResultReport } from "./draft-result-report";
 import type { DraftSelection, DraftSide } from "./draft-agent";
+import type { DraftPositionRecord } from "./draft-position-session";
 import type { OpponentTeam, RadarReport } from "./radar-types";
 import "./solo-draft.css";
 const roleName: Record<string, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", ADC: "바텀", SUPPORT: "서포터" };
-export function DraftResultPanel({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, nameOf, onReplay, onNext, disabled, autoReveal = false }: {
+export function DraftResultPanel({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, nameOf, onReplay, onNext, disabled, autoReveal = false, positionRecord }: {
   report: RadarReport; blueTeam: OpponentTeam | null; redTeam: OpponentTeam | null; selections: DraftSelection[]; previousPicks: string[]; firstPickSide: DraftSide;
   nameOf: (id: string) => string; onReplay: () => void; onNext: () => void; disabled: boolean; autoReveal?: boolean;
+  /** Optional explicit position work; omitted keeps the legacy image. Only used for the PNG, re-validated there. */
+  positionRecord?: DraftPositionRecord | null;
 }) {
   const result = useMemo(() => buildDraftResultReport({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide }), [report, blueTeam, redTeam, selections, previousPicks, firstPickSide]);
   const root = useRef<HTMLElement | null>(null);
@@ -25,7 +28,9 @@ export function DraftResultPanel({ report, blueTeam, redTeam, selections, previo
     const snapshot = result;
     try {
       // Fixed input captured at click time; later result changes do not affect this file.
-      const model = buildDraftResultImageModel({ result: snapshot, selections: selections.map(s => ({ ...s })), patchId: report.patch_id, dataCutoff: report.analysis_window?.availability_cutoff ?? report.cutoff, nameOf });
+      // The builder is synchronous and copies only strings, so later position edits cannot leak in.
+      const model = buildDraftResultImageModel({ result: snapshot, selections: selections.map(s => ({ ...s })), patchId: report.patch_id, dataCutoff: report.analysis_window?.availability_cutoff ?? report.cutoff, nameOf,
+        ...(positionRecord !== undefined ? { positionRecord } : {}) });
       const blob = await createDraftResultPng(model);
       downloadBlob(blob, draftResultImageFileName(model));
       const stale = currentResult.current !== snapshot;
