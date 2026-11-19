@@ -2,7 +2,7 @@
 
 `cached-history-audit.yml`은 이미 확보한 암호화 보관소를 인증·복원한 뒤 기존 연도 수용 감사 도구를 실행한다. 새 공급자 요청, 수집 원장 변경, 피드 빌드·게시, 제품 배포는 하지 않는다. 읽기 권한만 사용하며 자동 예약도 없다.
 
-수동 입력은 기존 `oe-private-history-state-*` artifact ID와 검토할 연도다. artifact가 같은 저장소의 main에서 성공한 정규 collector에서 생성됐는지 확인한다. ZIP은 암호화 상태 파일 하나만 허용하며 키는 기존 저장소 secret에서만 읽는다. 원본 행·복호화 보관소는 산출물에 넣지 않고 `admission.json` 및 복원 진단만 14일 보관한다.
+수동 입력은 기존 `oe-private-history-state-*` artifact ID와 검토할 연도다. artifact가 같은 저장소의 main에서 성공한 정규 collector에서 생성됐는지 확인한다. ZIP은 암호화 상태 파일 한 개와 기존 collector의 세 진단 JSON(pack-report, restore-report, local-health)만 허용한다. 중복/그 외 파일/경로/링크는 거부하고 진단은 각각256KB로 제한하며 추출하지 않는다. 키는 기존 저장소 secret에서만 읽는다. 원본 행·복호화 보관소는 산출물에 넣지 않고 `admission.json` 및 복원 진단만 14일 보관한다.
 
 워크플로 성공은 진단 생성 성공이지 그 연도의 전수 확보나 수용 성공을 뜻하지 않는다. 보고서의 status, 거부 사유, 수용 경기·선수 ID·표본 범위를 확인한 뒤 파생 기능에 사용한다. raw 파일을 개발 PC로 옮기거나 공개 재배포하지 않는다.
 

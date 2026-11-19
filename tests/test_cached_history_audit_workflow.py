@@ -1,6 +1,11 @@
 import ast
+import io
+import stat
 import textwrap
+import zipfile
 from pathlib import Path
+
+import pytest
 
 WORKFLOW = Path(__file__).resolve().parents[1] / ".github/workflows/cached-history-audit.yml"
 
@@ -32,3 +37,35 @@ def test_only_reports_are_uploaded_and_inline_validation_compiles():
     ]
     program = workflow.split("python - <<'PY'\n", 1)[1].split("          PY\n", 1)[0]
     ast.parse(textwrap.dedent(program))
+
+
+def test_real_collector_envelope_is_accepted_but_raw_and_duplicate_entries_are_not():
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    program = workflow.split("python - <<'PY'\n", 1)[1].split("          PY\n", 1)[0]
+    tree = ast.parse(textwrap.dedent(program))
+    function = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "encrypted_entry"
+    )
+    namespace = {"stat": stat, "limit": 512 * 1024 * 1024}
+    exec(
+        compile(ast.Module(body=[function], type_ignores=[]), "<zip-validator>", "exec"), namespace
+    )
+
+    def check(names):
+        data = io.BytesIO()
+        with zipfile.ZipFile(data, "w") as output:
+            for name in names:
+                output.writestr(name, b"fixture")
+        with zipfile.ZipFile(data) as source:
+            return namespace["encrypted_entry"](source).filename
+
+    encrypted = "oe-private-history-state.pmi"
+    assert check([encrypted, "pack-report.json", "restore-report.json"]) == encrypted
+    assert check([encrypted, "local-health.json"]) == encrypted
+    for unexpected in ("raw.csv", "../pack-report.json", "extra.json"):
+        with pytest.raises(SystemExit):
+            check([encrypted, unexpected])
+    with pytest.warns(UserWarning), pytest.raises(SystemExit):
+        check([encrypted, encrypted])
