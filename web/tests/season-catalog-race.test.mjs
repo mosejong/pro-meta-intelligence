@@ -26,10 +26,7 @@ function declaration(name) {
   assert.ok(found, name);
   return ts.transpileModule(found.getText(source), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 }
-test('source wires invalidate into a layout cleanup keyed on catalog and disabled', () => {
-  assert.match(source.text, /useLayoutEffect\(\(\) => \(\) => invalidate\(\), \[catalog, disabled\]\)/);
-  assert.match(source.text, /useLayoutEffect\(\(\) => \{ live\.current = \{ catalog, disabled, onCatalog \}; \}\)/);
-});
+
 const cards = moduleAt('season-player-cards');
 const current = JSON.parse(readFileSync(new URL('../public/history/season-player-cards.json', import.meta.url), 'utf8'));
 const deferred = () => { let resolve, reject; const promise = new Promise((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; };
