@@ -88,13 +88,23 @@ jobs:
                              check=True, stdout=handle, stderr=subprocess.PIPE)
           if archive.stat().st_size > limit:
               raise SystemExit("Encrypted ZIP exceeds the limit")
-          with zipfile.ZipFile(archive) as zipped:
-              if zipped.namelist() != ["oe-private-history-state.pmi"]:
+
+          def encrypted_entry(zipped):
+              allowed = {"oe-private-history-state.pmi", "pack-report.json", "restore-report.json", "local-health.json"}
+              entries = zipped.infolist()
+              names = [entry.filename for entry in entries]
+              if (len(names) != len(set(names)) or not set(names) <= allowed
+                      or "oe-private-history-state.pmi" not in names):
                   raise SystemExit("Unexpected encrypted ZIP entries")
-              info = zipped.infolist()[0]
-              if (info.file_size > limit or info.flag_bits & 1
-                      or stat.S_ISLNK(info.external_attr >> 16)):
-                  raise SystemExit("Unsupported encrypted ZIP entry")
+              for entry in entries:
+                  bound = limit if entry.filename.endswith(".pmi") else 256 * 1024
+                  if (entry.file_size > bound or entry.flag_bits & 1
+                          or stat.S_ISLNK(entry.external_attr >> 16)):
+                      raise SystemExit("Unsupported encrypted ZIP entry")
+              return zipped.getinfo("oe-private-history-state.pmi")
+
+          with zipfile.ZipFile(archive) as zipped:
+              info = encrypted_entry(zipped)
               # Authentication and raw archive validation are delegated to the existing restore CLI.
               with (root / "history.pmi").open("xb") as target:
                   with zipped.open(info) as encrypted:
