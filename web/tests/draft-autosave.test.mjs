@@ -66,7 +66,8 @@ test("IndexedDB draft writes are serial and continue after a failed transaction"
       request.result = {
         close() {},
         transaction() {
-          const tx = { objectStore: () => ({ put(text) { tx.text = text; } }) };
+          // put() records the board text; delete() accepts the same-transaction review sidecar removal.
+          const tx = { objectStore: () => ({ put(text) { tx.text = text; }, delete() {} }) };
           transactions.push(tx);
           return tx;
         },

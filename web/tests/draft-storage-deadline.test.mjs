@@ -54,7 +54,7 @@ test("a timed out write cannot permanently block later writes", async () => {
       request.result = { close() { closed++; }, transaction() {
         const tx = { objectStore: () => ({ put(text) {
           if (text === "retry") queueMicrotask(() => { stored.push(text); tx.oncomplete(); });
-        } }), abort() { aborted++; this.onabort?.(); } };
+        }, delete() { /* board-only writes also clear the review sidecar in the same transaction */ } }), abort() { aborted++; this.onabort?.(); } };
         return tx;
       } };
       request.onsuccess();
