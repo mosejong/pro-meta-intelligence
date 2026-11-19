@@ -1,0 +1,126 @@
+name: Audit cached historical data
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_id:
+        description: "Existing encrypted OE history artifact ID; no provider download"
+        required: true
+        type: string
+      year:
+        description: "Reviewed annual archive to audit"
+        required: true
+        default: "2015"
+        type: choice
+        options: ["2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: cached-history-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OE_ARCHIVE_KEY: ${{ secrets.OE_ARCHIVE_KEY }}
+      GH_TOKEN: ${{ github.token }}
+      AUDIT_ARTIFACT_ID: ${{ inputs.artifact_id }}
+      AUDIT_YEAR: ${{ inputs.year }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install -e ".[hosted-ops]"
+      - name: Download only an existing trusted encrypted state
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$OE_ARCHIVE_KEY"
+          python - <<'PY'
+          import json
+          import os
+          import re
+          import stat
+          import subprocess
+          import zipfile
+          from pathlib import Path
+
+          artifact_id = os.environ["AUDIT_ARTIFACT_ID"]
+          repository = os.environ["GITHUB_REPOSITORY"]
+          if not re.fullmatch(r"[1-9][0-9]{0,19}", artifact_id):
+              raise SystemExit("Invalid encrypted artifact ID")
+
+          def get_json(endpoint):
+              result = subprocess.run(["gh", "api", endpoint], check=True, capture_output=True)
+              return json.loads(result.stdout)
+
+          artifact = get_json(f"repos/{repository}/actions/artifacts/{artifact_id}")
+          source = artifact.get("workflow_run") or {}
+          source_run = source.get("id")
+          if (not isinstance(source_run, int) or artifact.get("expired") is not False
+                  or artifact.get("name") != f"oe-private-history-state-{source_run}"):
+              raise SystemExit("Not a live encrypted history state artifact")
+          run = get_json(f"repos/{repository}/actions/runs/{source_run}")
+          if (run.get("path") != ".github/workflows/hosted-oe-sync.yml"
+                  or run.get("head_branch") != "main"
+                  or (run.get("head_repository") or {}).get("full_name") != repository
+                  or run.get("status") != "completed" or run.get("conclusion") != "success"
+                  or run.get("event") not in {"schedule", "workflow_dispatch"}):
+              raise SystemExit("Encrypted state must belong to a successful trusted collector on main")
+          limit = 512 * 1024 * 1024
+          size = artifact.get("size_in_bytes")
+          if not isinstance(size, int) or not 0 < size <= limit:
+              raise SystemExit("Encrypted state size is unsupported")
+          root = Path("outputs/private-audit-state")
+          root.mkdir(parents=True, exist_ok=True)
+          archive = root / "state.zip"
+          with archive.open("xb") as handle:
+              subprocess.run(["gh", "api", f"repos/{repository}/actions/artifacts/{artifact_id}/zip"],
+                             check=True, stdout=handle, stderr=subprocess.PIPE)
+          if archive.stat().st_size > limit:
+              raise SystemExit("Encrypted ZIP exceeds the limit")
+          with zipfile.ZipFile(archive) as zipped:
+              if zipped.namelist() != ["oe-private-history-state.pmi"]:
+                  raise SystemExit("Unexpected encrypted ZIP entries")
+              info = zipped.infolist()[0]
+              if (info.file_size > limit or info.flag_bits & 1
+                      or stat.S_ISLNK(info.external_attr >> 16)):
+                  raise SystemExit("Unsupported encrypted ZIP entry")
+              # Authentication and raw archive validation are delegated to the existing restore CLI.
+              with (root / "history.pmi").open("xb") as target:
+                  with zipped.open(info) as encrypted:
+                      import shutil
+                      shutil.copyfileobj(encrypted, target, length=1024 * 1024)
+          PY
+      - name: Authenticate and restore private copy without any source collection
+        run: |
+          python -m pro_meta_intelligence restore-private-oe-archive \
+            --input outputs/private-audit-state/history.pmi \
+            --archive-dir outputs/private-audit-state/raw \
+            --report outputs/cached-history-audit/restore-report.json
+      - name: Run offline year admission audit
+        shell: bash
+        run: |
+          python ops/audit_player_career_archive.py \
+            --archive-dir outputs/private-audit-state/raw \
+            --year "$AUDIT_YEAR" \
+            --output outputs/cached-history-audit/admission.json
+      - name: Preserve aggregate diagnostic reports only
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cached-history-audit-${{ inputs.year }}-${{ github.run_id }}
+          path: |
+            outputs/cached-history-audit/admission.json
+            outputs/cached-history-audit/restore-report.json
+          if-no-files-found: warn
+          retention-days: 14
