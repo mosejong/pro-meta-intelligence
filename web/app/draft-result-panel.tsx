@@ -1,7 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- champion portraits use the existing Riot Data Dragon CDN */
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { championImageUrl } from "./champion-assets";
+import { buildDraftResultImageModel, createDraftResultPng, downloadBlob, draftResultImageFileName } from "./draft-result-image";
 import { buildDraftResultReport } from "./draft-result-report";
 import type { DraftSelection, DraftSide } from "./draft-agent";
 import type { OpponentTeam, RadarReport } from "./radar-types";
@@ -13,6 +14,26 @@ export function DraftResultPanel({ report, blueTeam, redTeam, selections, previo
 }) {
   const result = useMemo(() => buildDraftResultReport({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide }), [report, blueTeam, redTeam, selections, previousPicks, firstPickSide]);
   const root = useRef<HTMLElement | null>(null);
+  const currentResult = useRef(result);
+  useEffect(() => { currentResult.current = result; }, [result]);
+  const saving = useRef(false);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [imageMessage, setImageMessage] = useState("");
+  const saveImage = async () => {
+    if (saving.current || disabled || result.status !== "READY") return;
+    saving.current = true; setImageBusy(true); setImageMessage("이미지를 만드는 중이에요…");
+    const snapshot = result;
+    try {
+      // Fixed input captured at click time; later result changes do not affect this file.
+      const model = buildDraftResultImageModel({ result: snapshot, selections: selections.map(s => ({ ...s })), patchId: report.patch_id, dataCutoff: report.analysis_window?.availability_cutoff ?? report.cutoff, nameOf });
+      const blob = await createDraftResultPng(model);
+      downloadBlob(blob, draftResultImageFileName(model));
+      const stale = currentResult.current !== snapshot;
+      setImageMessage(stale ? "버튼을 누른 시점의 이전 밴픽 결과 이미지로 다운로드를 요청했어요. 지금 화면의 결과와 다를 수 있고, 실제 저장 여부와 위치는 브라우저에 따라 달라요." : "이미지 다운로드를 요청했어요. 휴대폰 브라우저에 따라 다운로드 폴더나 파일 앱에 저장되거나, 새 창에서 길게 눌러 저장해야 할 수 있어요.");
+    } catch {
+      setImageMessage("이미지를 만들지 못했어요. 밴픽 결과는 그대로 유지돼요. 잠시 후 다시 시도해 주세요.");
+    } finally { saving.current = false; setImageBusy(false); }
+  };
   useEffect(() => {
     if (!autoReveal || result.status !== "READY") return;
     const frame = window.requestAnimationFrame(() => root.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }));
@@ -33,6 +54,7 @@ export function DraftResultPanel({ report, blueTeam, redTeam, selections, previo
       {team.missed_priorities.length ? <ul>{team.missed_priorities.map(item => <li key={item.champion_id}><b>{nameOf(item.champion_id)}</b> · {item.game_count}회 관측 · {item.disposition === "OPEN" ? "이번 밴픽에 남겨둠" : item.disposition === "BANNED" ? "이번에 밴됨" : "상대가 가져감"}</li>)}</ul> : <p>남은 우선 픽 요약에서 비교할 카드가 없어요.</p>}
     </article>)}</div>
     <p className="draft-result-boundary">현재 공개 자료의 우선 픽 요약을 비교합니다. 여러 역할의 기록이 겹치면 횟수를 합산하지 않고 가장 큰 관측 행을 표시합니다. 횟수가 높다고 강한 픽이나 좋은 밴이라는 뜻은 아니며, 기록에 없으면 0회가 아닌 미확인입니다. 역할은 관측 정보이며 배정 결과가 아닙니다. 경기 승패·시너지·상성은 계산하지 않습니다.</p>
-    <div className="draft-result-actions"><button type="button" disabled={disabled} onClick={onReplay}>같은 팀으로 다시 도전</button><button type="button" disabled={disabled} onClick={onNext}>피어리스 다음 세트</button></div>
+    <div className="draft-result-actions"><button type="button" disabled={disabled} onClick={onReplay}>같은 팀으로 다시 도전</button><button type="button" disabled={disabled} onClick={onNext}>피어리스 다음 세트</button><button type="button" disabled={disabled || imageBusy} aria-busy={imageBusy} onClick={() => { void saveImage(); }}>{imageBusy ? "이미지 만드는 중…" : "밴픽 결과 이미지 저장"}</button></div>
+    {imageMessage ? <p className="draft-result-image-status" role="status">{imageMessage}</p> : null}
   </section>;
 }

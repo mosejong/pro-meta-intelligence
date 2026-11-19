@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { sameSimulationInput, type SimulationInputSnapshot } from "./simulation-scenario";
 import { ASSUMPTION_FIELDS, CORE_TEAM_IDS, type AssumptionField, type ExperimentRun } from "./experiment-replay";
 import { compareExperimentRuns, freezeBaseline, OUTCOME_STATS, type OutcomeStat } from "./experiment-comparison";
+import { ExperimentBatchPanel } from "./experiment-batch-panel";
 import "./experiment-comparison-panel.css";
 
 type ExperimentComparisonPanelProps = {
@@ -120,6 +121,9 @@ export function ExperimentComparisonPanel({ run, shownMinute, readyInput }: Expe
           </div> : <p className="experiment-comparison-pending">실행 B 재생이 끝나면 결과 비교를 표시합니다.</p>}
         </>}
       </section>}
+
+      {baseline && <ExperimentBatchPanel baseline={baseline} run={run} shownMinute={shownMinute}
+        ready={!isBaseline && !!comparison?.ok && !!comparison.outcome} label={label} />}
     </div>
   </details>;
 }
