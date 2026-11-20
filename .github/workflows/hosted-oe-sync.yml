@@ -171,6 +171,16 @@ jobs:
           if [[ "$sync_status" -ne 0 || "$health_status" -ne 0 ]]; then
             exit 1
           fi
+      - name: Write the approved three-field snapshot manifest
+        id: snapshot-manifest
+        # Approved 2026-11-20: export only content_hash, retrieved_at and byte_length per snapshot.
+        # Best-effort: a missing restore report (explicit fresh start) must never block the backup.
+        if: always() && env.HISTORY_ONLY != 'true' && steps.restore.outcome == 'success'
+        continue-on-error: true
+        run: >-
+          python ops/write_private_snapshot_manifest.py
+          --report "$PRIVATE_STATE_DIR/restore-report.json"
+          --output "$PRIVATE_STATE_DIR/snapshot-manifest.json"
       - name: Preserve public-safe sync diagnostics on success or rejection
         # Current-season only: in history mode a failure here would skip the encrypted repack.
         if: ${{ always() && env.HISTORY_ONLY != 'true' }}
@@ -183,6 +193,7 @@ jobs:
             outputs/hosted-oe-state/sync-report.json
             outputs/hosted-oe-state/local-health.json
             outputs/oe-feed-jobs/latest.json
+            outputs/hosted-oe-state/snapshot-manifest.json
           if-no-files-found: warn
           retention-days: 14
       - name: Repack authenticated private history without publishing raw rows
