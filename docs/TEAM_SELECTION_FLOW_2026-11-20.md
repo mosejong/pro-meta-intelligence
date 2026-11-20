@@ -65,7 +65,7 @@ Claude implemented; Codex verifies. No commands, tests, git or network were run.
 
 No storage, schema, share, room, model, dependency or lock changes. The step is memory-only.
 
-## E2E fresh-entry assumptions that need migration (not edited here)
+## E2E entry migration identified during implementation (subsequently completed by Codex)
 Specs that `goto(root)` and then wait for `.draft-stage` to be non-inert now wait forever on fresh state, because the board is gated on the setup step. They should call `enterDraftWorkspace(page)` after load (and after reloads with an empty board):
 - ab-real-evidence, ab-player-evidence
 - draft-studio (×4)
@@ -84,7 +84,7 @@ Further assumptions:
 - Specs that reload expecting a restored board are fine when the board has work. Reloads of an empty board return to setup.
 
 ## Not run / risks
-- Nothing was run (typecheck, lint, unit, SSR, E2E).
+- Claude did not run commands during implementation. Codex independently ran verification; see the dated integration section below.
 - Risk: `inert` on the outer setup/draft wrappers relies on React 19 boolean `inert` (already used in this file).
 - Risk: the deep-link effect also switches the rail to the DRAFT tab so the share/room UI is visible.
 - Risk: the reset dialog opened from setup lives outside both steps, so it works from either step.
@@ -100,3 +100,5 @@ Further assumptions:
 - Shared test helpers/specs were migrated to explicit real setup/start actions; the history panel moved after the board and tests now locate its actual visible component. The latest global lint passed.
 - Board precedes management/share/library. Setup and current draft screenshots were independently captured at 390px and 1440px. Existing Riot notice is preserved.
 - This feature remains local and has not been deployed. Previously authorized intermediate deployment was PR #131 at a811a8fb.
+
+- Additional post-reorder PC/mobile retention coverage: 10/10 passed (BLUE/RED notes restore without automatic opponent restart, corrupt notes preserve the board, undo/manual-side pruning persists, reset/import restores only appropriate data). Combined with the four identical-board load checks in the prior final run, all 14 targeted notes-retention checks passed after reorder.
