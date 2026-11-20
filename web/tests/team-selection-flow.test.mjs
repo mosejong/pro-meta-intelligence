@@ -15,6 +15,44 @@ async function withVite(run) {
 const source = () => readFile(new URL("../app/draft-lab.tsx", import.meta.url), "utf8");
 const openTag = (html, cls) => html.match(new RegExp(`<(?:section|div)[^>]*class="${cls}"[^>]*>`))?.[0];
 
+test("completed result: optional simulation link is navigation only, hidden without callback, follows disabled", async () => {
+  await withVite(async (vite) => {
+    const { DraftResultPanel } = await vite.ssrLoadModule("/app/draft-result-panel.tsx");
+    const { applyDraftSelection } = await vite.ssrLoadModule("/app/draft-agent.ts");
+    const { sampleReport } = await vite.ssrLoadModule("/app/sample-report.ts");
+    const ids = ["Aatrox", "Ahri", "Akali", "Alistar", "Amumu", "Anivia", "Wukong", "Kai'Sa", "Ashe", "Azir",
+      "Bard", "Braum", "Brand", "Caitlyn", "Camille", "Corki", "Darius", "Diana", "Draven", "Ekko"];
+    const report = structuredClone(sampleReport);
+    const [blueTeam, redTeam] = report.opponent_prep.teams;
+    let selections = [];
+    for (const id of ids) selections = applyDraftSelection(selections, id, [], "BLUE");
+    const before = structuredClone(selections);
+    const calls = [];
+    const render = (extra) => renderToStaticMarkup(createElement(DraftResultPanel, { report, blueTeam, redTeam, selections, previousPicks: [],
+      firstPickSide: "BLUE", nameOf: (id) => id, onReplay: () => calls.push("replay"), onNext: () => calls.push("next"), disabled: false, ...extra }));
+    const button = (html) => html.match(/<button[^>]*class="draft-result-simulation"[^>]*>[^<]*<\/button>/)?.[0];
+
+    const legacy = render({});
+    assert.match(legacy, /id="draft-result"/, "fixture renders the READY result");
+    assert.equal(button(legacy), undefined, "no callback (room mode) -> no simulation button");
+    assert.equal((legacy.match(/<button/g) ?? []).length, 3, "legacy three actions unchanged");
+
+    const linked = button(render({ onOpenSimulation: () => calls.push("sim") }));
+    assert.ok(linked, "callback provided -> button rendered");
+    assert.match(linked, /가정 시뮬레이션 준비/);
+    assert.doesNotMatch(linked, /disabled/);
+    assert.match(button(render({ onOpenSimulation: () => {}, disabled: true })), /disabled=""/, "follows the existing disabled flag");
+    assert.deepEqual(calls, [], "rendering never invokes navigation or draft actions");
+    assert.deepEqual(selections, before, "selections are not mutated");
+  });
+  const lab = await source();
+  const helper = lab.slice(lab.indexOf("function openSimulationReadiness()"), lab.indexOf("/** Rail selection"));
+  assert.match(helper, /showStudioTab\("SIMULATION"/);
+  assert.doesNotMatch(helper, /set(?:Selections|Position|Solo|Timer|Pending|Roster|ReadyInput)|restoreSession|nextGame/, "navigation only");
+  assert.match(lab, /onOpenRoleAssignment=\{openSimulationReadiness\}/, "A/B route shares the helper");
+  assert.match(lab, /onOpenSimulation=\{room\.active \? undefined : openSimulationReadiness\}/, "room mode hides the link");
+});
+
 test("start gate: explicit start only with ready data, two distinct valid teams, no import/room", async () => {
   await withVite(async (vite) => {
     const F = await vite.ssrLoadModule("/app/team-selection-flow.ts");

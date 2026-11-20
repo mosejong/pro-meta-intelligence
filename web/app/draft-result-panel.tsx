@@ -9,11 +9,13 @@ import type { DraftPositionRecord } from "./draft-position-session";
 import type { OpponentTeam, RadarReport } from "./radar-types";
 import "./solo-draft.css";
 const roleName: Record<string, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", ADC: "바텀", SUPPORT: "서포터" };
-export function DraftResultPanel({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, nameOf, onReplay, onNext, disabled, autoReveal = false, positionRecord }: {
+export function DraftResultPanel({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, nameOf, onReplay, onNext, disabled, autoReveal = false, positionRecord, onOpenSimulation }: {
   report: RadarReport; blueTeam: OpponentTeam | null; redTeam: OpponentTeam | null; selections: DraftSelection[]; previousPicks: string[]; firstPickSide: DraftSide;
   nameOf: (id: string) => string; onReplay: () => void; onNext: () => void; disabled: boolean; autoReveal?: boolean;
   /** Optional explicit position work; omitted keeps the legacy image. Only used for the PNG, re-validated there. */
   positionRecord?: DraftPositionRecord | null;
+  /** Optional navigation only: opens the existing simulation input gate. Omitted (e.g. room mode) hides the button. Never runs a simulation. */
+  onOpenSimulation?: () => void;
 }) {
   const result = useMemo(() => buildDraftResultReport({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide }), [report, blueTeam, redTeam, selections, previousPicks, firstPickSide]);
   const root = useRef<HTMLElement | null>(null);
@@ -59,7 +61,7 @@ export function DraftResultPanel({ report, blueTeam, redTeam, selections, previo
       {team.missed_priorities.length ? <ul>{team.missed_priorities.map(item => <li key={item.champion_id}><b>{nameOf(item.champion_id)}</b> · {item.game_count}회 관측 · {item.disposition === "OPEN" ? "이번 밴픽에 남겨둠" : item.disposition === "BANNED" ? "이번에 밴됨" : "상대가 가져감"}</li>)}</ul> : <p>남은 우선 픽 요약에서 비교할 카드가 없어요.</p>}
     </article>)}</div>
     <p className="draft-result-boundary">현재 공개 자료의 우선 픽 요약을 비교합니다. 여러 역할의 기록이 겹치면 횟수를 합산하지 않고 가장 큰 관측 행을 표시합니다. 횟수가 높다고 강한 픽이나 좋은 밴이라는 뜻은 아니며, 기록에 없으면 0회가 아닌 미확인입니다. 역할은 관측 정보이며 배정 결과가 아닙니다. 경기 승패·시너지·상성은 계산하지 않습니다.</p>
-    <div className="draft-result-actions"><button type="button" disabled={disabled} onClick={onReplay}>같은 팀으로 다시 도전</button><button type="button" disabled={disabled} onClick={onNext}>피어리스 다음 세트</button><button type="button" disabled={disabled || imageBusy} aria-busy={imageBusy} onClick={() => { void saveImage(); }}>{imageBusy ? "이미지 만드는 중…" : "밴픽 결과 이미지 저장"}</button></div>
+    <div className="draft-result-actions"><button type="button" disabled={disabled} onClick={onReplay}>같은 팀으로 다시 도전</button><button type="button" disabled={disabled} onClick={onNext}>피어리스 다음 세트</button><button type="button" disabled={disabled || imageBusy} aria-busy={imageBusy} onClick={() => { void saveImage(); }}>{imageBusy ? "이미지 만드는 중…" : "밴픽 결과 이미지 저장"}</button>{onOpenSimulation ? <button type="button" className="draft-result-simulation" disabled={disabled} onClick={onOpenSimulation}>가정 시뮬레이션 준비</button> : null}</div>
     {imageMessage ? <p className="draft-result-image-status" role="status">{imageMessage}</p> : null}
   </section>;
 }

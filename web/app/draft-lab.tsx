@@ -545,6 +545,17 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     if (then) window.setTimeout(then, 0);
   }
 
+  /** Navigation only (A/B role assignment and completed result): select SIMULATION, focus the first enabled
+   *  readiness role select or its summary, scroll gently. Never runs a simulation or mutates draft state. */
+  function openSimulationReadiness() {
+    showStudioTab("SIMULATION", () => {
+      const target = document.querySelector<HTMLElement>(`#${panelOf("SIMULATION")} .simulation-readiness-team select:not(:disabled)`)
+        ?? document.querySelector<HTMLElement>(`#${panelOf("SIMULATION")} .simulation-readiness > summary`);
+      target?.focus();
+      if (target) scrollIntoViewGently(target);
+    });
+  }
+
   /** Rail selection: if the page is scrolled past the panel start, bring the new panel's top into view. */
   function selectStudioTab(tab: StudioTab) {
     setStudioTab(tab);
@@ -948,7 +959,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       </section>
       <TeamDraftColumn unassigned={redTeam ? positionUnassigned[redTeam.team_id] ?? [] : []} assignments={redTeam ? positionRoles[redTeam.team_id] : emptyChampionRoles()} positionDisabled={!canSelect || room.active} onAssign={(id, role) => assignPosition("RED", id, role)} onConfirm={() => confirmPositions("RED")} side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
     </section>
-    {selections.length === 20 && <DraftResultPanel report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} previousPicks={previousPicks} firstPickSide={firstPickSide} nameOf={nameOf} autoReveal={soloEnabled && studioTab === "DRAFT" && step === "DRAFT" && !room.active} disabled={!canSelect || room.active} onReplay={() => setPendingReset("GAME")} onNext={nextGame} positionRecord={positionRecord} />}
+    {selections.length === 20 && <DraftResultPanel report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} previousPicks={previousPicks} firstPickSide={firstPickSide} nameOf={nameOf} autoReveal={soloEnabled && studioTab === "DRAFT" && step === "DRAFT" && !room.active} disabled={!canSelect || room.active} onReplay={() => setPendingReset("GAME")} onNext={nextGame} positionRecord={positionRecord} onOpenSimulation={room.active ? undefined : openSimulationReadiness} />}
     {!room.active && (games.length > 0 || selections.length === 20) && <DraftSeriesRecapPanel report={report} games={games} current={recapCurrent} nameOf={nameOf} />}
     {!room.active && <section className="solo-draft solo-draft-review" lang="ko" aria-label="혼자 연습 선택 기록">
       <SoloDraftHistoryPanel history={prunedHistory} nameOf={nameOf} patchId={report.patch_id} cutoff={report.cutoff ?? ""}
@@ -1033,12 +1044,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     <div id={panelOf("COMPARISON")} className="studio-comparison-panel" role="tabpanel" aria-labelledby={`${panelOf("COMPARISON")}-tab`} hidden={studioTab !== "COMPARISON"}>
     <DraftComparisonPanel key={comparisonEpoch} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf}
       readyInput={experimentReadyInput} publicationRoot={productRootHref(currentSpace)}
-      onOpenRoleAssignment={() => showStudioTab("SIMULATION", () => {
-        const target = document.querySelector<HTMLElement>(`#${panelOf("SIMULATION")} .simulation-readiness-team select:not(:disabled)`)
-          ?? document.querySelector<HTMLElement>(`#${panelOf("SIMULATION")} .simulation-readiness > summary`);
-        target?.focus();
-        if (target) scrollIntoViewGently(target);
-      })} />
+      onOpenRoleAssignment={openSimulationReadiness} />
     </div>
 
     <div id={panelOf("SIMULATION")} className="studio-simulation-panel" role="tabpanel" aria-labelledby={`${panelOf("SIMULATION")}-tab`} hidden={studioTab !== "SIMULATION"}>
