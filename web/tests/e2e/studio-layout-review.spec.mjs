@@ -1,8 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftWorkspace } from "./studio-panels.mjs";
 
 test("the selected side tab remains visible when the workspace becomes narrow", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "This case explicitly moves from desktop to a narrow viewport.");
   await page.goto("/pro-meta-intelligence/");
+  await enterDraftWorkspace(page);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   const selected = page.locator('#studio-panel-simulation-tab');
   await selected.click();

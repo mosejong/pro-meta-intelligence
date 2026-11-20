@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftWorkspace } from "./studio-panels.mjs";
 
 // Parent runner supplies a real room endpoint through VITE_DRAFT_ROOM_ENDPOINT
 // and serves the existing application. These tests never fake room broadcasts.
@@ -30,7 +31,7 @@ async function copy(page, name) {
 }
 async function pick(page) { await available(page).first().click(); await confirm(page).click(); }
 async function create(page) {
-  await page.goto(root); await ready(page);
+  await page.goto(root); await enterDraftWorkspace(page); await ready(page);
   await room(page).locator("summary").click();
   await room(page).getByRole("button", { name: "현재 밴픽으로 방 만들기", exact: true }).click();
   await room(page).getByRole("button", { name: "동의하고 방 만들기", exact: true }).click();
@@ -140,7 +141,7 @@ test("real blue, red and spectator sync turns; reconnect and explicit leave pres
 });
 
 test("creation consent can be cancelled without replacing personal draft", async ({ page }) => {
-  await page.goto(root); await ready(page); await pick(page);
+  await page.goto(root); await enterDraftWorkspace(page); await ready(page); await pick(page);
   await expect(progress(page)).toHaveAttribute("value", "1");
   await room(page).locator("summary").click();
   await room(page).getByRole("button", { name: "현재 밴픽으로 방 만들기", exact: true }).click();

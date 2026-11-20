@@ -1,10 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftWorkspace } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const header = page => page.locator("header.workspace-header");
 
 test("Velkoz and Belveth use the actual official portrait files", async ({ page }, testInfo) => {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   for (const id of ["Velkoz", "Belveth"]) {
     await page.locator("#draft-search").fill(id);
@@ -18,6 +20,7 @@ test("Velkoz and Belveth use the actual official portrait files", async ({ page 
 
 test("main navigation stays simple and research routes share the charcoal header", async ({ page }, testInfo) => {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(header(page)).toBeVisible();
   await expect(header(page).getByRole("link", { name: "모의 밴픽", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(header(page).locator(".workspace-resources")).not.toHaveAttribute("open", "");
@@ -38,6 +41,7 @@ test("main navigation stays simple and research routes share the charcoal header
   await page.screenshot({ path: testInfo.outputPath("team-neutral-shell.png"), fullPage: false });
   await header(page).getByRole("link", { name: "모의 밴픽", exact: true }).click();
   await expect(page).toHaveURL(/\/draft\/$/);
+  await enterDraftWorkspace(page);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await expectNoOverflow(page);
 });

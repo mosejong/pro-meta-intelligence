@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
-import { showPanel } from "./studio-panels.mjs";
+import { enterDraftWorkspace, showPanel } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const progress = (page) => page.locator(".draft-turn-progress");
@@ -23,6 +23,7 @@ test("a delayed file read from a previous matchup cannot overwrite the new roste
   });
   await roster(page).locator('input[type="file"]').setInputFiles({ name: "delayed-roster.json", mimeType: "application/json", buffer: Buffer.from(file) });
   await expect.poll(() => page.evaluate(() => typeof window.releaseRosterRead)).toBe("function");
+  await page.getByRole("button", { name: "팀 선택으로", exact: true }).click();
   const oldBlue = await page.getByRole("button", { name: /^BLUE TEAM:/ }).locator("strong").textContent();
   await page.getByRole("button", { name: /^BLUE TEAM:/ }).click();
   const dialog = page.getByRole("dialog", { name: "BLUE TEAM", exact: true });
@@ -30,6 +31,7 @@ test("a delayed file read from a previous matchup cannot overwrite the new roste
   const choice = dialog.locator(".team-choice-grid button").filter({ hasNotText: oldBlue }).filter({ hasNotText: redName }).first();
   await choice.click();
   await expect(dialog).not.toBeVisible();
+  await enterDraftWorkspace(page);
   await openRoster(page);
   await slot(page, "blue", "TOP").selectOption("");
   const latest = await page.evaluate(() => localStorage.getItem("pro-meta-roster-scenario-v1"));
@@ -43,6 +45,7 @@ test("a delayed file read from a previous matchup cannot overwrite the new roste
 
 async function openStudio(page) {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
 }
@@ -100,13 +103,18 @@ test("edit, move, device restore and side swap keep each team's virtual roster",
   await expect(roster(page).locator("> summary")).not.toContainText("원관측과 다른 슬롯 0");
 
   await page.reload();
+  await expect(page.locator(".draft-flow-setup")).toBeVisible();
+  await enterDraftWorkspace(page);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await openRoster(page);
   await expect(roster(page).getByRole("status").filter({ hasText: "복원했습니다" })).toBeVisible();
   expect(await values(page, "blue")).toEqual(blueEdited);
   expect(await values(page, "red")).toEqual(redEdited);
 
+  await page.getByRole("button", { name: "팀 선택으로", exact: true }).click();
   await page.getByRole("button", { name: "블루와 레드 팀 교체", exact: true }).click();
+  await enterDraftWorkspace(page);
+  await openRoster(page);
   await expect(page.locator(".roster-team.blue h3")).toContainText(redName);
   await expect(page.locator(".roster-team.red h3")).toContainText(blueName);
   expect(await values(page, "red")).toEqual(blueEdited);
@@ -246,7 +254,10 @@ test("after freezing A, a side swap keeps the roster change attributed to the sa
   await page.getByRole("button", { name: "현재 세트 초기화", exact: true }).click();
   await page.getByRole("dialog").getByRole("button", { name: "초기화", exact: true }).click();
   await expect(progress(page)).toHaveAttribute("value", "0");
+  await page.getByRole("button", { name: "팀 선택으로", exact: true }).click();
   await page.getByRole("button", { name: "블루와 레드 팀 교체", exact: true }).click();
+  await enterDraftWorkspace(page);
+  await openRoster(page);
   await expect(page.locator(".roster-team.red h3")).toContainText(blueName);
   await expect(slot(page, "red", "SUPPORT")).toHaveValue(foreign);
   await finishDraft(page);

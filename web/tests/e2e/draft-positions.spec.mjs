@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { showPanel } from "./studio-panels.mjs";
+import { showPanel, enterDraftWorkspace } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const roles = ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"];
@@ -15,6 +15,7 @@ const confirm = (page) => page.locator(".draft-lock-in").getByRole("button", { n
 
 async function open(page) {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
   await expect(progress(page)).toHaveAttribute("value", "0");
   await expect(page.locator(".draft-position-board")).toHaveCount(2);

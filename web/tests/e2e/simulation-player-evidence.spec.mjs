@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
-import { showPanel } from "./studio-panels.mjs";
+import { enterDraftWorkspace, showPanel } from "./studio-panels.mjs";
 
 /**
  * Season evidence of the assigned champions inside the simulation-readiness panel. The season file
@@ -82,6 +82,7 @@ async function unusedPlayer(page, side, role) {
 /** Completed draft, ten players, explicit roles: a ready input. */
 async function readyInput(page, url = root) {
   await page.goto(url);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   for (let i = 0; i < 20; i += 1) {

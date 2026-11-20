@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { showPanel } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
@@ -23,6 +24,7 @@ async function prepare(page) {
 async function end(page) { await slider(page).focus(); await slider(page).press("End"); }
 async function sourceRun(page) {
   await page.goto(root);
+  await enterDraftForReview(page);
   await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
   await openShare(page); await expect(copy(page)).toBeDisabled();
   await prepare(page); await seed(page).fill("4242");
@@ -51,7 +53,7 @@ test("assumption-only link: fresh recipient must prepare, explicitly apply, then
 
   const receiver = await browser.newPage({ viewport: testInfo.project.use.viewport, isMobile: Boolean(testInfo.project.use.isMobile), hasTouch: Boolean(testInfo.project.use.hasTouch) });
   try {
-    await receiver.goto(link); await openShare(receiver);
+    await receiver.goto(link); await enterDraftForReview(receiver); await openShare(receiver);
     await expect(share(receiver)).toContainText("링크에서 받은 가정값");
     await expect(share(receiver)).toContainText("시드 4242");
     await expect(apply(receiver)).toBeDisabled();
