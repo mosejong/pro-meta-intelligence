@@ -60,7 +60,7 @@ import { loadPublishedSeasonCatalog } from "./season-catalog-loader";
 import { basisKey, buildRosterIndex, pairKey, rosterBasis, serializeRosterScenario, type RosterRole } from "./roster-scenario";
 import { DraftResultPanel } from "./draft-result-panel";
 import { DraftSeriesRecapPanel } from "./draft-series-recap-panel";
-import { boardInteractive, draftStartBlock, isDraftDeepLink, sessionHasDraftWork, DRAFT_START_BLOCK_TEXT, type DraftFlowStep } from "./team-selection-flow";
+import { boardInteractive, currentPracticeMode, draftStartBlock, isDraftDeepLink, practiceModeChange, sessionHasDraftWork, DRAFT_START_BLOCK_TEXT, type DraftFlowStep, type PracticeMode } from "./team-selection-flow";
 
 type DraftLabProps = {
   currentSpace: ProductSpace;
@@ -270,6 +270,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const railVertical = useSyncExternalStore(subscribeRail, verticalRail, () => false);
   // Two-step flow: explicit team selection, then the (always mounted) studio. Memory-only, never saved or hashed.
   const [step, setStep] = useState<DraftFlowStep>("SETUP");
+  // Setup "진행 방식" draft: null follows the actual mode. Memory-only, never saved; applied only by the start/continue click.
+  const [setupChoice, setSetupChoice] = useState<PracticeMode | null>(null);
   const setupHeading = useRef<HTMLHeadingElement>(null);
   const draftHeading = useRef<HTMLHeadingElement>(null);
   // Set only by an explicit start/back click, so restores and deep links never steal focus.
@@ -362,7 +364,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   if (prunedHistory !== autoHistory && (prunedHistory.length || autoHistory.length)) setAutoHistory(prunedHistory);
   if (lastAuto && !soloAutoRecordMatches(lastAuto, selections, autoContext)) setLastAuto(null);
   useEffect(() => {
-    const pause = () => setSoloEnabled(false);
+    const pause = () => { setSoloEnabled(false); setSetupChoice(null); };
     window.addEventListener("hashchange", pause);
     return () => window.removeEventListener("hashchange", pause);
   }, []);
@@ -393,6 +395,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     // Every restore path clears notes (a fresh empty list, so autosave deletes any sidecar even for an
     // identical board string). Only the initial local restore re-applies validated notes afterwards.
     setSoloEnabled(false); setLastAuto(null); setAutoHistory([]); setRestoredNotes([]);
+    // A pending setup practice choice never survives a board replacement; setup then shows the actual (manual) mode.
+    setSetupChoice(null);
     // Any other restore path drops a not-yet-applied practice roster request.
     setRosterRequest(null);
     // Saved explicit roles/unassigned picks (v4) come back for this exact local context; suggestions are never stored.
@@ -659,8 +663,30 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const startBlock = draftStartBlock({ dataReady: sessionReady && (Boolean(seriesReport) || feedLabel !== "FEED CONNECTING"), importing,
     roomActive: room.active, blueTeamId, redTeamId, teamIds: teams.map((team) => team.team_id) });
   const resuming = hasCurrentWork || games.length > 0;
+  // Effective setup choice: the pending draft, else the board's actual mode (so back-to-setup reflects it).
+  const actualPracticeMode = currentPracticeMode({ soloEnabled, manualSide });
+  const setupMode = room.active ? "MANUAL" : setupChoice ?? actualPracticeMode;
+  const pendingModeChange = practiceModeChange(setupChoice, { soloEnabled, manualSide }, room.active);
+  // Honest notice of what an explicit mode change at continue will clear (same items as the draft-step controls).
+  const clearsStaged = Boolean(pendingModeChange && pendingChampion);
+  const clearsNotes = Boolean(pendingModeChange?.clearAutoNotes && prunedHistory.length > 0);
+  const modeChangeLoss = clearsStaged && clearsNotes ? " 방식을 바꾸면 대기 중인 카드와 이 세트의 자동 선택 기록이 정리됩니다."
+    : clearsStaged ? " 방식을 바꾸면 대기 중인 카드가 정리됩니다."
+      : clearsNotes ? " 방식을 바꾸면 이 세트의 자동 선택 기록이 정리됩니다." : "";
   function enterDraft() {
     if (startBlock) return;
+    // Unchanged effective mode touches nothing (board, staged card, notes, timer, prior solo state all kept).
+    // A changed mode reuses the draft-step checkbox/side-select clears, once, here at the explicit click.
+    const change = practiceModeChange(setupChoice, { soloEnabled, manualSide }, room.active);
+    if (change) {
+      setSoloEnabled(change.soloEnabled);
+      setManualSide(change.manualSide);
+      if (change.clearStaged) setPendingChampion(null);
+      if (change.clearLastAuto) setLastAuto(null);
+      if (change.clearAutoNotes) setAutoHistory([]);
+      if (change.stopTimer) setTimerRunning(false);
+    }
+    setSetupChoice(null);
     stepFocus.current = "DRAFT";
     setStep("DRAFT");
   }
@@ -668,6 +694,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   function backToSetup() {
     if (room.active) return;
     setTimerRunning(false);
+    // Setup shows the actual current mode and side; nothing changes unless the user picks another and continues.
+    setSetupChoice(null);
     stepFocus.current = "SETUP";
     setStep("SETUP");
   }
@@ -795,6 +823,20 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         <TeamChooser label="RED TEAM" teams={teams} value={redTeamId} onChange={(id) => changeTeam("RED", id)} disabled={room.active || games.length > 0 || hasCurrentWork} locale={locale} />
         {resuming && <p className="draft-setup-hint">{t("draft.setupHint")}</p>}
       </section>
+      {/* Practice mode draft (Korean-only like the solo copy). Selecting only updates the draft choice: no auto turn,
+          timer or clear happens on setup; the explicit start/continue below applies it. */}
+      <fieldset className="draft-flow-mode" lang="ko" disabled={room.active || !sessionReady || importing}>
+        <legend>진행 방식</legend>
+        {([
+          ["MANUAL", "양쪽 모두 직접 선택", null],
+          ["SOLO_BLUE", `내 팀 ${blueTeam?.team_name ?? "블루"}`, "블루 · 상대 자동"],
+          ["SOLO_RED", `내 팀 ${redTeam?.team_name ?? "레드"}`, "레드 · 상대 자동"],
+        ] as const).map(([mode, label, detail]) => <label key={mode}>
+          <input type="radio" name="draft-practice-mode" value={mode} checked={setupMode === mode} onChange={() => setSetupChoice(mode)} />
+          <span>{label}{detail && <small>{detail}</small>}</span>
+        </label>)}
+        <p className="draft-flow-note">{setupMode === "MANUAL" ? "두 팀의 차례를 모두 직접 고릅니다." : `시작하면 ${(setupMode === "SOLO_BLUE" ? redTeam?.team_name : blueTeam?.team_name) ?? "상대 팀"}의 차례는 공개 기록을 참고해 자동으로 진행됩니다. 연습용이며 실제 팀의 전략을 예측하지 않습니다.`}{modeChangeLoss}</p>
+      </fieldset>
       <div className="draft-flow-actions">
         <button type="button" className="draft-flow-primary" onClick={enterDraft} disabled={startBlock !== null} aria-describedby={startBlock ? "draft-flow-start-note" : undefined}>{resuming ? "밴픽 이어가기" : "밴픽 시작"}</button>
         {/* Optional new series: reuses the existing series-reset confirmation dialog, never resets silently. */}
@@ -898,7 +940,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     </section>}
     {/* Secondary management, always mounted (never collapsed): incoming share/room previews scroll and focus themselves. */}
     <section className="draft-series draft-series-management" aria-label="밴픽 관리·공유" lang={lang.ui}>
-      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={next => { setRoom(next); if (next.active) { restoreGeneration.current += 1; setStep("DRAFT"); setSoloEnabled(false); setLastAuto(null); setAutoHistory([]); setRestoredNotes([]); setPositionState({ context: "", roles: {} }); } }} onSnapshot={(session, reset) => {
+      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={next => { setRoom(next); if (next.active) { restoreGeneration.current += 1; setStep("DRAFT"); setSoloEnabled(false); setSetupChoice(null); setLastAuto(null); setAutoHistory([]); setRestoredNotes([]); setPositionState({ context: "", roles: {} }); } }} onSnapshot={(session, reset) => {
         restoreGeneration.current += 1;
         if (reset) setComparisonEpoch(epoch => epoch + 1);
         setSeriesReport(session.report); setBlueTeamId(session.blueTeamId); setRedTeamId(session.redTeamId);

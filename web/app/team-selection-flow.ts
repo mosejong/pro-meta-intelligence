@@ -1,6 +1,7 @@
 /**
  * Two-step draft studio flow: team selection (SETUP) first, then the existing draft workspace (DRAFT).
- * Pure decisions only; the step lives in DraftLab state (no route, no hash, no storage field).
+ * Pure decisions only; the step and the setup practice-mode choice live in DraftLab state (no route, no hash,
+ * no storage field).
  */
 export type DraftFlowStep = "SETUP" | "DRAFT";
 
@@ -55,6 +56,45 @@ export function isDraftDeepLink(hash: string): boolean {
 /** Board actions (stage, confirm, auto opponent, timer) run only on the visible draft step. */
 export function boardInteractive(canSelect: boolean, step: DraftFlowStep): boolean {
   return canSelect && step === "DRAFT";
+}
+
+/**
+ * Setup "진행 방식": both sides by hand, or one side mine with the other played by the existing automatic
+ * opponent. The setup choice is a draft only (null = follow the current mode); it is applied by the explicit
+ * start/continue click and never on render, restore, hash, import or room events.
+ */
+export type PracticeMode = "MANUAL" | "SOLO_BLUE" | "SOLO_RED";
+type PracticeSide = "BLUE" | "RED";
+export type PracticeState = { soloEnabled: boolean; manualSide: PracticeSide };
+
+/** The mode the board is actually in (reflected by the setup choice when entering setup). */
+export function currentPracticeMode(state: PracticeState): PracticeMode {
+  if (!state.soloEnabled) return "MANUAL";
+  return state.manualSide === "RED" ? "SOLO_RED" : "SOLO_BLUE";
+}
+
+/**
+ * State updates for an explicit start/continue, or null when the effective mode is unchanged (then nothing
+ * is touched: board, staged card, notes and timer all stay). A change reuses the existing draft-step control
+ * semantics exactly once: toggling the automatic opponent = the checkbox clears (staged card, last auto
+ * record, notes, timer); only switching my side while it stays on = the side select clears (staged card,
+ * last auto record). In MANUAL the side is left as it is. A room always resolves to MANUAL.
+ */
+export type PracticeModeChange = {
+  soloEnabled: boolean;
+  manualSide: PracticeSide;
+  clearStaged: true;
+  clearLastAuto: true;
+  clearAutoNotes: boolean;
+  stopTimer: boolean;
+};
+export function practiceModeChange(choice: PracticeMode | null, current: PracticeState, roomActive: boolean): PracticeModeChange | null {
+  const target: PracticeMode = roomActive ? "MANUAL" : choice ?? currentPracticeMode(current);
+  if (target === currentPracticeMode(current)) return null;
+  const soloEnabled = target !== "MANUAL";
+  const manualSide: PracticeSide = target === "SOLO_RED" ? "RED" : target === "SOLO_BLUE" ? "BLUE" : current.manualSide;
+  const toggled = soloEnabled !== current.soloEnabled;
+  return { soloEnabled, manualSide, clearStaged: true, clearLastAuto: true, clearAutoNotes: toggled, stopTimer: toggled };
 }
 
 /** Short Korean reason for a disabled start (Korean-only like the rest of the new solo copy). */

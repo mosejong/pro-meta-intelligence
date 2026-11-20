@@ -188,6 +188,122 @@ test("source guards: board gate, paused auto/timer, back preservation and existi
   assert.match(lab, /heading\?\.focus\(\{ preventScroll: true \}\);\s*scrollIntoViewGently\(heading\);/);
 });
 
+test("practice mode helper: fresh manual, explicit intent, unchanged continue touches nothing, room forces manual", async () => {
+  await withVite(async (vite) => {
+    const F = await vite.ssrLoadModule("/app/team-selection-flow.ts");
+    const manualBlue = { soloEnabled: false, manualSide: "BLUE" };
+    const soloBlue = { soloEnabled: true, manualSide: "BLUE" };
+    const soloRed = { soloEnabled: true, manualSide: "RED" };
+    // Fresh default and the mode reflected on entering setup.
+    assert.equal(F.currentPracticeMode(manualBlue), "MANUAL");
+    assert.equal(F.currentPracticeMode({ soloEnabled: false, manualSide: "RED" }), "MANUAL", "a restored side alone is not solo");
+    assert.equal(F.currentPracticeMode(soloBlue), "SOLO_BLUE");
+    assert.equal(F.currentPracticeMode(soloRed), "SOLO_RED");
+    // No pending choice (fresh, back->continue, restore/deep link/import/hash reset it): nothing changes.
+    for (const state of [manualBlue, soloBlue, soloRed, { soloEnabled: false, manualSide: "RED" }]) {
+      assert.equal(F.practiceModeChange(null, state, false), null, JSON.stringify(state));
+    }
+    // Re-selecting the actual mode is unchanged too: board, staged card, notes, timer and solo state are kept.
+    assert.equal(F.practiceModeChange("MANUAL", manualBlue, false), null);
+    assert.equal(F.practiceModeChange("SOLO_RED", soloRed, false), null);
+    assert.equal(F.practiceModeChange("MANUAL", { soloEnabled: false, manualSide: "RED" }, false), null, "restored notes side untouched in manual");
+    // Explicit intent: manual -> my RED vs auto BLUE (checkbox semantics: notes and timer cleared once).
+    assert.deepEqual(F.practiceModeChange("SOLO_RED", manualBlue, false),
+      { soloEnabled: true, manualSide: "RED", clearStaged: true, clearLastAuto: true, clearAutoNotes: true, stopTimer: true });
+    assert.deepEqual(F.practiceModeChange("SOLO_BLUE", manualBlue, false),
+      { soloEnabled: true, manualSide: "BLUE", clearStaged: true, clearLastAuto: true, clearAutoNotes: true, stopTimer: true });
+    // Side switch while staying solo: side-select semantics only (notes and timer kept).
+    assert.deepEqual(F.practiceModeChange("SOLO_RED", soloBlue, false),
+      { soloEnabled: true, manualSide: "RED", clearStaged: true, clearLastAuto: true, clearAutoNotes: false, stopTimer: false });
+    // Solo -> manual: checkbox-off semantics, side left as is.
+    assert.deepEqual(F.practiceModeChange("MANUAL", soloRed, false),
+      { soloEnabled: false, manualSide: "RED", clearStaged: true, clearLastAuto: true, clearAutoNotes: true, stopTimer: true });
+    // Room: a setup choice can never enable the automatic opponent.
+    for (const choice of [null, "MANUAL", "SOLO_BLUE", "SOLO_RED"]) {
+      assert.equal(F.practiceModeChange(choice, manualBlue, true), null, `room ${choice}`);
+      assert.equal(F.practiceModeChange(choice, soloRed, true)?.soloEnabled, false, `room forces off ${choice}`);
+    }
+  });
+});
+
+test("practice mode wiring: setup choice is a draft, applied once at the explicit start, never on load paths", async () => {
+  const lab = await source();
+  assert.match(lab, /const \[setupChoice, setSetupChoice\] = useState<PracticeMode \| null>\(null\);/, "fresh: follow the actual (manual) mode");
+  assert.match(lab, /const \[soloEnabled, setSoloEnabled\] = useState\(false\);/);
+  // Setup radios only change the draft choice: no solo/side/timer/clear side effects on SETUP.
+  const fieldset = lab.slice(lab.indexOf('className="draft-flow-mode"'), lab.indexOf("</fieldset>"));
+  assert.match(fieldset, /<legend>진행 방식<\/legend>/);
+  assert.match(fieldset, /onChange=\{\(\) => setSetupChoice\(mode\)\}/);
+  assert.doesNotMatch(fieldset, /setSoloEnabled|setManualSide|setAutoHistory|setPendingChampion|setTimerRunning|setLastAuto|setStep/);
+  assert.match(fieldset, /disabled=\{room\.active \|\| !sessionReady \|\| importing\}/);
+  assert.ok(lab.indexOf('className="draft-flow-mode"') < lab.indexOf('className="draft-flow-actions"'), "above the CTA");
+  // Start: existing gate first; every change goes through the helper; clears are conditional, not unconditional.
+  const start = lab.slice(lab.indexOf("function enterDraft()"), lab.indexOf("function backToSetup()"));
+  assert.match(start, /if \(startBlock\) return;\s*\/\/[^\n]*\n\s*\/\/[^\n]*\n\s*const change = practiceModeChange\(setupChoice, \{ soloEnabled, manualSide \}, room\.active\);\s*if \(change\) \{/);
+  assert.match(start, /if \(change\.clearAutoNotes\) setAutoHistory\(\[\]\);/);
+  assert.match(start, /if \(change\.stopTimer\) setTimerRunning\(false\);/);
+  const outside = start.replace(/if \(change\) \{[\s\S]*?\r?\n {4}\}/, "");
+  assert.notEqual(outside, start, "the conditional change block exists");
+  assert.doesNotMatch(outside, /setAutoHistory|setPendingChampion|setTimerRunning|setLastAuto|setSoloEnabled|setManualSide|setRestoredNotes|setPositionState/,
+    "unchanged continue preserves board, staged card, notes, timer and prior solo state");
+  // Only the explicit start (via the helper) and the existing draft-step checkbox can turn solo on.
+  assert.equal((lab.match(/setSoloEnabled\(true\)/g) ?? []).length, 0);
+  assert.equal((lab.match(/setSoloEnabled\(change\.soloEnabled\)/g) ?? []).length, 1);
+  assert.match(lab, /<input type="checkbox" checked=\{soloEnabled\} disabled=\{!canSelect \|\| room\.active\} onChange=\{event => \{ setSoloEnabled\(event\.target\.checked\); setPendingChampion\(null\); setLastAuto\(null\); setAutoHistory\(\[\]\); setTimerRunning\(false\); \}\} \/>상대 자동 밴픽/,
+    "draft-step checkbox unchanged");
+  assert.match(lab, /<select aria-label="내 진영" value=\{manualSide\} disabled=\{!canSelect \|\| room\.active\} onChange=\{event => \{ if \(event\.target\.value === "BLUE" \|\| event\.target\.value === "RED"\) \{ setManualSide\(event\.target\.value\); setPendingChampion\(null\); setLastAuto\(null\); \} \}\}>/,
+    "draft-step side select unchanged");
+  // Back reflects the actual mode (choice reset to null) and changes no mode/board state.
+  const back = lab.slice(lab.indexOf("function backToSetup()"), lab.indexOf("function undo()"));
+  assert.match(back, /setSetupChoice\(null\)/);
+  assert.doesNotMatch(back, /setSoloEnabled|setManualSide/);
+  // Restore (startup, import, share, library), hash and room keep auto off and drop any pending setup choice.
+  const restore = lab.slice(lab.indexOf("const restoreSession = useCallback"), lab.indexOf("}, [setPendingChampion, setInspected, setQuery]);"));
+  assert.match(restore, /setSoloEnabled\(false\);[\s\S]*setSetupChoice\(null\);/);
+  assert.match(lab, /const pause = \(\) => \{ setSoloEnabled\(false\); setSetupChoice\(null\); \};/);
+  assert.match(lab, /if \(next\.active\) \{ restoreGeneration\.current \+= 1; setStep\("DRAFT"\); setSoloEnabled\(false\); setSetupChoice\(null\);/);
+  const startup = lab.slice(lab.indexOf("readLocalDraftForRestore().then"), lab.indexOf("}, [restoreSession]);"));
+  assert.doesNotMatch(startup, /setSoloEnabled\(true\)|setSetupChoice\((?!null)/, "notes restore the side only; auto stays off");
+  // Nothing new is persisted: autosave/share carry no solo flag or setup choice.
+  const autosave = lab.slice(lab.indexOf("const autosaveRequest = useMemo"), lab.indexOf("const retrySave"));
+  assert.match(autosave, /\{ scenario: saveSnapshot, manualSide, records: prunedHistory \}/);
+  assert.doesNotMatch(autosave + lab.slice(lab.indexOf("const shareSession = useMemo"), lab.indexOf("if (!timerRunning || !turn")), /soloEnabled|setupChoice|setupMode/);
+  // The auto turn remains gated by the visible draft step, so nothing auto-plays while on SETUP.
+  assert.match(lab, /if \(!autoChoice \|\| !boardActive \|\| pendingReset \|\| studioTab !== "DRAFT" \|\| room\.active\) return;/);
+});
+
+test("fresh SSR: setup shows the practice mode with manual selected, disabled until the session is ready", async () => {
+  await withVite(async (vite) => {
+    const { LocaleProvider } = await vite.ssrLoadModule("/app/locale.tsx");
+    const { DraftLab } = await vite.ssrLoadModule("/app/draft-lab.tsx");
+    const { ChampionNameProvider } = await vite.ssrLoadModule("/app/champion-names.tsx");
+    const { sampleReport } = await vite.ssrLoadModule("/app/sample-report.ts");
+    const html = renderToStaticMarkup(createElement(LocaleProvider, {}, createElement(ChampionNameProvider, null,
+      createElement(DraftLab, { currentSpace: "DRAFT", report: sampleReport, feedLabel: "TEST FEED" }))));
+    const setupAt = html.indexOf('class="draft-flow-setup"');
+    const modeAt = html.indexOf('class="draft-flow-mode"');
+    const actionsAt = html.indexOf('class="draft-flow-actions"');
+    assert.ok(setupAt < modeAt && modeAt < actionsAt && actionsAt < html.indexOf('class="draft-flow-draft"'), "inside setup, above the CTA");
+    const mode = html.slice(modeAt, html.indexOf("</fieldset>", modeAt));
+    assert.match(html.slice(modeAt - 80, modeAt + 120), /<fieldset class="draft-flow-mode" lang="ko" disabled=""/);
+    assert.match(mode, /<legend>진행 방식<\/legend>/);
+    assert.equal(mode.match(/type="radio"/g)?.length, 3);
+    // Attribute-order independent: parse each radio <input> tag and read its attributes individually.
+    const attr = (tag, name) => tag.match(new RegExp(`\\s${name}="([^"]*)"`))?.[1];
+    const isChecked = (tag) => /\schecked(?=[\s=/>])/.test(tag);
+    const radios = [...mode.matchAll(/<input\b[^>]*>/g)].map((match) => match[0]).filter((tag) => attr(tag, "type") === "radio");
+    assert.equal(radios.length, 3);
+    for (const tag of radios) assert.equal(attr(tag, "name"), "draft-practice-mode", tag);
+    const byValue = Object.fromEntries(radios.map((tag) => [attr(tag, "value"), tag]));
+    assert.deepEqual(Object.keys(byValue).sort(), ["MANUAL", "SOLO_BLUE", "SOLO_RED"]);
+    assert.equal(isChecked(byValue.MANUAL), true, "fresh default is both sides manual");
+    assert.equal(isChecked(byValue.SOLO_BLUE), false, "my-blue option unchecked");
+    assert.equal(isChecked(byValue.SOLO_RED), false, "my-red option unchecked");
+    assert.match(mode, /블루 · 상대 자동/);
+    assert.match(mode, /레드 · 상대 자동/);
+  });
+});
+
 test("boundaries: the flow adds no storage, schema, share, room or model changes", async () => {
   const flow = await readFile(new URL("../app/team-selection-flow.ts", import.meta.url), "utf8");
   assert.doesNotMatch(flow, /^import /m, "pure helper with no imports");
