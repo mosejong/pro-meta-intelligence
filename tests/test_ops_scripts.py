@@ -206,6 +206,72 @@ def test_hosted_oe_collector_restores_private_state_and_publishes_only_safe_head
     assert "--force" not in workflow
 
 
+def _workflow_step(workflow: str, name: str) -> str:
+    assert workflow.count(f"- name: {name}\n") == 1, name
+    return workflow.split(f"- name: {name}\n", 1)[1].split("\n      - ", 1)[0]
+
+
+def test_normal_diagnostics_failure_cannot_skip_the_encrypted_ledger_repack() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "hosted-oe-sync.yml").read_text(encoding="utf-8")
+
+    # The diagnostics upload is best-effort, exactly like the history-only diagnostics upload,
+    # and its condition, payload, destination and retention are unchanged.
+    diagnostics = _workflow_step(
+        workflow, "Preserve public-safe sync diagnostics on success or rejection"
+    )
+    assert diagnostics == (
+        "        # Current-season only: in history mode a failure here would skip "
+        "the encrypted repack.\n"
+        "        if: ${{ always() && env.HISTORY_ONLY != 'true' }}\n"
+        "        # A diagnostics upload failure must never prevent the attempt ledger "
+        "from being repacked.\n"
+        "        continue-on-error: true\n"
+        "        uses: actions/upload-artifact@v7\n"
+        "        with:\n"
+        "          name: oe-sync-diagnostics-${{ github.run_id }}\n"
+        "          path: |\n"
+        "            outputs/hosted-oe-state/sync-report.json\n"
+        "            outputs/hosted-oe-state/local-health.json\n"
+        "            outputs/oe-feed-jobs/latest.json\n"
+        "          if-no-files-found: warn\n"
+        "          retention-days: 14"
+    )
+    history_diagnostics = _workflow_step(workflow, "Preserve history-only acquisition diagnostics")
+    assert "continue-on-error: true" in history_diagnostics
+
+    # The repack and the encrypted-state upload that follow stay strict and unconditional.
+    repack = _workflow_step(
+        workflow, "Repack authenticated private history without publishing raw rows"
+    )
+    archive_upload = _workflow_step(workflow, "Upload redundant rolling private history state")
+    retention = _workflow_step(workflow, "Keep the two newest encrypted history states")
+    for strict_step in (repack, archive_upload, retention):
+        assert "continue-on-error" not in strict_step
+        assert "if:" not in strict_step
+    assert "if-no-files-found: error" in archive_upload
+    assert workflow.index("Preserve public-safe sync diagnostics") < workflow.index(
+        "Repack authenticated private history"
+    )
+
+    # Source-health and publication-readiness gates are untouched.
+    assert "if: steps.sync-health.outcome == 'success' && env.HISTORY_ONLY != 'true'" in workflow
+    assert "pages_ready: ${{ steps.pages-upload.outcome == 'success' }}" in workflow
+    failed_health = _workflow_step(
+        workflow, "Preserve failed collection health after publishing its public status"
+    )
+    assert (
+        "if: always() && steps.sync-health.outcome != 'success' && env.HISTORY_ONLY != 'true'"
+        in failed_health
+    )
+    assert "continue-on-error" not in failed_health
+    assert "exit 1" in failed_health
+    for gate in (
+        "Validate and build the independent Pages artifact",
+        "Publish only the reviewed public feed heads",
+    ):
+        assert "continue-on-error" not in _workflow_step(workflow, gate)
+
+
 def test_hosted_archive_bootstrap_never_prints_or_persists_the_generated_key() -> None:
     script = (ROOT / "ops" / "windows" / "bootstrap-hosted-oe-archive.ps1").read_text(
         encoding="utf-8"
