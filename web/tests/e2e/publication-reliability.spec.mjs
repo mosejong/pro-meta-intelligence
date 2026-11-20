@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
+import { enterDraftWorkspace } from "./studio-panels.mjs";
 
 /**
  * Publication loading under slow/failed/out-of-order responses. Delays are injected with route();
@@ -40,6 +41,7 @@ test("slow companion files do not block the draft once the core feed is verified
     await route.continue().catch(() => undefined);
   });
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await expect(page.getByText(/FEED CONNECTING|DEMO FALLBACK/)).toHaveCount(0);
@@ -57,6 +59,7 @@ test("a first core failure shows the explicit demo fallback", async ({ page }) =
   const errors = trackErrors(page);
   await page.route(CORE, (route) => route.fulfill({ status: 503, body: "unavailable" }));
   await page.goto(root);
+  await enterDraftWorkspace(page);
   // The narrow layout hides the label visually; it must still be the stated feed state.
   await expect(page.getByText("DEMO FALLBACK", { exact: true })).not.toHaveCount(0);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
@@ -104,6 +107,7 @@ test("a failed scheduled refresh keeps the draft in progress", async ({ page }) 
     return route.fulfill({ status: 500, body: "boom" });
   });
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await picker(page).first().click();
   await confirm(page).click();

@@ -1,7 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftWorkspace } from "./studio-panels.mjs";
 
 test("main navigation and old brief URL use team-neutral workspaces", async ({ page }) => {
   await page.goto("/pro-meta-intelligence/");
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await expect(page.getByRole("link", { name: /T1 브리프|T1 简报/ })).toHaveCount(0);
@@ -20,6 +22,8 @@ test("main navigation and old brief URL use team-neutral workspaces", async ({ p
   await expect(page.getByRole("link", { name: /T1 브리프|T1 简报/ })).toHaveCount(0);
   await expect(page.locator(".draft-match-setup .team-chooser-trigger strong")).toHaveText(names);
   await page.reload();
+  await expect(page.locator(".draft-flow-setup")).toBeVisible();
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "模拟禁选", exact: true })).toBeVisible();
   await page.getByRole("combobox", { name: "语言", exact: true }).selectOption("ko");
   // T1 remains an ordinary selectable team; no assertion forbids its data from appearing.

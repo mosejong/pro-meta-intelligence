@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { showPanel } from "./studio-panels.mjs";
+import { enterDraftWorkspace, showPanel } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const storageKey = "pro-meta-guest-clubs-v1";
@@ -19,6 +19,7 @@ async function openRoster(page) {
 
 async function openStudioWithDraftTurn(page) {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
@@ -76,6 +77,7 @@ test("guest clubs save a side including empty slots, confirm loads and persist u
   await expect(progress(page)).toHaveAttribute("value", "1");
 
   await page.reload();
+  await expect(page.locator(".draft-flow-draft")).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await openRoster(page);
   await expect(entries(page)).toHaveCount(1);
@@ -99,6 +101,7 @@ test("guest clubs save a side including empty slots, confirm loads and persist u
   expect(await values(page, "red")).toEqual(originalRed);
   await expect(progress(page)).toHaveAttribute("value", "1");
   await page.reload();
+  await expect(page.locator(".draft-flow-draft")).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await openRoster(page);
   await expect(entries(page)).toHaveCount(0);
@@ -125,6 +128,7 @@ test("a denied guest club write reports an error without a phantom saved club", 
   expect({ blue: await values(page, "blue"), red: await values(page, "red") }).toEqual(before);
   await expect(progress(page)).toHaveAttribute("value", "1");
   await page.reload();
+  await expect(page.locator(".draft-flow-draft")).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await openRoster(page);
   await expect(entries(page)).toHaveCount(0);
@@ -135,6 +139,7 @@ test("saving never overwrites a corrupted guest club library", async ({ page }) 
   const corrupted = '{"clubs": [broken guest club library';
   await page.evaluate(({ key, value }) => localStorage.setItem(key, value), { key: storageKey, value: corrupted });
   await page.reload();
+  await expect(page.locator(".draft-flow-draft")).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await openRoster(page);
   const before = { blue: await values(page, "blue"), red: await values(page, "red") };
@@ -151,7 +156,7 @@ test("two tabs saving together preserve both clubs", async ({ page, context }) =
   await openStudioWithDraftTurn(page);
   const other = await context.newPage();
   try {
-    await other.goto(root); await expect(other.locator(".draft-stage")).not.toHaveAttribute("inert", ""); await openRoster(other);
+    await other.goto(root); await enterDraftWorkspace(other); await expect(other.locator(".draft-stage")).not.toHaveAttribute("inert", ""); await openRoster(other);
     await fillClub(page, "첫 번째 탭 구단"); await fillClub(other, "두 번째 탭 구단");
     await Promise.all([page, other].map(p => club(p).getByRole("button", { name: "새 구단으로 저장", exact: true }).click()));
     for (const p of [page, other]) {

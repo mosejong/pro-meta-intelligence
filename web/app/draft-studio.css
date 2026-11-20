@@ -64,6 +64,9 @@ main.draft-lab.draft-studio .draft-series :is(p, summary, header span, label) { 
 main.draft-lab.draft-studio .draft-series details { margin-top: 0; }
 main.draft-lab.draft-studio .draft-series summary { display: flex; align-items: center; width: fit-content; padding-block: 8px; cursor: pointer; }
 main.draft-lab.draft-studio .draft-series :is(button, select, input) { max-width: 100%; border: 1px solid var(--studio-line); background: var(--studio-panel); color: var(--studio-text); }
+/* Management follows the board/result in DOM order; only a separator, no visual reordering. */
+main.draft-lab.draft-studio .draft-series.draft-series-management { border-top: 1px solid var(--studio-line); padding-block: 12px; }
+main.draft-lab.draft-studio .solo-draft-review:empty { display: none; }
 main.draft-lab.draft-studio .draft-stage { width: 100%; max-width: 1680px; min-height: 0; margin-inline: auto; grid-template-columns: minmax(190px, .8fr) minmax(0, 2.4fr) minmax(190px, .8fr); align-items: stretch; border-bottom: 1px solid var(--studio-line); }
 main.draft-lab.draft-studio .draft-team-column { grid-row: 1; grid-column: auto; padding: 16px 12px; gap: 0; background: var(--studio-panel); box-shadow: none; }
 main.draft-lab.draft-studio .draft-team-column.blue { grid-column: 1; border: 0; border-right: 1px solid var(--studio-line); }
@@ -352,5 +355,37 @@ main.draft-lab.draft-studio .studio-save-flag { min-height: 32px; padding: 2px 1
   }
   main.draft-lab.draft-studio .studio-shell .studio-tabs button[aria-selected="true"] { border-left-color: var(--studio-action); background: var(--studio-panel); }
 }
+/* Two-step flow: team selection, then the studio. Hidden steps use [hidden] (display:none !important above). */
+main.draft-lab.draft-studio .draft-flow-setup { display: grid; gap: 16px; width: 100%; max-width: 760px; margin: 0 auto; padding: 24px clamp(12px, 2vw, 32px) 32px; }
+main.draft-lab.draft-studio .draft-flow-setup .draft-match-setup { display: grid; padding-inline: 0; border-bottom: 0; background: transparent; }
+main.draft-lab.draft-studio .draft-flow-setup .draft-match-setup .team-chooser-trigger { min-height: 72px; }
+main.draft-lab.draft-studio .draft-flow-head { display: grid; gap: 6px; }
+main.draft-lab.draft-studio .draft-flow-head h2 { margin: 0; font-size: 18px; font-weight: 650; }
+main.draft-lab.draft-studio :is(.draft-flow-head h2, .draft-flow-matchup h2):focus { outline: none; }
+main.draft-lab.draft-studio :is(.draft-flow-head h2, .draft-flow-matchup h2):focus-visible { outline: 2px solid #f0d6ae; outline-offset: 3px; }
+main.draft-lab.draft-studio .draft-flow-steps { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0; padding: 0; list-style: none; color: var(--studio-muted); font-size: 12px; }
+main.draft-lab.draft-studio .draft-flow-steps li[aria-current="step"] { color: var(--studio-text); font-weight: 700; }
+main.draft-lab.draft-studio .draft-flow-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+main.draft-lab.draft-studio .draft-flow-actions button { min-height: 48px; padding: 10px 20px; font-size: 15px; }
+main.draft-lab.draft-studio .draft-flow-actions .draft-flow-primary { flex: 1 1 220px; border-color: var(--studio-action); background: var(--studio-action); color: #201b15; font-weight: 700; }
+main.draft-lab.draft-studio .draft-flow-actions .draft-flow-secondary { flex: 0 1 auto; background: transparent; font-size: 13px; }
+main.draft-lab.draft-studio .draft-flow-note { flex-basis: 100%; margin: 0; color: var(--studio-muted); font-size: 12px; }
+main.draft-lab.draft-studio .draft-flow-matchup { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 6px clamp(12px, 2vw, 32px); border-bottom: 1px solid var(--studio-line); background: var(--studio-bg); }
+main.draft-lab.draft-studio .draft-flow-matchup h2 { flex: 1 1 200px; min-width: 0; margin: 0; font-size: 15px; font-weight: 650; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .draft-flow-matchup h2 .blue { color: var(--draft-blue); }
+main.draft-lab.draft-studio .draft-flow-matchup h2 .red { color: var(--draft-red); }
+main.draft-lab.draft-studio .draft-flow-matchup h2 small { color: var(--studio-muted); font-size: 12px; font-weight: 400; }
+main.draft-lab.draft-studio .draft-flow-matchup > button { min-height: 44px; padding: 6px 14px; font-size: 13px; }
+@media (max-width: 600px) {
+  main.draft-lab.draft-studio .draft-flow-setup { padding-block: 16px 24px; gap: 12px; }
+  main.draft-lab.draft-studio .draft-flow-actions button { flex-basis: 100%; }
+  main.draft-lab.draft-studio .draft-flow-matchup .draft-flow-steps { flex-basis: 100%; }
+}
 main.draft-lab.draft-studio .studio-preview-footer { border-top: 1px solid var(--studio-line); margin-top: 20px; padding: 12px 0; color: var(--studio-muted); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
 main.draft-lab.draft-studio .studio-preview-footer p { margin: 0 0 6px; }
+/* Cascade repair: a global footer rule painted this notice bright blue. Studio tone only; text stays visible. */
+main.draft-lab.draft-studio footer.studio-preview-footer {
+  padding-inline: clamp(12px, 2vw, 32px); border-top: 1px solid var(--studio-line);
+  background: var(--studio-bg); background-image: none; color: var(--studio-muted);
+}
+main.draft-lab.draft-studio footer.studio-preview-footer p { color: var(--studio-muted); }

@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { readFile } from "node:fs/promises";
 
 const root = "/pro-meta-intelligence/";
 const solo = page => page.getByRole("region", { name: "혼자 밴픽 연습", exact: true });
-const review = page => solo(page).locator(".solo-history");
+const review = page => page.locator(".solo-history");
 const progress = page => page.locator(".draft-turn-progress");
 
 async function sidecar(page, mutate = false) {
@@ -31,6 +32,7 @@ async function start(page, side) {
     configurable: true, value: { writeText: async () => { throw new Error("denied"); } },
   }));
   await page.goto(root);
+  await enterDraftForReview(page);
   await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
   await solo(page).getByLabel("내 진영", { exact: true }).selectOption(side);
   await solo(page).getByRole("checkbox", { name: "상대 자동 밴픽", exact: true }).check();
@@ -67,7 +69,7 @@ for (const side of ["BLUE", "RED"]) {
     await expect(review(page).locator(":scope > summary")).toContainText(`(${turns.length})`);
     expect(await copyText(page)).toBe(original);
     await expect(review(page)).toContainText(/저장.*연습.*메모/);
-    await expect(solo(page).locator(".solo-explain .solo-draft-last")).toHaveCount(0);
+    await expect(page.locator(".solo-explain .solo-draft-last")).toHaveCount(0);
     expect(page.url()).toBe(before);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await review(page).screenshot({ path: testInfo.outputPath(`restored-review-${side.toLowerCase()}.png`) });

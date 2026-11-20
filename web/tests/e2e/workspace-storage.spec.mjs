@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftWorkspace } from "./studio-panels.mjs";
 
 test("blocked preference storage does not crash the draft workspace", async ({ page }, testInfo) => {
   const errors = [];
@@ -9,6 +10,7 @@ test("blocked preference storage does not crash the draft workspace", async ({ p
     }
   });
   await page.goto("/pro-meta-intelligence/");
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
@@ -30,6 +32,7 @@ test("a stalled draft database releases the workspace and failed saves can be re
   await page.goto("/pro-meta-intelligence/");
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await page.clock.fastForward(10001);
+  await enterDraftWorkspace(page);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
   await page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ }).click();

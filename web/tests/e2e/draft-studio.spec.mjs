@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
-import { showPanel } from "./studio-panels.mjs";
+import { enterDraftWorkspace, showPanel } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const progress = (page) => page.locator(".draft-turn-progress");
@@ -9,6 +9,7 @@ const confirm = (page) => page.locator(".draft-lock-in").getByRole("button", { n
 
 async function openStudio(page) {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await expect(picker(page).first()).toBeEnabled();
@@ -116,14 +117,15 @@ test("keyboard activation and next-set Fearless locks survive refresh", async ({
   await finish(page, 0, true);
   await page.getByRole("button", { name: "세트 저장하고 다음 세트", exact: true }).click();
   await expect(progress(page)).toHaveAttribute("value", "0");
-  await expect(page.locator(".draft-series")).toContainText("피어리스 · 2세트");
-  await expect(page.locator(".draft-series")).toContainText("픽 10개");
+  await expect(page.getByRole("region", { name: "피어리스 시리즈", exact: true })).toContainText("피어리스 · 2세트");
+  await expect(page.getByRole("region", { name: "피어리스 시리즈", exact: true })).toContainText("픽 10개");
   await page.getByRole("checkbox", { name: "선택 가능한 챔피언만", exact: true }).uncheck();
   await expect(page.locator(".draft-picker-grid button:disabled")).toHaveCount(10);
   await saved(page);
   await page.reload();
+  await enterDraftWorkspace(page);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
-  await expect(page.locator(".draft-series")).toContainText("피어리스 · 2세트");
+  await expect(page.getByRole("region", { name: "피어리스 시리즈", exact: true })).toContainText("피어리스 · 2세트");
   await page.getByRole("checkbox", { name: "선택 가능한 챔피언만", exact: true }).uncheck();
   await expect(page.locator(".draft-picker-grid button:disabled")).toHaveCount(10);
 });
@@ -157,6 +159,7 @@ test("an injected storage failure can retry the latest staged draft", async ({ p
 
 test("team changes, duplicate prevention and red-first selection remain usable", async ({ page }) => {
   await openStudio(page);
+  await page.getByRole("button", { name: "팀 선택으로", exact: true }).click();
   async function selectGenG(side) {
     await page.getByRole("button", { name: new RegExp(`^${side} TEAM:`) }).click();
     const dialog = page.getByRole("dialog", { name: `${side} TEAM`, exact: true });
@@ -175,12 +178,16 @@ test("team changes, duplicate prevention and red-first selection remain usable",
   await page.getByRole("button", { name: "블루와 레드 팀 교체", exact: true }).click();
   await expect(blue.locator("strong")).toHaveText(redName);
   await expect(red.locator("strong")).toHaveText(blueName);
+  await enterDraftWorkspace(page);
   await page.locator(".draft-first-selection select").selectOption("RED");
   await expect(page.locator(".draft-current-turn h2")).toContainText("레드 차례");
   await choose(page);
+  await page.getByRole("button", { name: "팀 선택으로", exact: true }).click();
   await expect(blue).toBeDisabled();
   await expect(red).toBeDisabled();
   await expect(page.getByRole("button", { name: "블루와 레드 팀 교체", exact: true })).toBeDisabled();
+  await enterDraftWorkspace(page);
   await page.getByRole("button", { name: "선택 취소", exact: true }).click();
+  await page.getByRole("button", { name: "팀 선택으로", exact: true }).click();
   await expect(blue).toBeEnabled();
 });

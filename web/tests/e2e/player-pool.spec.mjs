@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { showPanel } from "./studio-panels.mjs";
+import { enterDraftWorkspace, showPanel } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const ROLES = ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"];
@@ -14,6 +14,7 @@ const chips = (page, championId) => pool(page).locator(`.player-pool-champs li[d
 
 async function openStudio(page) {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
 }
@@ -122,18 +123,22 @@ test("evidence follows roster edits, live bans/undo, next-set fearless locks, re
   if ((await details.getAttribute("open")) === null) await details.locator("summary").click();
   await expect(details.getByRole("status").filter({ hasText: "이 기기에 저장됨" })).toBeVisible();
   await page.reload();
+  await expect(page.locator(".draft-flow-draft")).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
-  await expect(page.locator(".draft-series")).toContainText("피어리스 · 2세트");
+  await expect(page.getByRole("region", { name: "피어리스 시리즈", exact: true })).toContainText("피어리스 · 2세트");
   await openPool(page);
   await expect(slot(page, "blue", "SUPPORT")).toHaveValue(foreign);
   await expectRowsFollowSlots(page);
   for (const chip of await chips(page, picked.championId).all()) await expect(chip).toHaveAttribute("data-state", "FEARLESS_LOCKED");
 
+  await page.getByRole("button", { name: "팀 선택으로", exact: true }).click();
   await page.getByRole("button", { name: "블루와 레드 팀 교체", exact: true }).click();
+  await enterDraftWorkspace(page);
+  await openPool(page);
   await expect(slot(page, "red", "SUPPORT")).toHaveValue(foreign);
   await expectRowsFollowSlots(page);
   await expect(row(page, "red", "SUPPORT")).toContainText("원팀(");
-  await expect(page.locator(".draft-series")).toContainText("피어리스 · 2세트");
+  await expect(page.getByRole("region", { name: "피어리스 시리즈", exact: true })).toContainText("피어리스 · 2세트");
 
   const overflow = await page.evaluate(() => {
     const panel = document.querySelector("details.player-pool");

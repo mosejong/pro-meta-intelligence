@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
-import { showPanel, studioTab } from "./studio-panels.mjs";
+import { enterDraftWorkspace, showPanel, studioTab } from "./studio-panels.mjs";
 
 /**
  * A/B player · champion observation differences. Roles are assigned in the simulation-readiness tab,
@@ -100,6 +100,7 @@ test("roles → freeze A → change player and roles → annual evidence (error/
   try {
     // Completed draft + ten players, no roles yet.
     await page.goto(root);
+    await enterDraftWorkspace(page);
     await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
     await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
     for (let i = 0; i < 20; i += 1) {

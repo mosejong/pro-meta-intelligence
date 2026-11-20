@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
-import { showPanel } from "./studio-panels.mjs";
+import { enterDraftWorkspace, showPanel } from "./studio-panels.mjs";
 
 const ROLES = ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"];
 const history = JSON.parse(readFileSync(new URL("../../public/history/player-season-2026.json", import.meta.url), "utf8"));
@@ -13,6 +13,7 @@ test("actual annual data reproduces both sides of a role-change comparison", asy
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   await page.goto("/pro-meta-intelligence/draft/");
+  await enterDraftWorkspace(page);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   for (let turn = 1; turn <= 20; turn++) {
     await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
