@@ -1,0 +1,18 @@
+.solo-explain details { margin-top: 6px; font-size: 12px; color: var(--studio-muted, #a7afb7); }
+.solo-explain summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--studio-text, #eee); }
+.solo-explain ol { margin: 4px 0 0; padding-left: 20px; }
+.solo-explain li { margin: 2px 0; overflow-wrap: anywhere; }
+.solo-history { margin-top: 6px; font-size: 12px; color: var(--studio-muted, #a7afb7); }
+.solo-history summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; color: var(--studio-text, #eee); }
+.solo-history ol { margin: 4px 0 0; padding-left: 20px; }
+.solo-history li { margin: 2px 0; overflow-wrap: anywhere; }
+.solo-history li details { padding-left: 4px; }
+.solo-history em,
+.solo-explain em { font-style: normal; color: var(--studio-action, #debc86); }
+
+.solo-history-share { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--studio-line, #343a40); min-width: 0; }
+.solo-history-share button { min-height: 44px; min-width: 44px; padding: 10px 14px; border: 1px solid var(--studio-line, #343a40); border-radius: 4px; background: var(--studio-panel, #16191c); color: var(--studio-text, #eee); font: inherit; cursor: pointer; }
+.solo-history-share button:hover:not(:disabled) { border-color: var(--studio-action, #debc86); }
+.solo-history-share button:disabled { opacity: .5; cursor: default; }
+.solo-history-share button:focus-visible, .solo-history-share textarea:focus-visible { outline: 2px solid var(--studio-action, #debc86); outline-offset: 3px; }
+.solo-history-share textarea { display: block; box-sizing: border-box; max-width: 100%; min-height: 12rem; padding: 12px; border: 1px solid var(--studio-line, #343a40); border-radius: 4px; background: var(--studio-panel, #16191c); color: var(--studio-text, #eee); font: inherit; line-height: 1.6; resize: vertical; }

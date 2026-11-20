@@ -1,4 +1,5 @@
 import { championAssetId } from "./champion-assets";
+import type { DraftPositionRecord } from "./draft-position-session";
 import type { OpponentChampionTendency, OpponentTeam, RadarEntry, RadarReport } from "./radar-types";
 
 export type DraftSide = "BLUE" | "RED";
@@ -369,9 +370,15 @@ export function serializeDraftScenario(
   games: DraftGame[] = [],
   stagedChampion: string | null = null,
   firstPickSide: DraftSide = "BLUE",
+  /**
+   * Local-practice only: explicit current-game position work (normalized by the caller).
+   * Omitted/empty keeps the exact v3 output, so share links and rooms never carry roles.
+   */
+  positions: DraftPositionRecord | null = null,
 ) {
+  const withPositions = positions !== null && Object.keys(positions).length > 0;
   return JSON.stringify({
-    schema_version: "3",
+    schema_version: withPositions ? "4" : "3",
     first_pick_side: selections[0]?.side ?? firstPickSide,
     model_version: DRAFT_MODEL_VERSION,
     artifact_type: "public-draft-scenario",
@@ -387,6 +394,7 @@ export function serializeDraftScenario(
     complete: selections.length === STANDARD_DRAFT_SEQUENCE.length,
     selections,
     staged_champion: stagedChampion,
+    ...(withPositions ? { current_game_positions: positions } : {}),
     evidence: {
       match_ids: unique([...blueTeam.evidence.match_ids, ...redTeam.evidence.match_ids]),
       source_versions: report.opponent_prep?.evidence_index.source_versions ?? report.evidence_index.source_versions,

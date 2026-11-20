@@ -24,16 +24,20 @@ import {
   type DraftGame,
 } from "./draft-agent";
 import { productRootHref, productSpaceHref, type ProductSpace } from "./product-space";
-import { isDraftSessionErrorCode, MAX_DRAFT_FILE_BYTES, parseDraftSession, readLocalDraft, type DraftSession, type DraftSessionErrorCode } from "./draft-session";
+import { isDraftSessionErrorCode, MAX_DRAFT_FILE_BYTES, parseDraftSession, type DraftSession, type DraftSessionErrorCode } from "./draft-session";
 import { useDraftSave } from "./use-draft-save";
+import { readLocalDraftForRestore, type DraftAutosaveRequest } from "./solo-review-autosave";
 import type { OpponentTeam, RadarReport } from "./radar-types";
 import { TeamChooser } from "./team-chooser";
 import { defaultDraftMatchup } from "./team-defaults";
 import { DraftChampionInfo, type ChampionFocus } from "./draft-champion-info";
 import { DraftComparisonPanel } from "./draft-comparison-panel";
 import { PartnershipPlacement } from "./partnership-placement";
-import { RosterWorkshop } from "./roster-workshop";
+import { RosterWorkshop, type RosterMeta, type RosterRestoreRequest } from "./roster-workshop";
 import { SimulationReadinessPanel } from "./simulation-readiness-panel";
+import { SimulationExamplePanel } from "./simulation-example-panel";
+import { buildSimulationExample, exampleBlockReason } from "./simulation-example";
+import { ExperimentReplayPanel } from "./experiment-replay-panel";
 import type { LiveRoster } from "./roster-comparison";
 import type { SimulationInputSnapshot } from "./simulation-scenario";
 import { DEFAULT_LOCALE, LanguageSelector, useLocale, type Locale, type MessageKey } from "./locale";
@@ -42,6 +46,20 @@ import "./draft-studio.css";
 import { WorkspaceHeader } from "./workspace-header";
 import { DraftSharePanel } from "./draft-share-panel";
 import { DraftRoomPanel, type RoomControls } from "./draft-room-panel";
+import { useSoloSeasonHistory } from "./use-solo-season-history";
+import { explainSoloDraftTurn, suggestSoloDraftTurn } from "./solo-draft";
+import { SoloDraftHistoryPanel } from "./solo-draft-history-panel";
+import { appendSoloAutoHistory, pruneSoloAutoHistory, soloHistoryContext, type SoloAutoHistory } from "./solo-draft-history";
+import { SoloDraftExplanationPanel, soloAutoContext, soloAutoRecordMatches, type SoloAutoRecord } from "./solo-draft-explanation";
+import { DraftPositionStack } from "./draft-position-stack";
+import { emptyChampionRoles, championKey, teamPicks, type ChampionRoles, type RoleAssignments } from "./champion-roles";
+import { buildDraftPositionBoard, reconcileChampionRoles, moveChampionRole } from "./draft-position-board";
+import { normalizeDraftPositions } from "./draft-position-session";
+import { DraftPracticeLibraryPanel } from "./draft-practice-library-panel";
+import { loadPublishedSeasonCatalog } from "./season-catalog-loader";
+import { basisKey, buildRosterIndex, pairKey, rosterBasis, serializeRosterScenario, type RosterRole } from "./roster-scenario";
+import { DraftResultPanel } from "./draft-result-panel";
+import { DraftSeriesRecapPanel } from "./draft-series-recap-panel";
 
 type DraftLabProps = {
   currentSpace: ProductSpace;
@@ -159,8 +177,13 @@ function TeamDraftColumn({
   staged,
   nameOf,
   inspected,
-  onInspect,
+  onInspect, assignments, unassigned, positionDisabled, onAssign, onConfirm,
 }: {
+  assignments: ChampionRoles;
+  unassigned: string[];
+  positionDisabled: boolean;
+  onAssign: (id: string, role: RosterRole | null) => void;
+  onConfirm: () => void;
   side: DraftSide;
   team: OpponentTeam | null;
   selections: DraftSelection[];
@@ -171,7 +194,6 @@ function TeamDraftColumn({
   onInspect: (slot: InspectedSlot) => void;
 }) {
   const bans = selectionsFor(selections, side, "BAN");
-  const picks = selectionsFor(selections, side, "PICK");
   const { locale, t, format } = useLocale();
   const lang = langAttrs(locale);
   const sideLabel = t(sideKey(side));
@@ -189,19 +211,13 @@ function TeamDraftColumn({
         </div>;
       })}
     </div>
-    <div className="draft-pick-stack">
-      {Array.from({ length: 5 }, (_, index) => {
-        const preview = staged?.side === side && staged.kind === "PICK" && staged.slot === index + 1 ? staged : null;
-        const confirmed = picks.find((item) => item.slot === index + 1) ?? null;
-        const selection = confirmed ?? preview;
-        return <article className={preview ? "staged" : selection ? "filled" : ""} key={index}
-          {...(confirmed ? inspectProps(confirmed, inspected, format("draft.inspect.PICK", { side: sideLabel, slot: index + 1, name: nameOf(confirmed.champion_id) }), onInspect) : {})}>
-          <b>{side === "BLUE" ? "B" : "R"}{index + 1}</b>
-          {selection ? <><img src={championImageUrl(selection.champion_id)} alt="" /><div><strong lang={lang.name}>{nameOf(selection.champion_id)}</strong><span>{preview ? t("draft.column.staged") : format("draft.column.confirmed", { turn: selection.turn })}</span></div></> : <div><strong>{t("draft.column.waiting")}</strong><span>{index < 3 ? t("draft.column.phase1Pick") : t("draft.column.phase2Pick")}</span></div>}
-        </article>;
-      })}
-    </div>
+    <DraftPositionStack team={team} side={side} selections={selections} staged={staged} assignments={assignments} unassigned={unassigned} disabled={positionDisabled} nameOf={nameOf} onAssign={onAssign} onConfirm={onConfirm} onInspect={onInspect} inspected={selections.find(item => inspected && sameSlot(item, inspected) && item.champion_id === inspected.champion_id) ?? null} />
   </section>;
+}
+
+/** Position work is valid only for this exact basis, matchup, first-pick side, series and room mode. */
+function positionContextKey(report: RadarReport, blueTeamId: string, redTeamId: string, firstPickSide: DraftSide, games: DraftGame[], roomActive: boolean) {
+  return JSON.stringify([basisKey(rosterBasis(report)), blueTeamId, redTeamId, firstPickSide, games, roomActive]);
 }
 
 export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftLabProps) {
@@ -218,6 +234,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const defaultMatchup = useMemo(() => defaultDraftMatchup(teams), [teams]);
   const [blueTeamId, setBlueTeamId] = useState(defaultMatchup.blue?.team_id ?? "");
   const [redTeamId, setRedTeamId] = useState(defaultMatchup.red?.team_id ?? "");
+  const [positionState, setPositionState] = useState<{ context: string; roles: RoleAssignments; unassigned?: Record<string, string[]> }>({ context: "", roles: {} });
   const [selections, setSelections] = useState<DraftSelection[]>([]);
   const [firstPickSide, setFirstPickSide] = useState<DraftSide>("BLUE");
   const [query, setQuery] = useState("");
@@ -228,6 +245,17 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [pendingChampion, setPendingChampion] = useState<string | null>(null);
   const [timer, setTimer] = useState(30);
   const [timerRunning, setTimerRunning] = useState(false);
+  const [soloEnabled, setSoloEnabled] = useState(false);
+  const [manualSide, setManualSide] = useState<DraftSide>("BLUE");
+  const [lastAuto, setLastAuto] = useState<SoloAutoRecord | null>(null);
+  // Review of every real auto turn in the current set (frozen pre-choice records). Autosaved with the board
+  // as local practice notes and restored only on the initial local restore of the same exact board.
+  const [autoHistory, setAutoHistory] = useState<SoloAutoHistory>([]);
+  // Identity of records that came from the local notes sidecar (provenance for the panel note only).
+  const [restoredNotes, setRestoredNotes] = useState<SoloAutoHistory>([]);
+  // Bumped by every accepted board replacement (restore/import/share/library/room), so a slower startup
+  // read or hash can never apply over a board accepted meanwhile.
+  const restoreGeneration = useRef(0);
   const [sessionReady, setSessionReady] = useState(false);
   const [importing, setImporting] = useState(false);
   const [storageStatus, setStorageStatus] = useState<StorageStatus>({ code: "CHECKING" });
@@ -245,10 +273,36 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [comparisonEpoch, setComparisonEpoch] = useState(0);
   // Live virtual roster published by the roster editor (tagged with its basis and pair); null until restored.
   const [liveRoster, setLiveRoster] = useState<LiveRoster | null>(null);
+  // Season-player presence reported by the roster editor (null while none is mounted).
+  const [rosterMeta, setRosterMeta] = useState<RosterMeta | null>(null);
+  // Explicit roster restore from the practice library (token + validated payload).
+  const [rosterRequest, setRosterRequest] = useState<RosterRestoreRequest | null>(null);
+  const rosterToken = useRef(0);
   /** Current ready simulation input (with explicit roles) reported by the readiness panel, or null. */
   const [readyInput, setReadyInput] = useState<SimulationInputSnapshot | null>(null);
+  // Past-season players: practice/saving/observation only, never assumption-experiment input.
+  const historicalPlayers = rosterMeta?.seasonPlayers ?? false;
+  const experimentReadyInput = historicalPlayers ? null : readyInput;
   const blueTeam = teams.find((team) => team.team_id === blueTeamId) ?? null;
   const redTeam = teams.find((team) => team.team_id === redTeamId) ?? null;
+  const positionContext = positionContextKey(report, blueTeamId, redTeamId, firstPickSide, games, room.active);
+  const positionUnassigned = positionState.context === positionContext ? positionState.unassigned ?? {} : {};
+  const positionRoles: RoleAssignments = {};
+  for (const [side, team] of [["BLUE", blueTeam], ["RED", redTeam]] as const) if (team) positionRoles[team.team_id] = reconcileChampionRoles(positionState.context === positionContext ? positionState.roles[team.team_id] ?? emptyChampionRoles() : emptyChampionRoles(), teamPicks(selections, side));
+  function assignPosition(side: DraftSide, id: string, role: RosterRole | null) {
+    const team = side === "BLUE" ? blueTeam : redTeam;
+    if (!team || room.active || !sessionReady || importing) return;
+    setPositionState(current => ({ context: positionContext, unassigned: { ...(current.context === positionContext ? current.unassigned : {}), [team.team_id]: [...(current.context === positionContext ? current.unassigned?.[team.team_id] ?? [] : []).filter(value => championKey(value) !== championKey(id)), ...(role === null ? [id] : [])] }, roles: { ...(current.context === positionContext ? current.roles : {}), [team.team_id]: moveChampionRole(current.context === positionContext ? current.roles[team.team_id] ?? emptyChampionRoles() : emptyChampionRoles(), id, role, teamPicks(selections, side)) } }));
+  }
+  function confirmPositions(side: DraftSide) {
+    const team = side === "BLUE" ? blueTeam : redTeam;
+    if (!team || room.active || !sessionReady || importing) return;
+    const board = buildDraftPositionBoard({ team, side, selections, assignments: positionRoles[team.team_id], unassigned: positionUnassigned[team.team_id] });
+    if (!board.canConfirm) return;
+    const roles = emptyChampionRoles();
+    for (const position of board.positions) roles[position.role] = position.champion_id;
+    setPositionState(current => ({ context: positionContext, unassigned: current.context === positionContext ? current.unassigned : {}, roles: { ...(current.context === positionContext ? current.roles : {}), [team.team_id]: roles } }));
+  }
   const turn = nextDraftTurn(selections, firstPickSide);
   const frame = useMemo(
     () => buildDraftAgentFrame(report, blueTeam, redTeam, selections, previousPicks, firstPickSide),
@@ -257,9 +311,51 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const preview = useMemo(() => previewOpponentPick(report, blueTeam, redTeam, selections, pendingChampion, previousPicks, 3, firstPickSide),
     [report, blueTeam, redTeam, selections, pendingChampion, previousPicks, firstPickSide]);
   const canSelect = sessionReady && !importing && Boolean(blueTeam && redTeam) && (Boolean(seriesReport) || feedLabel !== "FEED CONNECTING");
-  const roomCanAct = !room.active || Boolean(room.connected && !room.sending && room.snapshot?.status === "DRAFTING" && room.role === turn?.side);
+  const soloWaiting = soloEnabled && !room.active && !!turn && turn.side !== manualSide;
+  const roomCanAct = (!room.active || Boolean(room.connected && !room.sending && room.snapshot?.status === "DRAFTING" && room.role === turn?.side)) && !soloWaiting;
   const roomHostReady = Boolean(room.role === "BLUE" && room.connected && !room.sending);
   const hasCurrentWork = selections.length > 0 || Boolean(pendingChampion);
+  // Only a finished current set joins the recap; its team IDs are the board's at completion.
+  const recapCurrent = useMemo<DraftGame | null>(() => selections.length === 20 ? { blue_team_id: blueTeamId, red_team_id: redTeamId, selections } : null,
+    [selections, blueTeamId, redTeamId]);
+
+  const soloSeason = useSoloSeasonHistory(report, productRootHref(currentSpace), (soloEnabled || studioTab === "DETAILS") && !room.active);
+  const autoChoice = useMemo(() => soloEnabled && !room.active && !soloSeason.loading ? suggestSoloDraftTurn({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, manualSide, seasonHistory: soloSeason.history }) : null,
+    [soloEnabled, room.active, report, blueTeam, redTeam, selections, previousPicks, firstPickSide, manualSide, soloSeason.loading, soloSeason.history]);
+  useEffect(() => {
+    if (!autoChoice || !canSelect || pendingReset || studioTab !== "DRAFT" || room.active) return;
+    const timerId = window.setTimeout(() => {
+      setSeriesReport(current => current ?? structuredClone(report));
+      setSelections(current => current === selections ? applyDraftSelection(current, autoChoice.champion_id, previousPicks, firstPickSide) : current);
+      setPendingChampion(null); setInspected(null); setTimer(30); setTimerRunning(false);
+      // Explanation is computed once per real auto choice from the same pre-choice input, never per render.
+      const explained = explainSoloDraftTurn({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, manualSide, seasonHistory: soloSeason.history });
+      const record: SoloAutoRecord = { turn: selections.length + 1, champion_id: autoChoice.champion_id, reason: autoChoice.reason,
+        prefix: selections.map(s => s.champion_id), context: soloAutoContext(blueTeam?.team_id, redTeam?.team_id, firstPickSide, manualSide, previousPicks),
+        explanation: explained?.selected.champion_id === autoChoice.champion_id && explained.turn === selections.length + 1 ? explained : null };
+      setLastAuto(record);
+      // Same record, frozen, keyed additionally by the data basis it was explained against.
+      setAutoHistory(current => appendSoloAutoHistory(current, { ...record, context: soloHistoryContext(record.context, basisKey(rosterBasis(report))) }));
+    }, 600);
+    return () => window.clearTimeout(timerId);
+  }, [autoChoice, canSelect, pendingReset, studioTab, room.active, report, selections, previousPicks, firstPickSide, blueTeam, redTeam, manualSide, soloSeason.history]);
+  const autoContext = useMemo(() => soloAutoContext(blueTeam?.team_id, redTeam?.team_id, firstPickSide, manualSide, previousPicks),
+    [blueTeam?.team_id, redTeam?.team_id, firstPickSide, manualSide, previousPicks]);
+  const reportBasis = useMemo(() => basisKey(rosterBasis(report)), [report]);
+  const historyContext = useMemo(() => soloHistoryContext(autoContext, reportBasis), [autoContext, reportBasis]);
+  // Adjust-during-render: entries no longer on the board (undo/reselect/reset/team/side/first pick/
+  // next set/basis change, room mode or a lost race) are dropped for good, so a later manual choice of
+  // the same champion on the same turn is never shown as automatic. Same for the last-choice record.
+  // Memoized so the autosave request only changes with the board/notes, not on timer/status renders.
+  const prunedHistory = useMemo(() => room.active ? [] : pruneSoloAutoHistory(autoHistory, selections, historyContext),
+    [room.active, autoHistory, selections, historyContext]);
+  if (prunedHistory !== autoHistory && (prunedHistory.length || autoHistory.length)) setAutoHistory(prunedHistory);
+  if (lastAuto && !soloAutoRecordMatches(lastAuto, selections, autoContext)) setLastAuto(null);
+  useEffect(() => {
+    const pause = () => setSoloEnabled(false);
+    window.addEventListener("hashchange", pause);
+    return () => window.removeEventListener("hashchange", pause);
+  }, []);
 
   useEffect(() => {
     if (pendingReset) { resetDialog.current?.showModal(); cancelReset.current?.focus(); }
@@ -267,6 +363,19 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   }, [pendingReset]);
 
   const restoreSession = useCallback((session: DraftSession) => {
+    restoreGeneration.current += 1;
+    // Every restore path clears notes (a fresh empty list, so autosave deletes any sidecar even for an
+    // identical board string). Only the initial local restore re-applies validated notes afterwards.
+    setSoloEnabled(false); setLastAuto(null); setAutoHistory([]); setRestoredNotes([]);
+    // Any other restore path drops a not-yet-applied practice roster request.
+    setRosterRequest(null);
+    // Saved explicit roles/unassigned picks (v4) come back for this exact local context; suggestions are never stored.
+    const saved = Object.entries(session.positions ?? {});
+    setPositionState(saved.length ? {
+      context: positionContextKey(session.report, session.blueTeamId, session.redTeamId, session.firstPickSide, session.games, false),
+      roles: Object.fromEntries(saved.map(([id, team]) => [id, { ...team.roles }])),
+      unassigned: Object.fromEntries(saved.map(([id, team]) => [id, [...team.unassigned]])),
+    } : { context: "", roles: {} });
     setSeriesReport(session.report);
     setBlueTeamId(session.blueTeamId);
     setRedTeamId(session.redTeamId);
@@ -283,28 +392,65 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
   useEffect(() => {
     let active = true;
-    readLocalDraft().then((saved) => {
-      if (!active) return;
-      if (saved) {
-        const result = parseDraftSession(saved);
-        if (result.ok) {
-          setComparisonEpoch((epoch) => epoch + 1);
-          restoreSession(result.session);
-          setStorageStatus({ code: "RESTORED" });
-        } else setStorageStatus({ code: "RESTORE_FAILED", reason: sessionReason(result) });
-      } else setStorageStatus({ code: "IDLE" });
+    const generation = restoreGeneration.current;
+    // One read + parse + optional hash/codec promise; nothing applies after unmount or after another
+    // board was accepted meanwhile. Note failures restore the board alone and are never RESTORE_FAILED.
+    readLocalDraftForRestore().then((saved) => {
+      if (!active || generation !== restoreGeneration.current) return;
+      if (saved.kind === "RESTORED") {
+        setComparisonEpoch((epoch) => epoch + 1);
+        restoreSession(saved.session);
+        if (saved.notes) {
+          // Frozen records exactly as saved; automatic opponent play stays off and nothing is re-suggested/explained.
+          setManualSide(saved.notes.manualSide);
+          setAutoHistory(saved.notes.records);
+          setRestoredNotes(saved.notes.records);
+        }
+        setStorageStatus({ code: "RESTORED" });
+      } else if (saved.kind === "INVALID") setStorageStatus({ code: "RESTORE_FAILED", reason: sessionReason(saved.result) });
+      else setStorageStatus({ code: "IDLE" });
     }).catch(() => {
-      if (active) setStorageStatus({ code: "UNAVAILABLE" });
+      if (active && generation === restoreGeneration.current) setStorageStatus({ code: "UNAVAILABLE" });
     }).finally(() => { if (active) setSessionReady(true); });
     return () => { active = false; };
   }, [restoreSession]);
 
+  // Explicit local position work only (memoized; never part of share links or room messages).
+  const positionRecord = useMemo(() => {
+    if (room.active || positionState.context !== positionContext) return null;
+    return normalizeDraftPositions(positionState.roles, positionState.unassigned ?? {}, { blueTeamId, redTeamId, selections });
+  }, [room.active, positionState, positionContext, blueTeamId, redTeamId, selections]);
   const saveSnapshot = useMemo(() => {
-    if (!sessionReady || !seriesReport || !blueTeam || !redTeam || importing) return null;
-    return serializeDraftScenario(seriesReport, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide);
-  }, [sessionReady, seriesReport, blueTeam, redTeam, selections, games, pendingChampion, importing, firstPickSide]);
+    if (!sessionReady || !seriesReport || !blueTeam || !redTeam || importing || room.active) return null;
+    return serializeDraftScenario(seriesReport, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide, positionRecord);
+  }, [sessionReady, seriesReport, blueTeam, redTeam, selections, games, pendingChampion, importing, firstPickSide, room.active, positionRecord]);
+  // Current-player roster for the practice library: only when the editor's live roster belongs to this
+  // exact frozen basis and pair. Season players are never saved as current players: they travel as
+  // separate catalog references, and only when every reference still resolves in the loaded catalog.
+  const practiceRoster = useMemo(() => {
+    if (!saveSnapshot || !seriesReport || !liveRoster || !rosterMeta || (rosterMeta.seasonPlayers && !rosterMeta.season)) return null;
+    const teamIds = [blueTeamId, redTeamId].sort() as [string, string];
+    if (basisKey(liveRoster.basis) !== basisKey(rosterBasis(seriesReport)) || pairKey(liveRoster.teamIds) !== pairKey(teamIds)) return null;
+    if (rosterMeta.season && pairKey(Object.keys(rosterMeta.season.lineups)) !== pairKey(teamIds)) return null;
+    return serializeRosterScenario({ basis: liveRoster.basis, team_ids: teamIds, rosters: liveRoster.rosters }, buildRosterIndex(seriesReport.opponent_prep?.teams ?? []));
+  }, [saveSnapshot, seriesReport, liveRoster, rosterMeta, blueTeamId, redTeamId]);
+  const practiceSeason = practiceRoster !== null ? rosterMeta?.season ?? null : null;
+  const practiceRosterBlocked = rosterMeta?.seasonPlayers && !rosterMeta.season
+    ? "시즌 선수 자료가 불러와지지 않았거나 저장된 시즌 선수를 현재 자료에서 확인하지 못해 선수 구성은 함께 저장할 수 없습니다. 밴픽만 저장하거나 시즌 자료를 다시 불러와 주세요."
+    : null;
+  const seasonRoot = productRootHref(currentSpace);
+  const loadSeasonCatalog = useCallback((signal: AbortSignal, expected?: { catalog_id: string; cutoff: string }) => loadPublishedSeasonCatalog(seasonRoot, signal, expected), [seasonRoot]);
+  // Practice library gate: any board/context/mode change invalidates a pending or in-flight library load.
+  const practiceBoardKey = useMemo(() => JSON.stringify([seriesReport ? [seriesReport.patch_id, seriesReport.cutoff] : null,
+    blueTeamId, redTeamId, firstPickSide, games, selections, pendingChampion, positionRecord, room.active, importing, sessionReady]),
+  [seriesReport, blueTeamId, redTeamId, firstPickSide, games, selections, pendingChampion, positionRecord, room.active, importing, sessionReady]);
+  // saveSnapshot stays the raw board string (the practice library uses it). The autosave request adds the
+  // pruned local notes and manual side; null exactly when saveSnapshot is null (not ready/import/room).
+  // A notes or manual-side change resubmits even for identical board bytes; an empty list deletes the sidecar.
+  const autosaveRequest = useMemo<DraftAutosaveRequest | null>(() => saveSnapshot === null ? null : { scenario: saveSnapshot, manualSide, records: prunedHistory },
+    [saveSnapshot, manualSide, prunedHistory]);
   // Memoized above, so timer ticks and status updates never resubmit; each committed change is written immediately.
-  const retrySave = useDraftSave(saveSnapshot, setStorageStatus);
+  const retrySave = useDraftSave(autosaveRequest, setStorageStatus);
 
   const shareSession = useMemo(() => ({ report, blueTeamId, redTeamId, games, selections, stagedChampion: pendingChampion, firstPickSide }),
     [report, blueTeamId, redTeamId, games, selections, pendingChampion, firstPickSide]);
@@ -412,6 +558,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
   function resetDraft() {
     if (room.active) return;
+    setLastAuto(null); setAutoHistory([]);
+    setPositionState({ context: "", roles: {} });
     setSelections([]);
     setPendingChampion(null);
     setInspected(null);
@@ -424,6 +572,26 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     if (!seriesReport) setSeriesReport(structuredClone(report));
     setPendingChampion(championId);
     setInspected(null);
+  }
+
+  const exampleGuard = exampleBlockReason({ canSelect, roomActive: room.active, selections: selections.length, games: games.length, pendingChampion: Boolean(pendingChampion), hasHistoricalPlayers: historicalPlayers });
+  // Explicit "use the example" click: re-checks the current values, then sets the authored draft and
+  // roles once on an empty first set. Readiness re-validates and publishes the input; nothing runs.
+  function applySimulationExample() {
+    if (exampleGuard) return;
+    const example = buildSimulationExample({ report, blueTeam, redTeam, firstPickSide, roster: liveRoster, hasHistoricalPlayers: historicalPlayers });
+    if (!example.ok) return;
+    // Same series lock as a first manual choice: the displayed report becomes the fixed series report.
+    if (!seriesReport) setSeriesReport(structuredClone(report));
+    setSelections(example.selections);
+    setPositionState({ context: positionContext, unassigned: {}, roles: Object.fromEntries(Object.entries(example.roles).map(([id, roles]) => [id, { ...roles }])) });
+    setPendingChampion(null);
+    setInspected(null);
+    setLastAuto(null);
+    setAutoHistory([]);
+    setTimer(30);
+    setTimerRunning(false);
+    setQuery("");
   }
 
   function confirmChampion() {
@@ -458,7 +626,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
   function undo() {
     if (room.active) return;
-    setSelections((current) => current.slice(0, -1));
+    setPositionState({ context: "", roles: {} });
+    setSelections((current) => soloEnabled ? current.slice(0, Math.max(0, current.findLastIndex(item => item.side === manualSide))) : current.slice(0, -1));
+    setLastAuto(null);
     setPendingChampion(null);
     setInspected(null);
     setTimer(30);
@@ -494,7 +664,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
   function downloadScenario() {
     if (!blueTeam || !redTeam) return;
-    const blob = new Blob([serializeDraftScenario(report, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide)], { type: "application/json" });
+    const blob = new Blob([serializeDraftScenario(report, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide, positionRecord)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -588,6 +758,18 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
     <div className="studio-panels">
     <div id={panelOf("DRAFT")} className="studio-draft-panel" role="tabpanel" aria-labelledby={`${panelOf("DRAFT")}-tab`} hidden={studioTab !== "DRAFT"}>
+    <section className="solo-draft" lang="ko" aria-label="혼자 밴픽 연습">
+      <div className="solo-draft-controls">
+        <label><input type="checkbox" checked={soloEnabled} disabled={!canSelect || room.active} onChange={event => { setSoloEnabled(event.target.checked); setPendingChampion(null); setLastAuto(null); setAutoHistory([]); setTimerRunning(false); }} />상대 자동 밴픽</label>
+        <label>내 진영<select aria-label="내 진영" value={manualSide} disabled={!canSelect || room.active} onChange={event => { if (event.target.value === "BLUE" || event.target.value === "RED") { setManualSide(event.target.value); setPendingChampion(null); setLastAuto(null); } }}><option value="BLUE">블루</option><option value="RED">레드</option></select></label>
+      </div>
+      <p>{room.active ? "친구 방에서는 참가자가 직접 밴픽합니다." : soloEnabled ? "내 팀만 선택하면 상대는 공개 기록을 참고해 자기 차례를 진행합니다. 자동 선택은 연습용이며 실제 팀의 전략을 예측하지 않습니다." : "켜면 혼자서도 한 팀만 조작하며 끝까지 연습할 수 있어요. 끄면 양 팀을 직접 선택합니다."}</p>
+      {soloEnabled && <p role="status">{soloSeason.loading ? "시즌 선수 기록을 확인하고 있어요…" : soloSeason.error ? "시즌 자료를 확인하지 못해 현재 팀 기록·메타 후보로 연습합니다." : "같은 팀의 현재 관측 선수 시즌 기록을 함께 참고합니다. 가상 로스터 변경은 자동 상대에 반영하지 않습니다."}</p>}
+      {soloWaiting && !soloSeason.loading && <p role="status">{autoChoice ? "상대가 카드를 고르고 있어요…" : "자동 선택을 확인하지 못했습니다. 자동 밴픽을 끄고 직접 이어가세요."}</p>}
+      {soloAutoRecordMatches(lastAuto, selections, autoContext) && <SoloDraftExplanationPanel record={lastAuto} nameOf={nameOf} />}
+      {!room.active && <SoloDraftHistoryPanel history={prunedHistory} nameOf={nameOf} patchId={report.patch_id} cutoff={report.cutoff ?? ""}
+        restored={restoredNotes.length > 0 && prunedHistory.some(record => restoredNotes.includes(record))} />}
+    </section>
     <section className="draft-series" aria-label={t("draft.seriesLabel")} lang={lang.ui}>
       <label className="draft-first-selection">{t("draft.firstPick")}
         <select value={firstPickSide} disabled={room.active || !canSelect || selections.length > 0 || Boolean(pendingChampion)} onChange={(event) => {
@@ -604,7 +786,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         {!saveSnapshot && <small>{importing ? "파일을 불러오는 중이라 지금은 다시 저장할 수 없습니다." : "저장할 최신 밴픽이 아직 없습니다."}</small>}
         <small>현재 화면의 최신 밴픽만 다시 저장하며 이전 상태로 되돌리지 않습니다.</small>
       </div>}
-      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={setRoom} onSnapshot={(session, reset) => {
+      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={next => { setRoom(next); if (next.active) { restoreGeneration.current += 1; setSoloEnabled(false); setLastAuto(null); setAutoHistory([]); setRestoredNotes([]); setPositionState({ context: "", roles: {} }); } }} onSnapshot={(session, reset) => {
+        restoreGeneration.current += 1;
         if (reset) setComparisonEpoch(epoch => epoch + 1);
         setSeriesReport(session.report); setBlueTeamId(session.blueTeamId); setRedTeamId(session.redTeamId);
         setGames(session.games); setSelections(session.selections); setFirstPickSide(session.firstPickSide);
@@ -612,6 +795,16 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       }} />
       <DraftSharePanel outgoing={shareSession} liveReport={liveReport} ready={canSelect && !room.active} incomingReady={!room.active && sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onAccept={(session) => { if (room.active) return; setComparisonEpoch((epoch) => epoch + 1); setPendingReset(null); restoreSession(session); }} />
       <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={() => setPendingReset("SERIES")} disabled={room.active || (!games.length && !hasCurrentWork)}>{t("draft.resetSeries")}</button></div>
+      {/* Named local practices: separate database; loading reuses the file-import reset path. */}
+      <DraftPracticeLibraryPanel scenario={saveSnapshot} roster={practiceRoster} season={practiceSeason} rosterBlocked={practiceRosterBlocked} boardKey={practiceBoardKey} hasWork={hasCurrentWork || games.length > 0} locked={room.active || !sessionReady || importing}
+        loadSeasonCatalog={loadSeasonCatalog}
+        onLoad={(session, roster, season) => {
+          if (room.active) return;
+          setComparisonEpoch((epoch) => epoch + 1); setPendingReset(null); restoreSession(session);
+          // Withdraw the old roster until the editor applies the saved one, so A/B and simulation never capture a mixed state.
+          // Draft, current roster and season refs arrive together, already fully verified by the panel.
+          if (roster) { setLiveRoster(null); setRosterRequest({ token: ++rosterToken.current, roster, season }); }
+        }} />
       <details className="draft-session-details"><summary lang="ko">고급 설정 · 파일 저장·불러오기</summary>
       <p>{format("draft.sessionInfo", { state: t(seriesReport ? "draft.sessionInfo.locked" : "draft.sessionInfo.pending"), patch: report.patch_id, cutoff: report.cutoff ?? "", model: DRAFT_MODEL_VERSION })}</p>
       <div className="draft-session-controls"><button type="button" onClick={downloadScenario} disabled={!selections.length && !games.length}>{t("draft.scenarioJson")}</button><label>{t("draft.import")}<input type="file" accept=".json,application/json" disabled={room.active || !sessionReady || importing} onChange={(event) => void importScenario(event.currentTarget)} /></label><button type="button" onClick={downloadScenario} disabled={!canSelect}>{t("draft.saveJson")}</button></div>
@@ -624,7 +817,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
     {/* No lang on the stage/picker containers: their children set lang per control. */}
     <section className="draft-stage" aria-label={t("draft.stageLabel")} inert={!canSelect}>
-      <TeamDraftColumn side="BLUE" team={blueTeam} selections={selections} staged={staged} active={turn?.side === "BLUE"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
+      <TeamDraftColumn unassigned={blueTeam ? positionUnassigned[blueTeam.team_id] ?? [] : []} assignments={blueTeam ? positionRoles[blueTeam.team_id] : emptyChampionRoles()} positionDisabled={!canSelect || room.active} onAssign={(id, role) => assignPosition("BLUE", id, role)} onConfirm={() => confirmPositions("BLUE")} side="BLUE" team={blueTeam} selections={selections} staged={staged} active={turn?.side === "BLUE"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
       <section className="draft-control-room">
         <div className={`draft-clock ${timer <= 10 ? "urgent" : ""}`} lang={lang.ui}><span>{`TURN ${Math.min(selections.length + 1, STANDARD_DRAFT_SEQUENCE.length)} / ${STANDARD_DRAFT_SEQUENCE.length}`}</span><strong>{String(timer).padStart(2, "0")}</strong><button type="button" onClick={() => setTimerRunning((running) => !running)} disabled={!turn}>{timerRunning ? t("draft.timerPause") : t("draft.timerStart")}</button></div>
         <div className={`draft-current-turn ${turn?.side.toLowerCase() ?? "complete"}`} role="status" lang={lang.ui}><span>{phaseLabel}</span><h2>{turn ? format("draft.turnHeading", { team: frame.acting_team_name ?? "", side: t(sideKey(turn.side)) }) : t("draft.scenarioComplete")}</h2><p>{turn ? format(turnHintKey(turn.kind), { slot: turn.slot }) : t("draft.turnDoneHint")}</p>{room.active && <p className="draft-room-turn">{room.role === "SPECTATOR" ? "관전 중 · 선택할 수 없습니다" : room.role === "BLUE" ? "나는 블루" : room.role === "RED" ? "나는 레드" : "참여 확인 중"} · {room.ended ? "참여 종료" : !room.connected ? "연결 확인 중" : room.sending ? "선택 반영 중" : room.snapshot?.status === "WAITING" ? "레드 참가 대기" : turn ? `${turn.side === "BLUE" ? "블루" : "레드"} 차례` : "세트 완료"}</p>}{!turn && <button type="button" disabled={room.active && !roomHostReady} onClick={nextGame}>{t("draft.nextGame")}</button>}</div>
@@ -649,11 +842,13 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
           {/* The full champion info lives in the details panel; this only switches panels. */}
           <button type="button" className="studio-info-entry" lang={lang.ui} aria-controls={panelOf("DETAILS")} onClick={openChampionInfo}>{t("draft.championInfoOpen")}</button>
         </section>
-        <div className="draft-actions" lang={lang.ui}><button type="button" onClick={undo} disabled={room.active || !selections.length}>{t("draft.undo")}</button><button type="button" onClick={() => setPendingReset("GAME")} disabled={room.active || !hasCurrentWork}>{t("draft.resetGame")}</button></div>
+        <div className="draft-actions" lang={lang.ui}><button type="button" onClick={undo} disabled={room.active || (soloEnabled ? !selections.some(s => s.side === manualSide) : !selections.length)} lang={soloEnabled ? "ko" : undefined}>{soloEnabled ? "내 마지막 선택 되돌리기" : t("draft.undo")}</button><button type="button" onClick={() => setPendingReset("GAME")} disabled={room.active || !hasCurrentWork}>{t("draft.resetGame")}</button></div>
         <ol className="draft-sequence-mini" aria-label={t("draft.sequenceLabel")} lang={lang.ui}>{draftSequence(firstPickSide).map((item, index) => <li className={index < selections.length ? "done" : index === selections.length ? "current" : ""} key={index}><span>{index + 1}</span><b>{item.side === "BLUE" ? "B" : "R"}{item.kind === "BAN" ? "B" : "P"}{item.slot}</b></li>)}</ol>
       </section>
-      <TeamDraftColumn side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
+      <TeamDraftColumn unassigned={redTeam ? positionUnassigned[redTeam.team_id] ?? [] : []} assignments={redTeam ? positionRoles[redTeam.team_id] : emptyChampionRoles()} positionDisabled={!canSelect || room.active} onAssign={(id, role) => assignPosition("RED", id, role)} onConfirm={() => confirmPositions("RED")} side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
     </section>
+    {selections.length === 20 && <DraftResultPanel report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} previousPicks={previousPicks} firstPickSide={firstPickSide} nameOf={nameOf} autoReveal={soloEnabled && studioTab === "DRAFT" && !room.active} disabled={!canSelect || room.active} onReplay={() => setPendingReset("GAME")} onNext={nextGame} positionRecord={positionRecord} />}
+    {!room.active && (games.length > 0 || selections.length === 20) && <DraftSeriesRecapPanel report={report} games={games} current={recapCurrent} nameOf={nameOf} />}
     </div>
 
     <div id={panelOf("ROSTER")} className="studio-roster-panel" role="tabpanel" aria-labelledby={`${panelOf("ROSTER")}-tab`} hidden={studioTab !== "ROSTER"}>
@@ -662,13 +857,13 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         already frozen A is not changed retroactively. */}
     <RosterWorkshop report={report} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={!canSelect}
       selections={selections} previousPicks={previousPicks} focusChampionId={championFocus?.champion_id ?? null}
-      publicationRoot={productRootHref(currentSpace)} defaultOpen onRosterChange={setLiveRoster} />
+      publicationRoot={productRootHref(currentSpace)} defaultOpen onRosterChange={setLiveRoster} restoreRequest={rosterRequest} onRosterMeta={setRosterMeta} />
     </div>
 
     <div id={panelOf("DETAILS")} className="studio-details-panel" role="tabpanel" aria-labelledby={`${panelOf("DETAILS")}-tab`} hidden={studioTab !== "DETAILS"}>
     <nav className="draft-workspace-nav" aria-label="상세 분석 이동"><button type="button" onClick={() => showStudioTab("DRAFT")}>모의 밴픽으로</button><a href={productSpaceHref(currentSpace, "TEAM")}>선택한 두 팀 분석</a><a href={productSpaceHref(currentSpace, "PROOF")}>예측 검증 결과</a></nav>
     <div id="studio-champion-info" className="studio-champion-info" tabIndex={-1}>
-      <DraftChampionInfo focus={championFocus} report={report} blueTeam={blueTeam} redTeam={redTeam} nameOf={nameOf} onCloseInspect={() => setInspected(null)} />
+      <DraftChampionInfo seasonLoading={soloSeason.loading} seasonHistory={soloSeason.history} focus={championFocus} report={report} blueTeam={blueTeam} redTeam={redTeam} nameOf={nameOf} onCloseInspect={() => setInspected(null)} />
     </div>
     <p className="studio-details-staged" role="status">{pendingChampion ? `${nameOf(pendingChampion)} 올려놓음 · 확정은 모의 밴픽 탭에서 합니다.` : turn ? "올려놓은 챔피언이 없습니다. 아래 후보를 누르면 올려놓기만 하고 확정하지 않습니다." : "밴픽이 완료되었습니다."}</p>
     <section id="draft-preview" className="draft-response-preview" aria-label="확정 전 상대 픽 예상" aria-live="polite">
@@ -701,7 +896,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
 
     <div id={panelOf("COMPARISON")} className="studio-comparison-panel" role="tabpanel" aria-labelledby={`${panelOf("COMPARISON")}-tab`} hidden={studioTab !== "COMPARISON"}>
     <DraftComparisonPanel key={comparisonEpoch} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf}
-      readyInput={readyInput} publicationRoot={productRootHref(currentSpace)}
+      readyInput={experimentReadyInput} publicationRoot={productRootHref(currentSpace)}
       onOpenRoleAssignment={() => showStudioTab("SIMULATION", () => {
         const target = document.querySelector<HTMLElement>(`#${panelOf("SIMULATION")} .simulation-readiness-team select:not(:disabled)`)
           ?? document.querySelector<HTMLElement>(`#${panelOf("SIMULATION")} .simulation-readiness > summary`);
@@ -713,7 +908,19 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     <div id={panelOf("SIMULATION")} className="studio-simulation-panel" role="tabpanel" aria-labelledby={`${panelOf("SIMULATION")}-tab`} hidden={studioTab !== "SIMULATION"}>
     {/* Simulation input gate (with assigned-champion season records): explicit champion roles +
         current rosters; no outcome is computed. */}
-    <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} publicationRoot={productRootHref(currentSpace)} defaultOpen disabled={!canSelect} onReadyInputChange={setReadyInput} />
+    <SimulationExamplePanel report={report} blueTeam={blueTeam} redTeam={redTeam} firstPickSide={firstPickSide} roster={liveRoster} hasHistoricalPlayers={historicalPlayers} nameOf={nameOf} blockReason={exampleGuard} onApply={applySimulationExample} />
+    <SimulationReadinessPanel key={`sim-${comparisonEpoch}`} report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} games={games} firstPickSide={firstPickSide} roster={liveRoster} nameOf={nameOf} publicationRoot={productRootHref(currentSpace)} defaultOpen disabled={!canSelect || room.active} roleAssignments={positionRoles} onRoleAssign={(teamId, role, id) => {
+      const side = teamId === blueTeamId ? "BLUE" : "RED";
+      if (id) assignPosition(side, id, role);
+      else { const current = positionRoles[teamId]?.[role]; if (current) assignPosition(side, current, null); }
+    }} onReadyInputChange={setReadyInput} hasHistoricalPlayers={historicalPlayers}
+      onOpenRoster={() => showStudioTab("ROSTER", () => {
+        const target = document.getElementById(`${panelOf("ROSTER")}-tab`);
+        target?.focus();
+      })} />
+    {/* Assumption experiment on the validated ready input; runs only on its explicit button.
+        Past-season players are not experiment input, so a stale ready input is never passed on. */}
+    <ExperimentReplayPanel readyInput={experimentReadyInput} blocked={!canSelect || room.active} nameOf={nameOf} />
     </div>
     </div>
     </div>

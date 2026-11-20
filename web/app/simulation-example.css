@@ -1,0 +1,56 @@
+.simulation-example {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px solid rgba(127, 127, 127, 0.35);
+  border-radius: 8px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.simulation-example > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+}
+.simulation-example > summary:focus-visible,
+.simulation-example-apply:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.simulation-example-note,
+.simulation-example-reason,
+.simulation-example-bans {
+  margin: 6px 0;
+  font-size: 0.9em;
+}
+.simulation-example-teams {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.simulation-example-team h4 {
+  margin: 4px 0;
+}
+.simulation-example-team ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.simulation-example-team li {
+  display: grid;
+  grid-template-columns: 4em minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+  padding: 2px 0;
+}
+.simulation-example-apply {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 16px;
+  margin-top: 6px;
+}
+@media (max-width: 640px) {
+  .simulation-example-teams {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

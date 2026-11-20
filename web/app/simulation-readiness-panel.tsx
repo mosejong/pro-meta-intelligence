@@ -20,6 +20,8 @@ import { SimulationPlayerEvidence } from "./simulation-player-evidence-panel";
 import "./simulation-readiness-panel.css";
 
 type SimulationReadinessPanelProps = {
+  roleAssignments?: Record<string, ChampionRoles>;
+  onRoleAssign?: (teamId: string, role: RosterRole, championId: string) => void;
   report: RadarReport;
   blueTeam: OpponentTeam | null;
   redTeam: OpponentTeam | null;
@@ -39,6 +41,14 @@ type SimulationReadinessPanelProps = {
    * Called only when the ready input actually changes; a new callback identity or re-render never re-notifies.
    */
   onReadyInputChange?: (snapshot: SimulationInputSnapshot | null) => void;
+  /**
+   * A past-season player is in the live roster. Those players are supported for practice, saving and
+   * observation reference only, not as assumption-experiment input: no ready input is published,
+   * fixed or exported while true. Clearing it returns to the normal readiness checks unchanged.
+   */
+  hasHistoricalPlayers?: boolean;
+  /** Moves to the roster tab only; never edits the roster or the draft. */
+  onOpenRoster?: () => void;
 };
 
 const roleLabels: Record<RosterRole, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
@@ -79,7 +89,7 @@ function FixedInputView({ snapshot, nameOf }: { snapshot: SimulationInputSnapsho
  * the fixed input lives in memory only. Replaying a file is display-only: it never changes the
  * draft, rosters, the A/B baseline or device storage. No outcome or winner is computed here.
  */
-export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, nameOf, publicationRoot = "./", disabled = false, defaultOpen = false, onReadyInputChange }: SimulationReadinessPanelProps) {
+export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections, games, firstPickSide, roster, nameOf, publicationRoot = "./", disabled = false, defaultOpen = false, onReadyInputChange, roleAssignments, onRoleAssign, hasHistoricalPlayers = false, onOpenRoster }: SimulationReadinessPanelProps) {
   const [roleDraft, setRoleDraft] = useState<RoleDraft>({});
   const [open, setOpen] = useState(defaultOpen);
   const [fixed, setFixed] = useState<SimulationInputSnapshot | null>(null);
@@ -109,6 +119,7 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
     return result;
   }, [basis, blueTeam, redTeam, firstPickSide, games.length, selections]);
   const rolesOf = (teamId: string): ChampionRoles => {
+    if (roleAssignments) return roleAssignments[teamId] ?? emptyChampionRoles();
     const entry = roleDraft[teamId];
     return entry && entry.context === contexts[teamId] ? entry.roles : emptyChampionRoles();
   };
@@ -123,7 +134,9 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
   const readyCallback = useRef(onReadyInputChange);
   useEffect(() => { readyCallback.current = onReadyInputChange; });
   const notified = useRef<SimulationInputSnapshot | null>(null);
-  const readySnapshot = readiness.ok ? readiness.snapshot : null;
+  // Past-season players are not experiment input: the readiness result is never published while present.
+  const usable = readiness.ok && !hasHistoricalPlayers;
+  const readySnapshot = usable && readiness.ok ? readiness.snapshot : null;
   useEffect(() => {
     const previous = notified.current;
     if (previous === readySnapshot) return;
@@ -145,6 +158,7 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
   function assign(teamId: string, role: RosterRole, championId: string) {
     const context = contexts[teamId];
     if (!context || disabled) return;
+    if (roleAssignments) { onRoleAssign?.(teamId, role, championId); return; }
     setRoleDraft((current) => {
       const roles = { ...(current[teamId]?.context === context ? current[teamId].roles : emptyChampionRoles()) };
       // One champion per team occupies one role: choosing it again moves it here.
@@ -155,13 +169,13 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
   }
 
   function fix() {
-    if (!readiness.ok) return;
+    if (!readiness.ok || hasHistoricalPlayers) return;
     setFixed(readiness.snapshot);
     setExportMessage("");
   }
 
   function download() {
-    if (!fixed) return;
+    if (!fixed || hasHistoricalPlayers) return;
     const result = serializeManagerScenario(report, fixed);
     if (!result.ok) { setExportMessage(result.message); return; }
     const url = URL.createObjectURL(new Blob([result.text], { type: "application/json" }));
@@ -201,14 +215,17 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
     if (fileInput.current) fileInput.current.value = "";
   }
 
-  const fixedSame = fixed && readiness.ok ? sameSimulationInput(fixed, readiness.snapshot) : false;
-  const replaySame = replay && readiness.ok ? sameSimulationInput(replay.snapshot, readiness.snapshot) : false;
-  const summaryState = fixed ? "입력 고정됨" : readiness.ok ? "준비 가능" : complete ? "역할·로스터 확인 필요" : `미충족 · 밴픽 ${selections.length}/20`;
+  const fixedSame = fixed && usable && readiness.ok ? sameSimulationInput(fixed, readiness.snapshot) : false;
+  const replaySame = replay && usable && readiness.ok ? sameSimulationInput(replay.snapshot, readiness.snapshot) : false;
+  const summaryState = hasHistoricalPlayers ? "과거 시즌 선수 · 실험 입력 미연결" : fixed ? "입력 고정됨" : readiness.ok ? "준비 가능" : complete ? "역할·로스터 확인 필요" : `미충족 · 밴픽 ${selections.length}/20`;
+  // An empty current slot may be a past-season player kept in the roster; never present it as a lost player.
+  const slotLabel = (slot: RosterSlotRecord | null | undefined, teamId: string) =>
+    !slot && hasHistoricalPlayers ? "현재 선수 입력 없음 (과거 시즌 선수 여부는 선수 구성에서 확인)" : playerLabel(slot, teamId);
 
   return <details className="simulation-readiness" lang="ko" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
     <summary>시뮬레이션 입력 준비 <small>{summaryState}</small></summary>
     <div className="simulation-readiness-body">
-      <p className="simulation-readiness-note" role="note">역할은 사용자 배정입니다. 선수 근거는 현재 관측이며 연간 자료는 포함하지 않습니다. 학습된 선수/챔피언 효과·상성·룬·아이템·실제 승률은 아직 계산하지 않습니다.</p>
+      <p className="simulation-readiness-note" role="note">역할은 사용자 배정입니다. 입력 표에는 현재 관측 선수를 표시하고, 별도 선수 근거에서 올해의 역할별 사용 기록을 확인할 수 있습니다. 학습된 선수·과거 시즌 선수·챔피언 효과와 상성·룬·아이템·실제 승률은 아직 계산하지 않습니다.</p>
       {!complete && <p className="simulation-readiness-pending" role="status">밴픽 20개를 완료하면 각 팀 픽 5개를 역할에 배정할 수 있습니다. 현재 {selections.length}/20개입니다.</p>}
       {complete && blueTeam && redTeam && <div className="simulation-readiness-teams">{SIDES.map((side) => {
         const team = side === "BLUE" ? blueTeam : redTeam;
@@ -225,17 +242,21 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
                   {picks.map((id) => <option key={id} value={id}>{nameOf(id)}</option>)}
                 </select>
               </label>
-              <small>{capture ? playerLabel(capture.teams[team.team_id]?.[role], team.team_id) : "로스터 확인 중"}</small>
+              <small>{capture ? slotLabel(capture.teams[team.team_id]?.[role], team.team_id) : "로스터 확인 중"}</small>
             </li>;
           })}</ol>
         </fieldset>;
       })}</div>}
-      {complete && !readiness.ok && <ul className="simulation-readiness-issues" aria-label="준비 미충족 항목">{readiness.issues.map((issue, index) => <li key={index}>{issue.message}</li>)}</ul>}
-      {readiness.ok && <p role="status">입력 준비 완료: 두 팀의 역할 10개와 로스터 10명이 현재 밴픽·분석 데이터와 맞습니다.</p>}
-      <SimulationPlayerEvidence snapshot={readiness.ok ? readiness.snapshot : null} basis={reportBasis} publicationRoot={publicationRoot} nameOf={nameOf} />
+      {hasHistoricalPlayers && <div className="simulation-readiness-issues" role="status">
+        <p><b>과거 시즌 선수가 선수 구성에 있어 가정 실험 입력을 만들지 않습니다.</b> 과거 시즌 선수 구성은 연습·보관·밴픽 관측 참고용이며 현재 가정 실험 입력에는 연결되지 않습니다. 선수가 사라지거나 저장에 실패한 것이 아니며, 선수 구성은 그대로 유지됩니다.</p>
+        {onOpenRoster && <button type="button" onClick={onOpenRoster}>선수 구성 확인</button>}
+      </div>}
+      {complete && !readiness.ok && !hasHistoricalPlayers && <ul className="simulation-readiness-issues" aria-label="준비 미충족 항목">{readiness.issues.map((issue, index) => <li key={index}>{issue.message}</li>)}</ul>}
+      {usable && <p role="status">입력 준비 완료: 두 팀의 역할 10개와 로스터 10명이 현재 밴픽·분석 데이터와 맞습니다.</p>}
+      <SimulationPlayerEvidence snapshot={readySnapshot} basis={reportBasis} publicationRoot={publicationRoot} nameOf={nameOf} />
       <div className="simulation-readiness-actions">
-        <button type="button" disabled={!readiness.ok || disabled} onClick={fix}>{fixed ? "현재 입력으로 다시 고정" : "준비된 입력 고정"}</button>
-        <button type="button" disabled={!fixed} onClick={download}>입력 JSON 저장</button>
+        <button type="button" disabled={!usable || disabled} onClick={fix}>{fixed ? "현재 입력으로 다시 고정" : "준비된 입력 고정"}</button>
+        <button type="button" disabled={!fixed || hasHistoricalPlayers} onClick={download}>입력 JSON 저장</button>
         <button type="button" disabled={!fixed} onClick={() => { setFixed(null); setExportMessage(""); }}>고정 해제</button>
       </div>
       {fixed && <section className="simulation-readiness-fixed-section" aria-label="고정한 시뮬레이션 입력">
@@ -254,7 +275,7 @@ export function SimulationReadinessPanel({ report, blueTeam, redTeam, selections
         </div>
         {replayMessage && <p role={replayMessage.tone}>{replayMessage.text}</p>}
         {replay && <>
-          <p className="simulation-readiness-identity" role="status">{replaySame ? "현재 입력과 같음" : readiness.ok ? "현재 입력과 다름" : "현재 입력과 다름 (현재 입력이 아직 준비되지 않았습니다)"}</p>
+          <p className="simulation-readiness-identity" role="status">{replaySame ? "현재 입력과 같음" : usable ? "현재 입력과 다름" : "현재 입력과 다름 (현재 입력이 아직 준비되지 않았습니다)"}</p>
           <FixedInputView snapshot={replay.snapshot} nameOf={nameOf} />
         </>}
       </section>

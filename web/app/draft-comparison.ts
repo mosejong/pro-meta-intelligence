@@ -222,13 +222,14 @@ export function compareDraftSnapshots(a: DraftComparisonSnapshot, b: DraftCompar
     // Physical slot (side/kind/slot) is the comparison unit, so first-selection changes surface as slot changes.
     const after = b.selections.find((item) => item.side === before.side && item.kind === before.kind && item.slot === before.slot);
     if (!after) return { ok: false, message: "비교할 슬롯이 맞지 않습니다. 기준 A를 다시 고정하세요." };
-    if (keyOf(before.champion_id) !== keyOf(after.champion_id)) changes.push({ before, after });
+    // Detached copies: editing a returned change never reaches the fixed A or current B.
+    if (keyOf(before.champion_id) !== keyOf(after.champion_id)) changes.push({ before: { ...before }, after: { ...after } });
   }
   const aLocks = new Set(a.locks.map(keyOf));
   const bLocks = new Set(b.locks.map(keyOf));
   return { ok: true, changes, unchangedCount: 20 - changes.length,
     teamChanges: (["BLUE", "RED"] as const).filter((side) => a.teams[side].id !== b.teams[side].id)
-      .map((side) => ({ side, before: a.teams[side], after: b.teams[side] })),
+      .map((side) => ({ side, before: { ...a.teams[side] }, after: { ...b.teams[side] } })),
     firstPickChanged: a.firstPickSide !== b.firstPickSide,
     addedLocks: b.locks.filter((id) => !aLocks.has(keyOf(id))),
     removedLocks: a.locks.filter((id) => !bLocks.has(keyOf(id))),

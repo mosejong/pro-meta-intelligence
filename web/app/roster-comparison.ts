@@ -87,6 +87,11 @@ export function captureRoster(report: RadarReport, teamIds: readonly string[], b
   return { ok: true, capture: { basis: { ...expected, source_versions: [...expected.source_versions] }, team_ids: sorted, teams } };
 }
 
+/** Fresh copy of a slot record so a returned comparison never aliases a frozen capture. */
+const copySlot = (slot: RosterSlotRecord | null): RosterSlotRecord | null => slot
+  ? { source_team_id: slot.source_team_id, player_id: slot.player_id, player_name: slot.player_name, source_team_name: slot.source_team_name }
+  : null;
+
 const sameSlot = (left: RosterSlotRecord | null, right: RosterSlotRecord | null) =>
   left === right || Boolean(left && right && left.source_team_id === right.source_team_id && left.player_id === right.player_id);
 
@@ -98,7 +103,7 @@ export function compareRosterCaptures(a: RosterCapture | null, b: RosterCapture 
   for (const teamId of a.team_ids) for (const role of ROSTER_ROLES) {
     const before = a.teams[teamId]?.[role] ?? null;
     const after = b.teams[teamId]?.[role] ?? null;
-    if (!sameSlot(before, after)) changes.push({ team_id: teamId, role, a: before, b: after });
+    if (!sameSlot(before, after)) changes.push({ team_id: teamId, role, a: copySlot(before), b: copySlot(after) });
   }
   return { status: "COMPARED", changes };
 }
@@ -109,7 +114,7 @@ const assignmentRecord = (slot: RosterSlotRecord | null) => slot ? { source_team
 export function rosterExport(capture: RosterCapture) {
   return {
     evidence_scope: ROSTER_EVIDENCE_SCOPE,
-    basis: capture.basis,
+    basis: { ...capture.basis, source_versions: [...capture.basis.source_versions] },
     rosters: Object.fromEntries(capture.team_ids.map((teamId) => [teamId, Object.fromEntries(ROSTER_ROLES.map((role) => {
       const slot = capture.teams[teamId][role];
       return [role, slot ? { source_team_id: slot.source_team_id, player_id: slot.player_id, player_name: slot.player_name } : null];

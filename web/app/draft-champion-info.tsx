@@ -4,6 +4,9 @@
 
 import { useId, useRef, useState, type KeyboardEvent } from "react";
 import { championAssetId, championImageUrl, DATA_DRAGON_VERSION } from "./champion-assets";
+import { draftCandidateEvidence } from "./draft-candidate-evidence";
+import "./draft-candidate-evidence.css";
+import type { SeasonHistory } from "./player-season-history";
 import type { DraftSelection, DraftSide } from "./draft-agent";
 import type { OpponentChampionTendency, OpponentTeam, RadarReport } from "./radar-types";
 
@@ -164,7 +167,9 @@ function focusLabel(focus: ChampionFocus) {
   return `${side} ${focus.selection.slot}번째 ${kind} · 확정됨${focus.inspected ? " · 정보 열람 중" : ""}`;
 }
 
-export function DraftChampionInfo({ focus, report, blueTeam, redTeam, nameOf, initialTab = "OVERVIEW", onCloseInspect }: {
+export function DraftChampionInfo({ focus, report, blueTeam, redTeam, nameOf, initialTab = "OVERVIEW", onCloseInspect, seasonHistory, seasonLoading = false }: {
+  seasonHistory?: SeasonHistory | null;
+  seasonLoading?: boolean;
   focus: ChampionFocus | null;
   report: RadarReport;
   blueTeam: OpponentTeam | null;
@@ -223,6 +228,17 @@ export function DraftChampionInfo({ focus, report, blueTeam, redTeam, nameOf, in
     </div>
     <div className="studio-info-body" role="tabpanel" id={`${id}-panel`} aria-labelledby={`${id}-tab-${tab}`}>
       {tab === "OVERVIEW" && <>
+        <section className="draft-candidate-evidence" aria-label="픽 검토 근거">
+          {seasonLoading && <p className="studio-info-note" role="status">시즌 선수 기록을 확인하고 있어요…</p>}
+          {([blueTeam, redTeam] as const).filter((team): team is OpponentTeam => !!team).map(team => {
+            const evidence = draftCandidateEvidence(report, team, focus.champion_id, seasonHistory);
+            return <div key={team.team_id} data-candidate-category={evidence.category}>
+              <b>{team.team_name} · {evidence.label}</b>
+              <p className="studio-info-note">팀·현재 관측 선수 기록 {evidence.teamObserved ? "확인" : "미확인"} · 시즌 사용 기록 {evidence.seasonObserved ? "확인" : "미확인"}</p>
+              <p className="studio-info-note">{evidence.boundary}</p>
+            </div>;
+          })}
+        </section>
         <dl>
           <div><dt>공개 기록 역할</dt><dd>{summary.observed_roles.length ? summary.observed_roles.map((role) => championRoleLabels[role]).join(" · ") : "관측 없음"}</dd></div>
           {summary.teams.map((team) => <div key={team.side}><dt>{team.team_name} · 팀 공개 요약</dt><dd>

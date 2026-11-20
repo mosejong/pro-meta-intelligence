@@ -1,0 +1,104 @@
+/* Specificity keeps legacy pick-card rules from changing the position board. */
+main.draft-lab.draft-studio .draft-pick-stack.draft-position-board,
+.draft-pick-stack.draft-position-board {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--studio-text, #ececea);
+}
+
+main.draft-lab.draft-studio .draft-position-board article,
+.draft-pick-stack.draft-position-board article {
+  display: grid;
+  grid-template-columns: 26px 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 64px;
+  padding: 6px;
+  border: 1px solid var(--studio-line, #34373c);
+  border-radius: 3px;
+  background: var(--studio-bg, #111214);
+  overflow: visible;
+}
+
+main.draft-lab.draft-studio .draft-position-board article > b,
+.draft-pick-stack.draft-position-board article > b {
+  padding: 0;
+  color: var(--studio-muted, #a7a9ad);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+main.draft-lab.draft-studio .draft-position-board article img,
+.draft-pick-stack.draft-position-board article img {
+  grid-column: 2;
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+}
+
+main.draft-lab.draft-studio .draft-position-board article div,
+.draft-pick-stack.draft-position-board article div {
+  grid-column: 3;
+  min-width: 0;
+  padding: 0;
+}
+
+main.draft-lab.draft-studio .draft-position-board article strong,
+.draft-pick-stack.draft-position-board article strong {
+  color: var(--studio-text, #ececea);
+  font-size: 13px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+main.draft-lab.draft-studio .draft-position-board article span,
+.draft-pick-stack.draft-position-board article span {
+  color: var(--studio-muted, #a7a9ad);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+main.draft-lab.draft-studio .draft-position-board article .draft-position-controls,
+.draft-pick-stack.draft-position-board article .draft-position-controls {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.draft-pick-stack.draft-position-board :is(select, button) {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px;
+  border: 1px solid var(--studio-line, #34373c);
+  border-radius: 3px;
+  background: var(--studio-raised, #202226);
+  color: var(--studio-text, #ececea);
+  font: inherit;
+  font-size: 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  touch-action: manipulation;
+}
+
+.draft-pick-stack.draft-position-board :is(select, button):focus-visible {
+  outline: 2px solid #f0d6ae;
+  outline-offset: 2px;
+}
+.draft-pick-stack.draft-position-board button[aria-pressed="true"] { border-color: #dfb981; }
+.draft-pick-stack.draft-position-board :disabled { opacity: .5; cursor: not-allowed; }
+.draft-pick-stack.draft-position-board .draft-position-confirm { border-color: #dfb981; color: #dfb981; }
+.draft-position-board .draft-position-hint { margin: 0 0 2px; color: var(--studio-muted, #a7a9ad); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.draft-position-board .draft-position-unassigned { display: grid; gap: 6px; min-width: 0; }
+.draft-position-board .draft-position-unassigned h3 { margin: 4px 0 0; color: #dfb981; font-size: 12px; }
+main.draft-lab.draft-studio .draft-position-board > article.staged,
+.draft-pick-stack.draft-position-board > article.staged { border: 1px dashed #dfb981; background: var(--studio-raised, #202226); }
+main.draft-lab.draft-studio .draft-position-board article.draft-position-empty > div,
+.draft-pick-stack.draft-position-board article.draft-position-empty > div { grid-column: 2 / -1; }

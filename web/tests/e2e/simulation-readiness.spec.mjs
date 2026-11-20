@@ -92,14 +92,15 @@ test("20 turns → explicit roles → fix → export → read-only replay → ro
   for (const side of ["blue", "red"]) for (const role of ROLES) await expect(roleSlot(page, side, role)).toHaveValue("");
   const fix = body.getByRole("button", { name: "준비된 입력 고정", exact: true });
   await expect(fix).toBeDisabled();
-  // Explicit assignment in reverse pick order on blue; choosing a champion twice moves it.
+  // Explicit assignment in reverse pick order on blue; occupied roles swap consistently with the board.
   for (const side of ["blue", "red"]) for (const [i, role] of ROLES.entries()) {
     await roleSlot(page, side, role).selectOption({ index: side === "blue" ? 5 - i : i + 1 });
   }
   const blueTop = await roleSlot(page, "blue", "TOP").inputValue();
+  const blueMid = await roleSlot(page, "blue", "MID").inputValue();
   await roleSlot(page, "blue", "MID").selectOption(blueTop);
-  await expect(roleSlot(page, "blue", "TOP")).toHaveValue("");
-  await expect(fix).toBeDisabled();
+  await expect(roleSlot(page, "blue", "TOP")).toHaveValue(blueMid);
+  await expect(fix).toBeEnabled();
   await roleSlot(page, "blue", "TOP").selectOption({ index: 3 });
   await expect(body.getByRole("status").filter({ hasText: "입력 준비 완료" })).toBeVisible();
   await fix.click();

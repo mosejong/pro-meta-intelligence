@@ -1,5 +1,6 @@
 import { championAssetId } from "./champion-assets";
 import { applyDraftSelection, completeFearlessGame, DRAFT_MODEL_VERSION, fearlessLocks, isChampionLocked, nextDraftTurn, type DraftGame, type DraftSelection, type DraftSide } from "./draft-agent";
+import { parseDraftPositions, type DraftPositionRecord } from "./draft-position-session";
 import { isRadarReport, type RadarReport } from "./radar-types";
 
 export const MAX_DRAFT_FILE_BYTES = 16 * 1024 * 1024;
@@ -11,6 +12,8 @@ export type DraftSession = {
   selections: DraftSelection[];
   stagedChampion: string | null;
   firstPickSide: DraftSide;
+  /** Explicit current-game position work (schema v4, local practice only); absent when none. */
+  positions?: DraftPositionRecord;
 };
 /**
  * Stable parse-failure codes. `error` keeps the existing Korean text for current callers;
@@ -70,7 +73,9 @@ export function parseDraftSession(text: string): DraftSessionResult {
   if (new TextEncoder().encode(text).byteLength > MAX_DRAFT_FILE_BYTES) return fail("SIZE_LIMIT");
   let value: unknown;
   try { value = JSON.parse(text); } catch { return fail("INVALID_JSON"); }
-  if (!record(value) || value.artifact_type !== "public-draft-scenario" || (value.schema_version !== "2" && value.schema_version !== "3") || value.format !== "HARD_FEARLESS_5_BAN_5_PICK") return fail("UNSUPPORTED_FORMAT");
+  // v2: blue first, no roles. v3: chosen first-pick side, no roles. v4: v3 + required current-game positions.
+  if (!record(value) || value.artifact_type !== "public-draft-scenario" || !["2", "3", "4"].includes(value.schema_version as string) || value.format !== "HARD_FEARLESS_5_BAN_5_PICK") return fail("UNSUPPORTED_FORMAT");
+  if (value.schema_version === "4" ? !record(value.current_game_positions) : Object.hasOwn(value, "current_game_positions")) return fail("UNSUPPORTED_FORMAT");
   const firstPickSide = value.schema_version === "2" ? "BLUE" : value.first_pick_side;
   if (firstPickSide !== "BLUE" && firstPickSide !== "RED") return fail("INVALID_FIRST_PICK_SIDE");
   if (value.model_version !== DRAFT_MODEL_VERSION) return fail("MODEL_VERSION_MISMATCH");
@@ -92,7 +97,7 @@ export function parseDraftSession(text: string): DraftSessionResult {
   for (const game of value.previous_games) {
     if (!record(game) || ![blue.team_id, red.team_id].includes(String(game.blue_team_id)) ||
       ![blue.team_id, red.team_id].includes(String(game.red_team_id))) return fail("PREVIOUS_MATCHUP_MISMATCH");
-    const gameFirstSide = value.schema_version === "3" && Array.isArray(game.selections) && record(game.selections[0]) ? game.selections[0].side : "BLUE";
+    const gameFirstSide = value.schema_version !== "2" && Array.isArray(game.selections) && record(game.selections[0]) ? game.selections[0].side : "BLUE";
     if (gameFirstSide !== "BLUE" && gameFirstSide !== "RED") return fail("PREVIOUS_FIRST_PICK_SIDE");
     const selections = replaySelections(game.selections, fearlessLocks(games), gameFirstSide);
     if (!selections) return fail("PREVIOUS_SELECTIONS");
@@ -105,7 +110,10 @@ export function parseDraftSession(text: string): DraftSessionResult {
   if (!selections || value.game_number !== games.length + 1 || value.complete !== (selections.length === 20)) return fail("CURRENT_GAME");
   const stagedChampion = value.staged_champion ?? null;
   if (stagedChampion !== null && (!validChampion(stagedChampion) || !nextDraftTurn(selections) || isChampionLocked(selections, stagedChampion, locks))) return fail("STAGED_CHAMPION");
-  return { ok: true, session: { report, blueTeamId: blue.team_id, redTeamId: red.team_id, games, selections, stagedChampion, firstPickSide } };
+  // Reuses CURRENT_GAME (existing translated text): positions belong to the current game record.
+  const positions = value.schema_version === "4" ? parseDraftPositions(value.current_game_positions, { blueTeamId: blue.team_id, redTeamId: red.team_id, selections }) : {};
+  if (!positions) return fail("CURRENT_GAME");
+  return { ok: true, session: { report, blueTeamId: blue.team_id, redTeamId: red.team_id, games, selections, stagedChampion, firstPickSide, ...(Object.keys(positions).length ? { positions } : {}) } };
 }
 
 // IndexedDB accommodates the complete public snapshot without localStorage's small quota.
@@ -148,23 +156,126 @@ export async function readLocalDraft(timeoutMs = DRAFT_STORAGE_TIMEOUT_MS): Prom
   } finally { database.close(); }
 }
 
-async function persistLocalDraft(text: string, timeoutMs: number): Promise<void> {
+/**
+ * Local solo auto-choice review sidecar, kept in the same `sessions` store next to `current`.
+ * `current` stays the exact raw board text; both values are opaque here (the caller parses the board,
+ * hashes it and runs solo-review-retention.ts). A stored review is local practice notes, never proof.
+ */
+export const SOLO_REVIEW_KEY = "current-solo-review";
+const DRAFT_KEY = "current";
+/** Same 64 KiB UTF-8 bound as MAX_SOLO_REVIEW_BYTES in solo-review-retention.ts (not imported: keeps this module UI-free). */
+export const SOLO_REVIEW_STORAGE_MAX_BYTES = 64 * 1024;
+export type LocalDraftWithReview = { scenario: string | null; review: string | null };
+
+/** Non-empty string within the byte bound, else null (never truncated). */
+function boundedReview(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 && value.length <= SOLO_REVIEW_STORAGE_MAX_BYTES &&
+    new TextEncoder().encode(value).byteLength <= SOLO_REVIEW_STORAGE_MAX_BYTES ? value : null;
+}
+
+/**
+ * Board and review from ONE readonly transaction; resolves only after both reads and transaction completion.
+ * A missing, non-string, oversized or unreadable sidecar gives `review: null` without blocking the board.
+ * Open/board-read/transaction failures and the deadline reject like readLocalDraft.
+ */
+export async function readLocalDraftWithReview(timeoutMs = DRAFT_STORAGE_TIMEOUT_MS): Promise<LocalDraftWithReview> {
   const database = await openDraftDatabase(timeoutMs);
   try {
-    await new Promise<void>((resolve, reject) => {
-      const transaction = database.transaction("sessions", "readwrite");
-      const timer = setTimeout(() => { reject(new Error("Draft storage write timed out")); transaction.abort(); }, timeoutMs);
-      try { transaction.objectStore("sessions").put(text, "current"); }
-      catch (error) { clearTimeout(timer); reject(error); transaction.abort(); return; }
-      transaction.oncomplete = () => { clearTimeout(timer); resolve(); };
-      transaction.onerror = () => { clearTimeout(timer); reject(transaction.error); };
-      transaction.onabort = () => { clearTimeout(timer); reject(transaction.error); };
+    return await new Promise<LocalDraftWithReview>((resolve, reject) => {
+      let settled = false, boardRead = false;
+      let scenario: string | null = null, review: string | null = null;
+      let transaction: IDBTransaction | undefined;
+      const settle = (done: () => void) => { if (!settled) { settled = true; clearTimeout(timer); done(); } };
+      const abort = () => { try { transaction?.abort(); } catch { /* already finished */ } };
+      const timer = setTimeout(() => settle(() => { reject(new Error("Draft storage read timed out")); abort(); }), timeoutMs);
+      try {
+        const tx = database.transaction("sessions", "readonly");
+        transaction = tx;
+        const store = tx.objectStore("sessions");
+        const board = store.get(DRAFT_KEY);
+        const side = store.get(SOLO_REVIEW_KEY);
+        board.onsuccess = () => { boardRead = true; scenario = typeof board.result === "string" ? board.result : null; };
+        board.onerror = () => settle(() => reject(board.error));
+        side.onsuccess = () => { review = boundedReview(side.result); };
+        // A failed sidecar read only drops the review; preventing the default keeps the transaction alive for the board.
+        side.onerror = (event: Event) => { event.preventDefault(); review = null; };
+        tx.oncomplete = () => settle(() => boardRead ? resolve({ scenario, review }) : reject(new Error("Draft storage read incomplete")));
+        tx.onabort = () => settle(() => reject(tx.error ?? new Error("Draft storage read aborted")));
+      } catch (error) { settle(() => { reject(error); abort(); }); }
     });
   } finally { database.close(); }
 }
 
+/**
+ * Writes `current` and the sidecar (PUT review, or DELETE when null) in ONE readwrite transaction.
+ * Settlement state machine: the first of complete / error / abort / deadline / setup failure settles;
+ * later callbacks are ignored and nothing is written after settlement.
+ * Fallback: only when a review was included and that transaction aborted by itself (e.g. QuotaExceededError),
+ * one board-PUT + sidecar-DELETE transaction starts on the same connection after the abort event. It shares the
+ * original transaction deadline, so the bound stays: open <= timeoutMs, then all transactions <= timeoutMs.
+ * Deadline, blocked/open failures and synchronous setup errors never fall back.
+ */
+async function persistLocalDraft(scenario: string, review: string | null, timeoutMs: number): Promise<void> {
+  const database = await openDraftDatabase(timeoutMs);
+  try {
+    await new Promise<void>((resolve, reject) => {
+      let settled = false, fellBack = false;
+      let active: IDBTransaction | undefined;
+      const settle = (error?: unknown, failed = false) => {
+        if (settled) return;
+        settled = true; clearTimeout(timer);
+        if (failed) reject(error); else resolve();
+      };
+      const abortActive = () => { try { active?.abort(); } catch { /* already finished */ } };
+      const timer = setTimeout(() => { settle(new Error("Draft storage write timed out"), true); abortActive(); }, timeoutMs);
+      const run = (withReview: string | null) => {
+        const canFallBack = withReview !== null && !fellBack;
+        let tx: IDBTransaction | undefined;
+        let requestError: unknown = null;
+        try {
+          const created = database.transaction("sessions", "readwrite");
+          tx = created;
+          active = created;
+          created.oncomplete = () => { if (active === created) settle(); };
+          // A request error is NOT terminal: the transaction still rolls back and fires abort afterwards.
+          // Only record it; settling here would let the next queued writer start before the rollback finished.
+          created.onerror = () => { if (active === created) requestError ??= created.error; };
+          // Terminal failure: settle (or start the single fallback) only once the transaction has fully aborted.
+          created.onabort = () => {
+            if (active !== created || settled) return;
+            if (canFallBack) { fellBack = true; run(null); }
+            else settle(created.error ?? requestError ?? new Error("Draft storage write aborted"), true);
+          };
+          const store = created.objectStore("sessions");
+          store.put(scenario, DRAFT_KEY);
+          if (withReview === null) store.delete(SOLO_REVIEW_KEY); else store.put(withReview, SOLO_REVIEW_KEY);
+        } catch (error) {
+          if (!tx) { settle(error, true); return; }
+          // Setup failed on a live transaction: no fallback; reject on its terminal abort (the deadline still bounds this).
+          const failed = tx;
+          failed.onabort = () => { if (active === failed) settle(error, true); };
+          try { failed.abort(); } catch { settle(error, true); }
+        }
+      };
+      run(review);
+    });
+  } finally { database.close(); }
+}
+
+// One queue for both write APIs: calls run in invocation order, and a failure never blocks later writes.
 let pendingWrite: Promise<void> = Promise.resolve();
-export function writeLocalDraft(text: string, timeoutMs = DRAFT_STORAGE_TIMEOUT_MS): Promise<void> {
-  pendingWrite = pendingWrite.catch(() => undefined).then(() => persistLocalDraft(text, timeoutMs));
+function enqueueWrite(write: () => Promise<void>): Promise<void> {
+  pendingWrite = pendingWrite.catch(() => undefined).then(write);
   return pendingWrite;
+}
+
+/** Board-only write. Also deletes the review sidecar in the same transaction, so no stale reasons survive (even for identical board bytes). */
+export function writeLocalDraft(text: string, timeoutMs = DRAFT_STORAGE_TIMEOUT_MS): Promise<void> {
+  return enqueueWrite(() => persistLocalDraft(text, null, timeoutMs));
+}
+
+/** Board + review pair write. An empty, non-string or oversized review is stored as "no review" (DELETE), never truncated. */
+export function writeLocalDraftWithReview(scenario: string, review: string | null, timeoutMs = DRAFT_STORAGE_TIMEOUT_MS): Promise<void> {
+  const kept = boundedReview(review);
+  return enqueueWrite(() => persistLocalDraft(scenario, kept, timeoutMs));
 }

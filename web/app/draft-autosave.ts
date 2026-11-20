@@ -1,5 +1,8 @@
-/** Tracks durable acknowledgements independently of component status messages. */
-export function createDraftSaveTracker(write: (text: string) => Promise<void>) {
+/**
+ * Tracks durable acknowledgements independently of component status messages.
+ * `T` is the submitted save value (a raw draft string by default; draft-lab submits a board + notes request).
+ */
+export function createDraftSaveTracker<T = string>(write: (value: T) => Promise<void>) {
   let revision = 0;
   let acknowledged = 0;
   const savedListeners = new Set<() => void>();
@@ -9,10 +12,10 @@ export function createDraftSaveTracker(write: (text: string) => Promise<void>) {
       savedListeners.add(listener);
       return () => { savedListeners.delete(listener); };
     },
-    submit(text: string): Promise<void> {
+    submit(value: T): Promise<void> {
       const submitted = ++revision;
       // Mark dirty before the writer starts, including synchronous writer failures.
-      return Promise.resolve().then(() => write(text)).then(() => {
+      return Promise.resolve().then(() => write(value)).then(() => {
         acknowledged = Math.max(acknowledged, submitted);
         savedListeners.forEach((listener) => listener());
       });
@@ -29,19 +32,19 @@ export type DraftSaveStatusCode = "SAVING" | "SAVED" | "SAVE_FAILED";
  * submissions are ignored, so a slow old write cannot overwrite the newest status.
  * Nothing here retries automatically, so status re-renders can never cause a save loop.
  */
-export function createDraftSaveSession(
-  tracker: Pick<ReturnType<typeof createDraftSaveTracker>, "submit">,
+export function createDraftSaveSession<T = string>(
+  tracker: { submit(value: T): Promise<void> },
   onStatus: (code: DraftSaveStatusCode) => void,
 ) {
   let generation = 0;
-  let latest: string | null = null;
+  let latest: T | null = null;
   let pending = false;
   let failed = false;
-  function run(text: string) {
+  function run(value: T) {
     const mine = ++generation;
     pending = true;
     failed = false;
-    const saved = tracker.submit(text);
+    const saved = tracker.submit(value);
     void Promise.resolve().then(() => { if (mine === generation && pending) onStatus("SAVING"); });
     void saved.then(
       () => { if (mine === generation) { pending = false; onStatus("SAVED"); } },
@@ -52,12 +55,12 @@ export function createDraftSaveSession(
   const canRetry = () => latest !== null && failed && !pending;
   return {
     /** null = no savable snapshot right now (restoring, importing, no locked data). */
-    submit(text: string | null) {
-      latest = text;
-      return text === null ? null : run(text);
+    submit(value: T | null) {
+      latest = value;
+      return value === null ? null : run(value);
     },
     canRetry,
-    retry() { return canRetry() ? run(latest!) : null; },
+    retry() { const value = latest; return canRetry() && value !== null ? run(value) : null; },
   };
 }
 

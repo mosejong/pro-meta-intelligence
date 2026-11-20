@@ -242,3 +242,20 @@ def test_windows_scripts_resolve_the_default_root_after_parameter_binding() -> N
         assert '[string]$RepositoryRoot = ""' in script
         assert "if (-not $RepositoryRoot)" in script
         assert "[string]$RepositoryRoot = (Resolve-Path" not in script
+
+
+def test_season_artifact_mode_is_read_only_and_exports_only_public_aggregates():
+    workflow = (ROOT / ".github/workflows/refresh-draft-scout.yml").read_text(encoding="utf-8")
+    assert "options: [scouting, season-artifact]" in workflow
+    assert "if: inputs.refresh_scope != 'season-artifact'" in workflow
+    job = workflow.split("  season-artifact:", 1)[1]
+    assert "if: inputs.refresh_scope == 'season-artifact'" in job
+    assert "actions: read" in job and "contents: read" in job
+    assert "contents: write" not in job and "pull-requests: write" not in job
+    assert "ref: ${{ github.sha }}" in job
+    assert "python ops/build_player_season_history.py" in job
+    assert "git push" not in job and "deploy-pages" not in job and "sync-oe-feed" not in job
+    exported = job.split("name: Export only derived public aggregates", 1)[1]
+    assert "player-season-2026.json" in exported and "manifest.json" in exported
+    assert ".pmi" not in exported and ".csv" not in exported
+    assert "if-no-files-found: error" in exported

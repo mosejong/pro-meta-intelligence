@@ -1,0 +1,25 @@
+.solo-draft { padding: 12px; border: 1px solid var(--studio-line, #343a40); background: var(--studio-panel, #16191c); margin: 12px 0; }
+.solo-draft-controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; }
+.solo-draft label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13px; }
+.solo-draft select { min-height: 44px; color: var(--studio-text, #eee); background: #101315; padding: 8px; border: 1px solid var(--studio-line, #343a40); }
+.solo-draft p { margin: 8px 0 0; color: var(--studio-muted, #a7afb7); font-size: 12px; overflow-wrap: anywhere; }
+.solo-draft [role="status"] { color: var(--studio-action, #debc86); }
+.draft-result { padding: 20px; border: 1px solid var(--studio-line, #343a40); margin: 16px 0; background: var(--studio-panel, #16191c); overflow-wrap: anywhere; scroll-margin-top: 64px; }
+.draft-result > header { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
+.draft-result h2 { margin: 4px 0; font-size: 20px; }
+.draft-result p, .draft-result small, .draft-result > header > span { color: var(--studio-muted, #a7afb7); font-size: 12px; }
+.draft-result h3 { margin: 0; font-size: 16px; }
+.draft-result h4 { font-size: 13px; margin: 16px 0 6px; }
+.draft-result-teams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.draft-result-teams article { min-width: 0; border-top: 2px solid var(--draft-blue, #86b9df); padding-top: 12px; }
+.draft-result-teams article.red { border-color: var(--draft-red, #df9696); }
+.draft-result-picks { display: grid; gap: 8px; list-style: none; margin: 12px 0; padding: 0; }
+.draft-result-picks li { display: flex; gap: 10px; min-width: 0; align-items: center; }
+.draft-result-picks img { width: 40px; height: 40px; border-radius: 3px; }
+.draft-result-picks li div { min-width: 0; display: grid; gap: 2px; }
+.draft-result-teams ul { padding-left: 18px; margin: 0; font-size: 12px; }
+.draft-result-teams ul li { margin-bottom: 4px; }
+.draft-result-boundary { border-top: 1px solid var(--studio-line, #343a40); padding-top: 12px; }
+.draft-result-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.draft-result button { min-height: 44px; padding: 8px 12px; }
+@media (max-width: 720px) { .draft-result { padding: 14px; } .draft-result-teams { grid-template-columns: 1fr; gap: 20px; } }

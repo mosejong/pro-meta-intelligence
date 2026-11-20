@@ -1983,7 +1983,10 @@ test("ships a normalized official schedule companion feed", async () => {
   assert.equal(schedule.artifact_type, "pro-schedule-snapshot");
   assert.equal(schedule.source_id, "lol-esports-schedule");
   assert.match(schedule.source_url, /^https:\/\/lolesports\.com\//);
-  assert.ok(schedule.events.length > 0);
+  // A legitimate official snapshot may have no upcoming events (events=[] with event_count 0);
+  // damaged/mismatched snapshots are still rejected by the count check below and the pages-build test.
+  assert.ok(Array.isArray(schedule.events));
+  assert.ok(Number.isSafeInteger(schedule.quality.event_count) && schedule.quality.event_count >= 0);
   assert.equal(schedule.quality.event_count, schedule.events.length);
   assert.ok(schedule.events.every((event) => event.participants.length === 2));
   assert.ok(schedule.events.every((event) => Date.parse(event.start_at) >= Date.parse(schedule.retrieved_at)));

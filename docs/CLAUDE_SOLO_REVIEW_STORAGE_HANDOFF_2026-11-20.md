@@ -1,0 +1,8 @@
+# Claude quota handoff · 2026-11-20 Asia/Seoul
+Session: 234ed5b7-e549-488c-b106-ede774fecd9b. Model claude-opus-5-5, effort medium. Do not switch paid credits/account/model.
+Actual result outputs/claude-solo-review-storage-fix-20261120-result.json is_error=true; exact message:
+"You've hit your 5-hour limit · resets 7:40am (Asia/Seoul)"
+Reset2026-11-20T07:40:00+09:00, resume no earlier than07:45KST. Prior local maxturn stops are unrelated.
+Claude implemented storage helpers then corrected nonterminal onerror settlement and old autosave fake. Codex related24/type/lint pass. See SOLO_REVIEW_STORAGE_2026-11-20.md and state for local commit. No running jobs, no product source edits by Codex, no further Claude request after actual limit.
+Pending: final Claude narrative report was interrupted, but source has independent passing evidence. Stage3 UI/hash/restore wiring is NOT implemented. On resume first inspect current state/git/result and avoid repeating verified storage work; same session review final narrow diff then prepare stage3 task. Preserve scenario v2-v4, shared serializers/library/links/rooms. read/write helpers pair raw strings, caller must compute SHA and parse codec before applying; saved notes not proven provenance. Restore manualSide, keep soloEnabled=false. Full integration/browser required when wiring.
+Automation4 registration changed to07:45KST daily pending real success; registration is not proof of execution. Restore original15min RRULE only AFTER an actual successful Claude response. No original source collection, push/merge/deploy/API/purchase/SoloQ/translation.

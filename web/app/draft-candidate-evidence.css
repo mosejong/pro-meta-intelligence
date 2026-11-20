@@ -1,0 +1,6 @@
+.draft-candidate-evidence { display: grid; gap: 8px; margin: 0 0 14px; min-width: 0; }
+.draft-candidate-evidence > div { min-width: 0; padding: 10px 12px; border: 1px solid var(--studio-line, #34373c); border-left: 3px solid #858a92; border-radius: 4px; background: var(--studio-bg, #111214); overflow-wrap: anywhere; }
+.draft-candidate-evidence > [data-candidate-category="META"] { border-left-color: #8db9cb; }
+.draft-candidate-evidence > [data-candidate-category="OFF_META"] { border-left-color: #dfb981; }
+.draft-candidate-evidence b { display: block; font-size: 13px; line-height: 1.6; color: var(--studio-text, #ececea); }
+.draft-candidate-evidence .studio-info-note { margin: 5px 0 0; line-height: 1.6; }

@@ -1,0 +1,13 @@
+.experiment-batch { margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid rgba(127, 127, 127, 0.3); }
+.experiment-batch h4 { margin: 0 0 0.35rem; }
+.experiment-batch-boundary, .experiment-batch-hint { font-size: 0.85em; opacity: 0.8; }
+.experiment-batch-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.experiment-batch-actions input { width: 3.5em; }
+.experiment-batch-actions input[aria-invalid] { outline: 2px solid #c0392b; }
+.experiment-batch-status:empty { display: none; }
+.experiment-batch-stale { color: #b9770e; }
+.experiment-batch-result[data-stale] { opacity: 0.6; }
+.experiment-batch-result ul { padding-left: 1.1rem; }
+.experiment-batch-scroll { overflow-x: auto; }
+.experiment-batch-scroll table { border-collapse: collapse; font-size: 0.85em; }
+.experiment-batch-scroll th, .experiment-batch-scroll td { padding: 0.2rem 0.45rem; text-align: right; white-space: nowrap; }

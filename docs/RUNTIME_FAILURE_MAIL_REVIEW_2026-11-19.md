@@ -22,6 +22,18 @@
 
 ## 운영 확인 관문
 
-운영 전용 PR 통합 및 다음 공식 일정 갱신/감시 결과 확인이 남는다. 일정 소스는 최소 **6시간 간격**을 지켜야 하므로 마지막 실패 요청 시각(11/19 02:13 KST) 직후 수동 반복 요청하지 않는다. 기존 cron상 다음 일정 갱신은 09:17 KST, 감시는 09:43 KST이나 실제 GitHub 실행은 지연될 수 있다. 10:45 후속 확인에서 새 일정 취득·빈 일정·공개 건강과 이슈 #120 회복 여부를 대조한다. 현재 시점에는 완전 복구/메일 중단을 확정하지 않는다.
+운영 전용 [PR #126](https://github.com/mosejong/pro-meta-intelligence/pull/126)은 원격 Python/web CI 모두 통과 후 main `b0d7455a`로 통합했다. 웹 파일은 포함하지 않아 새 제품 Pages 배포는 유발하지 않았다. 다음 공식 일정 갱신/감시의 실제 회복 결과 확인은 남는다.
+
+일정 소스는 최소 **6시간 간격**을 지켜야 하므로 마지막 실패 요청 시각(11/19 02:13 KST) 직후 수동 반복 요청하지 않는다. 기존 cron상 다음 일정 갱신은 09:17 KST, 감시는 09:43 KST이나 실제 GitHub 실행은 지연될 수 있다. 10:45 후속 자동화에 새 일정 취득·빈 일정·공개 건강과 이슈 #120 회복 여부 대조를 추가했다. 현재 시점에는 완전 복구/메일 중단을 확정하지 않는다.
 
 증거: `outputs/schedule-diagnostics-44356201642/`, `outputs/watchdog-44262583725/health.json`, `outputs/schedule-parser-compatibility-20261119.json`, `outputs/schedule-empty-offline-snapshot-20261119.json`, `outputs/runtime-mail-final-python-20261119.log`. 메일 알림은 과거 기록이므로 수정 뒤 과거 메일 자체가 사라지지 않는다.
+
+## 2026-11-19 · 09:03 KST 운영 후속 확인
+
+- [PR #127](https://github.com/mosejong/pro-meta-intelligence/pull/127) CI 통과 후 main 1cfbcf33에 통합했다. 정상 빈 일정의 Pages 검사를 수정하고 요청 직전 원장을 빌드 전에 서버 artifact로 보존한다. 기존 cron·정책·6시간 간격은 변경하지 않았다. web/tests 변경으로 기존 공개 UI의 Pages 재빌드 run44425297777이 실행돼 성공했으며, 로컬 제품 기능은 포함하지 않았다.
+- [실행44425299926](https://github.com/mosejong/pro-meta-intelligence/actions/runs/44425299926)은 과거 실행의 보수적 상한08:35:22 KST를 복원하고 쿨다운 성공으로 종료했다. 새 일정 제공처 요청·build·push·deploy는 없었다. artifact14482934628(schedule-attempt-state)을 실제 gh API로 내려받아 운영 restore 함수로 검증했고 동일 원장 시각을 복원했다. 따라서 ZIP redirect 및 실제 업로드 형식은 이 빈 후보/원장 경로에서 확인됐다. 새 취득 후보가 든 artifact의 실제 왕복은 후속 관문이다.
+- 공개 일정 신선도는 아직 회복 전이고 issue120은 OPEN이다. 다음 요청 하한은14:35:22 KST이며 이후 새 실제 요청이 생기면 다시 계산한다. 10:45 역사자료 예약은 일정 재요청을 하지 않게 보완했다. 14:45 일정 복구 후속은 최신 원장을 재검증한 뒤 한 번만 수행한다.
+- 임시 workflow 비활성화 시도는 자동 승인 심사에서 지속적 서비스 신선도 영향 때문에 거절돼 실행하지 않았다. 우회 비활성화·cron 변경·알림 숨김은 하지 않았다. 요청 원장 보존이라는 안전한 수정으로 예약은 유지한다.
+- 로컬 제품 브랜치에도 같은 운영 커밋을 적용한 뒤 독립 Python595개·ruff119파일·Pages5개 통과. 제품 비교의 웹321개·타입/lint·새 PC/모바일2개 검사와 범위를 구분한다. 자료 정합성은 SEASON_COMPATIBLE이다.
+
+증거: outputs/schedule-state-roundtrip/report.json, outputs/schedule-state-roundtrip/hosted.log, outputs/schedule-guard-integrated-python-20261119.log, outputs/schedule-guard-integrated-pages-20261119.log.
