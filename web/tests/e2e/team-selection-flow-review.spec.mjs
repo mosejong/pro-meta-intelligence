@@ -40,9 +40,8 @@ test("teams first; start, back cancels pending auto turn, continue and reload pr
   await expect(progress(page)).toHaveAttribute("value", "1");
   await expect(page.getByRole("button", { name: /^BLUE TEAM:/ })).toBeDisabled();
   await page.getByRole("button", { name: "밴픽 이어가기", exact: true }).click();
-  await expect(progress(page)).toHaveAttribute("value", "1");
-  await solo.getByRole("checkbox", { name: "상대 자동 밴픽", exact: true }).uncheck();
-  await solo.getByRole("checkbox", { name: "상대 자동 밴픽", exact: true }).check();
+  // Continue resumes the pending automatic turn itself. Toggling off/on here can run AFTER that turn
+  // finishes and deliberately clear its notes, so it cannot be used as a preservation check.
   await expect(progress(page)).toHaveAttribute("value", "2");
   await expect.poll(() => page.evaluate(() => new Promise((resolve, reject) => {
     const opening = indexedDB.open("pro-meta-draft", 1);

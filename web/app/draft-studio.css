@@ -370,6 +370,16 @@ main.draft-lab.draft-studio .draft-flow-actions button { min-height: 48px; paddi
 main.draft-lab.draft-studio .draft-flow-actions .draft-flow-primary { flex: 1 1 220px; border-color: var(--studio-action); background: var(--studio-action); color: #201b15; font-weight: 700; }
 main.draft-lab.draft-studio .draft-flow-actions .draft-flow-secondary { flex: 0 1 auto; background: transparent; font-size: 13px; }
 main.draft-lab.draft-studio .draft-flow-note { flex-basis: 100%; margin: 0; color: var(--studio-muted); font-size: 12px; }
+/* Setup practice mode: one compact radio group above the start button, existing palette, 44px rows. */
+main.draft-lab.draft-studio .draft-flow-mode { display: grid; gap: 4px; min-width: 0; margin: 0; padding: 0; border: 0; }
+main.draft-lab.draft-studio .draft-flow-mode legend { margin-bottom: 4px; padding: 0; color: var(--studio-text); font-size: 13px; font-weight: 650; }
+main.draft-lab.draft-studio .draft-flow-mode label { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border: 1px solid var(--studio-line); cursor: pointer; }
+main.draft-lab.draft-studio .draft-flow-mode label:has(input:checked) { border-color: var(--studio-action); }
+main.draft-lab.draft-studio .draft-flow-mode input { flex: 0 0 auto; width: 18px; height: 18px; margin: 0; accent-color: var(--studio-action); }
+main.draft-lab.draft-studio .draft-flow-mode span { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .draft-flow-mode small { color: var(--studio-muted); font-size: 12px; }
+main.draft-lab.draft-studio .draft-flow-mode:disabled label { cursor: default; opacity: 0.6; }
+main.draft-lab.draft-studio .draft-flow-mode .draft-flow-note { margin-top: 2px; }
 main.draft-lab.draft-studio .draft-flow-matchup { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 6px clamp(12px, 2vw, 32px); border-bottom: 1px solid var(--studio-line); background: var(--studio-bg); }
 main.draft-lab.draft-studio .draft-flow-matchup h2 { flex: 1 1 200px; min-width: 0; margin: 0; font-size: 15px; font-weight: 650; overflow-wrap: anywhere; }
 main.draft-lab.draft-studio .draft-flow-matchup h2 .blue { color: var(--draft-blue); }
