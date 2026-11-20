@@ -205,3 +205,7 @@ Status: **implemented, not run.** No commands, tests or historical runs were exe
   - no published or live history access.
 - `ops/current-draft-season-evaluation.mjs` (new): the CLI.
 - No base, UI, scorer, model, collector or package files changed.
+
+## Codex verification checkpoint
+
+Implementation-time unrun lists above are historical handoff notes. Independent execution completed: base JS28 plus season JS31 (combined59/59), Python26/26, scoped lint/format, verified2374 archive season build, and both real cohort CLIs. Frozen protocols30525faf and96712294 preceded their respective scoring runs. See [independent review](CODEX_CURRENT_DRAFT_RULE_REVIEW_2026-11-20.md) for results and limits. No product scorer changed, no predictive improvement claimed, no publish/deploy.
