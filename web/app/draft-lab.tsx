@@ -673,6 +673,13 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const modeChangeLoss = clearsStaged && clearsNotes ? " 방식을 바꾸면 대기 중인 카드와 이 세트의 자동 선택 기록이 정리됩니다."
     : clearsStaged ? " 방식을 바꾸면 대기 중인 카드가 정리됩니다."
       : clearsNotes ? " 방식을 바꾸면 이 세트의 자동 선택 기록이 정리됩니다." : "";
+  // First selection side, shared by the setup and draft-step selects. Locked only by the current set's board
+  // (room, not selectable, any selection or staged card); prior Fearless games never lock a new set's choice.
+  const firstSideLocked = room.active || !canSelect || selections.length > 0 || Boolean(pendingChampion);
+  function chooseFirstPickSide(side: string) {
+    if (firstSideLocked) return;
+    if (side === "BLUE" || side === "RED") { setFirstPickSide(side); if (!seriesReport) setSeriesReport(structuredClone(report)); }
+  }
   function enterDraft() {
     if (startBlock) return;
     // Unchanged effective mode touches nothing (board, staged card, notes, timer, prior solo state all kept).
@@ -837,6 +844,18 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         </label>)}
         <p className="draft-flow-note">{setupMode === "MANUAL" ? "두 팀의 차례를 모두 직접 고릅니다." : `시작하면 ${(setupMode === "SOLO_BLUE" ? redTeam?.team_name : blueTeam?.team_name) ?? "상대 팀"}의 차례는 공개 기록을 참고해 자동으로 진행됩니다. 연습용이며 실제 팀의 전략을 예측하지 않습니다.`}{modeChangeLoss}</p>
       </fieldset>
+      {/* Optional match setting: the same firstPickSide state/guard as the draft-step select. Choosing here never
+          acts or starts a timer; the board (and any auto turn) only runs after the explicit start below. */}
+      <details className="draft-flow-options" lang="ko">
+        <summary>경기 설정</summary>
+        <label className="draft-setup-first-selection">시작할 첫 선택 진영
+          <select value={firstPickSide} disabled={firstSideLocked} onChange={(event) => chooseFirstPickSide(event.target.value)}>
+            <option value="BLUE">{blueTeam ? `블루 · ${blueTeam.team_name}` : "블루"}</option>
+            <option value="RED">{redTeam ? `레드 · ${redTeam.team_name}` : "레드"}</option>
+          </select>
+        </label>
+        <small>{firstSideLocked && hasCurrentWork ? "이 세트는 이미 선택이 시작되어 바꿀 수 없어요. 새 세트에서 바꿀 수 있습니다." : "밴픽 시작 전까지 바꿀 수 있어요. 이전 세트의 Fearless 잠금은 그대로 유지됩니다."}</small>
+      </details>
       <div className="draft-flow-actions">
         <button type="button" className="draft-flow-primary" onClick={enterDraft} disabled={startBlock !== null} aria-describedby={startBlock ? "draft-flow-start-note" : undefined}>{resuming ? "밴픽 이어가기" : "밴픽 시작"}</button>
         {/* Optional new series: reuses the existing series-reset confirmation dialog, never resets silently. */}
@@ -884,10 +903,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         notes, room, share, named practice, series reset and file controls follow the board in DOM and visual order. */}
     <section className="draft-series draft-series-context" aria-label={t("draft.seriesLabel")} lang={lang.ui}>
       <label className="draft-first-selection">{t("draft.firstPick")}
-        <select value={firstPickSide} disabled={room.active || !canSelect || selections.length > 0 || Boolean(pendingChampion)} onChange={(event) => {
-          const side = event.target.value;
-          if (side === "BLUE" || side === "RED") { setFirstPickSide(side); if (!seriesReport) setSeriesReport(structuredClone(report)); }
-        }}><option value="BLUE">{t("draft.firstPick.BLUE")}</option><option value="RED">{t("draft.firstPick.RED")}</option></select>
+        <select value={firstPickSide} disabled={firstSideLocked} onChange={(event) => chooseFirstPickSide(event.target.value)}><option value="BLUE">{t("draft.firstPick.BLUE")}</option><option value="RED">{t("draft.firstPick.RED")}</option></select>
         <span>{t("draft.firstPickHint")}</span>
       </label>
       <header><h2>{format("draft.seriesTitle", { game: games.length + 1 })}</h2><span>{format("draft.seriesLocks", { count: previousPicks.length })}</span></header>

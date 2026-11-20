@@ -380,6 +380,12 @@ main.draft-lab.draft-studio .draft-flow-mode span { display: flex; flex-wrap: wr
 main.draft-lab.draft-studio .draft-flow-mode small { color: var(--studio-muted); font-size: 12px; }
 main.draft-lab.draft-studio .draft-flow-mode:disabled label { cursor: default; opacity: 0.6; }
 main.draft-lab.draft-studio .draft-flow-mode .draft-flow-note { margin-top: 2px; }
+/* Optional match setting (collapsed): one first-selection select reusing the draft-step state; 44px targets, no new card. */
+main.draft-lab.draft-studio .draft-flow-options { min-width: 0; font-size: 13px; }
+main.draft-lab.draft-studio .draft-flow-options summary { display: flex; align-items: center; min-height: 44px; color: var(--studio-text); font-weight: 650; cursor: pointer; }
+main.draft-lab.draft-studio .draft-setup-first-selection { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
+main.draft-lab.draft-studio .draft-setup-first-selection select { flex: 1 1 180px; min-width: 0; max-width: 100%; min-height: 44px; }
+main.draft-lab.draft-studio .draft-flow-options small { display: block; margin-top: 4px; color: var(--studio-muted); font-size: 12px; overflow-wrap: anywhere; }
 main.draft-lab.draft-studio .draft-flow-matchup { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; padding: 6px clamp(12px, 2vw, 32px); border-bottom: 1px solid var(--studio-line); background: var(--studio-bg); }
 main.draft-lab.draft-studio .draft-flow-matchup h2 { flex: 1 1 200px; min-width: 0; margin: 0; font-size: 15px; font-weight: 650; overflow-wrap: anywhere; }
 main.draft-lab.draft-studio .draft-flow-matchup h2 .blue { color: var(--draft-blue); }
