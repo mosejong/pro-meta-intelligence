@@ -304,6 +304,63 @@ test("fresh SSR: setup shows the practice mode with manual selected, disabled un
   });
 });
 
+test("setup first selection: one shared guarded handler, same state as the draft-step select, no action on setup", async () => {
+  const lab = await source();
+  // Same guard as the existing draft-step control; prior Fearless games never lock a new set's choice.
+  assert.match(lab, /const firstSideLocked = room\.active \|\| !canSelect \|\| selections\.length > 0 \|\| Boolean\(pendingChampion\);/);
+  const guard = lab.match(/const firstSideLocked = [^\n]*/)[0];
+  assert.doesNotMatch(guard, /games\.length/, "a new set may change the first side while Fearless locks stay");
+  const handler = lab.slice(lab.indexOf("function chooseFirstPickSide("), lab.indexOf("function enterDraft()"));
+  assert.match(handler, /if \(firstSideLocked\) return;/);
+  assert.match(handler, /if \(side === "BLUE" \|\| side === "RED"\) \{ setFirstPickSide\(side\); if \(!seriesReport\) setSeriesReport\(structuredClone\(report\)\); \}/,
+    "keeps the existing freeze-series-report semantics");
+  assert.doesNotMatch(handler, /setStep|setTimerRunning|setSoloEnabled|setManualSide|setSelections|setPendingChampion|setGames|setAutoHistory|setLastAuto|setSetupChoice/,
+    "choosing a side never starts, acts, clears staged work or changes mode");
+  // Both selects share the state and handler; exactly two firstPickSide selects exist.
+  // Line-based: the onChange arrow contains ">" so a [^>]* tag match would stop early.
+  const selects = lab.match(/<select[^\n]*value=\{firstPickSide\}[^\n]*/g) ?? [];
+  assert.equal(selects.length, 2);
+  for (const tag of selects) {
+    assert.match(tag, /disabled=\{firstSideLocked\}/);
+    assert.match(tag, /onChange=\{\(event\) => chooseFirstPickSide\(event\.target\.value\)\}/);
+  }
+  // Setup control: separate class/label, outside the practice-mode fieldset, inside the setup step above the CTA.
+  const setupStart = lab.indexOf('className="draft-flow-setup"');
+  const setupOptions = lab.indexOf('className="draft-flow-options"');
+  assert.ok(lab.indexOf("</fieldset>") < setupOptions && setupOptions < lab.indexOf('className="draft-flow-actions"') && setupStart < setupOptions);
+  const options = lab.slice(setupOptions, lab.indexOf("</details>", setupOptions));
+  assert.match(options, /<summary>경기 설정<\/summary>/);
+  assert.match(options, /<label className="draft-setup-first-selection">시작할 첫 선택 진영/);
+  assert.doesNotMatch(options, /draft-first-selection"|t\("draft\.firstPick"\)/, "no duplicate draft-step class or label");
+  assert.doesNotMatch(lab.slice(setupOptions - 400, setupOptions), /<details[^>]*\sopen/, "collapsed by default");
+  // No new persisted field: autosave/share/session signatures still carry only firstPickSide.
+  assert.doesNotMatch(lab, /pendingFirst|setupFirst|firstSideChoice/);
+  // The auto turn stays gated by the visible draft step (boardActive), so nothing runs from setup.
+  assert.match(lab, /if \(!autoChoice \|\| !boardActive \|\| pendingReset \|\| studioTab !== "DRAFT" \|\| room\.active\) return;/);
+});
+
+test("fresh SSR: setup first selection is collapsed, BLUE by default and disabled until the session is ready", async () => {
+  await withVite(async (vite) => {
+    const { LocaleProvider } = await vite.ssrLoadModule("/app/locale.tsx");
+    const { DraftLab } = await vite.ssrLoadModule("/app/draft-lab.tsx");
+    const { ChampionNameProvider } = await vite.ssrLoadModule("/app/champion-names.tsx");
+    const { sampleReport } = await vite.ssrLoadModule("/app/sample-report.ts");
+    const html = renderToStaticMarkup(createElement(LocaleProvider, {}, createElement(ChampionNameProvider, null,
+      createElement(DraftLab, { currentSpace: "DRAFT", report: sampleReport, feedLabel: "TEST FEED" }))));
+    const optionsAt = html.indexOf('class="draft-flow-options"');
+    assert.ok(optionsAt > html.indexOf('class="draft-flow-setup"') && optionsAt < html.indexOf('class="draft-flow-actions"'));
+    const detailsTag = html.slice(html.lastIndexOf("<details", optionsAt), html.indexOf(">", optionsAt) + 1);
+    assert.doesNotMatch(detailsTag, /\sopen/, "collapsed optional setting");
+    const block = html.slice(optionsAt, html.indexOf("</details>", optionsAt));
+    assert.equal(html.match(/class="draft-setup-first-selection"/g)?.length, 1);
+    assert.equal(html.match(/class="draft-first-selection"/g)?.length, 1, "draft-step control unchanged and not duplicated");
+    const select = block.match(/<select\b[^>]*>/)[0];
+    assert.match(select, /\sdisabled=""/, "session not ready during SSR");
+    assert.match(block, /<option value="BLUE" selected="">/, "fresh default BLUE first");
+    assert.match(block, /시작할 첫 선택 진영/);
+  });
+});
+
 test("boundaries: the flow adds no storage, schema, share, room or model changes", async () => {
   const flow = await readFile(new URL("../app/team-selection-flow.ts", import.meta.url), "utf8");
   assert.doesNotMatch(flow, /^import /m, "pure helper with no imports");
