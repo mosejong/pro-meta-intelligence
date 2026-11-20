@@ -83,3 +83,125 @@ A champion name that the product cannot canonicalize is the only counted exclusi
   - a substitute-scorer rejection.
 - `ops/current-draft-evaluation.mjs`: the CLI.
 - No UI, scorer, preparer or package changes.
+
+## Optional full-evidence path: season history (added 2026-11-20, separately versioned)
+
+Status: **implemented, not run.** No commands, tests or historical runs were executed when this was written. This section contains no scores and no expected rates.
+
+**The baseline is untouched.** The protocol frozen at commit `30525faf` stays exactly as it was: `current-draft-evaluation-lib.mjs`, its tests, `ops/current-draft-evaluation.mjs` and their `seasonHistory = null` output. None of those files changed. Codex already ran that baseline: 9 matches, 180 states. This path is **coverage completion, not tuning**. Its result files were not inspected while writing it, and nothing in it searches over weights, candidates or rules.
+
+**What the new artifact declares about the comparison:**
+- The base cohort was **already observed** (`BASE_COHORT_ALREADY_OBSERVED`).
+- The baseline had **no season evidence** (`BASELINE_MISSING_SEASON_HISTORY`).
+- Any comparison with the baseline is therefore an **exploratory integration diagnostic** (`comparison_status: "EXPLORATORY_INTEGRATION_DIAGNOSTIC"`).
+- It is not a confirmatory trial, not a fresh holdout and not proof of utility (`NOT_A_CONFIRMATORY_TRIAL`, `NOT_A_FRESH_HOLDOUT`, `NOT_PROOF_OF_UTILITY`).
+
+### Step 1. Season evidence (Python, 2374 capture only)
+
+`ops/prepare_current_draft_season_evidence.py`, artifact `current-draft-season-evidence`, version `current-draft-season-evidence-v1`.
+
+**Inputs:** an explicit prepared dataset (the same file the baseline used), the **2374** CSV and its `.meta.json`. Every argument is required, and none has a default.
+
+**Source verification** reuses `ops/build_player_season_history.verify_archive`:
+- `source_id`, data file name, sha256, byte length, file stem, and a timezone-aware `retrieved_at`.
+
+**Pin checks** against the physical 2374 capture:
+- The hash must be `sha256:2374ae61…` and `retrieved_at` must be exactly `2026-11-04T03:03:22.056760+00:00`.
+- fcd2 (outcomes) and 76b7 (2022 data) are rejected explicitly.
+- The capture must not be in the future.
+
+**Import:** the CSV is read with the existing `OracleElixirCSVAdapter`. The adapter hash must match the archive metadata. If any target `match_id` appears in the season source, the preparer fails.
+
+**Per prepared snapshot, built as of exactly the 2374 cutoff:**
+- The snapshot, report and opponent-prep cutoffs must equal the capture retrieval time, with a timezone.
+- The snapshot must be real data (no fixture flag) and its patch must be consistent.
+- Every evidence `source_versions` entry must cite OE, the 2374 hash, and the **adapter's own** `source_version`.
+- The roster basis comes from `player_season.roster_basis_from_feed(report)`, and the references from `roster_references_from_feed(report)`. Both come from the **historical snapshot report**, never from the published feed or the target game's lineup or roles.
+- The season is the UTC year of the cutoff and must equal 2026.
+- The history is built with the existing `build_player_season_history`. That function excludes matches and events after the cutoff and outside the season. The adapter also rejects games dated after the capture.
+- The result is checked with the existing `validate_output`.
+
+**Why no `import_report` is needed:** a prepared snapshot report has no `input.import_report`, so the feed-based `select_accepted_snapshot` and `build_from_archive` path is not used. The source block `{source_id, source_version, content_hash, retrieved_at}` and `import_report` come from the verified capture and the adapter's own import of it. Nothing is guessed or faked.
+
+**Fail-closed cases:**
+- If no profile has a `player_id`, the preparer fails with `MISSING_FIELD: opponent_prep.teams[].player_profiles[].player_id`.
+- If a report has no prep, it fails with `MISSING_FIELD: snapshot.report.opponent_prep`.
+
+**Output:** `dataset_sha256` (sha256 of the exact dataset bytes), `source`, `season`, `claims`, and one `histories[]` entry per snapshot. Each entry holds `snapshot_id`, `patch_id`, `season`, `cutoff`, `roster_basis`, `roster_reference_count`, `history_sha256` and `history_json`. The output path must be under ignored `outputs/`.
+
+### Step 2. Evaluation (JS, same production rules)
+
+`web/tests/current-draft-season-evaluation-lib.mjs`, evaluator `current-solo-rule-concordance-season-v1`, plus the CLI `ops/current-draft-season-evaluation.mjs`.
+
+**Cross-validation before any state is replayed.** Any mismatch throws:
+- **Evidence artifact:** type and version, and the four declaration claims.
+- **Dataset:** `dataset_sha256` must equal the sha256 the CLI computes over the dataset bytes.
+- **Source:** must be the 2374 hash and its exact retrieval time. fcd2 and 76b7 are rejected. The season must be 2026.
+- **Snapshot coverage:** histories cover exactly the prepared snapshots, with no missing, extra or duplicate entries.
+- **Per snapshot:**
+  - `sha256(history_json) === history_sha256`.
+  - `roster_basis` deep-equals the production `rosterBasis(report)`.
+  - The cutoff string equals the report, snapshot and 2374 cutoffs.
+  - The year equals the cutoff year, and the patch matches.
+  - The snapshot evidence cites the season source version.
+  - The **production** `parsePlayerSeasonHistory(text, {basis, season})` accepts the history. It rejects a different basis, cutoff or year, a source retrieved after the cutoff, and any period after the cutoff.
+  - The parsed source equals the evidence source.
+  - The history's (team, player) set equals the snapshot's roster references.
+
+**Replay:** the wrapper calls the **unchanged base evaluator** `evaluateCurrentDraftRules`. Each `explainSoloDraftTurn` and `suggestSoloDraftTurn` call gets `{...input, seasonHistory}`, with the history found by the state's snapshot report. The wrapper first requires that the base input still has `seasonHistory === null`, and throws if no history exists for that snapshot. The production functions, prefix-only inputs, fixed 3 candidates, denominator, legality checks and API-agreement checks are therefore exactly the baseline's.
+
+**Output:** `artifact_type: "current-draft-rule-season-evaluation"`, plus:
+- `base_evaluator_version`;
+- `season_history`: source plus a per-snapshot summary (hash, player and found counts). It does not include the history text.
+- `base_cohort`: `frozen_protocol_commit: "30525faf"`, `baseline_season_history: null`, `already_observed: true`;
+- `comparison_status`, and claims equal to the base claims minus `SEASON_HISTORY_NOT_SUPPLIED`, plus the season and declaration claims.
+
+`summarizeEvaluation` still strips `by_team` and `case_results`.
+
+### How Codex runs it (unrun)
+
+1. `python -m ops.prepare_current_draft_season_evidence --dataset <the baseline dataset.json> --csv outputs/oracles-elixir/raw/oracles-elixir-match-data/2374ae61….csv --meta outputs/oracles-elixir/raw/oracles-elixir-match-data/2374ae61…<timestamp>.meta.json --output outputs/<run>/season-evidence.json`
+2. `node ops/current-draft-season-evaluation.mjs <the baseline dataset.json> outputs/<run>/season-evidence.json outputs/<run>/current-draft-season-eval.json`. This writes the full result and `.summary.json` under `outputs/`.
+3. Tests:
+   - `python -m pytest tests/test_current_draft_season_evidence.py`
+   - `node --test tests/current-draft-season-evaluation.test.mjs` from `web/`
+   - Re-run the frozen `node --test tests/current-draft-evaluation.test.mjs` to confirm the baseline is unchanged.
+   - Neither new test file is added to `npm test` or CI config, because those files are outside the owned set.
+
+### Unrun checks
+
+- Nothing in this section has been executed: not the preparer, the JS wrapper, either CLI or any test.
+- Whether the real 2374 snapshot report's evidence `source_version` equals the adapter's `source_version` for the 2374 CSV. If not, the preparer fails closed on purpose. Nothing is rewritten.
+- Whether the real snapshot reports carry `player_profiles` with `player_id`. If none do, the preparer fails closed with `MISSING_FIELD`.
+- Whether `validate_output`'s 3MB public budget holds for a full 2374 season history. If it does not, the preparer fails closed. The limit is inherited unchanged.
+- Whether the JS fixture history passes the production parser exactly as written, and whether the template feed's first `source_versions` entry exists.
+- Whether `tmp_path_factory` paths stay short enough on Windows for `SnapshotArchive.store` in the new Python tests.
+
+### Limitations
+
+- Same cohort and window as the baseline: 2026-11-04 → 2026-11-11, first sets only, already observed. It is not a holdout, and no full-season 2026 claim is possible.
+- Season history covers only games in the 2374 CSV up to its retrieval time, for players named in each snapshot's past-only profiles. Players who join later, or roles for the target game, are never used.
+- The production rules use season history only for CURRENT profiles with a recognized role that is unique per role. Other players add nothing, by design of the unchanged rules.
+- `season_evidence_state_count` counts states whose acting-team candidate pool contained season rows. It does not show that season rows were selected or helped.
+- The 2374 capture was already used for other research (`SOURCE_PREVIOUSLY_USED_FOR_OTHER_RESEARCH`).
+
+### Files (this section)
+
+- `ops/prepare_current_draft_season_evidence.py` (new).
+- `tests/test_current_draft_season_evidence.py` (new). It covers:
+  - the build and the snapshot basis;
+  - future player stats excluded;
+  - 19 malformed provenance, time, year and field cases;
+  - archive corruption and mismatch;
+  - the frozen pins;
+  - no default or fallback inputs;
+  - output under `outputs/` only.
+- `web/tests/current-draft-season-evaluation-lib.mjs` (new): the wrapper, strict cross-validation and the season API loader.
+- `web/tests/current-draft-season-evaluation.test.mjs` (new). It covers:
+  - real production calls with the history;
+  - a byte-identical baseline before and after the season run;
+  - a NOT_FOUND history equal to the baseline;
+  - 25 rejections, including a different roster basis, cutoff, year, future stats, source and dataset mismatches, roster-set mismatches and missing evidence;
+  - no published or live history access.
+- `ops/current-draft-season-evaluation.mjs` (new): the CLI.
+- No base, UI, scorer, model, collector or package files changed.
