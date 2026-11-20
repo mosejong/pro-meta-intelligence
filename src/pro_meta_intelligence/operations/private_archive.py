@@ -10,10 +10,13 @@ import shutil
 import struct
 import tarfile
 import tempfile
+from collections.abc import Iterable
+from datetime import UTC
 from pathlib import Path, PurePosixPath
 from typing import Any, BinaryIO
 
 from pro_meta_intelligence.sources import SnapshotArchive, SourceAttemptLedger
+from pro_meta_intelligence.sources.artifacts import ArchivedSnapshot
 
 SOURCE_ID = "oracles-elixir-match-data"
 MAGIC = b"PMIOEA01"
@@ -104,6 +107,7 @@ def pack_private_oe_archive(
         "encryption": "AES_256_GCM_AUTHENTICATED_CHUNKS",
         "key_source": f"ENVIRONMENT:{key_environment_variable}",
         "raw_rows_in_output": False,
+        "snapshots": _snapshot_manifest(inspection.snapshots),
     }
 
 
@@ -153,7 +157,31 @@ def restore_private_oe_archive(
         "encrypted_content_hash": _file_sha256(encrypted_input),
         "authenticated": True,
         "key_source": f"ENVIRONMENT:{key_environment_variable}",
+        "snapshots": _snapshot_manifest(inspection.snapshots),
     }
+
+
+def _snapshot_manifest(snapshots: Iterable[ArchivedSnapshot]) -> list[dict[str, Any]]:
+    """Return a non-secret receipt list for integrity-verified snapshots.
+
+    Each archived retrieval stays a separate entry, even when several share one content hash.
+    Entries carry only the content hash, the UTC retrieval time and the verified byte length.
+    No raw rows, filesystem paths, provider URLs, keys or request-ledger contents are included.
+    """
+
+    entries = [
+        (snapshot.retrieved_at.astimezone(UTC), snapshot.content_hash, snapshot.byte_length)
+        for snapshot in snapshots
+    ]
+    entries.sort(key=lambda item: (item[0], item[1]))
+    return [
+        {
+            "content_hash": content_hash,
+            "retrieved_at": retrieved_at.isoformat(),
+            "byte_length": byte_length,
+        }
+        for retrieved_at, content_hash, byte_length in entries
+    ]
 
 
 def _hosted_dependencies():

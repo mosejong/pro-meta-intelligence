@@ -214,8 +214,9 @@ def _workflow_step(workflow: str, name: str) -> str:
 def test_normal_diagnostics_failure_cannot_skip_the_encrypted_ledger_repack() -> None:
     workflow = (ROOT / ".github" / "workflows" / "hosted-oe-sync.yml").read_text(encoding="utf-8")
 
-    # The diagnostics upload is best-effort, exactly like the history-only diagnostics upload,
-    # and its condition, payload, destination and retention are unchanged.
+    # The diagnostics upload is best-effort, exactly like the history-only diagnostics upload.
+    # Its condition, destination and retention are unchanged; the only approved payload addition
+    # (2026-11-20) is the standalone three-field snapshot manifest, as the fourth exact path.
     diagnostics = _workflow_step(
         workflow, "Preserve public-safe sync diagnostics on success or rejection"
     )
@@ -233,11 +234,40 @@ def test_normal_diagnostics_failure_cannot_skip_the_encrypted_ledger_repack() ->
         "            outputs/hosted-oe-state/sync-report.json\n"
         "            outputs/hosted-oe-state/local-health.json\n"
         "            outputs/oe-feed-jobs/latest.json\n"
+        "            outputs/hosted-oe-state/snapshot-manifest.json\n"
         "          if-no-files-found: warn\n"
         "          retention-days: 14"
     )
+    uploaded = diagnostics.split("path: |\n", 1)[1].split("          if-no-files-found:", 1)[0]
+    for forbidden in ("restore-report", "pack-report", ".pmi", "*", ".zip", "ledger", "cache"):
+        assert forbidden not in uploaded
     history_diagnostics = _workflow_step(workflow, "Preserve history-only acquisition diagnostics")
     assert "continue-on-error: true" in history_diagnostics
+    assert "snapshot-manifest" not in history_diagnostics
+
+    # The manifest generator is normal-mode only, best-effort, needs a successful restore, reads
+    # the existing restore report and writes only the standalone manifest, right before upload.
+    generator = _workflow_step(workflow, "Write the approved three-field snapshot manifest")
+    assert generator == (
+        "        id: snapshot-manifest\n"
+        "        # Approved 2026-11-20: export only content_hash, retrieved_at and byte_length "
+        "per snapshot.\n"
+        "        # Best-effort: a missing restore report (explicit fresh start) must never block "
+        "the backup.\n"
+        "        if: always() && env.HISTORY_ONLY != 'true' && "
+        "steps.restore.outcome == 'success'\n"
+        "        continue-on-error: true\n"
+        "        run: >-\n"
+        "          python ops/write_private_snapshot_manifest.py\n"
+        '          --report "$PRIVATE_STATE_DIR/restore-report.json"\n'
+        '          --output "$PRIVATE_STATE_DIR/snapshot-manifest.json"'
+    )
+    assert workflow.count("write_private_snapshot_manifest.py") == 1
+    assert workflow.count("snapshot-manifest.json") == 2  # written once, uploaded once
+    assert workflow.index("id: sync-health") < workflow.index("id: snapshot-manifest")
+    generator_end = workflow.index("id: snapshot-manifest")
+    upload_start = workflow.index("- name: Preserve public-safe sync diagnostics")
+    assert "\n      - name: " not in workflow[generator_end:upload_start]
 
     # The repack and the encrypted-state upload that follow stay strict and unconditional.
     repack = _workflow_step(

@@ -92,6 +92,35 @@ state cannot be recovered; start a new explicitly approved collection or restore
 backup. A future external object store can replace this adapter without changing the archive
 integrity contract.
 
+### Verified capture manifest in pack and restore reports
+
+`pack-report.json` and `restore-report.json` (still `schema_version` `"1"`) now include an
+additive `snapshots` list. It is built from the same integrity-verified inspection that already
+gates packing and restoring. Each entry contains only `content_hash`, `retrieved_at` (UTC ISO 8601)
+and `byte_length`. Entries are sorted by UTC retrieval time and then by hash. Each archived
+retrieval keeps its own entry even when several share a content hash, so the list length equals
+`snapshot_count` and its distinct hashes equal `unique_content_count`. The list never contains raw
+rows, filesystem paths, provider URLs, key material or request-ledger contents. All existing fields
+are unchanged, and the encrypted container format, CLI arguments and key handling are untouched.
+Authentication and integrity failures still fail closed without producing a report.
+
+Hosted verification is still pending. These reports already ride in the private
+`oe-private-history-state-*` artifact, so the regular scheduled job will start exposing the
+manifest once this code is merged. No hosted run has produced a manifest yet, and no dispatch was
+added for this purpose.
+
+On 2026-11-20 the user explicitly approved exporting only these three fields
+(`content_hash`, `retrieved_at`, `byte_length`) to the repository's existing Actions artifacts.
+In normal (not `history_only`) runs, the step `Write the approved three-field snapshot manifest`
+runs `ops/write_private_snapshot_manifest.py` on the existing `restore-report.json`. It writes a
+standalone, sanitized JSON array to `outputs/hosted-oe-state/snapshot-manifest.json`, which is
+appended as the fourth exact path of `oe-sync-diagnostics-<run_id>`. The step is best-effort
+(`continue-on-error: true`) and runs only after a successful restore, so a failure (for example an
+explicit fresh start with no restore report) never blocks the diagnostics upload or the encrypted
+backup. Full restore and pack reports are not added to diagnostics; they stay only in the private
+state artifact. History-only mode and all strict backup, health and publication gates are
+unchanged. Scope, checks and verification status are in `docs/APPROVED_THREE_FIELD_EXPORT_2026-11-20.md`.
+
 The cryptographic implementation uses the maintained `cryptography` AES-GCM primitive. The custom
 container only frames bounded authenticated chunks for streaming; it does not implement an
 encryption algorithm. `zstandard` provides the production compression binding. Both dependencies
