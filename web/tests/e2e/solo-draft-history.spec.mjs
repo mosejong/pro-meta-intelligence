@@ -1,14 +1,16 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftWorkspace } from "./studio-panels.mjs";
 const root = "/pro-meta-intelligence/";
 const progress = page => page.locator(".draft-turn-progress");
 const solo = page => page.getByRole("region", { name: "혼자 밴픽 연습", exact: true });
 const toggle = page => solo(page).getByRole("checkbox", { name: "상대 자동 밴픽", exact: true });
 const available = page => page.locator(".draft-picker-grid button:not(:disabled)");
 const confirm = page => page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ });
-const review = page => solo(page).locator(".solo-history");
+const review = page => page.locator(".solo-history");
 const undo = page => page.getByRole("button", { name: "내 마지막 선택 되돌리기", exact: true });
 async function open(page, side) {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
   await solo(page).getByLabel("내 진영", { exact: true }).selectOption(side);
   await toggle(page).check();
@@ -36,9 +38,9 @@ test("접힌 복기 목록은 실제 자동 차례만 순서대로 보여주고 
   await expect(review(page).locator("input, select, a")).toHaveCount(0);
   await expect(review(page).getByRole("button", { name: "자동 선택 복기 복사", exact: true })).toBeVisible();
   // The last-choice explanation still shows only the latest auto turn.
-  await expect(solo(page).locator(".solo-explain .solo-draft-last")).toContainText("마지막 상대 선택");
-  await solo(page).locator(".solo-explain summary").click();
-  await expect(solo(page).locator(".solo-explain details")).toContainText("4번째 차례(밴) 선택 직전 상태 기준");
+  await expect(page.locator(".solo-explain .solo-draft-last")).toContainText("마지막 상대 선택");
+  await page.locator(".solo-explain summary").click();
+  await expect(page.locator(".solo-explain details")).toContainText("4번째 차례(밴) 선택 직전 상태 기준");
   await expect(progress(page)).toHaveAttribute("value", "4");
   await review(page).screenshot({ path: testInfo.outputPath("solo-history.png") });
 });

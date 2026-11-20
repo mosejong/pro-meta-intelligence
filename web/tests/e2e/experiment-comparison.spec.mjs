@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { showPanel } from "./studio-panels.mjs";
+import { enterDraftWorkspace, showPanel } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const ROLES = ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"];
@@ -17,6 +17,7 @@ async function openDetails(locator) {
 
 async function readyInput(page) {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await showPanel(page, "DRAFT");

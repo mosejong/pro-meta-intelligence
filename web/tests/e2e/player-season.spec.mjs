@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
-import { showPanel } from "./studio-panels.mjs";
+import { enterDraftWorkspace, showPanel } from "./studio-panels.mjs";
 
 /**
  * Season history section in the real draft studio. Network responses for the season file are
@@ -90,6 +90,7 @@ test("the actual derived file loads from the draft route and matches all display
   const real = JSON.parse(readFileSync(new URL("../../public/history/player-season-2026.json", import.meta.url), "utf8"));
   const state = watch(page);
   await page.goto(`${root}draft/`);
+  await enterDraftWorkspace(page);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await showPanel(page, "ROSTER");
   if ((await roster(page).getAttribute("open")) === null) await roster(page).locator("> summary").click();
@@ -126,6 +127,7 @@ test("the actual derived file loads from the draft route and matches all display
 
 async function openPool(page) {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await showPanel(page, "ROSTER");
@@ -278,6 +280,7 @@ test("a late response after closing or changing teams never reaches the new view
   await season(page).locator("> summary").click();
   await expect(season(page).getByRole("status")).toContainText("불러오는 중");
   await expect.poll(() => gates.length).toBe(2);
+  await page.getByRole("button", { name: "팀 선택으로", exact: true }).click();
   const blueName = (await page.locator(".draft-match-setup .team-chooser-trigger strong").first().textContent()).trim();
   const redBefore = (await page.locator(".draft-match-setup .team-chooser-trigger strong").nth(1).textContent()).trim();
   await page.locator(".draft-match-setup .team-chooser-trigger").nth(1).click();
@@ -289,6 +292,8 @@ test("a late response after closing or changing teams never reaches the new view
   await expect(page.locator(".draft-match-setup .team-chooser-trigger strong").nth(1)).toHaveText(redAfter);
   expect(redAfter).not.toBe(redBefore);
   gates[1]();
+  await enterDraftWorkspace(page);
+  await showPanel(page, "ROSTER");
 
   if ((await roster(page).getAttribute("open")) === null) await roster(page).locator("> summary").click();
   if ((await pool(page).getAttribute("open")) === null) await pool(page).locator("> summary").click();

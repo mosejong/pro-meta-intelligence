@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { STUDIO_PANELS, showPanel, studioPanel, studioTab } from "./studio-panels.mjs";
+import { enterDraftWorkspace, STUDIO_PANELS, showPanel, studioPanel, studioTab } from "./studio-panels.mjs";
 
 /**
  * The draft studio splits into five real tab panels (draft, roster, details, A/B, simulation readiness).
@@ -21,6 +21,7 @@ const isDesktop = (testInfo) => testInfo.project.name === "desktop";
 
 async function openStudio(page) {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await expect(picker(page).first()).toBeEnabled();

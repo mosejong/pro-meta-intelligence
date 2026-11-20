@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { showPanel } from "./studio-panels.mjs";
+import { showPanel, enterDraftWorkspace } from "./studio-panels.mjs";
 const root = "/pro-meta-intelligence/";
 const progress = page => page.locator(".draft-turn-progress");
 const solo = page => page.getByRole("region", { name: "혼자 밴픽 연습", exact: true });
@@ -8,6 +8,7 @@ const available = page => page.locator(".draft-picker-grid button:not(:disabled)
 const confirm = page => page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ });
 async function open(page, side = "BLUE") {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
   await solo(page).getByLabel("내 진영", { exact: true }).selectOption(side);
   await toggle(page).check();

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { showPanel } from "./studio-panels.mjs";
+import { enterDraftWorkspace, showPanel } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const catalogPath = /\/history\/season-player-cards\.json$/;
@@ -29,6 +29,7 @@ async function openRoster(page) {
 
 async function openWithDraftTurn(page) {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("heading", { name: "모의 밴픽", exact: true })).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
@@ -78,6 +79,7 @@ test("실제 2022 Nuguri 시즌 선수를 구단에 저장하고 명시적으로
   await page.locator("details.roster-workshop").screenshot({ path: testInfo.outputPath("season-lineup-saved.png") });
 
   await page.reload();
+  await expect(page.locator(".draft-flow-draft")).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   await openRoster(page);
   expect(requests).toHaveLength(1);

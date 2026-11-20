@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { showPanel } from "./studio-panels.mjs";
+import { showPanel, enterDraftWorkspace } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
 const board = (page, side) => page.locator(`.draft-position-board[aria-label="${side === "blue" ? "블루" : "레드"} 포지션 배정"]`);
@@ -11,6 +11,7 @@ const explicit = (page) => page.locator(".draft-position-copy").filter({ hasText
 
 async function open(page) {
   await page.goto(root);
+  await enterDraftWorkspace(page);
   await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
   await expect(page.locator(".draft-position-board")).toHaveCount(2);
 }
