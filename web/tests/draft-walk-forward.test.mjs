@@ -158,6 +158,15 @@ test("leakage and contract violations fail closed", () => {
   assert.throws(() => evaluateWalkForward(dataset(), api), /unit tests/);
 });
 
+test("a champion name the product cannot replay is a counted exclusion, not a failure", () => {
+  const data = dataset();
+  data.matches[1].selections[9].champion_id = "Not A Real Champion";
+  const result = run(data);
+  assert.equal(result.splits.VALIDATION.excluded_unknown_champion, 1);
+  assert.equal(result.splits.VALIDATION.matches, 1);
+  assert.equal(result.splits.VALIDATION.overall.PRODUCTION.states, 20);
+});
+
 test("the production rules do not mutate snapshots", () => {
   const mutating = { ...api, explainSoloDraftTurn: (input) => { input.report.entries.push({ rank: 1 }); return api.explainSoloDraftTurn(input); } };
   assert.throws(() => run(dataset(), {}, mutating), /mutated/);

@@ -194,6 +194,10 @@ export function evaluateWalkForward(dataset, api, options = {}) {
     const blues = prep.teams.filter((t) => t.team_id === raw.blue_team_id);
     const reds = prep.teams.filter((t) => t.team_id === raw.red_team_id);
     req(blues.length === 1 && reds.length === 1 && raw.blue_team_id !== raw.red_team_id, "Missing or ambiguous prior team evidence");
+    if (raw.split === "HOLDOUT" && options.unsealHoldout !== true) { counts.HOLDOUT.sealed_matches++; continue; }
+    // A name the product cannot canonicalize cannot be replayed (applyDraftSelection rejects it): counted
+    // exclusion before the order check, never substituted.
+    if (raw.selections.some((s) => !canonical(s?.champion_id))) { counts[raw.split].excluded_unknown_champion++; continue; }
     const sequence = api.draftSequence(raw.first_pick_side);
     let check = [];
     for (const [index, selection] of raw.selections.entries()) {
@@ -204,8 +208,6 @@ export function evaluateWalkForward(dataset, api, options = {}) {
       req(next.length === check.length + 1, "Duplicate or empty champion in target");
       check = next;
     }
-    if (raw.split === "HOLDOUT" && options.unsealHoldout !== true) { counts.HOLDOUT.sealed_matches++; continue; }
-    if (raw.selections.some((s) => !canonical(s.champion_id))) { counts[raw.split].excluded_unknown_champion++; continue; }
     counts[raw.split].matches++;
     leagueMatches.set(`${raw.split}|${raw.league}`, (leagueMatches.get(`${raw.split}|${raw.league}`) ?? 0) + 1);
 
