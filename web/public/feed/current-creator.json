@@ -27,26 +27,356 @@
   "schema_version": "1",
   "source_snapshot": {
     "analysis_window": {
-      "availability_cutoff": "2026-11-18T01:35:30.738564+00:00",
-      "end_inclusive": "2026-11-18T01:35:30.738564+00:00",
+      "availability_cutoff": "2026-11-23T00:14:59.674945+00:00",
+      "end_inclusive": "2026-11-23T00:14:59.674945+00:00",
       "historical": false,
       "mode": "ROLLING"
     },
-    "cutoff": "2026-11-18T01:35:30.738564+00:00",
+    "cutoff": "2026-11-23T00:14:59.674945+00:00",
     "fixture_only": false,
     "patch_id": "16.20",
     "radar_schema_version": "1",
     "source_versions": [
       {
-        "content_hash": "sha256:ee18acfb648f9ef18c3d9851daeb5574d2559dd5e5e29c9cf1b093601eb48320",
+        "content_hash": "sha256:5e8a925de0bd85018a1cc497cbf07952b67fa9fef444745fcf1d37a650101a19",
         "source_id": "oracles-elixir-match-data",
-        "source_version": "sha256:ee18acfb648f9ef18c3d9851daeb5574d2559dd5e5e29c9cf1b093601eb48320"
+        "source_version": "sha256:5e8a925de0bd85018a1cc497cbf07952b67fa9fef444745fcf1d37a650101a19"
       }
     ]
   },
   "template_version": "creator-brief-v1",
-  "topic_candidates": [],
-  "warnings": [
-    "NO_ELIGIBLE_CANDIDATES"
-  ]
+  "topic_candidates": [
+    {
+      "approved_claims": [
+        {
+          "claim_id": "Vi:JUNGLE:pick-presence",
+          "metric": "pick_presence_delta",
+          "text": "최근 7일 Vi JUNGLE 픽 점유율은 33.3%이며 이전 구간 대비 +13.3pp 변했다.",
+          "value": 0.133333
+        },
+        {
+          "claim_id": "Vi:JUNGLE:team-demand",
+          "metric": "demand_velocity",
+          "text": "최근 채택 팀은 3개이며 팀 수요는 이전 구간 대비 +66.7pp 변했다.",
+          "value": 0.666667
+        },
+        {
+          "claim_id": "Vi:JUNGLE:regional-divergence",
+          "metric": "most_divergent_region_delta",
+          "text": "EMEA의 최근 픽 점유율은 글로벌 점유율과 +0.0pp 차이가 난다.",
+          "value": 0.0
+        }
+      ],
+      "candidate_id": "Vi:JUNGLE",
+      "champion_id": "Vi",
+      "chapter_outline": [
+        {
+          "chapter": "HOOK",
+          "uses": [
+            "Vi:JUNGLE:pick-presence"
+          ]
+        },
+        {
+          "chapter": "WHAT CHANGED",
+          "uses": [
+            "Vi:JUNGLE:pick-presence",
+            "Vi:JUNGLE:team-demand",
+            "Vi:JUNGLE:regional-divergence"
+          ]
+        },
+        {
+          "chapter": "WHY IT MAY MATTER",
+          "uses": [
+            "Vi:JUNGLE:team-demand"
+          ]
+        },
+        {
+          "chapter": "COUNTERPOINT",
+          "uses": []
+        },
+        {
+          "chapter": "TAKEAWAY AND NEXT CHECK",
+          "uses": []
+        }
+      ],
+      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "data_cards": [
+        {
+          "card": "PICK_PRESENCE_COMPARISON",
+          "current": 0.333333,
+          "prior": 0.2
+        },
+        {
+          "card": "TEAM_DEMAND_COMPARISON",
+          "current": 1.0,
+          "prior": 0.333333
+        },
+        {
+          "card": "REGIONAL_PRESENCE",
+          "values": [
+            {
+              "delta_from_global": 0.0,
+              "match_count": 9,
+              "pick_count": 3,
+              "pick_presence": 0.333333,
+              "region": "EMEA",
+              "sample_eligible": true
+            }
+          ]
+        }
+      ],
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:8",
+        "oe:AL:LOLTMNT05_237029:pick:4",
+        "oe:AL:LOLTMNT05_238019:pick:1",
+        "oe:WLDs:LOLTMNT02_487408:pick:3"
+      ],
+      "falsifiers": [
+        {
+          "condition": "next comparable snapshot is less than or equal to zero",
+          "metric": "demand_velocity"
+        },
+        {
+          "condition": "adoption does not expand beyond the currently observed teams",
+          "metric": "current_distinct_team_count"
+        }
+      ],
+      "hook": "Vi JUNGLE의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "quality_flags": [],
+      "radar_rank": 1,
+      "review_state": "HUMAN_REVIEW_REQUIRED",
+      "role": "JUNGLE",
+      "short_summary": "Vi JUNGLE의 최근 픽 점유율은 33.3%로, 이전 구간 대비 +13.3pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "thumbnail_copy": [
+        "Vi JUNGLE",
+        "+13.3pp"
+      ],
+      "title_candidates": [
+        "왜 지금 Vi JUNGLE인가: +13.3pp 변화의 근거",
+        "EMEA에서 먼저 보인 Vi JUNGLE, 글로벌과 +0.0pp 차이",
+        "Vi JUNGLE은 진짜 신호일까? 데이터와 반론"
+      ]
+    },
+    {
+      "approved_claims": [
+        {
+          "claim_id": "Ahri:MID:pick-presence",
+          "metric": "pick_presence_delta",
+          "text": "최근 7일 Ahri MID 픽 점유율은 33.3%이며 이전 구간 대비 +33.3pp 변했다.",
+          "value": 0.333333
+        },
+        {
+          "claim_id": "Ahri:MID:team-demand",
+          "metric": "demand_velocity",
+          "text": "최근 채택 팀은 2개이며 팀 수요는 이전 구간 대비 +66.7pp 변했다.",
+          "value": 0.666667
+        },
+        {
+          "claim_id": "Ahri:MID:regional-divergence",
+          "metric": "most_divergent_region_delta",
+          "text": "EMEA의 최근 픽 점유율은 글로벌 점유율과 +0.0pp 차이가 난다.",
+          "value": 0.0
+        }
+      ],
+      "candidate_id": "Ahri:MID",
+      "champion_id": "Ahri",
+      "chapter_outline": [
+        {
+          "chapter": "HOOK",
+          "uses": [
+            "Ahri:MID:pick-presence"
+          ]
+        },
+        {
+          "chapter": "WHAT CHANGED",
+          "uses": [
+            "Ahri:MID:pick-presence",
+            "Ahri:MID:team-demand",
+            "Ahri:MID:regional-divergence"
+          ]
+        },
+        {
+          "chapter": "WHY IT MAY MATTER",
+          "uses": [
+            "Ahri:MID:team-demand"
+          ]
+        },
+        {
+          "chapter": "COUNTERPOINT",
+          "uses": []
+        },
+        {
+          "chapter": "TAKEAWAY AND NEXT CHECK",
+          "uses": []
+        }
+      ],
+      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "data_cards": [
+        {
+          "card": "PICK_PRESENCE_COMPARISON",
+          "current": 0.333333,
+          "prior": 0.0
+        },
+        {
+          "card": "TEAM_DEMAND_COMPARISON",
+          "current": 0.666667,
+          "prior": 0.0
+        },
+        {
+          "card": "REGIONAL_PRESENCE",
+          "values": [
+            {
+              "delta_from_global": 0.0,
+              "match_count": 9,
+              "pick_count": 3,
+              "pick_presence": 0.333333,
+              "region": "EMEA",
+              "sample_eligible": true
+            }
+          ]
+        }
+      ],
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:9",
+        "oe:AL:LOLTMNT05_237027:pick:5",
+        "oe:AL:LOLTMNT05_238019:pick:4"
+      ],
+      "falsifiers": [
+        {
+          "condition": "next comparable snapshot is less than or equal to zero",
+          "metric": "demand_velocity"
+        },
+        {
+          "condition": "adoption does not expand beyond the currently observed teams",
+          "metric": "current_distinct_team_count"
+        }
+      ],
+      "hook": "Ahri MID의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "quality_flags": [],
+      "radar_rank": 2,
+      "review_state": "HUMAN_REVIEW_REQUIRED",
+      "role": "MID",
+      "short_summary": "Ahri MID의 최근 픽 점유율은 33.3%로, 이전 구간 대비 +33.3pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "thumbnail_copy": [
+        "Ahri MID",
+        "+33.3pp"
+      ],
+      "title_candidates": [
+        "왜 지금 Ahri MID인가: +33.3pp 변화의 근거",
+        "EMEA에서 먼저 보인 Ahri MID, 글로벌과 +0.0pp 차이",
+        "Ahri MID은 진짜 신호일까? 데이터와 반론"
+      ]
+    },
+    {
+      "approved_claims": [
+        {
+          "claim_id": "Nautilus:SUPPORT:pick-presence",
+          "metric": "pick_presence_delta",
+          "text": "최근 7일 Nautilus SUPPORT 픽 점유율은 33.3%이며 이전 구간 대비 +33.3pp 변했다.",
+          "value": 0.333333
+        },
+        {
+          "claim_id": "Nautilus:SUPPORT:team-demand",
+          "metric": "demand_velocity",
+          "text": "최근 채택 팀은 2개이며 팀 수요는 이전 구간 대비 +66.7pp 변했다.",
+          "value": 0.666667
+        },
+        {
+          "claim_id": "Nautilus:SUPPORT:regional-divergence",
+          "metric": "most_divergent_region_delta",
+          "text": "EMEA의 최근 픽 점유율은 글로벌 점유율과 +0.0pp 차이가 난다.",
+          "value": 0.0
+        }
+      ],
+      "candidate_id": "Nautilus:SUPPORT",
+      "champion_id": "Nautilus",
+      "chapter_outline": [
+        {
+          "chapter": "HOOK",
+          "uses": [
+            "Nautilus:SUPPORT:pick-presence"
+          ]
+        },
+        {
+          "chapter": "WHAT CHANGED",
+          "uses": [
+            "Nautilus:SUPPORT:pick-presence",
+            "Nautilus:SUPPORT:team-demand",
+            "Nautilus:SUPPORT:regional-divergence"
+          ]
+        },
+        {
+          "chapter": "WHY IT MAY MATTER",
+          "uses": [
+            "Nautilus:SUPPORT:team-demand"
+          ]
+        },
+        {
+          "chapter": "COUNTERPOINT",
+          "uses": []
+        },
+        {
+          "chapter": "TAKEAWAY AND NEXT CHECK",
+          "uses": []
+        }
+      ],
+      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "data_cards": [
+        {
+          "card": "PICK_PRESENCE_COMPARISON",
+          "current": 0.333333,
+          "prior": 0.0
+        },
+        {
+          "card": "TEAM_DEMAND_COMPARISON",
+          "current": 0.666667,
+          "prior": 0.0
+        },
+        {
+          "card": "REGIONAL_PRESENCE",
+          "values": [
+            {
+              "delta_from_global": 0.0,
+              "match_count": 9,
+              "pick_count": 3,
+              "pick_presence": 0.333333,
+              "region": "EMEA",
+              "sample_eligible": true
+            }
+          ]
+        }
+      ],
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:6",
+        "oe:AL:LOLTMNT05_237020:pick:4",
+        "oe:AL:LOLTMNT05_237026:pick:6"
+      ],
+      "falsifiers": [
+        {
+          "condition": "next comparable snapshot is less than or equal to zero",
+          "metric": "demand_velocity"
+        },
+        {
+          "condition": "adoption does not expand beyond the currently observed teams",
+          "metric": "current_distinct_team_count"
+        }
+      ],
+      "hook": "Nautilus SUPPORT의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "quality_flags": [],
+      "radar_rank": 3,
+      "review_state": "HUMAN_REVIEW_REQUIRED",
+      "role": "SUPPORT",
+      "short_summary": "Nautilus SUPPORT의 최근 픽 점유율은 33.3%로, 이전 구간 대비 +33.3pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "thumbnail_copy": [
+        "Nautilus SUPPORT",
+        "+33.3pp"
+      ],
+      "title_candidates": [
+        "왜 지금 Nautilus SUPPORT인가: +33.3pp 변화의 근거",
+        "EMEA에서 먼저 보인 Nautilus SUPPORT, 글로벌과 +0.0pp 차이",
+        "Nautilus SUPPORT은 진짜 신호일까? 데이터와 반론"
+      ]
+    }
+  ],
+  "warnings": []
 }

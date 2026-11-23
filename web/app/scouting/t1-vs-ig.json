@@ -7,7 +7,7 @@
     "minimum_comfort_games": 3,
     "top_champions": 6
   },
-  "cutoff": "2026-11-18T01:35:30.738564+00:00",
+  "cutoff": "2026-11-23T00:14:59.674945+00:00",
   "head_to_head": [],
   "league_meta": [
     {
@@ -7037,7 +7037,7 @@
     "MULTI_PATCH_WINDOW"
   ],
   "schema_version": "1",
-  "source_version": "sha256:ee18acfb648f9ef18c3d9851daeb5574d2559dd5e5e29c9cf1b093601eb48320",
+  "source_version": "sha256:5e8a925de0bd85018a1cc497cbf07952b67fa9fef444745fcf1d37a650101a19",
   "target": {
     "first_rotation_picks": [
       {
