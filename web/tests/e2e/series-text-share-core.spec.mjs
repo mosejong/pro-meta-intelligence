@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 
 test("three Fearless sets copy as readable text; a changed series hides the old fallback", async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => { throw new Error("denied"); } } }));
   await page.goto("/pro-meta-intelligence/");
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   const next = page.getByRole("region", { name: "이번 밴픽 리포트", exact: true }).getByRole("button", { name: "피어리스 다음 세트", exact: true });
   for (let game = 0; game < 3; game++) {
     for (let turn = 0; turn < 20; turn++) {

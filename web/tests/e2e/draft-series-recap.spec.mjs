@@ -1,11 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 const root = "/pro-meta-intelligence/";
 const progress = page => page.locator(".draft-turn-progress");
 const recap = page => page.locator("details.draft-series-recap");
 const games = page => recap(page).locator(".draft-series-recap-game");
 const available = page => page.locator(".draft-picker-grid button:not(:disabled)");
 const confirm = page => page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ });
-async function ready(page) { await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled(); }
+async function ready(page) { await enterDraftForReview(page); }
 async function pick(page) {
   const before = Number(await progress(page).getAttribute("value"));
   await available(page).first().click(); await confirm(page).click();
@@ -53,7 +54,10 @@ test("여러 세트 복기는 완료 세트만 고정된 팀으로 보여주고 
   await expect(games(page).first().locator("h3")).toHaveText("1세트");
 
   // Swap sides for game 2: game 1 must keep its historic blue/red teams.
+  // Sides are swapped on the team-selection step (current flow), then the draft continues.
+  await page.getByRole("button", { name: "팀 선택으로", exact: true }).click();
   await page.getByRole("button", { name: "블루와 레드 팀 교체", exact: true }).click();
+  await ready(page);
   expect((await recapTeams(page))[0]).toEqual(game1);
   await pick(page);
   await expect(games(page)).toHaveCount(1); // in-progress game is not a finished set
@@ -80,10 +84,14 @@ test("여러 세트 복기는 완료 세트만 고정된 팀으로 보여주고 
 
   await recap(page).locator("summary").click();
   await expect(recap(page)).toHaveAttribute("open", "");
-  await expect(recap(page).locator("button, input, select, textarea, a[href]")).toHaveCount(0);
+  // Read-only review: the only control is the later-added explicit text copy.
+  const controls = recap(page).locator("button, input, select, textarea, a[href]");
+  await expect(controls).toHaveCount(1);
+  await expect(controls).toHaveText("여러 세트 밴픽 복사");
   await expect(recap(page)).toContainText("다음 세트부터 잠기는 픽");
   await expect(recap(page).getByText(/승률 \d|승리 확률|예측 승자|점수/)).toHaveCount(0);
-  await expect(recap(page).locator("[role=status]")).toHaveCount(0);
+  await expect(recap(page).getByText("확인하지 못함")).toHaveCount(0); // every finished set verified
+  await expect(recap(page).locator("[role=status]")).toHaveText(""); // only the idle copy status line
   expect(await noHorizontalOverflow(page)).toBe(true);
   await recap(page).screenshot({ path: testInfo.outputPath("series-recap-open.png") });
 });

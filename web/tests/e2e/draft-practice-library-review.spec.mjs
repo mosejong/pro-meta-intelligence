@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 
 // Independent review: an async saved-practice read must not discard work started after the click.
 test("a delayed library load preserves a champion staged while the read is in flight", async ({ page }) => {
@@ -54,7 +55,7 @@ test("real IndexedDB serializes two tabs racing for the fifth saved practice", a
     await expect(library.getByRole("button", { name: `보관 ${i} 열기`, exact: true })).toBeEnabled();
   }
   const other = await context.newPage(); await other.goto("/pro-meta-intelligence/");
-  await expect(other.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(other);
   const second = other.locator("details.draft-practice-library");
   await second.locator("summary").click();
   await library.getByLabel("연습 이름", { exact: true }).fill("다섯 번째 A");

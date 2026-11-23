@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { showPanel } from "./studio-panels.mjs";
 
 test("candidate evidence stays in details and never confirms or restricts a pick", async ({ page }, testInfo) => {
@@ -35,7 +36,7 @@ test("matching season companion is actually loaded and labels a current player's
   const season = JSON.parse(await readFile(new URL("../../public/history/player-season-2026.json", import.meta.url), "utf8"));
   expect(season.cutoff).toBe(report.cutoff);
   await page.goto("/pro-meta-intelligence/");
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   const name = await page.locator(".draft-team-column.blue header h2").textContent();
   const team = report.opponent_prep.teams.find(team => team.team_name === name); expect(team).toBeTruthy();
   const known = ["Ahri", "Akali", "Syndra", "Orianna", "Gnar", "Leona", "Rumble", "Aurora", "Nautilus", "Alistar"];

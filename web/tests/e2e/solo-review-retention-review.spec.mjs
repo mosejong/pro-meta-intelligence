@@ -33,7 +33,7 @@ async function start(page, side) {
   }));
   await page.goto(root);
   await enterDraftForReview(page);
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await solo(page).getByLabel("내 진영", { exact: true }).selectOption(side);
   await solo(page).getByRole("checkbox", { name: "상대 자동 밴픽", exact: true }).check();
   if (side === "RED") await expect(progress(page)).toHaveAttribute("value", "1");
@@ -62,7 +62,7 @@ for (const side of ["BLUE", "RED"]) {
     const original = await copyText(page);
     const before = page.url();
     await page.reload();
-    await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+    await enterDraftForReview(page);
     await expect(progress(page)).toHaveAttribute("value", side === "BLUE" ? "4" : "5");
     await expect(solo(page).getByLabel("내 진영", { exact: true })).toHaveValue(side);
     await expect(solo(page).getByRole("checkbox", { name: "상대 자동 밴픽", exact: true })).not.toBeChecked();
@@ -80,7 +80,7 @@ test("corrupt saved notes are dropped while the saved board still reloads", asyn
   await start(page, "BLUE");
   await sidecar(page, true);
   await page.reload();
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await expect(progress(page)).toHaveAttribute("value", "4");
   await expect(review(page)).toHaveCount(0);
   await expect(solo(page).getByRole("checkbox", { name: "상대 자동 밴픽", exact: true })).not.toBeChecked();
@@ -90,7 +90,7 @@ test("corrupt saved notes are dropped while the saved board still reloads", asyn
 test("undo and manual-side changes prune restored notes permanently across further reloads", async ({ page }) => {
   await start(page, "BLUE");
   await page.reload();
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await expect(progress(page)).toHaveAttribute("value", "4");
   await page.locator(".draft-actions").getByRole("button", { name: /되돌리기/ }).click();
   await expect(progress(page)).toHaveAttribute("value", "3");
@@ -99,14 +99,14 @@ test("undo and manual-side changes prune restored notes permanently across furth
     return typeof saved === "string" ? JSON.parse(saved).records.map(r => r.turn) : null;
   }).toEqual([2]);
   await page.reload();
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await expect(progress(page)).toHaveAttribute("value", "3");
   await expect(review(page).locator(":scope > summary")).toContainText("(1)");
   await solo(page).getByLabel("내 진영", { exact: true }).selectOption("RED");
   await expect(review(page)).toHaveCount(0);
   await expect.poll(() => sidecar(page)).toBeNull();
   await page.reload();
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await expect(progress(page)).toHaveAttribute("value", "3");
   await expect(review(page)).toHaveCount(0);
 });
@@ -124,7 +124,7 @@ test("reopening an identical named practice clears private autosave notes", asyn
   await expect(review(page)).toHaveCount(0);
   await expect.poll(() => sidecar(page)).toBeNull();
   await page.reload();
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await expect(progress(page)).toHaveAttribute("value", "4");
   await expect(review(page)).toHaveCount(0);
 });
@@ -139,7 +139,7 @@ test("accepting an identical shared draft clears private autosave notes", async 
   await expect(review(page)).toHaveCount(0);
   await expect.poll(() => sidecar(page)).toBeNull();
   await page.reload();
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await expect(progress(page)).toHaveAttribute("value", "4");
   await expect(review(page)).toHaveCount(0);
 });
@@ -166,7 +166,7 @@ test("reset clears saved notes and scenario import restores only the board", asy
   await expect(review(page)).toHaveCount(0);
   await expect.poll(() => sidecar(page)).toBeNull();
   await page.reload();
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await expect(progress(page)).toHaveAttribute("value", "4");
   await expect(review(page)).toHaveCount(0);
 });

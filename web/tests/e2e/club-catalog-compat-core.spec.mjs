@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { readFile } from "node:fs/promises";
 import { showPanel } from "./studio-panels.mjs";
 
@@ -7,7 +8,7 @@ test("old Nuguri club survives catalog expansion and 2015 MaRin is selectable", 
   const old = JSON.parse(await readFile(new URL("../../public/history/catalogs/b0f5e81bc19120632147dec7913ffd2c772aa17e63590e8b5570392a4e04c304.json", import.meta.url), "utf8"));
   await page.route("**/history/season-player-cards.json", route => route.fulfill({ json: old }), { times: 1 });
   await page.goto("/pro-meta-intelligence/");
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   const open = async () => {
     await showPanel(page, "ROSTER");
     const season = page.locator("details.season-lineup");
@@ -25,7 +26,7 @@ test("old Nuguri club survives catalog expansion and 2015 MaRin is selectable", 
   await expect(club.getByRole("status")).toContainText("저장했습니다");
   const saved = await page.evaluate(key => localStorage.getItem(key), key);
   await page.reload();
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   season = await open();
   const archive = page.waitForResponse(r => r.url().endsWith(`/history/catalogs/${old.catalog_id}.json`));
   await club.locator(".guest-club-list article").filter({ hasText: "이전 자료 너구리" }).getByRole("button", { name: "불러오기", exact: true }).click();

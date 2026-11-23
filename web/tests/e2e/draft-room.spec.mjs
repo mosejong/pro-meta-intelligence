@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { enterDraftWorkspace } from "./studio-panels.mjs";
 
 // Parent runner supplies a real room endpoint through VITE_DRAFT_ROOM_ENDPOINT
@@ -19,7 +20,7 @@ const room = page => page.locator(".draft-room");
 const progress = page => page.locator(".draft-turn-progress");
 const confirm = page => page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ });
 const available = page => page.locator(".draft-picker-grid button:not(:disabled)");
-async function ready(page) { await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled(); }
+async function ready(page) { await enterDraftForReview(page); }
 async function prepare(context) {
   await context.addInitScript(() => {
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async value => { window.__roomLink = value; } } });
@@ -148,7 +149,7 @@ test("creation consent can be cancelled without replacing personal draft", async
   await room(page).getByRole("button", { name: "취소", exact: true }).click();
   await expect(progress(page)).toHaveAttribute("value", "1");
   await expect(confirm(page)).toBeDisabled(); // No staged choice survives by accident.
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
 });
 
 test("late invite clipboard completion is ignored after leaving", async ({ page }) => {

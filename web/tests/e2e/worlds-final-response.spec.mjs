@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
@@ -27,7 +28,7 @@ async function setup(page, report) {
   const gen = report.opponent_prep.teams.find(t => t.team_name === "Gen.G");
   const blg = report.opponent_prep.teams.find(t => t.team_name === "Bilibili Gaming");
   await page.goto(root);
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await page.locator(".draft-session-details > summary").click();
   await page.locator('.draft-session-controls input[type="file"]').setInputFiles({ name: "final-game1-reference.json", mimeType: "application/json", buffer: Buffer.from(serialize(report, gen, blg, [])) });
   await expect(page.locator(".draft-team-column.blue h2")).toHaveText("Gen.G");

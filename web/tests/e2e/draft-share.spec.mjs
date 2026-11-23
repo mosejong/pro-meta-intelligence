@@ -1,11 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 
 const root = "/pro-meta-intelligence/";
 const progress = page => page.locator(".draft-turn-progress");
 const preview = page => page.getByRole("region", { name: "공유 밴픽 미리보기", exact: true });
 const confirm = page => page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ });
 async function ready(page) {
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
 }
 async function commit(page, count) {
   for (let i = 0; i < count; i++) {

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { showPanel } from "./studio-panels.mjs";
 
 const progress = page => page.locator(".draft-turn-progress");
@@ -28,7 +29,7 @@ test("three automatic-opponent sets → role assignment → named save → reloa
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/pro-meta-intelligence/");
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await showPanel(page, "DRAFT");
   const solo = page.getByRole("region", { name: "혼자 밴픽 연습", exact: true });
   await solo.getByRole("checkbox", { name: "상대 자동 밴픽", exact: true }).check();
@@ -50,7 +51,7 @@ test("three automatic-opponent sets → role assignment → named save → reloa
   await result(page).getByRole("button", { name: "피어리스 다음 세트", exact: true }).click();
   await expect(progress(page)).toHaveAttribute("value", "0");
   await page.reload();
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await openLibrary(page);
   await library(page).getByRole("button", { name: "3세트 통합 연습 열기", exact: true }).click();
   await library(page).getByRole("alertdialog").getByRole("button", { name: "바꾸기", exact: true }).click();

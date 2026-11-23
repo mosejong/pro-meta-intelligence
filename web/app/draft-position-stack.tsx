@@ -52,12 +52,12 @@ export function DraftPositionStack({ team, side, selections, staged, assignments
   }
 
   return <div className="draft-pick-stack draft-position-board" aria-label={`${sideLabel} 포지션 배정`} lang="ko">
-    <p className="draft-position-hint">관측 제안은 확정 배정이 아닙니다. 포지션을 검토한 뒤 확정하세요. 명시 배정은 이 기기와 저장 파일에 보관됩니다. 공유 링크·친구 방에는 포함되지 않습니다.</p>
+    {board.positions.some((item) => item.selection) && <p className="draft-position-hint">포지션은 기록을 본 제안이에요. 필요하면 바꿔서 확정하세요. 이 기기·저장 파일에만 남고 공유 링크·친구 방에는 빠져요.</p>}
     {ROSTER_ROLES.map((role) => {
       const position = board.positions.find((item) => item.role === role);
       return position?.selection
         ? card(position.selection, role, position.source, position.observed_roles)
-        : <article className="draft-position-empty" key={role} aria-label={`${roleLabel[role]} 빈 슬롯`}><b>{roleLabel[role]}</b><div><strong>{roleLabel[role]}</strong><span>확정 PICK 배정 대기</span></div></article>;
+        : <article className="draft-position-empty" key={role} aria-label={`${roleLabel[role]} 빈 슬롯`}><b>{roleLabel[role]}</b><div><strong>{roleLabel[role]}</strong><span>픽 대기</span></div></article>;
     })}
     {board.unassigned.length > 0 && <section className="draft-position-unassigned" aria-label={`${sideLabel} 미배정 PICK`}>
       <h3>미배정 PICK</h3>

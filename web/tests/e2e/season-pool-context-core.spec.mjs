@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { showPanel } from "./studio-panels.mjs";
 
 test("2015 MaRin pool reflects a current ban without treating historical counts as current strength", async ({ page }, testInfo) => {
   await page.goto("/pro-meta-intelligence/");
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await page.locator("#draft-search").fill("Maokai");
   await page.locator(".draft-picker-grid").getByRole("button", { name: "마오카이", exact: true }).click();
   await page.locator(".draft-lock-in").getByRole("button", { name: "밴 확정", exact: true }).click();

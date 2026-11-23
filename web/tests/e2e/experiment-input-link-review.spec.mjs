@@ -25,7 +25,7 @@ async function end(page) { await slider(page).focus(); await slider(page).press(
 async function sourceRun(page) {
   await page.goto(root);
   await enterDraftForReview(page);
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await openShare(page); await expect(copy(page)).toBeDisabled();
   await prepare(page); await seed(page).fill("4242");
   await fields(page).nth(0).fill("0.0000001"); await fields(page).nth(5).fill("-0.3");
