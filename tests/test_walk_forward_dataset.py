@@ -177,3 +177,12 @@ def test_snapshot_reports_carry_same_cutoff_patch_presence(tmp_path):
         counts = {row["champion_id"]: row["picks"] + row["bans"] for row in presence["champions"]}
         baseline = {row["champion_id"]: row["picks"] + row["bans"] for row in snapshot["presence"]}
         assert counts == baseline
+        for row in presence["champions"]:
+            assert sum(item["picks"] for item in row["roles"]) == row["picks"]
+            assert {item["role"] for item in row["roles"]} <= {
+                "TOP",
+                "JUNGLE",
+                "MID",
+                "BOTTOM",
+                "SUPPORT",
+            }

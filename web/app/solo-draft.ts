@@ -19,8 +19,16 @@ export type SoloDraftSuggestion = {
  */
 export type SoloBanPolicy = "OPPONENT_RECORD" | "PATCH_PRESENCE" | "PATCH_PRESENCE_WITH_OPPONENT";
 export const DEFAULT_BAN_POLICY: SoloBanPolicy = "PATCH_PRESENCE";
+/**
+ * Pick candidate policy. TEAM_AND_META is the shipped default. The TEAM_PLUS_* policies are frozen
+ * walk-forward candidates (docs/benchmarks/DRAFT_PICK_POLICY_CANDIDATES_2026-11-23.md) that need
+ * report.patch_presence; without a role-feasible candidate they fall back to TEAM_AND_META.
+ */
+export type SoloPickPolicy = "TEAM_AND_META" | "TEAM_PLUS_PATCH_PICKS" | "TEAM_PLUS_PATCH_PRESENCE";
+export const DEFAULT_PICK_POLICY: SoloPickPolicy = "TEAM_AND_META";
 export type SoloDraftInput = {
   banPolicy?: SoloBanPolicy;
+  pickPolicy?: SoloPickPolicy;
   seasonHistory?: SeasonHistory | null;
   report: RadarReport;
   blueTeam: OpponentTeam | null;
@@ -155,6 +163,32 @@ function soloContext(input: SoloDraftInput) {
     }
     return [...scores.entries()].filter(([id]) => available(id)).sort((a, b) => b[1] - a[1] || compare(a[0], b[0]))[0]?.[0] ?? null;
   } : null;
+  // Fixed, untuned pick scores: the acting team's observed game rate plus the same-patch pick share
+  // (picks / matches) or presence share ((picks + bans) / matches). Presence roles that make up at least
+  // a quarter of a champion's same-patch picks extend the role pool used for feasibility.
+  const pickPolicy = input.pickPolicy ?? DEFAULT_PICK_POLICY;
+  const presencePool = presenceRows ? presenceRows.champions.flatMap(row => {
+    const id = canonical(row.champion_id);
+    const roles = (row.roles ?? []).filter(r => row.picks > 0 && r.picks / row.picks >= 0.25).map(r => r.role === "ADC" ? "BOTTOM" : r.role)
+      .filter(role => observedRoles.has(role));
+    return id && roles.length ? [{ champion_id: id, roles: roles as import("./roster-scenario").RosterRole[], score: 0, season: false }] : [];
+  }) : [];
+  const widePool = [...rolePool, ...presencePool];
+  const wideFeasible = (id: string) => canCoverRoles(picked, widePool, id);
+  const presencePick = turn.kind === "PICK" && pickPolicy !== "TEAM_AND_META" && presenceRows ? (available: (id: string) => boolean) => {
+    const scores = new Map<string, number>();
+    const add = (id: string | undefined, value: number) => { if (id) scores.set(id, (scores.get(id) ?? 0) + value); };
+    for (const row of presenceRows.champions) {
+      add(canonical(row.champion_id), (pickPolicy === "TEAM_PLUS_PATCH_PICKS" ? row.picks : row.picks + row.bans) / presenceRows.match_count);
+    }
+    const teamRate = new Map<string, number>();
+    for (const p of acting.priority_picks) {
+      const id = canonical(p.champion_id);
+      if (id) teamRate.set(id, Math.max(teamRate.get(id) ?? 0, p.game_rate));
+    }
+    for (const [id, rate] of teamRate) add(id, rate);
+    return [...scores.entries()].filter(([id]) => available(id) && wideFeasible(id)).sort((a, b) => b[1] - a[1] || compare(a[0], b[0]))[0]?.[0] ?? null;
+  } : null;
   const select = (excluded: ReadonlySet<string>): SoloDraftSuggestion | null => {
   // Exclusions only narrow availability; replay and Fearless legality stay in `legal`.
   const available = (id: string) => !excluded.has(id) && legal(id);
@@ -170,6 +204,11 @@ function soloContext(input: SoloDraftInput) {
     const supported = roleFeasible(choice.champion_id);
     return { ...choice, role_supported: supported, reason: supported ? choice.reason : `${choice.reason} 남은 후보의 포지션 근거가 부족해 조합 구성을 보장하지 않습니다.` };
   };
+  if (turn.kind === "PICK" && presencePick) {
+    const pick = presencePick(available);
+    if (pick) return { champion_id: pick, source: "PATCH_PRESENCE", role_supported: true,
+      reason: "행동 팀의 공개 우선 픽 기록과 같은 패치의 공개 픽 빈도, 남은 포지션을 함께 참고한 연습 픽입니다. 선수의 실제 선택을 예측하지 않습니다." };
+  }
   if (record && turn.kind === "PICK" && metaSet.has(record) && !priorityIds.has(record)) return finish({
     champion_id: record, source: "RADAR", reason: "현재 레이더의 검토 가능 메타와 남은 포지션을 참고한 연습 픽입니다. 선수의 실제 선택을 예측하지 않습니다.",
   });
@@ -197,5 +236,6 @@ function soloContext(input: SoloDraftInput) {
     if (choice.source === "RADAR") return metaSet.has(choice.champion_id) ? "RADAR_META" : "RADAR_FRAME";
     return priorityIds.has(choice.champion_id) || !candidateById.has(choice.champion_id) ? "TEAM_PRIORITY" : "PLAYER_CURRENT";
   };
-  return { turn, target, replayLength: replay.length, select, rolesOf, evidenceOf, seasonEvidence: roleCandidates.some(row => row.season) };
+  return { turn, target, replayLength: replay.length, select, rolesOf: (id: string) => pickPolicy === "TEAM_AND_META" ? rolesOf(id)
+    : [...new Set(widePool.filter(row => row.champion_id === id).flatMap(row => row.roles))], evidenceOf, seasonEvidence: roleCandidates.some(row => row.season) };
 }

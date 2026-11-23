@@ -20,7 +20,11 @@ export const CANDIDATE_POLICIES = Object.freeze({
   CANDIDATE_BAN_PATCH_PRESENCE: "PATCH_PRESENCE",
   CANDIDATE_BAN_PATCH_PRESENCE_WITH_OPPONENT: "PATCH_PRESENCE_WITH_OPPONENT",
 });
-export const METHODS = Object.freeze(["PRODUCTION", ...Object.keys(CANDIDATE_POLICIES), "BASELINE_PATCH_PRESENCE", "BASELINE_TEAM_PRIORITY"]);
+export const PICK_CANDIDATE_POLICIES = Object.freeze({
+  CANDIDATE_PICK_TEAM_PLUS_PATCH_PICKS: "TEAM_PLUS_PATCH_PICKS",
+  CANDIDATE_PICK_TEAM_PLUS_PATCH_PRESENCE: "TEAM_PLUS_PATCH_PRESENCE",
+});
+export const METHODS = Object.freeze(["PRODUCTION", ...Object.keys(CANDIDATE_POLICIES), ...Object.keys(PICK_CANDIDATE_POLICIES), "BASELINE_PATCH_PRESENCE", "BASELINE_TEAM_PRIORITY"]);
 const BASELINES = ["BASELINE_PATCH_PRESENCE", "BASELINE_TEAM_PRIORITY"];
 const SPLIT_ORDER = ["DEV", "VALIDATION", "HOLDOUT"];
 const LAG_MS = 24 * 3600 * 1000;
@@ -261,6 +265,11 @@ export function evaluateWalkForward(dataset, api, options = {}) {
       for (const [method, banPolicy] of Object.entries(CANDIDATE_POLICIES)) {
         if (actual.kind !== "BAN") { lists[method] = lists.PRODUCTION; continue; }
         const candidate = api.explainSoloDraftTurn({ ...input, banPolicy });
+        lists[method] = candidate ? [candidate.selected, ...candidate.alternatives].slice(0, CANDIDATE_COUNT).map((c) => c.champion_id) : null;
+      }
+      for (const [method, pickPolicy] of Object.entries(PICK_CANDIDATE_POLICIES)) {
+        if (actual.kind !== "PICK") { lists[method] = lists.PRODUCTION; continue; }
+        const candidate = api.explainSoloDraftTurn({ ...input, pickPolicy });
         lists[method] = candidate ? [candidate.selected, ...candidate.alternatives].slice(0, CANDIDATE_COUNT).map((c) => c.champion_id) : null;
       }
       for (const method of BASELINES) {

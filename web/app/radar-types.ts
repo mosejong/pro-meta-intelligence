@@ -282,7 +282,7 @@ export type PatchPresence = {
   patch_id: string;
   cutoff: string;
   match_count: number;
-  champions: Array<{ champion_id: string; picks: number; bans: number }>;
+  champions: Array<{ champion_id: string; picks: number; bans: number; roles?: Array<{ role: string; picks: number }> }>;
 };
 
 function isPatchPresence(value: unknown): value is PatchPresence {
@@ -291,7 +291,8 @@ function isPatchPresence(value: unknown): value is PatchPresence {
   return typeof presence.patch_id === "string" && typeof presence.cutoff === "string" &&
     Number.isSafeInteger(presence.match_count) && (presence.match_count as number) >= 0 && Array.isArray(presence.champions) &&
     presence.champions.every((row) => isRecord(row) && typeof row.champion_id === "string" &&
-      Number.isSafeInteger(row.picks) && row.picks >= 0 && Number.isSafeInteger(row.bans) && row.bans >= 0);
+      Number.isSafeInteger(row.picks) && row.picks >= 0 && Number.isSafeInteger(row.bans) && row.bans >= 0 &&
+      (row.roles === undefined || (Array.isArray(row.roles) && row.roles.every((r) => isRecord(r) && typeof r.role === "string" && Number.isSafeInteger(r.picks) && r.picks >= 0))));
 }
 
 export type RadarReport = {
