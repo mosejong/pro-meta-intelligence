@@ -50,7 +50,7 @@ function evidenceText(evidence: SoloDraftEvidence, team: string): string {
     case "PLAYER_SEASON": return "같은 팀 현재 관측 선수 시즌 기록(시즌 기록이며 현재 패치의 강함을 뜻하지 않음)";
     case "RADAR_META": return "현재 레이더 검토 가능 메타";
     case "RADAR_FRAME": return "공개 레이더 후보";
-    case "PATCH_PRESENCE": return "같은 패치의 공개 픽·밴 빈도";
+    case "PATCH_PRESENCE": return "같은 패치의 공개 픽·밴 빈도(픽은 행동 팀 기록 포함)";
     case "FALLBACK": return "사용할 기록 없음 · 고정 규칙(챔피언 목록 순서)";
   }
 }
