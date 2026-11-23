@@ -164,7 +164,7 @@ export function evaluateWalkForward(dataset, api, options = {}) {
   const clustersBySplit = new Map();
   const teamTallies = new Map(); // `${split}|${team}` -> production tally
   const seen = new Set();
-  const counts = Object.fromEntries(SPLIT_ORDER.map((s) => [s, { matches: 0, sealed_matches: 0, excluded_unknown_champion: 0 }]));
+  const counts = Object.fromEntries(SPLIT_ORDER.map((s) => [s, { matches: 0, sealed_matches: 0, excluded_unknown_champion: 0, excluded_duplicate_champion: 0 }]));
   const leagueMatches = new Map();
   const ordered = [...dataset.matches].sort((a, b) => compare(String(a?.observed_at), String(b?.observed_at)) || compare(String(a?.match_id), String(b?.match_id)));
 
@@ -204,10 +204,10 @@ export function evaluateWalkForward(dataset, api, options = {}) {
       const expected = sequence[index];
       req(isRecord(selection) && typeof selection.champion_id === "string" && selection.turn === index + 1 && selection.side === expected.side &&
         selection.kind === expected.kind && selection.slot === expected.slot && selection.phase === expected.phase, "Invalid standard draft order");
-      const next = api.applyDraftSelection(check, selection.champion_id, [], raw.first_pick_side);
-      req(next.length === check.length + 1, "Duplicate or empty champion in target");
-      check = next;
+      check = api.applyDraftSelection(check, selection.champion_id, [], raw.first_pick_side);
     }
+    // The same champion twice in one provider draft is a source data defect: counted exclusion.
+    if (check.length !== 20) { counts[raw.split].excluded_duplicate_champion++; continue; }
     counts[raw.split].matches++;
     leagueMatches.set(`${raw.split}|${raw.league}`, (leagueMatches.get(`${raw.split}|${raw.league}`) ?? 0) + 1);
 
