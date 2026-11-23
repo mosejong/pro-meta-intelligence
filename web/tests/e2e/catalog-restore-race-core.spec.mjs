@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { readFile } from "node:fs/promises";
 import { showPanel } from "./studio-panels.mjs";
 
@@ -6,7 +7,7 @@ test("restoring a preserved practice cancels an older manual catalog request", a
   const old = JSON.parse(await readFile(new URL("../../public/history/catalogs/b0f5e81bc19120632147dec7913ffd2c772aa17e63590e8b5570392a4e04c304.json", import.meta.url), "utf8"));
   await page.route("**/history/season-player-cards.json", route => route.fulfill({ json: old }), { times: 1 });
   await page.goto("/pro-meta-intelligence/");
-  const ready = () => expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  const ready = () => enterDraftForReview(page);
   await ready();
   await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
   await page.locator(".draft-lock-in").getByRole("button", { name: "밴 확정", exact: true }).click();
