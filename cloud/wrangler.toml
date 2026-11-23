@@ -1,0 +1,16 @@
+# Cloud save worker. Deployed only after the owner adds Cloudflare credentials
+# (see docs/ACCOUNT_AND_CLOUD_SAVE_PLAN_2026-11-23.md). database_id is filled in at setup.
+name = "pmi-cloud-save"
+main = "src/index.mjs"
+compatibility_date = "2026-11-01"
+
+[vars]
+ALLOWED_ORIGINS = "https://mosejong.github.io,http://127.0.0.1:4190,http://localhost:5173"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pmi-cloud-save"
+database_id = "REPLACE_AT_SETUP"
+
+[triggers]
+crons = ["17 3 * * *"]  # daily cleanup of expired saves and old rate-limit windows

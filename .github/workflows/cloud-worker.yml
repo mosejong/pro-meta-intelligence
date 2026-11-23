@@ -1,0 +1,41 @@
+name: Deploy cloud save worker
+
+# Runs only after the owner adds the CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID secrets and puts
+# the D1 database_id into cloud/wrangler.toml (docs/ACCOUNT_AND_CLOUD_SAVE_PLAN_2026-11-23.md).
+on:
+  push:
+    branches: [main]
+    paths: ["cloud/**", ".github/workflows/cloud-worker.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Test
+        run: node --no-warnings --test cloud/test/handler.test.mjs
+      - name: Check deployment is configured
+        id: configured
+        run: |
+          if [[ -n "$CLOUDFLARE_API_TOKEN" && -n "$CLOUDFLARE_ACCOUNT_ID" ]] && ! grep -q REPLACE_AT_SETUP cloud/wrangler.toml; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Cloud save is not configured yet; skipping deploy."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Apply schema and deploy
+        if: steps.configured.outputs.ready == 'true'
+        working-directory: cloud
+        run: |
+          npx --yes wrangler@4 d1 execute pmi-cloud-save --remote --file schema.sql
+          npx --yes wrangler@4 deploy
