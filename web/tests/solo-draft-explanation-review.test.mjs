@@ -16,6 +16,9 @@ before(async () => {
   const { parsePlayerSeasonHistory } = await vite.ssrLoadModule("/app/player-season-history.ts");
   const { rosterBasis } = await vite.ssrLoadModule("/app/roster-scenario.ts");
   report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
+  // Record-path coverage: the published feed now carries patch_presence (default policy), which these
+  // branch tests deliberately exclude; the presence path is covered in solo-ban-policy.test.mjs.
+  delete report.patch_presence;
   const parsed = parsePlayerSeasonHistory(await readFile(new URL("../public/history/player-season-2026.json", import.meta.url), "utf8"), { basis: rosterBasis(report), season: 2026 });
   assert.ok(parsed.ok); history = parsed.value; teams = report.opponent_prep.teams;
 });

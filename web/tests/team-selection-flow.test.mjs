@@ -367,7 +367,7 @@ test("setup first selection: one shared guarded handler, same state as the draft
   const setupOptions = lab.indexOf('className="draft-flow-options"');
   assert.ok(lab.indexOf("</fieldset>") < setupOptions && setupOptions < lab.indexOf('className="draft-flow-actions"') && setupStart < setupOptions);
   const options = lab.slice(setupOptions, lab.indexOf("</details>", setupOptions));
-  assert.match(options, /<summary>경기 설정<\/summary>/);
+  assert.match(options, /<summary>경기 설정 <small className="draft-flow-options-hint">\(첫 선택 진영\)<\/small><\/summary>/);
   assert.match(options, /<label className="draft-setup-first-selection">시작할 첫 선택 진영/);
   assert.doesNotMatch(options, /draft-first-selection"|t\("draft\.firstPick"\)/, "no duplicate draft-step class or label");
   assert.doesNotMatch(lab.slice(setupOptions - 400, setupOptions), /<details[^>]*\sopen/, "collapsed by default");

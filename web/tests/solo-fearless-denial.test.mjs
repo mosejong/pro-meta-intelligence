@@ -14,6 +14,9 @@ test("seven opponents survive three Fearless sets under targeted bans without il
     const { rosterBasis } = await vite.ssrLoadModule("/app/roster-scenario.ts");
     const { SHARE_CHAMPIONS } = await vite.ssrLoadModule("/app/share-champion-ids.ts");
     const report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
+    // Record-path coverage: the published feed now carries patch_presence (default policy), which these
+    // branch tests deliberately exclude; the presence path is covered in solo-ban-policy.test.mjs.
+    delete report.patch_presence;
     const parsed = parsePlayerSeasonHistory(await readFile(new URL("../public/history/player-season-2026.json", import.meta.url), "utf8"), { basis: rosterBasis(report), season: 2026 });
     const history = parsed.ok ? parsed.value : null;
     const blueTeam = report.opponent_prep.teams.find(t => t.team_name === "T1");
