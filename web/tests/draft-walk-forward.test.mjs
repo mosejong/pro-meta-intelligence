@@ -173,7 +173,8 @@ test("ban candidates use report.patch_presence, match production on picks, and f
   assert.deepEqual(result.by_kind.PICK.CANDIDATE_BAN_PATCH_PRESENCE, result.by_kind.PICK.PRODUCTION, "picks unchanged");
   // v1 bans the presence leaders in order, so the pure presence candidate hits the first bans at top-1.
   assert.ok(result.by_phase["BAN:1"].CANDIDATE_BAN_PATCH_PRESENCE.top1 >= 4);
-  assert.ok(result.by_phase["BAN:1"].CANDIDATE_BAN_PATCH_PRESENCE.top1 > result.by_phase["BAN:1"].PRODUCTION.top1);
+  // PATCH_PRESENCE is now the production default, so production and that candidate must agree exactly.
+  assert.deepEqual(result.overall.PRODUCTION, result.overall.CANDIDATE_BAN_PATCH_PRESENCE);
   const bad = dataset();
   bad.snapshots[0].report.patch_presence = { patch_id: bad.snapshots[0].patch_id, cutoff: "2026-08-17T00:00:00+00:00", match_count: 1, champions: [] };
   assert.throws(() => run(bad), /Patch presence/);

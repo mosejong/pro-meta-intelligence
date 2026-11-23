@@ -36,7 +36,7 @@ const SHA = /^[0-9a-f]{64}$/;
 // Generator output is always canonical (solo-draft.ts `canonical`), so exact membership is required.
 const CHAMPIONS = new Set(SHARE_CHAMPIONS.map(([, id]) => id));
 const SIDES: readonly string[] = ["BLUE", "RED"];
-const SOURCES: readonly string[] = ["TEAM_RECORD", "PLAYER_SEASON", "RADAR", "FALLBACK"];
+const SOURCES: readonly string[] = ["TEAM_RECORD", "PLAYER_SEASON", "RADAR", "PATCH_PRESENCE", "FALLBACK"];
 const ROLES: readonly string[] = ROSTER_ROLES;
 /** True when any UTF-16 unit is C0 (U+0000–U+001F) or DEL (U+007F). */
 function hasControl(value: string): boolean {
@@ -97,6 +97,7 @@ function evidenceFits(kind: "BAN" | "PICK", source: SoloDraftSuggestion["source"
   if (source === "FALLBACK") return evidence === "FALLBACK";
   if (source === "PLAYER_SEASON") return kind === "PICK" && evidence === "PLAYER_SEASON";
   if (source === "RADAR") return evidence === "RADAR_META" || evidence === "RADAR_FRAME";
+  if (source === "PATCH_PRESENCE") return kind === "BAN" && evidence === "PATCH_PRESENCE";
   // BAN team-record candidates always come from the opposing team's priority ids.
   return kind === "BAN" ? evidence === "TEAM_PRIORITY" : evidence === "TEAM_PRIORITY" || evidence === "PLAYER_CURRENT";
 }
@@ -106,7 +107,7 @@ function readChoice(value: unknown, kind: "BAN" | "PICK"): SoloDraftExplainedCho
   const champion_id = champion(o.champion_id);
   const reason = text(o.reason);
   const source = oneOf<SoloDraftSuggestion["source"]>(o.source, SOURCES);
-  const evidence = oneOf<SoloDraftEvidence>(o.evidence, ["TEAM_PRIORITY", "PLAYER_CURRENT", "PLAYER_SEASON", "RADAR_META", "RADAR_FRAME", "FALLBACK"]);
+  const evidence = oneOf<SoloDraftEvidence>(o.evidence, ["TEAM_PRIORITY", "PLAYER_CURRENT", "PLAYER_SEASON", "RADAR_META", "RADAR_FRAME", "PATCH_PRESENCE", "FALLBACK"]);
   if (!evidenceFits(kind, source, evidence)) invalid();
   const roles = list(o.inferred_roles, ROLES.length).map(role => oneOf<string>(role, ROLES));
   if (new Set(roles).size !== roles.length || (kind === "BAN" && roles.length)) invalid();

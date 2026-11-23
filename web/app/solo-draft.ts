@@ -9,15 +9,16 @@ export type SoloDraftSuggestion = {
   champion_id: string;
   role_supported?: boolean;
   reason: string;
-  source: "TEAM_RECORD" | "PLAYER_SEASON" | "RADAR" | "FALLBACK";
+  source: "TEAM_RECORD" | "PLAYER_SEASON" | "RADAR" | "PATCH_PRESENCE" | "FALLBACK";
 };
 
 /**
- * Ban candidate policy. OPPONENT_RECORD is the shipped default. The PATCH_* policies are walk-forward
- * evaluation candidates (docs/benchmarks/DRAFT_RULE_WALK_FORWARD_PROTOCOL_2026-11-23.md) and need
- * report.patch_presence; without it they fall back to OPPONENT_RECORD.
+ * Ban candidate policy. PATCH_PRESENCE is the default since it passed the walk-forward adoption rules
+ * (docs/benchmarks/DRAFT_BAN_POLICY_CANDIDATES_2026-11-23.md). The PATCH_* policies need
+ * report.patch_presence; without it they fall back to OPPONENT_RECORD (the previous default).
  */
 export type SoloBanPolicy = "OPPONENT_RECORD" | "PATCH_PRESENCE" | "PATCH_PRESENCE_WITH_OPPONENT";
+export const DEFAULT_BAN_POLICY: SoloBanPolicy = "PATCH_PRESENCE";
 export type SoloDraftInput = {
   banPolicy?: SoloBanPolicy;
   seasonHistory?: SeasonHistory | null;
@@ -43,7 +44,7 @@ export function suggestSoloDraftTurn(input: SoloDraftInput): SoloDraftSuggestion
 }
 
 /** The evidence row that actually produced a candidate (finer than `source`, which is unchanged). */
-export type SoloDraftEvidence = "TEAM_PRIORITY" | "PLAYER_CURRENT" | "PLAYER_SEASON" | "RADAR_META" | "RADAR_FRAME" | "FALLBACK";
+export type SoloDraftEvidence = "TEAM_PRIORITY" | "PLAYER_CURRENT" | "PLAYER_SEASON" | "RADAR_META" | "RADAR_FRAME" | "PATCH_PRESENCE" | "FALLBACK";
 export type SoloDraftExplainedChoice = SoloDraftSuggestion & { inferred_roles: string[]; evidence: SoloDraftEvidence };
 export type SoloDraftExplanation = {
   turn: number;
@@ -141,7 +142,7 @@ function soloContext(input: SoloDraftInput) {
   // team's observed game rate for that champion. Ties break by canonical id.
   const presenceRows = report.patch_presence && report.patch_presence.patch_id === report.patch_id && report.patch_presence.match_count > 0
     ? report.patch_presence : null;
-  const banPolicy = input.banPolicy ?? "OPPONENT_RECORD";
+  const banPolicy = input.banPolicy ?? DEFAULT_BAN_POLICY;
   const presenceBan = turn.kind === "BAN" && banPolicy !== "OPPONENT_RECORD" && presenceRows ? (available: (id: string) => boolean) => {
     const scores = new Map<string, number>();
     for (const row of presenceRows.champions) {
@@ -177,7 +178,7 @@ function soloContext(input: SoloDraftInput) {
   });
   if (turn.kind === "BAN" && presenceBan) {
     const ban = presenceBan(available);
-    if (ban) return { champion_id: ban, source: "RADAR", reason: "같은 패치의 공개 픽·밴 빈도와 상대 팀 기록을 참고한 연습 밴입니다. 실제 팀의 선택을 예측하지 않습니다." };
+    if (ban) return { champion_id: ban, source: "PATCH_PRESENCE", reason: "같은 패치의 공개 픽·밴 빈도를 참고한 연습 밴입니다. 실제 팀의 선택을 예측하지 않습니다." };
   }
   if (record) return finish({ champion_id: record, source: "TEAM_RECORD", reason: turn.kind === "BAN"
     ? "상대 팀의 공개 우선 픽 기록을 바탕으로 한 연습 밴입니다."
@@ -192,7 +193,7 @@ function soloContext(input: SoloDraftInput) {
   };
   // Read-only classification of an already-made choice; mirrors the branches above without affecting them.
   const evidenceOf = (choice: SoloDraftSuggestion): SoloDraftEvidence => {
-    if (choice.source === "FALLBACK" || choice.source === "PLAYER_SEASON") return choice.source;
+    if (choice.source === "FALLBACK" || choice.source === "PLAYER_SEASON" || choice.source === "PATCH_PRESENCE") return choice.source;
     if (choice.source === "RADAR") return metaSet.has(choice.champion_id) ? "RADAR_META" : "RADAR_FRAME";
     return priorityIds.has(choice.champion_id) || !candidateById.has(choice.champion_id) ? "TEAM_PRIORITY" : "PLAYER_CURRENT";
   };

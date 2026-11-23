@@ -40,7 +40,7 @@ export function cleanSoloHistoryName(value: unknown, max: number): string {
   return chars.length > max ? `${chars.slice(0, max - 1).join("").trimEnd()}…` : flat;
 }
 
-const EVIDENCE: ReadonlySet<string> = new Set<SoloDraftEvidence>(["TEAM_PRIORITY", "PLAYER_CURRENT", "PLAYER_SEASON", "RADAR_META", "RADAR_FRAME", "FALLBACK"]);
+const EVIDENCE: ReadonlySet<string> = new Set<SoloDraftEvidence>(["TEAM_PRIORITY", "PLAYER_CURRENT", "PLAYER_SEASON", "RADAR_META", "RADAR_FRAME", "PATCH_PRESENCE", "FALLBACK"]);
 const ROLE_TEXT: Readonly<Record<string, string>> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", ADC: "바텀", SUPPORT: "서포터" };
 
 function evidenceText(evidence: SoloDraftEvidence, team: string): string {
@@ -50,6 +50,7 @@ function evidenceText(evidence: SoloDraftEvidence, team: string): string {
     case "PLAYER_SEASON": return "같은 팀 현재 관측 선수 시즌 기록(시즌 기록이며 현재 패치의 강함을 뜻하지 않음)";
     case "RADAR_META": return "현재 레이더 검토 가능 메타";
     case "RADAR_FRAME": return "공개 레이더 후보";
+    case "PATCH_PRESENCE": return "같은 패치의 공개 픽·밴 빈도";
     case "FALLBACK": return "사용할 기록 없음 · 고정 규칙(챔피언 목록 순서)";
   }
 }

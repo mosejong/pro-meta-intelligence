@@ -37,6 +37,7 @@ const evidenceLabel = (evidence: SoloDraftEvidence, team: string): string => ({
   PLAYER_SEASON: "같은 팀 현재 관측 선수 시즌 기록",
   RADAR_META: "현재 레이더 검토 가능 메타",
   RADAR_FRAME: "공개 레이더 후보",
+  PATCH_PRESENCE: "같은 패치의 공개 픽·밴 빈도",
   FALLBACK: "대체 규칙: 사용할 기록 후보 없음 · 고정 챔피언 목록 순서",
 })[evidence];
 
