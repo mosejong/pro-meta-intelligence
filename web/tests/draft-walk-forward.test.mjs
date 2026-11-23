@@ -147,6 +147,7 @@ test("leakage and contract violations fail closed", () => {
     ["Split label", (d) => { d.matches[0].split = "DEV"; }],
     ["Evidence limit", (d) => { d.snapshots[0].evidence_played_at_or_before = d.snapshots[0].cutoff; }],
     ["availability", (d) => { d.availability.lag_hours = 0; }],
+    ["Invalid standard draft order", (d) => { d.matches[0].selections[3].side = d.matches[0].selections[3].side === "BLUE" ? "RED" : "BLUE"; }],
     ["Duplicate target", (d) => { d.matches.push(structuredClone(d.matches[0])); d.audit.eligible_matches++; }],
     ["Unsupported", (d) => { d.protocol_id = "other"; }],
   ];
@@ -165,6 +166,14 @@ test("a champion name the product cannot replay is a counted exclusion, not a fa
   assert.equal(result.splits.VALIDATION.excluded_unknown_champion, 1);
   assert.equal(result.splits.VALIDATION.matches, 1);
   assert.equal(result.splits.VALIDATION.overall.PRODUCTION.states, 20);
+});
+
+test("a champion repeated inside one source draft is a counted exclusion", () => {
+  const data = dataset();
+  data.matches[1].selections[12].champion_id = data.matches[1].selections[2].champion_id;
+  const result = run(data);
+  assert.equal(result.splits.VALIDATION.excluded_duplicate_champion, 1);
+  assert.equal(result.splits.VALIDATION.matches, 1);
 });
 
 test("the production rules do not mutate snapshots", () => {
