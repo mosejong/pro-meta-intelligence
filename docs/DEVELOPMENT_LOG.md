@@ -692,3 +692,7 @@ Codex관련41,동일Claude lint수정후영향12/타입/lint/빌드통과. PC/�
 ## 2026-11-23 · 3단계 픽 정책 채택
 - 실행 전 고정한 두 후보 중 DEV 우세안 `TEAM_PLUS_PATCH_PRESENCE`(행동 팀 게임 비율 + 같은 패치 픽·밴 비율, 포지션 충족)를 VALIDATION에서 확인: 전체 top-3 21.6%→24.1%(+1.8~+3.1%p), 픽 18.5%→23.4%, 밴 동일, 불법·기권 0.
 - 서비스 기본 픽 정책으로 변경. 시작 시점(16.7%) 대비 VALIDATION top-3 +7.4%p. 다음은 HOLDOUT 1회 개봉.
+
+## 2026-11-23 · 최종안 HOLDOUT 개봉
+- 최종안(밴 PATCH_PRESENCE + 픽 TEAM_PLUS_PATCH_PRESENCE)으로 봉인 278경기를 1회 개봉: top-3 27.5%, 패치 빈도 기준선 22.8%(+3.8~+5.8%p), 이전에 보지 않은 경기만 27.6%, 불법·기권 0.
+- 이전 규칙과의 HOLDOUT 직접 비교는 하지 않았다. 이후 개선은 새 원본의 실제 시점 평가로 확인. 상세 benchmarks/DRAFT_RULE_HOLDOUT_RESULT_2026-11-23.md.
