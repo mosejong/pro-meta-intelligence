@@ -34,6 +34,7 @@ import { DraftChampionInfo, type ChampionFocus } from "./draft-champion-info";
 import { DraftComparisonPanel } from "./draft-comparison-panel";
 import { PartnershipPlacement } from "./partnership-placement";
 import { TesterFeedbackPanel } from "./tester-feedback-panel";
+import { CloudSavePanel } from "./cloud-save-panel";
 import { RosterWorkshop, type RosterMeta, type RosterRestoreRequest } from "./roster-workshop";
 import { SimulationReadinessPanel } from "./simulation-readiness-panel";
 import { SimulationExamplePanel } from "./simulation-example-panel";
@@ -779,16 +780,22 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         setImportStatus({ code: "TOO_LARGE" });
         return;
       }
-      const result = parseDraftSession(await file.text());
-      if (!result.ok) { setImportStatus({ code: "PARSE_FAILED", reason: sessionReason(result) }); return; }
-      if (room.active) return;
-      // A replaced session must not be compared against an in-memory A from earlier data.
-      setComparisonEpoch((epoch) => epoch + 1);
-      restoreSession(result.session);
-      setStep("DRAFT");
-      setImportStatus({ code: "LOADED" });
+      applyImportedText(await file.text());
     } catch { setImportStatus({ code: "READ_FAILED" }); }
     finally { input.value = ""; setImporting(false); }
+  }
+
+  /** Shared by file import and cloud load: validate with the scenario codec, then restore. */
+  function applyImportedText(text: string): boolean {
+    const result = parseDraftSession(text);
+    if (!result.ok) { setImportStatus({ code: "PARSE_FAILED", reason: sessionReason(result) }); return false; }
+    if (room.active) return false;
+    // A replaced session must not be compared against an in-memory A from earlier data.
+    setComparisonEpoch((epoch) => epoch + 1);
+    restoreSession(result.session);
+    setStep("DRAFT");
+    setImportStatus({ code: "LOADED" });
+    return true;
   }
 
   const phaseLabel = turn ? format(phaseKey(turn.kind), { phase: turn.phase }) : t("draft.complete");
@@ -991,6 +998,9 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
           // Draft, current roster and season refs arrive together, already fully verified by the panel.
           if (roster) { setLiveRoster(null); setRosterRequest({ token: ++rosterToken.current, roster, season }); }
         }} />
+      <CloudSavePanel disabled={room.active || !sessionReady || importing}
+        getScenario={() => blueTeam && redTeam && (selections.length || games.length) ? serializeDraftScenario(report, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide, positionRecord) : null}
+        onLoad={async (text) => applyImportedText(text)} />
       <details className="draft-session-details"><summary lang="ko">고급 설정 · 파일 저장·불러오기</summary>
       <p>{format("draft.sessionInfo", { state: t(seriesReport ? "draft.sessionInfo.locked" : "draft.sessionInfo.pending"), patch: report.patch_id, cutoff: report.cutoff ?? "", model: DRAFT_MODEL_VERSION })}</p>
       <div className="draft-session-controls"><button type="button" onClick={downloadScenario} disabled={!selections.length && !games.length}>{t("draft.scenarioJson")}</button><label>{t("draft.import")}<input type="file" accept=".json,application/json" disabled={room.active || !sessionReady || importing} onChange={(event) => void importScenario(event.currentTarget)} /></label><button type="button" onClick={downloadScenario} disabled={!canSelect}>{t("draft.saveJson")}</button></div>

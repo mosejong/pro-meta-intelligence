@@ -33,6 +33,9 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run test:pages
+        env:
+          # Cloud save stays hidden until the owner sets this repository variable to the deployed worker URL.
+          VITE_CLOUD_SAVE_URL: ${{ vars.CLOUD_SAVE_URL }}
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
