@@ -73,6 +73,8 @@ export function briefOf(result) {
   const pick = (group) => group && Object.fromEntries(Object.entries(group).filter(([k]) => METHODS.includes(k)).map(([k, v]) => [k, `${(v.top3_rate * 100).toFixed(1)}/${(v.top1_rate * 100).toFixed(1)}`]));
   return Object.fromEntries(Object.entries(result.splits).map(([name, split]) => [name, split.status !== "EVALUATED" ? { status: split.status, sealed_matches: split.sealed_matches } : {
     matches: split.matches, states: split.overall.PRODUCTION.states, "top3/top1 %": pick(split.overall),
+    illegal_candidates: Object.fromEntries(METHODS.map((m) => [m, split.overall[m].illegal_candidates])),
+    abstentions: Object.fromEntries(METHODS.map((m) => [m, split.overall[m].abstentions])),
     by_kind: Object.fromEntries(Object.entries(split.by_kind).map(([k, v]) => [k, pick(v)])),
     by_phase: Object.fromEntries(Object.entries(split.by_phase).map(([k, v]) => [k, pick(v)])),
     by_league: Object.fromEntries(Object.entries(split.by_league).map(([k, v]) => [`${k}(${v.matches})`, pick(v)])),
