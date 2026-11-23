@@ -36282,6 +36282,777 @@
     ]
   },
   "patch_id": "16.20",
+  "patch_presence": {
+    "champions": [
+      {
+        "bans": 169,
+        "champion_id": "Vi",
+        "picks": 49,
+        "roles": [
+          {
+            "picks": 49,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 183,
+        "champion_id": "Nocturne",
+        "picks": 34,
+        "roles": [
+          {
+            "picks": 34,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 87,
+        "champion_id": "Lee Sin",
+        "picks": 72,
+        "roles": [
+          {
+            "picks": 72,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 121,
+        "champion_id": "Locke",
+        "picks": 38,
+        "roles": [
+          {
+            "picks": 36,
+            "role": "MID"
+          },
+          {
+            "picks": 1,
+            "role": "BOTTOM"
+          },
+          {
+            "picks": 1,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 102,
+        "champion_id": "Olaf",
+        "picks": 53,
+        "roles": [
+          {
+            "picks": 53,
+            "role": "TOP"
+          }
+        ]
+      },
+      {
+        "bans": 97,
+        "champion_id": "Qiyana",
+        "picks": 57,
+        "roles": [
+          {
+            "picks": 57,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 83,
+        "champion_id": "Jarvan IV",
+        "picks": 70,
+        "roles": [
+          {
+            "picks": 70,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 90,
+        "champion_id": "Cassiopeia",
+        "picks": 55,
+        "roles": [
+          {
+            "picks": 51,
+            "role": "MID"
+          },
+          {
+            "picks": 3,
+            "role": "BOTTOM"
+          },
+          {
+            "picks": 1,
+            "role": "TOP"
+          }
+        ]
+      },
+      {
+        "bans": 66,
+        "champion_id": "Syndra",
+        "picks": 75,
+        "roles": [
+          {
+            "picks": 75,
+            "role": "MID"
+          }
+        ]
+      },
+      {
+        "bans": 73,
+        "champion_id": "Orianna",
+        "picks": 67,
+        "roles": [
+          {
+            "picks": 67,
+            "role": "MID"
+          }
+        ]
+      },
+      {
+        "bans": 85,
+        "champion_id": "Renata Glasc",
+        "picks": 50,
+        "roles": [
+          {
+            "picks": 50,
+            "role": "SUPPORT"
+          }
+        ]
+      },
+      {
+        "bans": 96,
+        "champion_id": "Caitlyn",
+        "picks": 33,
+        "roles": [
+          {
+            "picks": 33,
+            "role": "BOTTOM"
+          }
+        ]
+      },
+      {
+        "bans": 70,
+        "champion_id": "Lulu",
+        "picks": 59,
+        "roles": [
+          {
+            "picks": 59,
+            "role": "SUPPORT"
+          }
+        ]
+      },
+      {
+        "bans": 63,
+        "champion_id": "Ezreal",
+        "picks": 65,
+        "roles": [
+          {
+            "picks": 65,
+            "role": "BOTTOM"
+          }
+        ]
+      },
+      {
+        "bans": 48,
+        "champion_id": "Rumble",
+        "picks": 79,
+        "roles": [
+          {
+            "picks": 78,
+            "role": "TOP"
+          },
+          {
+            "picks": 1,
+            "role": "MID"
+          }
+        ]
+      },
+      {
+        "bans": 79,
+        "champion_id": "Akali",
+        "picks": 38,
+        "roles": [
+          {
+            "picks": 36,
+            "role": "MID"
+          },
+          {
+            "picks": 2,
+            "role": "TOP"
+          }
+        ]
+      },
+      {
+        "bans": 48,
+        "champion_id": "Nautilus",
+        "picks": 64,
+        "roles": [
+          {
+            "picks": 64,
+            "role": "SUPPORT"
+          }
+        ]
+      },
+      {
+        "bans": 63,
+        "champion_id": "Lucian",
+        "picks": 47,
+        "roles": [
+          {
+            "picks": 47,
+            "role": "BOTTOM"
+          }
+        ]
+      },
+      {
+        "bans": 39,
+        "champion_id": "K'Sante",
+        "picks": 66,
+        "roles": [
+          {
+            "picks": 65,
+            "role": "TOP"
+          },
+          {
+            "picks": 1,
+            "role": "MID"
+          }
+        ]
+      },
+      {
+        "bans": 58,
+        "champion_id": "Jayce",
+        "picks": 46,
+        "roles": [
+          {
+            "picks": 39,
+            "role": "TOP"
+          },
+          {
+            "picks": 4,
+            "role": "MID"
+          },
+          {
+            "picks": 3,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 43,
+        "champion_id": "Kalista",
+        "picks": 51,
+        "roles": [
+          {
+            "picks": 51,
+            "role": "BOTTOM"
+          }
+        ]
+      },
+      {
+        "bans": 32,
+        "champion_id": "Jhin",
+        "picks": 60,
+        "roles": [
+          {
+            "picks": 60,
+            "role": "BOTTOM"
+          }
+        ]
+      },
+      {
+        "bans": 36,
+        "champion_id": "Wukong",
+        "picks": 55,
+        "roles": [
+          {
+            "picks": 55,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 50,
+        "champion_id": "Seraphine",
+        "picks": 37,
+        "roles": [
+          {
+            "picks": 37,
+            "role": "SUPPORT"
+          }
+        ]
+      },
+      {
+        "bans": 15,
+        "champion_id": "Ambessa",
+        "picks": 68,
+        "roles": [
+          {
+            "picks": 66,
+            "role": "TOP"
+          },
+          {
+            "picks": 1,
+            "role": "JUNGLE"
+          },
+          {
+            "picks": 1,
+            "role": "MID"
+          }
+        ]
+      },
+      {
+        "bans": 42,
+        "champion_id": "Galio",
+        "picks": 41,
+        "roles": [
+          {
+            "picks": 23,
+            "role": "MID"
+          },
+          {
+            "picks": 18,
+            "role": "TOP"
+          }
+        ]
+      },
+      {
+        "bans": 37,
+        "champion_id": "Viktor",
+        "picks": 46,
+        "roles": [
+          {
+            "picks": 45,
+            "role": "MID"
+          },
+          {
+            "picks": 1,
+            "role": "BOTTOM"
+          }
+        ]
+      },
+      {
+        "bans": 16,
+        "champion_id": "Alistar",
+        "picks": 61,
+        "roles": [
+          {
+            "picks": 61,
+            "role": "SUPPORT"
+          }
+        ]
+      },
+      {
+        "bans": 30,
+        "champion_id": "Karma",
+        "picks": 45,
+        "roles": [
+          {
+            "picks": 45,
+            "role": "SUPPORT"
+          }
+        ]
+      },
+      {
+        "bans": 33,
+        "champion_id": "Pantheon",
+        "picks": 38,
+        "roles": [
+          {
+            "picks": 38,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 57,
+        "champion_id": "Poppy",
+        "picks": 12,
+        "roles": [
+          {
+            "picks": 10,
+            "role": "SUPPORT"
+          },
+          {
+            "picks": 2,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 21,
+        "champion_id": "Ryze",
+        "picks": 48,
+        "roles": [
+          {
+            "picks": 48,
+            "role": "MID"
+          }
+        ]
+      },
+      {
+        "bans": 47,
+        "champion_id": "Renekton",
+        "picks": 19,
+        "roles": [
+          {
+            "picks": 19,
+            "role": "TOP"
+          }
+        ]
+      },
+      {
+        "bans": 30,
+        "champion_id": "Bard",
+        "picks": 30,
+        "roles": [
+          {
+            "picks": 30,
+            "role": "SUPPORT"
+          }
+        ]
+      },
+      {
+        "bans": 21,
+        "champion_id": "Xin Zhao",
+        "picks": 39,
+        "roles": [
+          {
+            "picks": 39,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 25,
+        "champion_id": "Skarner",
+        "picks": 32,
+        "roles": [
+          {
+            "picks": 32,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 7,
+        "champion_id": "Yunara",
+        "picks": 50,
+        "roles": [
+          {
+            "picks": 50,
+            "role": "BOTTOM"
+          }
+        ]
+      },
+      {
+        "bans": 21,
+        "champion_id": "Gnar",
+        "picks": 32,
+        "roles": [
+          {
+            "picks": 32,
+            "role": "TOP"
+          }
+        ]
+      },
+      {
+        "bans": 23,
+        "champion_id": "Camille",
+        "picks": 28,
+        "roles": [
+          {
+            "picks": 21,
+            "role": "TOP"
+          },
+          {
+            "picks": 7,
+            "role": "SUPPORT"
+          }
+        ]
+      },
+      {
+        "bans": 5,
+        "champion_id": "Milio",
+        "picks": 45,
+        "roles": [
+          {
+            "picks": 45,
+            "role": "SUPPORT"
+          }
+        ]
+      },
+      {
+        "bans": 17,
+        "champion_id": "Kai'Sa",
+        "picks": 32,
+        "roles": [
+          {
+            "picks": 32,
+            "role": "BOTTOM"
+          }
+        ]
+      },
+      {
+        "bans": 19,
+        "champion_id": "Naafiri",
+        "picks": 30,
+        "roles": [
+          {
+            "picks": 29,
+            "role": "JUNGLE"
+          },
+          {
+            "picks": 1,
+            "role": "TOP"
+          }
+        ]
+      },
+      {
+        "bans": 27,
+        "champion_id": "Sylas",
+        "picks": 21,
+        "roles": [
+          {
+            "picks": 20,
+            "role": "MID"
+          },
+          {
+            "picks": 1,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 13,
+        "champion_id": "Aphelios",
+        "picks": 34,
+        "roles": [
+          {
+            "picks": 34,
+            "role": "BOTTOM"
+          }
+        ]
+      },
+      {
+        "bans": 9,
+        "champion_id": "Rakan",
+        "picks": 38,
+        "roles": [
+          {
+            "picks": 38,
+            "role": "SUPPORT"
+          }
+        ]
+      },
+      {
+        "bans": 23,
+        "champion_id": "Jax",
+        "picks": 21,
+        "roles": [
+          {
+            "picks": 20,
+            "role": "TOP"
+          },
+          {
+            "picks": 1,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 12,
+        "champion_id": "Ashe",
+        "picks": 29,
+        "roles": [
+          {
+            "picks": 29,
+            "role": "BOTTOM"
+          }
+        ]
+      },
+      {
+        "bans": 12,
+        "champion_id": "Taliyah",
+        "picks": 29,
+        "roles": [
+          {
+            "picks": 25,
+            "role": "MID"
+          },
+          {
+            "picks": 3,
+            "role": "BOTTOM"
+          },
+          {
+            "picks": 1,
+            "role": "JUNGLE"
+          }
+        ]
+      },
+      {
+        "bans": 14,
+        "champion_id": "Ahri",
+        "picks": 26,
+        "roles": [
+          {
+            "picks": 26,
+            "role": "MID"
+          }
+        ]
+      },
+      {
+        "bans": 13,
+        "champion_id": "Xayah",
+        "picks": 27,
+        "roles": [
+          {
+            "picks": 27,
+            "role": "BOTTOM"
+          }
+        ]
+      },
+      {
+        "bans": 22,
+        "champion_id": "Neeko",
+        "picks": 14,
+        "roles": [
+          {
+            "picks": 14,
+            "role": "SUPPORT"
+          }
+        ]
+      },
+      {
+        "bans": 9,
+        "champion_id": "Corki",
+        "picks": 23,
+        "roles": [
+          {
+            "picks": 20,
+            "role": "BOTTOM"
+          },
+          {
+            "picks": 2,
+            "role": "MID"
+          },
+          {
+            "picks": 1,
+            "role": "TOP"
+          }
+        ]
+      },
+      {
+        "bans": 17,
+        "champion_id": "Annie",
+        "picks": 14,
+        "roles": [
+          {
+            "picks": 14,
+            "role": "MID"
+          }
+        ]
+      },
+      {
+        "bans": 12,
+        "champion_id": "Varus",
+        "picks": 19,
+        "roles": [
+          {
+            "picks": 15,
+            "role": "BOTTOM"
+          },
+          {
+            "picks": 4,
+            "role": "TOP"
+          }
+        ]
+      },
+      {
+        "bans": 11,
+        "champion_id": "Trundle",
+        "picks": 19,
+        "roles": [
+          {
+            "picks": 17,
+            "role": "JUNGLE"
+          },
+          {
+            "picks": 2,
+            "role": "TOP"
+          }
+        ]
+      },
+      {
+        "bans": 10,
+        "champion_id": "Leona",
+        "picks": 19,
+        "roles": [
+          {
+            "picks": 19,
+            "role": "SUPPORT"
+          }
+        ]
+      },
+      {
+        "bans": 8,
+        "champion_id": "Aurora",
+        "picks": 20,
+        "roles": [
+          {
+            "picks": 15,
+            "role": "MID"
+          },
+          {
+            "picks": 5,
+            "role": "TOP"
+          }
+        ]
+      },
+      {
+        "bans": 17,
+        "champion_id": "LeBlanc",
+        "picks": 10,
+        "roles": [
+          {
+            "picks": 10,
+            "role": "MID"
+          }
+        ]
+      },
+      {
+        "bans": 15,
+        "champion_id": "Sivir",
+        "picks": 11,
+        "roles": [
+          {
+            "picks": 11,
+            "role": "BOTTOM"
+          }
+        ]
+      },
+      {
+        "bans": 16,
+        "champion_id": "Vayne",
+        "picks": 10,
+        "roles": [
+          {
+            "picks": 9,
+            "role": "TOP"
+          },
+          {
+            "picks": 1,
+            "role": "MID"
+          }
+        ]
+      }
+    ],
+    "cutoff": "2026-11-23T00:14:59.674945+00:00",
+    "match_count": 283,
+    "patch_id": "16.20"
+  },
   "publication_readiness": {
     "annual_coverage": {
       "blocking_issue_game_count": 9,
