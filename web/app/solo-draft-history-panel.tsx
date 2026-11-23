@@ -3,6 +3,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { SoloAutoSummary, SoloDraftExplanationBody } from "./solo-draft-explanation";
 import type { SoloAutoHistory } from "./solo-draft-history";
 import { buildSoloHistoryText, type SoloHistoryTextRefusal } from "./solo-draft-history-text";
+import { requestTextDownload, TEXT_DOWNLOAD_TYPE, type TextDownloadEnv, type TextDownloadResult } from "./text-download";
 import "./solo-draft-explanation.css";
 
 const shareRefusalText: Record<SoloHistoryTextRefusal, string> = {
@@ -22,48 +23,16 @@ type CopyState = { history: SoloAutoHistory; nameOf: NameOf; patchId: string; cu
 
 /** Fixed ASCII file name and MIME for the explicit readable download (no team/player names or IDs). */
 export const SOLO_HISTORY_FILE_NAME = "draft-choice-review.txt";
-export const SOLO_HISTORY_FILE_TYPE = "text/plain;charset=utf-8";
-export type SoloHistoryDownloadResult = "REQUESTED" | "UNAVAILABLE" | "FAILED";
-type DownloadEnv = {
-  doc?: Pick<Document, "createElement" | "body">;
-  urls?: Pick<typeof URL, "createObjectURL" | "revokeObjectURL">;
-  makeBlob?: (parts: BlobPart[], options: BlobPropertyBag) => Blob;
-  schedule?: (run: () => void) => void;
-};
+export const SOLO_HISTORY_FILE_TYPE = TEXT_DOWNLOAD_TYPE;
+export type SoloHistoryDownloadResult = TextDownloadResult;
 
 /**
- * Asks the browser to download `text` as a file through a Blob URL and one explicit anchor click.
- * "REQUESTED" only means the browser accepted the request; whether the OS actually saved the file is
- * unknown to the page. The anchor is always removed and the URL always revoked (later on success,
- * immediately on failure). Nothing here touches app storage, URL, history or selections.
+ * Asks the browser to download `text` as draft-choice-review.txt (see requestTextDownload).
+ * "REQUESTED" only means the browser accepted the request. Nothing here touches app storage, URL,
+ * history or selections.
  */
-export function requestSoloHistoryDownload(text: string, env: DownloadEnv = {}): SoloHistoryDownloadResult {
-  const doc = env.doc ?? (typeof document !== "undefined" ? document : undefined);
-  const urls = env.urls ?? (typeof URL !== "undefined" ? URL : undefined);
-  const makeBlob = env.makeBlob ?? (typeof Blob === "function" ? (parts: BlobPart[], options: BlobPropertyBag) => new Blob(parts, options) : undefined);
-  const schedule = env.schedule ?? ((run: () => void) => { setTimeout(run, 1000); });
-  if (typeof text !== "string" || !text || !doc?.body || typeof doc.createElement !== "function" || !makeBlob
-    || typeof urls?.createObjectURL !== "function" || typeof urls.revokeObjectURL !== "function") return "UNAVAILABLE";
-  let anchor: HTMLAnchorElement;
-  try {
-    anchor = doc.createElement("a");
-    if (typeof anchor.download !== "string" || typeof anchor.click !== "function") return "UNAVAILABLE";
-  } catch { return "UNAVAILABLE"; }
-  let url: string;
-  try { url = urls.createObjectURL(makeBlob([text], { type: SOLO_HISTORY_FILE_TYPE })); } catch { return "FAILED"; }
-  const revoke = () => { try { urls.revokeObjectURL(url); } catch { /* already gone */ } };
-  let clicked = false;
-  try {
-    anchor.href = url; anchor.download = SOLO_HISTORY_FILE_NAME; anchor.rel = "noopener"; anchor.style.display = "none";
-    doc.body.appendChild(anchor);
-    anchor.click();
-    clicked = true;
-  } catch { clicked = false; } finally {
-    try { anchor.remove(); } catch { /* not attached */ }
-  }
-  if (!clicked) { revoke(); return "FAILED"; }
-  try { schedule(revoke); } catch { revoke(); }
-  return "REQUESTED";
+export function requestSoloHistoryDownload(text: string, env: TextDownloadEnv = {}): SoloHistoryDownloadResult {
+  return requestTextDownload(text, SOLO_HISTORY_FILE_NAME, env);
 }
 
 type SaveState = { history: SoloAutoHistory; nameOf: NameOf; patchId: string; cutoff: string; status: SoloHistoryDownloadResult };

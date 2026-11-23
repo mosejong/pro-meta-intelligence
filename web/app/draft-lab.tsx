@@ -33,6 +33,7 @@ import { defaultDraftMatchup } from "./team-defaults";
 import { DraftChampionInfo, type ChampionFocus } from "./draft-champion-info";
 import { DraftComparisonPanel } from "./draft-comparison-panel";
 import { PartnershipPlacement } from "./partnership-placement";
+import { TesterFeedbackPanel } from "./tester-feedback-panel";
 import { RosterWorkshop, type RosterMeta, type RosterRestoreRequest } from "./roster-workshop";
 import { SimulationReadinessPanel } from "./simulation-readiness-panel";
 import { SimulationExamplePanel } from "./simulation-example-panel";
@@ -677,6 +678,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   // Effective setup choice: the pending draft, else the board's actual mode (so back-to-setup reflects it).
   const actualPracticeMode = currentPracticeMode({ soloEnabled, manualSide });
   const setupMode = room.active ? "MANUAL" : setupChoice ?? actualPracticeMode;
+  const feedbackContext = { step, tab: studioTab, mode: room.active ? "ROOM" as const : actualPracticeMode, completedSets: games.length,
+    currentTurn: selections.length, patchId: report.patch_id, cutoff: report.cutoff ?? "" };
   const pendingModeChange = practiceModeChange(setupChoice, { soloEnabled, manualSide }, room.active);
   // Honest notice of what an explicit mode change at continue will clear (same items as the draft-step controls).
   const clearsStaged = Boolean(pendingModeChange && pendingChampion);
@@ -960,6 +963,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <TeamDraftColumn unassigned={redTeam ? positionUnassigned[redTeam.team_id] ?? [] : []} assignments={redTeam ? positionRoles[redTeam.team_id] : emptyChampionRoles()} positionDisabled={!canSelect || room.active} onAssign={(id, role) => assignPosition("RED", id, role)} onConfirm={() => confirmPositions("RED")} side="RED" team={redTeam} selections={selections} staged={staged} active={turn?.side === "RED"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
     </section>
     {selections.length === 20 && <DraftResultPanel report={report} blueTeam={blueTeam} redTeam={redTeam} selections={selections} previousPicks={previousPicks} firstPickSide={firstPickSide} nameOf={nameOf} autoReveal={soloEnabled && studioTab === "DRAFT" && step === "DRAFT" && !room.active} disabled={!canSelect || room.active} onReplay={() => setPendingReset("GAME")} onNext={nextGame} positionRecord={positionRecord} onOpenSimulation={room.active ? undefined : openSimulationReadiness} />}
+    {selections.length === 20 && !room.active && <TesterFeedbackPanel context={feedbackContext} prompt="한 세트 끝! 써보니 어땠나요?" />}
     {!room.active && (games.length > 0 || selections.length === 20) && <DraftSeriesRecapPanel report={report} games={games} current={recapCurrent} nameOf={nameOf} />}
     {!room.active && <section className="solo-draft solo-draft-review" lang="ko" aria-label="혼자 연습 선택 기록">
       <SoloDraftHistoryPanel history={prunedHistory} nameOf={nameOf} patchId={report.patch_id} cutoff={report.cutoff ?? ""}
@@ -1074,6 +1078,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     </dialog>
     <footer className="studio-preview-footer" aria-label="테스트판과 Riot Games 비제휴 고지">
       <p>한국어 테스트판 · 구단은 이 브라우저에 저장됩니다. 실제 경기 승률과 완성된 경기 시뮬레이션은 제공하지 않습니다.</p>
+      <TesterFeedbackPanel context={feedbackContext} />
       <p>Pro Meta Intelligence isn&apos;t endorsed by Riot Games and doesn&apos;t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</p>
     </footer>
   </main>;

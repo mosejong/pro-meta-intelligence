@@ -1,0 +1,64 @@
+/* Tester feedback: footer entry and modal form. Studio tone; scoped to the draft workspace. */
+main.draft-lab.draft-studio .tester-feedback-open {
+  min-height: 40px; margin: 4px 0 10px; padding: 8px 14px; border: 1px solid var(--studio-action); border-radius: 4px;
+  background: transparent; color: var(--studio-action); font: 700 13px/1.3 var(--font-geist-sans); cursor: pointer;
+}
+main.draft-lab.draft-studio .tester-feedback-open:hover { background: var(--studio-raised); }
+main.draft-lab.draft-studio .tester-feedback-open:focus-visible,
+main.draft-lab.draft-studio .tester-feedback-dialog :is(button, input, textarea, a):focus-visible { outline: 2px solid var(--studio-action); outline-offset: 2px; }
+
+main.draft-lab.draft-studio .tester-feedback-dialog {
+  box-sizing: border-box; width: min(640px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); margin: auto; padding: 0;
+  overflow: auto; overscroll-behavior: contain; border: 1px solid #65696f; border-radius: 6px;
+  background: var(--studio-panel); color: var(--studio-text); font-size: 14px; line-height: 1.55;
+}
+main.draft-lab.draft-studio .tester-feedback-dialog::backdrop { background: #000000b3; }
+main.draft-lab.draft-studio .tester-feedback-dialog > header {
+  position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 18px; border-bottom: 1px solid var(--studio-line); background: var(--studio-panel);
+}
+main.draft-lab.draft-studio .tester-feedback-dialog h2 { margin: 0; font-size: 1.1rem; }
+main.draft-lab.draft-studio .tester-feedback-dialog > p { margin: 14px 18px 0; color: var(--studio-muted); }
+main.draft-lab.draft-studio .tester-feedback-dialog form { display: grid; gap: 16px; padding: 16px 18px 20px; }
+main.draft-lab.draft-studio .tester-feedback-dialog button,
+main.draft-lab.draft-studio .tester-feedback-dialog .tester-feedback-actions a {
+  min-height: 40px; padding: 8px 14px; border: 1px solid var(--studio-line); border-radius: 4px;
+  background: var(--studio-raised); color: var(--studio-text); font: 600 14px/1.3 var(--font-geist-sans); cursor: pointer; text-decoration: none;
+}
+main.draft-lab.draft-studio .tester-feedback-dialog button:disabled { opacity: .5; cursor: not-allowed; }
+main.draft-lab.draft-studio .tester-feedback-choice { min-width: 0; margin: 0; padding: 0; border: 0; }
+main.draft-lab.draft-studio .tester-feedback-choice legend { margin-bottom: 8px; padding: 0; font-weight: 700; }
+main.draft-lab.draft-studio .tester-feedback-choice > div { display: flex; flex-wrap: wrap; gap: 8px; }
+main.draft-lab.draft-studio .tester-feedback-choice label {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 12px; border: 1px solid var(--studio-line);
+  border-radius: 4px; background: var(--studio-bg); cursor: pointer;
+}
+main.draft-lab.draft-studio .tester-feedback-choice label:has(input:checked) { border-color: var(--studio-action); background: var(--studio-raised); }
+main.draft-lab.draft-studio .tester-feedback-choice input { margin: 0; accent-color: var(--studio-action); }
+main.draft-lab.draft-studio .tester-feedback-text { display: grid; gap: 6px; }
+main.draft-lab.draft-studio .tester-feedback-text label { font-weight: 700; }
+main.draft-lab.draft-studio .tester-feedback-text p { margin: 0; color: var(--studio-muted); font-size: 13px; }
+main.draft-lab.draft-studio .tester-feedback-dialog textarea {
+  box-sizing: border-box; width: 100%; min-height: 72px; padding: 8px 10px; border: 1px solid var(--studio-line); border-radius: 4px;
+  background: var(--studio-bg); color: var(--studio-text); font: 14px/1.5 var(--font-geist-sans); resize: vertical;
+}
+main.draft-lab.draft-studio .tester-feedback-context { padding: 12px; border: 1px dashed var(--studio-line); border-radius: 4px; }
+main.draft-lab.draft-studio .tester-feedback-context label { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; cursor: pointer; }
+main.draft-lab.draft-studio .tester-feedback-context ul { margin: 8px 0 0; padding-left: 18px; color: var(--studio-muted); font-size: 13px; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .tester-feedback-context p { margin: 8px 0 0; color: var(--studio-muted); font-size: 13px; }
+main.draft-lab.draft-studio .tester-feedback-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+main.draft-lab.draft-studio .tester-feedback-actions button:first-child { border-color: var(--studio-action); background: var(--studio-action); color: #201b15; }
+main.draft-lab.draft-studio .tester-feedback-dialog form > p { margin: 0; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .tester-feedback-dialog form > p[role="status"]:empty { display: none; }
+main.draft-lab.draft-studio .tester-feedback-send-hint,
+main.draft-lab.draft-studio .tester-feedback-empty { color: var(--studio-muted); font-size: 13px; }
+main.draft-lab.draft-studio .tester-feedback-clear { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid var(--studio-line); }
+main.draft-lab.draft-studio .tester-feedback-clear button { background: transparent; color: var(--studio-muted); }
+main.draft-lab.draft-studio .tester-feedback-clear span + button { border-color: #b93851; background: #b93851; color: white; }
+/* A shared rule reorders paragraphs in flex/grid parents; keep this form in source order. */
+main.draft-lab.draft-studio .tester-feedback-dialog form > * { order: 0; }
+main.draft-lab.draft-studio .tester-feedback-prompt {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 12px 0;
+  padding: 10px 14px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-panel); color: var(--studio-text);
+}
+main.draft-lab.draft-studio .tester-feedback-prompt .tester-feedback-open { margin: 0; }
