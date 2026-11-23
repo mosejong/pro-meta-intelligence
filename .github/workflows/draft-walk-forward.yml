@@ -124,10 +124,8 @@ jobs:
           }
           text = json.dumps(result, indent=2, sort_keys=True)
           Path("outputs/draft-walk-forward/result.json").write_text(text + "\n")
-          # Aggregate-only result in the log so it can be reviewed without downloading artifacts.
-          print("WALK_FORWARD_RESULT_BEGIN")
-          print(text)
-          print("WALK_FORWARD_RESULT_END")
+          # The full aggregate is the artifact; the log keeps only the brief printed above plus run ids.
+          print("WALK_FORWARD_RUN " + json.dumps(result["run"]))
           PY
       - name: Publish aggregate metrics only
         uses: actions/upload-artifact@v7

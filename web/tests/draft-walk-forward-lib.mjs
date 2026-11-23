@@ -16,7 +16,12 @@ export const BOOTSTRAP_SAMPLES = 1000;
 export const BOOTSTRAP_SEED = 20261123;
 export const LEAGUE_MIN_MATCHES = 30;
 export const TEAM_MIN_STATES = 40;
-export const METHODS = Object.freeze(["PRODUCTION", "BASELINE_PATCH_PRESENCE", "BASELINE_TEAM_PRIORITY"]);
+export const CANDIDATE_POLICIES = Object.freeze({
+  CANDIDATE_BAN_PATCH_PRESENCE: "PATCH_PRESENCE",
+  CANDIDATE_BAN_PATCH_PRESENCE_WITH_OPPONENT: "PATCH_PRESENCE_WITH_OPPONENT",
+});
+export const METHODS = Object.freeze(["PRODUCTION", ...Object.keys(CANDIDATE_POLICIES), "BASELINE_PATCH_PRESENCE", "BASELINE_TEAM_PRIORITY"]);
+const BASELINES = ["BASELINE_PATCH_PRESENCE", "BASELINE_TEAM_PRIORITY"];
 const SPLIT_ORDER = ["DEV", "VALIDATION", "HOLDOUT"];
 const LAG_MS = 24 * 3600 * 1000;
 const WEEK_MS = 7 * 24 * 3600 * 1000;
@@ -63,6 +68,20 @@ function metrics(tally) {
  * 95% percentile interval of the pooled top-3 rate (and of paired differences) by resampling
  * whole matches, since the 20 states of one draft are correlated.
  */
+/** Compact, aggregate-only view for logs: top-3/top-1 per method, by kind and league, and intervals. */
+export function briefOf(result) {
+  const pick = (group) => group && Object.fromEntries(Object.entries(group).filter(([k]) => METHODS.includes(k)).map(([k, v]) => [k, `${(v.top3_rate * 100).toFixed(1)}/${(v.top1_rate * 100).toFixed(1)}`]));
+  return Object.fromEntries(Object.entries(result.splits).map(([name, split]) => [name, split.status !== "EVALUATED" ? { status: split.status, sealed_matches: split.sealed_matches } : {
+    matches: split.matches, states: split.overall.PRODUCTION.states, "top3/top1 %": pick(split.overall),
+    by_kind: Object.fromEntries(Object.entries(split.by_kind).map(([k, v]) => [k, pick(v)])),
+    by_phase: Object.fromEntries(Object.entries(split.by_phase).map(([k, v]) => [k, pick(v)])),
+    by_league: Object.fromEntries(Object.entries(split.by_league).map(([k, v]) => [`${k}(${v.matches})`, pick(v)])),
+    production_minus_method_top3_ci95: split.bootstrap.production_minus_baseline_top3_ci95,
+    team_macro_top3: split.team_macro_top3,
+    ...(split.holdout_not_previously_inspected ? { holdout_not_previously_inspected: pick(split.holdout_not_previously_inspected) } : {}),
+  }]));
+}
+
 export function clusterBootstrap(clusters, { samples = BOOTSTRAP_SAMPLES, seed = BOOTSTRAP_SEED } = {}) {
   if (!clusters.length) return null;
   const random = mulberry32(seed);
@@ -118,6 +137,9 @@ function validateSnapshot(raw, api, fixtureOnly) {
   req(raw.report.fixture_only === fixtureOnly && raw.report.opponent_prep.fixture_only === fixtureOnly, "Fixture/real data mismatch");
   for (const team of raw.report.opponent_prep.teams) for (const game of team.recent_games ?? []) {
     req(time(game.observed_at, "recent game") <= cutoff - LAG_MS, "Future evidence in snapshot");
+  }
+  if (raw.report.patch_presence !== undefined) {
+    req(time(raw.report.patch_presence.cutoff, "presence cutoff") === cutoff && raw.report.patch_presence.patch_id === raw.patch_id, "Patch presence must match the snapshot cutoff and patch");
   }
   req(raw.presence.every((row) => isRecord(row) && typeof row.champion_id === "string" && Number.isSafeInteger(row.picks) && Number.isSafeInteger(row.bans)),
     "Invalid presence table");
@@ -233,7 +255,13 @@ export function evaluateWalkForward(dataset, api, options = {}) {
         req(explanation.turn === index + 1 && explanation.kind === actual.kind && explanation.side === actingSide, "Production API answered a different turn");
         lists.PRODUCTION = [explanation.selected, ...explanation.alternatives].slice(0, CANDIDATE_COUNT).map((c) => c.champion_id);
       }
-      for (const method of METHODS.slice(1)) {
+      // Candidate rules differ from production only on BAN turns (same production functions, explicit banPolicy).
+      for (const [method, banPolicy] of Object.entries(CANDIDATE_POLICIES)) {
+        if (actual.kind !== "BAN") { lists[method] = lists.PRODUCTION; continue; }
+        const candidate = api.explainSoloDraftTurn({ ...input, banPolicy });
+        lists[method] = candidate ? [candidate.selected, ...candidate.alternatives].slice(0, CANDIDATE_COUNT).map((c) => c.champion_id) : null;
+      }
+      for (const method of BASELINES) {
         lists[method] = baselineCandidates(method, { presence: snapshot.presence, actingTeam, opposingTeam, kind: actual.kind, taken });
       }
       const target = canonical(actual.champion_id);

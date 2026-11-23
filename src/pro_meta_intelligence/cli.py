@@ -77,6 +77,7 @@ from pro_meta_intelligence.quality import (
 )
 from pro_meta_intelligence.quality.team_coverage import audit_team_coverage
 from pro_meta_intelligence.radar import LeagueRegionMap, MetaRadar, MetaRadarConfig
+from pro_meta_intelligence.radar.presence import patch_presence
 from pro_meta_intelligence.sources import (
     SnapshotArchive,
     SourceAttemptLedger,
@@ -1323,6 +1324,12 @@ def _radar_payload(
             ),
         )
         .to_dict()
+    )
+    payload["patch_presence"] = patch_presence(
+        imported.matches,
+        imported.draft_events,
+        cutoff=config.cutoff,
+        patch_id=str(payload["patch_id"]),
     )
     payload["input"] = {
         "authenticity": getattr(args, "input_authenticity", "UNVERIFIED_CALLER_SUPPLIED_FILE"),

@@ -21,10 +21,5 @@ try {
   const result = lib.evaluateWalkForward(dataset, api, { unsealHoldout });
   await mkdir(dirname(resolve(output)), { recursive: true });
   await writeFile(resolve(output), JSON.stringify(result, null, 2) + "\n");
-  const brief = Object.fromEntries(Object.entries(result.splits).map(([name, split]) => [name, {
-    status: split.status, matches: split.matches, sealed_matches: split.sealed_matches,
-    top3: split.overall && Object.fromEntries(Object.entries(split.overall).map(([m, v]) => [m, v.top3_rate])),
-    production_minus_baseline_top3_ci95: split.bootstrap?.production_minus_baseline_top3_ci95 ?? null,
-  }]));
-  console.log(JSON.stringify({ holdout_unsealed: result.holdout_unsealed, splits: brief }));
+  console.log("WALK_FORWARD_BRIEF " + JSON.stringify({ holdout_unsealed: result.holdout_unsealed, outcome_source: result.outcome_source.content_hash, splits: lib.briefOf(result) }, null, 1));
 } finally { await vite.close(); }

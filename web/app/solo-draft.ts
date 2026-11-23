@@ -12,7 +12,14 @@ export type SoloDraftSuggestion = {
   source: "TEAM_RECORD" | "PLAYER_SEASON" | "RADAR" | "FALLBACK";
 };
 
+/**
+ * Ban candidate policy. OPPONENT_RECORD is the shipped default. The PATCH_* policies are walk-forward
+ * evaluation candidates (docs/benchmarks/DRAFT_RULE_WALK_FORWARD_PROTOCOL_2026-11-23.md) and need
+ * report.patch_presence; without it they fall back to OPPONENT_RECORD.
+ */
+export type SoloBanPolicy = "OPPONENT_RECORD" | "PATCH_PRESENCE" | "PATCH_PRESENCE_WITH_OPPONENT";
 export type SoloDraftInput = {
+  banPolicy?: SoloBanPolicy;
   seasonHistory?: SeasonHistory | null;
   report: RadarReport;
   blueTeam: OpponentTeam | null;
@@ -130,6 +137,23 @@ function soloContext(input: SoloDraftInput) {
   })];
   const roleFeasible = (id: string) => canCoverRoles(picked, rolePool, id);
   const rolesOf = (id: string) => [...new Set(rolePool.filter(row => row.champion_id === id).flatMap(row => row.roles))];
+  // Fixed, untuned scores: presence = (picks + bans) / same-patch matches; the blend adds the opposing
+  // team's observed game rate for that champion. Ties break by canonical id.
+  const presenceRows = report.patch_presence && report.patch_presence.patch_id === report.patch_id && report.patch_presence.match_count > 0
+    ? report.patch_presence : null;
+  const banPolicy = input.banPolicy ?? "OPPONENT_RECORD";
+  const presenceBan = turn.kind === "BAN" && banPolicy !== "OPPONENT_RECORD" && presenceRows ? (available: (id: string) => boolean) => {
+    const scores = new Map<string, number>();
+    for (const row of presenceRows.champions) {
+      const id = canonical(row.champion_id);
+      if (id) scores.set(id, (scores.get(id) ?? 0) + (row.picks + row.bans) / presenceRows.match_count);
+    }
+    if (banPolicy === "PATCH_PRESENCE_WITH_OPPONENT") for (const p of target.priority_picks) {
+      const id = canonical(p.champion_id);
+      if (id) scores.set(id, (scores.get(id) ?? 0) + p.game_rate);
+    }
+    return [...scores.entries()].filter(([id]) => available(id)).sort((a, b) => b[1] - a[1] || compare(a[0], b[0]))[0]?.[0] ?? null;
+  } : null;
   const select = (excluded: ReadonlySet<string>): SoloDraftSuggestion | null => {
   // Exclusions only narrow availability; replay and Fearless legality stay in `legal`.
   const available = (id: string) => !excluded.has(id) && legal(id);
@@ -151,6 +175,10 @@ function soloContext(input: SoloDraftInput) {
   if (record && turn.kind === "PICK" && candidateById.get(record)?.season) return finish({
     champion_id: record, source: "PLAYER_SEASON", reason: "현재 관측 선수의 같은 팀·시즌 역할별 기록과 남은 포지션을 참고한 연습 픽입니다. 시즌 기록은 현재 패치의 강함을 뜻하지 않습니다.",
   });
+  if (turn.kind === "BAN" && presenceBan) {
+    const ban = presenceBan(available);
+    if (ban) return { champion_id: ban, source: "RADAR", reason: "같은 패치의 공개 픽·밴 빈도와 상대 팀 기록을 참고한 연습 밴입니다. 실제 팀의 선택을 예측하지 않습니다." };
+  }
   if (record) return finish({ champion_id: record, source: "TEAM_RECORD", reason: turn.kind === "BAN"
     ? "상대 팀의 공개 우선 픽 기록을 바탕으로 한 연습 밴입니다."
     : "행동 팀의 공개 우선 픽 기록을 바탕으로 한 연습 픽입니다." });

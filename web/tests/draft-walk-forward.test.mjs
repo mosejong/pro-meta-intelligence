@@ -75,7 +75,7 @@ const run = (data, options = {}, customApi = api) => evaluateWalkForward(data, c
 
 test("holdout stays sealed by default and is never replayed", () => {
   let calls = 0;
-  const counting = { ...api, explainSoloDraftTurn: (input) => { calls++; return api.explainSoloDraftTurn(input); } };
+  const counting = { ...api, explainSoloDraftTurn: (input) => { if (!input.banPolicy) calls++; return api.explainSoloDraftTurn(input); } };
   const result = run(dataset(), {}, counting);
   assert.equal(calls, 40, "only the two VALIDATION drafts are replayed");
   assert.equal(result.holdout_unsealed, false);
@@ -157,6 +157,26 @@ test("leakage and contract violations fail closed", () => {
     assert.throws(() => run(data), new RegExp(message), message);
   }
   assert.throws(() => evaluateWalkForward(dataset(), api), /unit tests/);
+});
+
+test("ban candidates use report.patch_presence, match production on picks, and fall back without it", () => {
+  const withoutPresence = run(dataset()).splits.VALIDATION.overall;
+  for (const method of ["CANDIDATE_BAN_PATCH_PRESENCE", "CANDIDATE_BAN_PATCH_PRESENCE_WITH_OPPONENT"]) {
+    assert.deepEqual(withoutPresence[method], withoutPresence.PRODUCTION, `${method} falls back to production without presence`);
+  }
+  const data = dataset();
+  for (const snap of data.snapshots) {
+    snap.report.patch_presence = { patch_id: snap.patch_id, cutoff: snap.cutoff, match_count: 10,
+      champions: ids.slice(0, 12).map((c, i) => ({ champion_id: c, picks: 12 - i, bans: 0 })) };
+  }
+  const result = run(data).splits.VALIDATION;
+  assert.deepEqual(result.by_kind.PICK.CANDIDATE_BAN_PATCH_PRESENCE, result.by_kind.PICK.PRODUCTION, "picks unchanged");
+  // v1 bans the presence leaders in order, so the pure presence candidate hits the first bans at top-1.
+  assert.ok(result.by_phase["BAN:1"].CANDIDATE_BAN_PATCH_PRESENCE.top1 >= 4);
+  assert.ok(result.by_phase["BAN:1"].CANDIDATE_BAN_PATCH_PRESENCE.top1 > result.by_phase["BAN:1"].PRODUCTION.top1);
+  const bad = dataset();
+  bad.snapshots[0].report.patch_presence = { patch_id: bad.snapshots[0].patch_id, cutoff: "2026-08-17T00:00:00+00:00", match_count: 1, champions: [] };
+  assert.throws(() => run(bad), /Patch presence/);
 });
 
 test("a champion name the product cannot replay is a counted exclusion, not a failure", () => {

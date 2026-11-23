@@ -277,7 +277,25 @@ export type HistoryStatus = {
   boundary: string;
 };
 
+/** Same-patch pick/ban counts known at the report cutoff (practice-opponent ban input). */
+export type PatchPresence = {
+  patch_id: string;
+  cutoff: string;
+  match_count: number;
+  champions: Array<{ champion_id: string; picks: number; bans: number }>;
+};
+
+function isPatchPresence(value: unknown): value is PatchPresence {
+  if (!isRecord(value)) return false;
+  const presence = value as Partial<PatchPresence>;
+  return typeof presence.patch_id === "string" && typeof presence.cutoff === "string" &&
+    Number.isSafeInteger(presence.match_count) && (presence.match_count as number) >= 0 && Array.isArray(presence.champions) &&
+    presence.champions.every((row) => isRecord(row) && typeof row.champion_id === "string" &&
+      Number.isSafeInteger(row.picks) && row.picks >= 0 && Number.isSafeInteger(row.bans) && row.bans >= 0);
+}
+
 export type RadarReport = {
+  patch_presence?: PatchPresence;
   schema_version: "1";
   fixture_only: boolean;
   cutoff: string;
@@ -348,6 +366,7 @@ export function isRadarReport(value: unknown): value is RadarReport {
   if (report.publication_readiness !== undefined && !isPublicationReadiness(report.publication_readiness)) return false;
   if (report.history_status !== undefined && !isHistoryStatus(report.history_status)) return false;
   if (report.opponent_prep !== undefined && !isOpponentPrep(report.opponent_prep)) return false;
+  if (report.patch_presence !== undefined && (!isPatchPresence(report.patch_presence) || report.patch_presence.patch_id !== report.patch_id)) return false;
   return report.entries.every(isRadarEntry);
 }
 
