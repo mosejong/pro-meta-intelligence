@@ -164,3 +164,16 @@ def test_empty_or_corrupt_archive_fails_closed(tmp_path):
     snapshot.data_path.write_bytes(b"corrupt")
     with pytest.raises(ValueError, match="integrity"):
         prepare_walk_forward(tmp_path)
+
+
+def test_snapshot_reports_carry_same_cutoff_patch_presence(tmp_path):
+    store(tmp_path, season_csv(SEASON), CAPTURED)
+    result = prepare_walk_forward(tmp_path)
+    for snapshot in result["snapshots"]:
+        presence = snapshot["report"]["patch_presence"]
+        assert presence["cutoff"] == snapshot["cutoff"]
+        assert presence["patch_id"] == snapshot["patch_id"]
+        assert presence["match_count"] >= 1
+        counts = {row["champion_id"]: row["picks"] + row["bans"] for row in presence["champions"]}
+        baseline = {row["champion_id"]: row["picks"] + row["bans"] for row in snapshot["presence"]}
+        assert counts == baseline

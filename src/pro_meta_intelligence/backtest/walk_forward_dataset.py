@@ -28,6 +28,7 @@ from pro_meta_intelligence.ingestion.oracles_elixir import SOURCE_ID, OracleElix
 from pro_meta_intelligence.models import DraftAction
 from pro_meta_intelligence.opponent.brief import OpponentPrepBuilder, OpponentPrepConfig
 from pro_meta_intelligence.radar import LeagueRegionMap, MetaRadar, MetaRadarConfig
+from pro_meta_intelligence.radar.presence import patch_presence
 from pro_meta_intelligence.sources import SnapshotArchive, SourceRegistry
 
 SCHEMA_VERSION = "1"
@@ -221,6 +222,9 @@ def prepare_walk_forward(archive_root: Path, *, outcome_hash: str | None = None)
                         OpponentPrepConfig(cutoff=cutoff, patch_id=match.patch_id),
                     )
                     .to_dict()
+                )
+                report["patch_presence"] = patch_presence(
+                    matches_all, events_all, cutoff=cutoff, patch_id=match.patch_id
                 )
             except ValueError as error:
                 if "no matches" not in str(error):
