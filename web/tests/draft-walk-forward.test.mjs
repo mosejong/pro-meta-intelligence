@@ -75,7 +75,7 @@ const run = (data, options = {}, customApi = api) => evaluateWalkForward(data, c
 
 test("holdout stays sealed by default and is never replayed", () => {
   let calls = 0;
-  const counting = { ...api, explainSoloDraftTurn: (input) => { if (!input.banPolicy) calls++; return api.explainSoloDraftTurn(input); } };
+  const counting = { ...api, explainSoloDraftTurn: (input) => { if (!input.banPolicy && !input.pickPolicy) calls++; return api.explainSoloDraftTurn(input); } };
   const result = run(dataset(), {}, counting);
   assert.equal(calls, 40, "only the two VALIDATION drafts are replayed");
   assert.equal(result.holdout_unsealed, false);
@@ -178,6 +178,24 @@ test("ban candidates use report.patch_presence, match production on picks, and f
   const bad = dataset();
   bad.snapshots[0].report.patch_presence = { patch_id: bad.snapshots[0].patch_id, cutoff: "2026-08-17T00:00:00+00:00", match_count: 1, champions: [] };
   assert.throws(() => run(bad), /Patch presence/);
+});
+
+test("pick candidates change only PICK turns and fall back without presence", () => {
+  const plain = run(dataset()).splits.VALIDATION;
+  for (const method of ["CANDIDATE_PICK_TEAM_PLUS_PATCH_PICKS", "CANDIDATE_PICK_TEAM_PLUS_PATCH_PRESENCE"]) {
+    assert.deepEqual(plain.overall[method], plain.overall.PRODUCTION, `${method} equals production without presence`);
+  }
+  const data = dataset();
+  const roles = ["TOP", "JUNGLE", "MID", "BOTTOM", "SUPPORT"];
+  for (const snap of data.snapshots) {
+    snap.report.patch_presence = { patch_id: snap.patch_id, cutoff: snap.cutoff, match_count: 10,
+      champions: ids.slice(20, 30).map((c, i) => ({ champion_id: c, picks: 10 - i, bans: i % 2, roles: [{ role: roles[i % 5], picks: 10 - i }] })) };
+  }
+  const withPresence = run(data).splits.VALIDATION;
+  for (const method of ["CANDIDATE_PICK_TEAM_PLUS_PATCH_PICKS", "CANDIDATE_PICK_TEAM_PLUS_PATCH_PRESENCE"]) {
+    assert.deepEqual(withPresence.by_kind.BAN[method], withPresence.by_kind.BAN.PRODUCTION, `${method} leaves bans unchanged`);
+    assert.equal(withPresence.overall[method].illegal_candidates, 0);
+  }
 });
 
 test("a champion name the product cannot replay is a counted exclusion, not a failure", () => {

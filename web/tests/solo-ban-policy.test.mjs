@@ -72,3 +72,26 @@ test("the readable review accepts the presence evidence", () => {
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.ok(result.text.includes("같은 패치의 공개 픽·밴 빈도"));
 });
+
+test("pick candidates rank team rate plus same-patch share among role-feasible champions", () => {
+  const selections = [];
+  const order = ids.slice(40, 46);
+  for (const [i, id] of order.entries()) selections.push({ turn: i + 1, side: i % 2 ? "RED" : "BLUE", kind: "BAN", slot: Math.floor(i / 2) + 1, phase: 1, champion_id: id });
+  const presence = withPresence([
+    { champion_id: ids[11], picks: 18, bans: 0, roles: [{ role: "MID", picks: 18 }] },
+    { champion_id: ids[12], picks: 2, bans: 16, roles: [{ role: "TOP", picks: 2 }] },
+    { champion_id: ids[13], picks: 19, bans: 0, roles: [] },
+  ]);
+  const state = { ...presence, selections, manualSide: "RED" };
+  assert.equal(solo.DEFAULT_PICK_POLICY, "TEAM_AND_META");
+  assert.deepEqual(solo.explainSoloDraftTurn(state), solo.explainSoloDraftTurn({ ...state, pickPolicy: "TEAM_AND_META" }));
+  const picks = solo.explainSoloDraftTurn({ ...state, pickPolicy: "TEAM_PLUS_PATCH_PICKS" });
+  const presenceFirst = solo.explainSoloDraftTurn({ ...state, pickPolicy: "TEAM_PLUS_PATCH_PRESENCE" });
+  assert.equal(picks.kind, "PICK");
+  const chosen = [picks.selected, ...picks.alternatives].map(c => c.champion_id);
+  assert.ok(!chosen.includes(ids[13]), "a champion without any role evidence is never role-feasible");
+  assert.ok(chosen.includes(ids[11]) || picks.selected.source !== "PATCH_PRESENCE");
+  for (const e of [picks, presenceFirst]) for (const c of [e.selected, ...e.alternatives]) {
+    if (c.source === "PATCH_PRESENCE") { assert.equal(c.evidence, "PATCH_PRESENCE"); assert.equal(c.role_supported, true); }
+  }
+});
