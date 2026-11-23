@@ -1,0 +1,138 @@
+name: Draft rule walk-forward evaluation
+
+# Protocol: docs/benchmarks/DRAFT_RULE_WALK_FORWARD_PROTOCOL_2026-11-23.md
+# Restores the encrypted private OE archive on the runner, replays the 2026 season week by week
+# through the unchanged production solo rules and fixed baselines, and publishes aggregates only.
+# No provider request is made; raw rows and per-match inputs never leave the runner.
+
+on:
+  workflow_dispatch:
+    inputs:
+      archive_artifact_id:
+        description: "Encrypted oe-private-history-state artifact ID (blank = newest retained)"
+        required: false
+        default: ""
+        type: string
+      outcome_hash:
+        description: "Pin the 2026 season capture (sha256:...; blank = newest 2026 capture)"
+        required: false
+        default: ""
+        type: string
+      unseal_holdout:
+        description: "Replay the sealed HOLDOUT split (only for the final, pre-declared check)"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  actions: read
+  contents: read
+
+# Serialize with collector retention so the pinned artifact is not removed during restore.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: python -m pip install -e ".[hosted-ops]"
+      - run: npm ci
+        working-directory: web
+      - name: Restore the encrypted archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OE_ARCHIVE_KEY: ${{ secrets.OE_ARCHIVE_KEY }}
+          ARCHIVE_ARTIFACT_ID: ${{ inputs.archive_artifact_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "$OE_ARCHIVE_KEY" ]]
+          root=outputs/draft-walk-forward
+          mkdir -p "$root"
+          if [[ -z "$ARCHIVE_ARTIFACT_ID" ]]; then
+            ARCHIVE_ARTIFACT_ID=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" \
+              --jq '[.artifacts[] | select(.expired == false and (.name | startswith("oe-private-history-state-")))] | sort_by(.created_at) | reverse | .[0].id // empty')
+          fi
+          [[ "$ARCHIVE_ARTIFACT_ID" =~ ^[0-9]+$ ]]
+          echo "ARCHIVE_ARTIFACT_ID=$ARCHIVE_ARTIFACT_ID" >> "$GITHUB_ENV"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARCHIVE_ARTIFACT_ID" > "$root/artifact.json"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          artifact = json.loads(Path("outputs/draft-walk-forward/artifact.json").read_text())
+          if artifact["expired"] or not artifact["name"].startswith("oe-private-history-state-"):
+              raise SystemExit("Expected a retained encrypted history artifact")
+          PY
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARCHIVE_ARTIFACT_ID/zip" > "$root/state.zip"
+          python - <<'PY'
+          import shutil
+          import zipfile
+          from pathlib import Path
+          root = Path("outputs/draft-walk-forward")
+          with zipfile.ZipFile(root / "state.zip") as archive:
+              member = archive.getinfo("oe-private-history-state.pmi")
+              if member.file_size > 1024 * 1024 * 1024:
+                  raise SystemExit("Encrypted state exceeds restore size limit")
+              with archive.open(member) as source, (root / "state.pmi").open("wb") as target:
+                  shutil.copyfileobj(source, target)
+          PY
+          python -m pro_meta_intelligence restore-private-oe-archive --input "$root/state.pmi" --archive-dir "$root/raw" --report "$root/restore.json"
+          rm -f "$root/state.zip" "$root/state.pmi"
+      - name: Prepare the weekly walk-forward dataset
+        env:
+          OUTCOME_HASH: ${{ inputs.outcome_hash }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(--archive outputs/draft-walk-forward/raw --output outputs/draft-walk-forward/dataset.json)
+          if [[ -n "$OUTCOME_HASH" ]]; then
+            [[ "$OUTCOME_HASH" =~ ^sha256:[0-9a-f]{64}$ ]]
+            args+=(--outcome-hash "$OUTCOME_HASH")
+          fi
+          python -m pro_meta_intelligence.backtest.walk_forward_dataset "${args[@]}"
+      - name: Evaluate production rules and fixed baselines
+        env:
+          UNSEAL_HOLDOUT: ${{ inputs.unseal_holdout }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          flags=()
+          if [[ "$UNSEAL_HOLDOUT" == "true" ]]; then flags+=(--unseal-holdout); fi
+          node ops/draft-walk-forward.mjs outputs/draft-walk-forward/dataset.json outputs/draft-walk-forward/result.json "${flags[@]}"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          result = json.loads(Path("outputs/draft-walk-forward/result.json").read_text())
+          result["run"] = {
+              "workflow_run_id": os.environ["GITHUB_RUN_ID"],
+              "source_revision": os.environ["GITHUB_SHA"],
+              "archive_artifact_id": os.environ["ARCHIVE_ARTIFACT_ID"],
+          }
+          text = json.dumps(result, indent=2, sort_keys=True)
+          Path("outputs/draft-walk-forward/result.json").write_text(text + "\n")
+          # Aggregate-only result in the log so it can be reviewed without downloading artifacts.
+          print("WALK_FORWARD_RESULT_BEGIN")
+          print(text)
+          print("WALK_FORWARD_RESULT_END")
+          PY
+      - name: Publish aggregate metrics only
+        uses: actions/upload-artifact@v7
+        with:
+          name: draft-walk-forward-summary-${{ github.run_id }}
+          path: outputs/draft-walk-forward/result.json
+          if-no-files-found: error
+          retention-days: 90
