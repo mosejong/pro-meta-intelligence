@@ -20,12 +20,12 @@ export type SoloDraftSuggestion = {
 export type SoloBanPolicy = "OPPONENT_RECORD" | "PATCH_PRESENCE" | "PATCH_PRESENCE_WITH_OPPONENT";
 export const DEFAULT_BAN_POLICY: SoloBanPolicy = "PATCH_PRESENCE";
 /**
- * Pick candidate policy. TEAM_AND_META is the shipped default. The TEAM_PLUS_* policies are frozen
- * walk-forward candidates (docs/benchmarks/DRAFT_PICK_POLICY_CANDIDATES_2026-11-23.md) that need
- * report.patch_presence; without a role-feasible candidate they fall back to TEAM_AND_META.
+ * Pick candidate policy. TEAM_PLUS_PATCH_PRESENCE is the default since it passed the walk-forward
+ * adoption rules (docs/benchmarks/DRAFT_PICK_POLICY_CANDIDATES_2026-11-23.md). The TEAM_PLUS_* policies
+ * need report.patch_presence; without a role-feasible candidate they fall back to TEAM_AND_META.
  */
 export type SoloPickPolicy = "TEAM_AND_META" | "TEAM_PLUS_PATCH_PICKS" | "TEAM_PLUS_PATCH_PRESENCE";
-export const DEFAULT_PICK_POLICY: SoloPickPolicy = "TEAM_AND_META";
+export const DEFAULT_PICK_POLICY: SoloPickPolicy = "TEAM_PLUS_PATCH_PRESENCE";
 export type SoloDraftInput = {
   banPolicy?: SoloBanPolicy;
   pickPolicy?: SoloPickPolicy;

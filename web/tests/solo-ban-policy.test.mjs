@@ -62,7 +62,8 @@ test("picks are unchanged by the ban policy", () => {
   for (const [i, id] of order.entries()) selections.push({ turn: i + 1, side: i % 2 ? "RED" : "BLUE", kind: "BAN", slot: Math.floor(i / 2) + 1, phase: 1, champion_id: id });
   const input = { ...base, selections, manualSide: "RED" };
   const presence = withPresence([{ champion_id: ids[9], picks: 30, bans: 30 }]);
-  assert.deepEqual(solo.explainSoloDraftTurn({ ...presence, selections, manualSide: "RED" }), solo.explainSoloDraftTurn(input));
+  // Isolate the ban policy: with the pick policy held fixed, a ban-only presence change never alters picks.
+  assert.deepEqual(solo.explainSoloDraftTurn({ ...presence, selections, manualSide: "RED", pickPolicy: "TEAM_AND_META" }), solo.explainSoloDraftTurn(input));
 });
 
 test("the readable review accepts the presence evidence", () => {
@@ -83,8 +84,10 @@ test("pick candidates rank team rate plus same-patch share among role-feasible c
     { champion_id: ids[13], picks: 19, bans: 0, roles: [] },
   ]);
   const state = { ...presence, selections, manualSide: "RED" };
-  assert.equal(solo.DEFAULT_PICK_POLICY, "TEAM_AND_META");
-  assert.deepEqual(solo.explainSoloDraftTurn(state), solo.explainSoloDraftTurn({ ...state, pickPolicy: "TEAM_AND_META" }));
+  assert.equal(solo.DEFAULT_PICK_POLICY, "TEAM_PLUS_PATCH_PRESENCE");
+  assert.deepEqual(solo.explainSoloDraftTurn(state), solo.explainSoloDraftTurn({ ...state, pickPolicy: "TEAM_PLUS_PATCH_PRESENCE" }));
+  // Without presence data picks stay on the previous team-and-meta rules.
+  assert.deepEqual(solo.explainSoloDraftTurn({ ...base, selections, manualSide: "RED" }), solo.explainSoloDraftTurn({ ...base, selections, manualSide: "RED", pickPolicy: "TEAM_AND_META" }));
   const picks = solo.explainSoloDraftTurn({ ...state, pickPolicy: "TEAM_PLUS_PATCH_PICKS" });
   const presenceFirst = solo.explainSoloDraftTurn({ ...state, pickPolicy: "TEAM_PLUS_PATCH_PRESENCE" });
   assert.equal(picks.kind, "PICK");

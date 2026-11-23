@@ -97,7 +97,7 @@ function evidenceFits(kind: "BAN" | "PICK", source: SoloDraftSuggestion["source"
   if (source === "FALLBACK") return evidence === "FALLBACK";
   if (source === "PLAYER_SEASON") return kind === "PICK" && evidence === "PLAYER_SEASON";
   if (source === "RADAR") return evidence === "RADAR_META" || evidence === "RADAR_FRAME";
-  if (source === "PATCH_PRESENCE") return kind === "BAN" && evidence === "PATCH_PRESENCE";
+  if (source === "PATCH_PRESENCE") return evidence === "PATCH_PRESENCE";
   // BAN team-record candidates always come from the opposing team's priority ids.
   return kind === "BAN" ? evidence === "TEAM_PRIORITY" : evidence === "TEAM_PRIORITY" || evidence === "PLAYER_CURRENT";
 }
