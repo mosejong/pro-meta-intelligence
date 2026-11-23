@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { createServer } from "vite";
@@ -27,7 +28,7 @@ async function setup(page, report) {
   const gen = report.opponent_prep.teams.find(t => t.team_name === "Gen.G");
   const blg = report.opponent_prep.teams.find(t => t.team_name === "Bilibili Gaming");
   await page.goto(root);
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await page.locator(".draft-session-details > summary").click();
   await page.locator('.draft-session-controls input[type="file"]').setInputFiles({ name: "final-game1-reference.json", mimeType: "application/json", buffer: Buffer.from(serialize(report, gen, blg, [])) });
   await expect(page.locator(".draft-team-column.blue h2")).toHaveText("Gen.G");
@@ -70,7 +71,9 @@ async function playCase(page, report) {
   const ownPicks = expected.selections.filter(s => s.side === "BLUE" && s.kind === "PICK");
   const images = page.locator(".draft-team-column.blue .draft-pick-stack article.filled img");
   await expect(images).toHaveCount(ownPicks.length);
-  for (let i = 0; i < ownPicks.length; i++) expect(await images.nth(i).getAttribute("src")).toContain(`/${ownPicks[i].champion_id}.png`);
+  // The pick stack is ordered by assigned position, not pick order: compare the shown champions as a set.
+  const shown = (await images.evaluateAll(nodes => nodes.map(n => n.getAttribute("src").split("/").pop()))).sort();
+  expect(shown).toEqual(ownPicks.map(p => `${p.champion_id}.png`).sort());
 }
 test("결승 전 자료에서 실제 젠지 선택을 가능한 지점까지 유지하며 BLG 반응을 확인한다", async ({ page }, testInfo) => {
   expect(Date.parse(frozen.cutoff)).toBeLessThan(Date.parse(reference.first_game_at));

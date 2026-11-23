@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { showPanel, enterDraftWorkspace } from "./studio-panels.mjs";
 
 const root = "/pro-meta-intelligence/";
@@ -12,7 +13,7 @@ const explicit = (page) => page.locator(".draft-position-copy").filter({ hasText
 async function open(page) {
   await page.goto(root);
   await enterDraftWorkspace(page);
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await expect(page.locator(".draft-position-board")).toHaveCount(2);
 }
 

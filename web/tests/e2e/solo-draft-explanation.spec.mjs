@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 const root = "/pro-meta-intelligence/";
 const progress = page => page.locator(".draft-turn-progress");
 const solo = page => page.getByRole("region", { name: "혼자 밴픽 연습", exact: true });
@@ -8,7 +9,7 @@ const confirm = page => page.locator(".draft-lock-in").getByRole("button", { nam
 const explain = page => solo(page).locator(".solo-explain");
 async function open(page, side) {
   await page.goto(root);
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await solo(page).getByLabel("내 진영", { exact: true }).selectOption(side);
   await toggle(page).check();
 }

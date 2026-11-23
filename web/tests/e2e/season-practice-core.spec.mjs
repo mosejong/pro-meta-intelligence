@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { createHash } from "node:crypto";
 import { showPanel } from "./studio-panels.mjs";
 
@@ -8,7 +9,7 @@ test("season practice restores Nuguri and draft together; cancelling delayed cat
     await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
     await page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ }).click();
   };
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await pickTurn();
   await showPanel(page, "ROSTER");
   const season = page.locator("details.season-lineup");

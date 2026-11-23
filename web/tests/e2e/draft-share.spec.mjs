@@ -1,11 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 
 const root = "/pro-meta-intelligence/";
 const progress = page => page.locator(".draft-turn-progress");
 const preview = page => page.getByRole("region", { name: "공유 밴픽 미리보기", exact: true });
 const confirm = page => page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ });
 async function ready(page) {
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
 }
 async function commit(page, count) {
   for (let i = 0; i < count; i++) {
@@ -51,7 +52,8 @@ test("copy to a fresh context previews; cancel preserves stored work; explicit l
   const context = await browser.newContext({ viewport: page.viewportSize() });
   try {
     const recipient = await context.newPage();
-    await recipient.goto(url); await ready(recipient);
+    // A shared link opens the explicit "load this draft?" preview before the draft step.
+    await recipient.goto(url);
     await expect(preview(recipient)).toBeVisible();
     await expect(progress(recipient)).toHaveAttribute("value", "0");
     await expect(preview(recipient)).toContainText("확정 3개");
@@ -60,16 +62,17 @@ test("copy to a fresh context previews; cancel preserves stored work; explicit l
     await recipient.screenshot({ path: testInfo.outputPath("share-preview.png"), fullPage: false });
     await preview(recipient).getByRole("button", { name: "취소", exact: true }).click();
     await expect(preview(recipient)).toHaveCount(0);
+    await ready(recipient);
     await commit(recipient, 1);
     await expect.poll(async () => (await stored(recipient))?.selections.length).toBe(1);
     const before = await stored(recipient);
     // Same-fragment navigation need not reload Chromium; explicitly test a fresh visit.
-    await recipient.goto(url); await recipient.reload(); await ready(recipient);
+    await recipient.goto(url); await recipient.reload();
     await expect(preview(recipient)).toBeVisible();
     await expect(progress(recipient)).toHaveAttribute("value", "1");
     await preview(recipient).getByRole("button", { name: "취소", exact: true }).click();
     expect(await stored(recipient)).toEqual(before);
-    await recipient.reload(); await ready(recipient);
+    await recipient.reload();
     await expect(preview(recipient)).toBeVisible();
     await preview(recipient).getByRole("button", { name: "이 밴픽 불러오기", exact: true }).click();
     await expect(progress(recipient)).toHaveAttribute("value", "3");

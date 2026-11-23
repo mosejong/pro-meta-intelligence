@@ -120,7 +120,11 @@ main.draft-lab.draft-studio .draft-picker-filter label { min-height: 44px; }
 main.draft-lab.draft-studio .draft-picker-filter input { accent-color: #c3c4c7; }
 main.draft-lab.draft-studio .draft-picker-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 5px; max-height: clamp(190px, 29vh, 340px); padding: 4px; scrollbar-width: thin; scrollbar-color: #62666e var(--studio-bg); scroll-padding-block: 4px; overscroll-behavior: contain; }
 main.draft-lab.draft-studio .draft-picker-grid > button { min-height: 44px; padding: 3px; border: 1px solid transparent; border-radius: 3px; background: var(--studio-panel); color: var(--studio-text); }
-main.draft-lab.draft-studio .draft-picker-grid img { display: block; border-radius: 1px; }
+/* Rows size to their content: with overflow-clipped items the default auto rows collapsed to the
+   44px min-height, cutting off the portrait bottom and hiding every champion name. */
+main.draft-lab.draft-studio .draft-picker-grid { grid-auto-rows: max-content; }
+main.draft-lab.draft-studio .draft-picker-grid img { display: block; width: min(100%, 52px); margin-inline: auto; border-radius: 1px; }
+main.draft-lab.draft-studio .draft-picker-grid span { text-align: center; }
 main.draft-lab.draft-studio .draft-picker-grid span { margin-top: 4px; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
 main.draft-lab.draft-studio .draft-picker-grid button[aria-pressed="true"] { border-color: var(--studio-text); background: #303237; box-shadow: inset 0 0 0 1px var(--studio-text); }
 main.draft-lab.draft-studio .draft-picker-grid button:disabled { opacity: .42; }
@@ -383,6 +387,9 @@ main.draft-lab.draft-studio .draft-flow-mode .draft-flow-note { margin-top: 2px;
 /* Optional match setting (collapsed): one first-selection select reusing the draft-step state; 44px targets, no new card. */
 main.draft-lab.draft-studio .draft-flow-options { min-width: 0; font-size: 13px; }
 main.draft-lab.draft-studio .draft-flow-options summary { display: flex; align-items: center; min-height: 44px; color: var(--studio-text); font-weight: 650; cursor: pointer; }
+/* display:flex drops the native disclosure marker; restore a visible open/closed cue. */
+main.draft-lab.draft-studio .draft-flow-options summary::before { content: "▸"; margin-right: 6px; color: var(--studio-muted); }
+main.draft-lab.draft-studio .draft-flow-options[open] summary::before { content: "▾"; }
 main.draft-lab.draft-studio .draft-setup-first-selection { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; }
 main.draft-lab.draft-studio .draft-setup-first-selection select { flex: 1 1 180px; min-width: 0; max-width: 100%; min-height: 44px; }
 main.draft-lab.draft-studio .draft-flow-options small { display: block; margin-top: 4px; color: var(--studio-muted); font-size: 12px; overflow-wrap: anywhere; }
@@ -405,3 +412,5 @@ main.draft-lab.draft-studio footer.studio-preview-footer {
   background: var(--studio-bg); background-image: none; color: var(--studio-muted);
 }
 main.draft-lab.draft-studio footer.studio-preview-footer p { color: var(--studio-muted); }
+
+main.draft-lab.draft-studio .draft-flow-options summary .draft-flow-options-hint { display: inline; margin: 0 0 0 6px; font-weight: 400; }

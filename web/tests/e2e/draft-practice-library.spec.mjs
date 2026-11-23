@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 
 const root = "/pro-meta-intelligence/";
 const progress = (page) => page.locator(".draft-turn-progress");
@@ -11,7 +12,7 @@ const items = (page) => panel(page).locator(".draft-practice-list > li:not(.draf
 
 async function open(page) {
   await page.goto(root);
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
 }
 async function advance(page, target) {
   while (Number(await progress(page).getAttribute("value")) < target) {

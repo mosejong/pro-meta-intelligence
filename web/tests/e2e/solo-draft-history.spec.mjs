@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { enterDraftWorkspace } from "./studio-panels.mjs";
 const root = "/pro-meta-intelligence/";
 const progress = page => page.locator(".draft-turn-progress");
@@ -11,7 +12,7 @@ const undo = page => page.getByRole("button", { name: "내 마지막 선택 되�
 async function open(page, side) {
   await page.goto(root);
   await enterDraftWorkspace(page);
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await solo(page).getByLabel("내 진영", { exact: true }).selectOption(side);
   await toggle(page).check();
 }

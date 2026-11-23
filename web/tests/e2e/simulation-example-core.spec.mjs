@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { showPanel } from "./studio-panels.mjs";
 
 const progress = page => page.locator(".draft-turn-progress");
@@ -9,7 +10,7 @@ const ready = page => readiness(page).getByRole("status").filter({ hasText: "입
 const rosterValues = page => page.locator(".roster-team li[data-role] select").evaluateAll(selects => selects.map(s => s.value));
 async function open(page) {
   await page.goto("/pro-meta-intelligence/");
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
 }
 async function openExample(page) {
   await showPanel(page, "SIMULATION");

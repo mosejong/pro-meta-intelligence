@@ -71,7 +71,8 @@ test("the readable review accepts the presence evidence", () => {
   const record = { turn: 1, champion_id: explanation.selected.champion_id, reason: explanation.selected.reason, prefix: [], context: "ctx", explanation };
   const result = text.buildSoloHistoryText({ history: [record], patchId: "26.22", cutoff: "2026-11-17T00:00:00Z", nameOf: (id) => `챔-${id}` });
   assert.equal(result.ok, true, JSON.stringify(result));
-  assert.ok(result.text.includes("같은 패치의 공개 픽·밴 빈도"));
+  assert.ok(result.text.includes("근거: 같은 패치의 공개 픽·밴 빈도"));
+  assert.ok(!result.text.includes("픽은 행동 팀"), "a ban does not mention pick-only team records");
 });
 
 test("pick candidates rank team rate plus same-patch share among role-feasible champions", () => {
@@ -96,5 +97,29 @@ test("pick candidates rank team rate plus same-patch share among role-feasible c
   assert.ok(chosen.includes(ids[11]) || picks.selected.source !== "PATCH_PRESENCE");
   for (const e of [picks, presenceFirst]) for (const c of [e.selected, ...e.alternatives]) {
     if (c.source === "PATCH_PRESENCE") { assert.equal(c.evidence, "PATCH_PRESENCE"); assert.equal(c.role_supported, true); }
+  }
+});
+
+test("with the real feed's patch presence, three Fearless sets complete with only legal choices", async () => {
+  const live = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
+  if (!live.patch_presence) return; // feeds without presence use the record path covered elsewhere
+  const agent = await vite.ssrLoadModule("/app/draft-agent.ts");
+  const teams = live.opponent_prep.teams;
+  for (const [blueTeam, redTeam] of [[teams[0], teams[1]], [teams[2], teams[3]]]) for (const firstPickSide of ["BLUE", "RED"]) {
+    let previous = [];
+    for (let set = 0; set < 3; set++) {
+      let selections = [];
+      for (let turn = 0; turn < 20; turn++) {
+        const state = { report: live, blueTeam, redTeam, selections, previousPicks: previous, firstPickSide, manualSide: turn % 2 ? "BLUE" : "RED" };
+        const next = agent.nextDraftTurn(selections, firstPickSide);
+        const input = { ...state, manualSide: next.side === "BLUE" ? "RED" : "BLUE" };
+        const choice = solo.suggestSoloDraftTurn(input);
+        assert.ok(choice, `a choice exists (set ${set + 1}, turn ${turn + 1})`);
+        const after = agent.applyDraftSelection(selections, choice.champion_id, previous, firstPickSide);
+        assert.equal(after.length, selections.length + 1, `legal choice ${choice.champion_id}`);
+        selections = after;
+      }
+      previous = [...previous, ...selections.filter(s => s.kind === "PICK").map(s => s.champion_id)];
+    }
   }
 });

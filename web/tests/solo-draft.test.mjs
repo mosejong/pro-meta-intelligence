@@ -13,6 +13,9 @@ before(async () => {
   const { SHARE_CHAMPIONS } = await vite.ssrLoadModule("/app/share-champion-ids.ts");
   ids = SHARE_CHAMPIONS.map(([, id]) => id);
   report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
+  // Record-path coverage: the published feed now carries patch_presence (default policy), which these
+  // branch tests deliberately exclude; the presence path is covered in solo-ban-policy.test.mjs.
+  delete report.patch_presence;
   base = { report, blueTeam: report.opponent_prep.teams[0], redTeam: report.opponent_prep.teams[1],
     selections: [], previousPicks: [], firstPickSide: "BLUE", manualSide: "RED" };
 });

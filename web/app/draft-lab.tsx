@@ -868,7 +868,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       {/* Optional match setting: the same firstPickSide state/guard as the draft-step select. Choosing here never
           acts or starts a timer; the board (and any auto turn) only runs after the explicit start below. */}
       <details className="draft-flow-options" lang="ko">
-        <summary>경기 설정</summary>
+        <summary>경기 설정 <small className="draft-flow-options-hint">(첫 선택 진영)</small></summary>
         <label className="draft-setup-first-selection">시작할 첫 선택 진영
           <select value={firstPickSide} disabled={firstSideLocked} onChange={(event) => chooseFirstPickSide(event.target.value)}>
             <option value="BLUE">{blueTeam ? `블루 · ${blueTeam.team_name}` : "블루"}</option>

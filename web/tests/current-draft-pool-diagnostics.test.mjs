@@ -17,6 +17,9 @@ before(async () => {
   ({ vite, api } = await loadDiagnosticsApi());
   ids = api.SHARE_CHAMPIONS.map(([, id]) => id).filter((id) => !ALIAS_IDS.has(id));
   template = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
+  // Record-path coverage: the published feed now carries patch_presence (default policy), which these
+  // branch tests deliberately exclude; the presence path is covered in solo-ban-policy.test.mjs.
+  delete template.patch_presence;
 });
 after(async () => { await vite?.close(); });
 

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { readFile } from "node:fs/promises";
 
 test("PNG download renders explicit positions and creates a real local PNG", async ({ page }, testInfo) => {
@@ -11,7 +12,7 @@ test("PNG download renders explicit positions and creates a real local PNG", asy
     };
   });
   await page.goto("/pro-meta-intelligence/");
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   for (let i = 0; i < 20; i++) {
     await page.locator(".draft-picker-grid button:not(:disabled)").first().click();
     await page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ }).click();

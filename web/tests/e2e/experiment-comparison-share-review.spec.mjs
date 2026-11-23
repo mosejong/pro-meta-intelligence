@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { showPanel } from "./studio-panels.mjs";
 
 async function pair(page) {
   await page.goto("/pro-meta-intelligence/");
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await showPanel(page, "SIMULATION");
   const example = page.locator("details.simulation-example");
   await example.locator(":scope > summary").click();

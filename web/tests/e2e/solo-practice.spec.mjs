@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { showPanel, enterDraftWorkspace } from "./studio-panels.mjs";
 const root = "/pro-meta-intelligence/";
 const progress = page => page.locator(".draft-turn-progress");
@@ -9,7 +10,7 @@ const confirm = page => page.locator(".draft-lock-in").getByRole("button", { nam
 async function open(page, side = "BLUE") {
   await page.goto(root);
   await enterDraftWorkspace(page);
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await solo(page).getByLabel("내 진영", { exact: true }).selectOption(side);
   await toggle(page).check();
 }
@@ -75,7 +76,7 @@ test("레드 혼자 연습은 첫 상대 차례부터 시작하고 새로고침�
   await expect(available(page).first()).toBeEnabled();
   await expect.poll(() => savedTurns(page)).toBe(1);
   await page.reload();
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await expect(progress(page)).toHaveAttribute("value", "1");
   await expect(toggle(page)).not.toBeChecked();
   await solo(page).getByLabel("내 진영", { exact: true }).selectOption("RED");

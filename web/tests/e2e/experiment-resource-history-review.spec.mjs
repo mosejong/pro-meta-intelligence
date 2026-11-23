@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enterDraftForReview } from "./enter-draft-review.mjs";
 import { showPanel } from "./studio-panels.mjs";
 
 const panel = page => page.locator("section.experiment-replay");
@@ -7,7 +8,7 @@ const slider = page => panel(page).locator('.experiment-replay-seek input[type="
 async function openDetails(item) { if (await item.getAttribute("open") === null) await item.locator(":scope > summary").click(); }
 async function ready(page) {
   await page.goto("/pro-meta-intelligence/");
-  await expect(page.getByRole("button", { name: "밴픽 링크 복사", exact: true })).toBeEnabled();
+  await enterDraftForReview(page);
   await showPanel(page, "SIMULATION");
   await expect(history(page)).toHaveCount(0);
   const example = page.locator("details.simulation-example");

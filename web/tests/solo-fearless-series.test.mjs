@@ -16,6 +16,8 @@ test("seven teams complete three continuous Fearless sets from either first side
     const rows = [];
     for (const [snapshot, path] of [["CURRENT", "../public/feed/current.json"], ["FROZEN_20261114", "./fixtures/eligible-feed-20261114.json"]]) {
       const report = JSON.parse(await readFile(new URL(path, import.meta.url), "utf8"));
+      // Record-path coverage (season evidence across sets); the presence default is covered in solo-ban-policy.test.mjs.
+      delete report.patch_presence;
       const parsed = parsePlayerSeasonHistory(season, { basis: rosterBasis(report), season: 2026 });
       const history = parsed.ok ? parsed.value : null;
       // A later companion refresh may no longer match the frozen report; withhold it too.

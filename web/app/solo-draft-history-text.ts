@@ -43,14 +43,14 @@ export function cleanSoloHistoryName(value: unknown, max: number): string {
 const EVIDENCE: ReadonlySet<string> = new Set<SoloDraftEvidence>(["TEAM_PRIORITY", "PLAYER_CURRENT", "PLAYER_SEASON", "RADAR_META", "RADAR_FRAME", "PATCH_PRESENCE", "FALLBACK"]);
 const ROLE_TEXT: Readonly<Record<string, string>> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", ADC: "바텀", SUPPORT: "서포터" };
 
-function evidenceText(evidence: SoloDraftEvidence, team: string): string {
+function evidenceText(evidence: SoloDraftEvidence, team: string, kind: "BAN" | "PICK" = "PICK"): string {
   switch (evidence) {
     case "TEAM_PRIORITY": return `${team}의 공개 우선 픽 기록`;
     case "PLAYER_CURRENT": return `${team} 현재 관측 선수의 공개 기록`;
     case "PLAYER_SEASON": return "같은 팀 현재 관측 선수 시즌 기록(시즌 기록이며 현재 패치의 강함을 뜻하지 않음)";
     case "RADAR_META": return "현재 레이더 검토 가능 메타";
     case "RADAR_FRAME": return "공개 레이더 후보";
-    case "PATCH_PRESENCE": return "같은 패치의 공개 픽·밴 빈도(픽은 행동 팀 기록 포함)";
+    case "PATCH_PRESENCE": return kind === "BAN" ? "같은 패치의 공개 픽·밴 빈도" : `${team}의 공개 우선 픽 기록 + 같은 패치의 공개 픽·밴 빈도`;
     case "FALLBACK": return "사용할 기록 없음 · 고정 규칙(챔피언 목록 순서)";
   }
 }
@@ -156,7 +156,7 @@ export function buildSoloHistoryText(input: SoloHistoryTextInput): SoloHistoryTe
         continue;
       }
       lines.push(`${entry.turn}번째 차례 · ${e.side === "BLUE" ? "블루" : "레드"} ${e.kind === "BAN" ? "밴" : "픽"} · ${name(entry.champion_id)}`);
-      lines.push(`- 근거: ${evidenceText(e.selected.evidence, e.team)}`);
+      lines.push(`- 근거: ${evidenceText(e.selected.evidence, e.team, e.kind)}`);
       if (e.kind === "PICK") {
         lines.push(e.selected.roles.length
           ? `- 포지션: 기록에서 추론한 후보 ${e.selected.roles.join("/")} (추론이며 사용자가 배정한 포지션 아님)`
@@ -165,7 +165,7 @@ export function buildSoloHistoryText(input: SoloHistoryTextInput): SoloHistoryTe
       }
       const shown = e.alternatives.slice(0, ALTERNATIVES_SHOWN);
       lines.push(shown.length
-        ? `- 다른 후보: ${shown.map(c => `${name(c.champion_id)}(${evidenceText(c.evidence, e.team)})`).join(", ")}`
+        ? `- 다른 후보: ${shown.map(c => `${name(c.champion_id)}(${evidenceText(c.evidence, e.team, e.kind)})`).join(", ")}`
         : "- 다른 후보: 같은 규칙으로 고를 다른 합법 후보 없음");
     }
     const text = lines.join("\n");
