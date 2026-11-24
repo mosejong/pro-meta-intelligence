@@ -212,6 +212,15 @@ main.draft-lab.draft-studio .draft-reset-dialog button:last-child { background: 
   main.draft-lab.draft-studio .draft-pick-stack strong { font-size: 12px; white-space: normal; overflow-wrap: anywhere; }
   main.draft-lab.draft-studio .draft-pick-stack span { font-size: 10px; line-height: 1.3; }
   main.draft-lab.draft-studio .draft-control-room { padding: 12px; }
+  /* Phones: the turn and picker (the action repeated 20 times per set) come before the two team boards,
+     which follow directly below for review. Desktop and tablet layouts are unchanged. */
+  main.draft-lab.draft-studio .draft-control-room { grid-row: 1; border-top: 0; border-bottom: 1px solid var(--studio-line); }
+  main.draft-lab.draft-studio .draft-team-column.blue,
+  main.draft-lab.draft-studio .draft-team-column.red { grid-row: 2; }
+  /* Phones: drop explanatory copy that repeats what the controls already say, so the picker starts
+     near the first screen. Status lines (role=status), locale notes and warnings stay. */
+  main.draft-lab.draft-studio .studio-workspace-header > p:not([role]) { display: none; }
+  main.draft-lab.draft-studio .solo-draft > p:not([role]) { display: none; }
   main.draft-lab.draft-studio .draft-clock { gap: 8px; }
   main.draft-lab.draft-studio .draft-clock > button { padding-inline: 8px; }
   main.draft-lab.draft-studio .draft-picker-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); max-height: 268px; }
@@ -414,3 +423,5 @@ main.draft-lab.draft-studio footer.studio-preview-footer {
 main.draft-lab.draft-studio footer.studio-preview-footer p { color: var(--studio-muted); }
 
 main.draft-lab.draft-studio .draft-flow-options summary .draft-flow-options-hint { display: inline; margin: 0 0 0 6px; font-weight: 400; }
+/* The first draft-panel block's top margin collapsed through the panel, dropping it 12px below the tab rail. */
+main.draft-lab.draft-studio .studio-draft-panel > .solo-draft:first-child { margin-top: 0; }

@@ -86,8 +86,9 @@ test("20 turns → explicit roles → fix → export → read-only replay → ro
   await openDetails(panel(page));
   const body = panel(page);
   await expect(body.getByRole("note")).toContainText("역할은 사용자 배정");
-  await expect(body.getByRole("note")).toContainText("선수 근거는 현재 관측이며 연간 자료는 포함하지 않습니다");
-  await expect(body.getByRole("note")).toContainText("학습된 선수/챔피언 효과·상성·룬·아이템·실제 승률은 아직 계산하지 않습니다");
+  // Current copy (the annual role evidence now lives in a separate player-evidence section).
+  await expect(body.getByRole("note")).toContainText("별도 선수 근거에서 올해의 역할별 사용 기록을 확인할 수 있습니다");
+  await expect(body.getByRole("note")).toContainText("챔피언 효과와 상성·룬·아이템·실제 승률은 아직 계산하지 않습니다");
 
   // Nothing is pre-filled from pick order.
   for (const side of ["blue", "red"]) for (const role of ROLES) await expect(roleSlot(page, side, role)).toHaveValue("");

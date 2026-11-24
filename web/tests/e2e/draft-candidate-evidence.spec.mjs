@@ -7,6 +7,7 @@ test("candidate evidence stays in details and never confirms or restricts a pick
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/pro-meta-intelligence/");
+  await enterDraftForReview(page);
   const progress = page.locator(".draft-turn-progress");
   const picker = page.locator(".draft-picker-grid button:not(:disabled)");
   await expect(picker.first()).toBeEnabled();
@@ -36,6 +37,7 @@ test("matching season companion is actually loaded and labels a current player's
   const season = JSON.parse(await readFile(new URL("../../public/history/player-season-2026.json", import.meta.url), "utf8"));
   expect(season.cutoff).toBe(report.cutoff);
   await page.goto("/pro-meta-intelligence/");
+  await enterDraftForReview(page);
   await enterDraftForReview(page);
   const name = await page.locator(".draft-team-column.blue header h2").textContent();
   const team = report.opponent_prep.teams.find(team => team.team_name === name); expect(team).toBeTruthy();

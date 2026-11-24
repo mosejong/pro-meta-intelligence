@@ -276,6 +276,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   const [setupChoice, setSetupChoice] = useState<PracticeMode | null>(null);
   const setupHeading = useRef<HTMLHeadingElement>(null);
   const draftHeading = useRef<HTMLHeadingElement>(null);
+  const controlRoom = useRef<HTMLElement>(null);
   // Set only by an explicit start/back click, so restores and deep links never steal focus.
   const stepFocus = useRef<DraftFlowStep | null>(null);
   // Read-only viewing of an already-confirmed slot. Separate from pendingChampion: it never stages or confirms.
@@ -384,7 +385,10 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     stepFocus.current = null;
     const heading = step === "DRAFT" ? draftHeading.current : setupHeading.current;
     heading?.focus({ preventScroll: true });
-    scrollIntoViewGently(heading);
+    // Phones stack the turn and picker first (draft-studio.css); bring them into view instead of the heading.
+    const phone = step === "DRAFT" && window.matchMedia?.("(max-width: 600px)").matches && studioTab === "DRAFT";
+    scrollIntoViewGently(phone ? controlRoom.current : heading);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only an explicit step change scrolls
   }, [step]);
 
   useEffect(() => {
@@ -940,7 +944,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     {/* No lang on the stage/picker containers: their children set lang per control. */}
     <section className="draft-stage" aria-label={t("draft.stageLabel")} inert={!boardActive}>
       <TeamDraftColumn unassigned={blueTeam ? positionUnassigned[blueTeam.team_id] ?? [] : []} assignments={blueTeam ? positionRoles[blueTeam.team_id] : emptyChampionRoles()} positionDisabled={!canSelect || room.active} onAssign={(id, role) => assignPosition("BLUE", id, role)} onConfirm={() => confirmPositions("BLUE")} side="BLUE" team={blueTeam} selections={selections} staged={staged} active={turn?.side === "BLUE"} nameOf={nameOf} inspected={inspectedSelection} onInspect={inspectSlot} />
-      <section className="draft-control-room">
+      <section className="draft-control-room" ref={controlRoom}>
         <div className={`draft-clock ${timer <= 10 ? "urgent" : ""}`} lang={lang.ui}><span>{`TURN ${Math.min(selections.length + 1, STANDARD_DRAFT_SEQUENCE.length)} / ${STANDARD_DRAFT_SEQUENCE.length}`}</span><strong>{String(timer).padStart(2, "0")}</strong><button type="button" onClick={() => setTimerRunning((running) => !running)} disabled={!turn}>{timerRunning ? t("draft.timerPause") : t("draft.timerStart")}</button></div>
         <div className={`draft-current-turn ${turn?.side.toLowerCase() ?? "complete"}`} role="status" lang={lang.ui}><span>{phaseLabel}</span><h2>{turn ? format("draft.turnHeading", { team: frame.acting_team_name ?? "", side: t(sideKey(turn.side)) }) : t("draft.scenarioComplete")}</h2><p>{turn ? format(turnHintKey(turn.kind), { slot: turn.slot }) : t("draft.turnDoneHint")}</p>{room.active && <p className="draft-room-turn">{room.role === "SPECTATOR" ? "관전 중 · 선택할 수 없습니다" : room.role === "BLUE" ? "나는 블루" : room.role === "RED" ? "나는 레드" : "참여 확인 중"} · {room.ended ? "참여 종료" : !room.connected ? "연결 확인 중" : room.sending ? "선택 반영 중" : room.snapshot?.status === "WAITING" ? "레드 참가 대기" : turn ? `${turn.side === "BLUE" ? "블루" : "레드"} 차례` : "세트 완료"}</p>}{!turn && <button type="button" disabled={room.active && !roomHostReady} onClick={nextGame}>{t("draft.nextGame")}</button>}</div>
         <progress className="draft-turn-progress" value={selections.length} max={20} aria-label={format("draft.progressLabel", { count: selections.length, total: 20 })} lang={lang.ui} />

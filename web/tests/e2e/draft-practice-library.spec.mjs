@@ -6,7 +6,7 @@ const progress = (page) => page.locator(".draft-turn-progress");
 const available = (page) => page.locator(".draft-picker-grid button:not(:disabled)");
 const confirm = (page) => page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ });
 const panel = (page) => page.locator("details.draft-practice-library");
-const nameInput = (page) => panel(page).getByLabel("연습 이름");
+const nameInput = (page) => panel(page).getByLabel("연습 이름", { exact: true });
 const saveButton = (page) => panel(page).getByRole("button", { name: "이 연습 저장", exact: true });
 const items = (page) => panel(page).locator(".draft-practice-list > li:not(.draft-practice-empty)");
 
