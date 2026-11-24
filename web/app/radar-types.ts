@@ -367,7 +367,9 @@ export function isRadarReport(value: unknown): value is RadarReport {
   if (report.publication_readiness !== undefined && !isPublicationReadiness(report.publication_readiness)) return false;
   if (report.history_status !== undefined && !isHistoryStatus(report.history_status)) return false;
   if (report.opponent_prep !== undefined && !isOpponentPrep(report.opponent_prep)) return false;
-  if (report.patch_presence !== undefined && (!isPatchPresence(report.patch_presence) || report.patch_presence.patch_id !== report.patch_id)) return false;
+  // Optional auxiliary block: a malformed one invalidates the report, but a patch mismatch only makes the
+  // solo rules ignore it (solo-draft.ts checks the patch before use), so the rest of the report stays usable.
+  if (report.patch_presence !== undefined && !isPatchPresence(report.patch_presence)) return false;
   return report.entries.every(isRadarEntry);
 }
 

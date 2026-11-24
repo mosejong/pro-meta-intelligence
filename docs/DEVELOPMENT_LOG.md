@@ -708,3 +708,10 @@ Codex관련41,동일Claude lint수정후영향12/타입/lint/빌드통과. PC/�
 - 화면: 챔피언 선택 칸이 44px로 눌려 이름이 전혀 보이지 않고 그림 아래가 잘리던 결함 수정. 포지션 안내 축약·첫 픽 이후 표시, "픽 대기", 경기 설정 펼침 표시, 밴 설명에서 픽 전용 문구 제거.
 - 브라우저 검사: 팀 선택 단계 이전 흐름을 가정한 27개 파일 38곳을 공통 진입 도우미로 교체, 공유 링크 미리보기·결승 대응·복기 검사 수정.
 - 남은 브라우저 검사 실패(변경 전 main에서도 동일): 이 환경에서 챔피언 이미지·한글 이름 차단(studio-polish, season-player-comparison/pool-context의 '마오카이'), 자료 갱신 후 문구·수치 기대값(publication/local-report-reliability, simulation-readiness/player-evidence, ab-player-evidence, player-pool), 연습 보관함 이름 입력 중복 라벨(draft-practice-library), studio-sidetabs 레일 위치, 친구 방(별도 서버 설정 필요), solo-review-retention 간헐 실패. 다음 정비 대상.
+
+## 2026-11-24 · 품질 점검 2차 (휴대폰 흐름·브라우저 검사)
+- 휴대폰(600px 이하): 차례·챔피언 선택·확정을 양 팀 보드보다 위로 올리고, 설명 문구 일부를 숨기고, 시작 직후 선택 영역으로 이동한다. 390×844에서 선택 목록 시작 위치 1482px → 시작 직후 화면 안 407px. PC·태블릿 배치는 그대로.
+- 보고서 검증: `patch_presence`의 패치가 보고서와 다르면 보고서 전체를 거부하던 것을, 해당 빈도만 쓰지 않도록 완화(형식 오류는 계속 거부). 패치 ID를 바꾼 로컬 파일이 "잘못된 파일"로 처리되던 원인이었다.
+- 작업실 탭 레일과 패널 상단이 12px 어긋나던 것(첫 블록 여백이 패널 밖으로 새던 문제) 수정.
+- 브라우저 검사 정비: 연습 보관함 이름 칸 선택자, 공유·후보 근거·보관함 동시성·선수 풀·시뮬레이션 문구/원본 시점 조건, 마오카이 클릭을 그림 ID 기준으로.
+- 남은 실패(변경 전 main에서도 실패): ab-player-evidence(비교 파일 재현 상태 문구), studio-polish(실제 초상화 내려받기 필요), season-player-comparison/pool-context의 한글 이름 문구(Data Dragon 한글 자료 필요), solo-review-retention 간헐 실패, 친구 방(별도 서버 설정).

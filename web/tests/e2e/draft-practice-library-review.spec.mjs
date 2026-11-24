@@ -4,6 +4,7 @@ import { enterDraftForReview } from "./enter-draft-review.mjs";
 // Independent review: an async saved-practice read must not discard work started after the click.
 test("a delayed library load preserves a champion staged while the read is in flight", async ({ page }) => {
   await page.goto("/pro-meta-intelligence/");
+  await enterDraftForReview(page);
   const picker = page.locator(".draft-picker-grid button:not(:disabled)");
   const progress = page.locator(".draft-turn-progress");
   const lockIn = page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ });
@@ -43,6 +44,7 @@ test("a delayed library load preserves a champion staged while the read is in fl
 
 test("real IndexedDB serializes two tabs racing for the fifth saved practice", async ({ page, context }, testInfo) => {
   await page.goto("/pro-meta-intelligence/");
+  await enterDraftForReview(page);
   const picker = page.locator(".draft-picker-grid button:not(:disabled)");
   await expect(picker.first()).toBeEnabled(); await picker.first().click();
   await page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ }).click();

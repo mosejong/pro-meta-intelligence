@@ -138,7 +138,9 @@ test("evidence follows roster edits, live bans/undo, next-set fearless locks, re
   await expect(slot(page, "red", "SUPPORT")).toHaveValue(foreign);
   await expectRowsFollowSlots(page);
   await expect(row(page, "red", "SUPPORT")).toContainText("원팀(");
+  await showPanel(page, "DRAFT"); // the series context lives in the draft panel, hidden while the pool tab is open
   await expect(page.getByRole("region", { name: "피어리스 시리즈", exact: true })).toContainText("피어리스 · 2세트");
+  await openPool(page); // back to the pool panel for the layout checks below
 
   const overflow = await page.evaluate(() => {
     const panel = document.querySelector("details.player-pool");

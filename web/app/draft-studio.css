@@ -423,3 +423,5 @@ main.draft-lab.draft-studio footer.studio-preview-footer {
 main.draft-lab.draft-studio footer.studio-preview-footer p { color: var(--studio-muted); }
 
 main.draft-lab.draft-studio .draft-flow-options summary .draft-flow-options-hint { display: inline; margin: 0 0 0 6px; font-weight: 400; }
+/* The first draft-panel block's top margin collapsed through the panel, dropping it 12px below the tab rail. */
+main.draft-lab.draft-studio .studio-draft-panel > .solo-draft:first-child { margin-top: 0; }

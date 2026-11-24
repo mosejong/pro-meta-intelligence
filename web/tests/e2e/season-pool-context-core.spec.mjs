@@ -6,7 +6,7 @@ test("2015 MaRin pool reflects a current ban without treating historical counts 
   await page.goto("/pro-meta-intelligence/");
   await enterDraftForReview(page);
   await page.locator("#draft-search").fill("Maokai");
-  await page.locator(".draft-picker-grid").getByRole("button", { name: "마오카이", exact: true }).click();
+  await /* by portrait id: the Korean display name needs Data Dragon locale data */ page.locator(".draft-picker-grid button").filter({ has: page.locator('img[src$="/Maokai.png"]') }).click();
   await page.locator(".draft-lock-in").getByRole("button", { name: "밴 확정", exact: true }).click();
   await showPanel(page, "ROSTER");
   const season = page.locator("details.season-lineup");

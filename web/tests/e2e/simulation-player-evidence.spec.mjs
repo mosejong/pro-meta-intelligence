@@ -124,7 +124,10 @@ test("the actual season artifact matches assigned-player counts on the nested dr
   expect(state.requests).toBe(0);
   await evidence(page).locator("> summary").click();
   await expect(evidence(page).locator(".simulation-evidence-source")).toContainText(`원본 제외 ${real.import_summary.rejected_game_count}경기`);
-  await expect(evidence(page).locator(".simulation-evidence-source")).toContainText("원본이 분석 기준 시각보다 오래되어");
+  // The age note appears only while the source is older than the analysis cutoff; check it conditionally.
+  const sourceText = await evidence(page).locator(".simulation-evidence-source").textContent();
+  if (Date.parse(real.source?.retrieved_at ?? "") < Date.parse(real.cutoff ?? "")) expect(sourceText).toContain("원본이 분석 기준 시각보다 오래되어");
+  else expect(sourceText).not.toContain("원본이 분석 기준 시각보다 오래되어");
   const key = id => {
     const normalized = id.toLowerCase().replace(/[^a-z0-9]/g, "");
     return ({ wukong: "monkeyking", renataglasc: "renata" })[normalized] ?? normalized;

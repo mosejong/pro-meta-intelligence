@@ -223,7 +223,8 @@ test("source guards: board gate, paused auto/timer, back preservation and existi
   // Focus moves to headings by ref only on explicit start/back.
   assert.match(lab, /stepFocus\.current = "DRAFT";\s*setStep\("DRAFT"\);/);
   assert.match(lab, /stepFocus\.current = "SETUP";\s*setStep\("SETUP"\);/);
-  assert.match(lab, /heading\?\.focus\(\{ preventScroll: true \}\);\s*scrollIntoViewGently\(heading\);/);
+  // Phones scroll to the turn/picker area instead of the heading; focus still moves to the heading.
+  assert.match(lab, /heading\?\.focus\(\{ preventScroll: true \}\);[\s\S]{0,400}scrollIntoViewGently\(phone \? controlRoom\.current : heading\);/);
 });
 
 test("practice mode helper: fresh manual, explicit intent, unchanged continue touches nothing, room forces manual", async () => {
