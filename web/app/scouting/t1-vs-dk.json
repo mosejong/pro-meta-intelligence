@@ -7,7 +7,7 @@
     "minimum_comfort_games": 3,
     "top_champions": 6
   },
-  "cutoff": "2026-11-23T00:14:59.674945+00:00",
+  "cutoff": "2026-11-24T04:17:26.976788+00:00",
   "head_to_head": [
     {
       "league": "LCK",
@@ -11134,7 +11134,7 @@
     "MULTI_PATCH_WINDOW"
   ],
   "schema_version": "1",
-  "source_version": "sha256:5e8a925de0bd85018a1cc497cbf07952b67fa9fef444745fcf1d37a650101a19",
+  "source_version": "sha256:2bfa98e8cfc4e519fcaa452a262f3439ab62ecb52a5b82cffc2307777118e5be",
   "target": {
     "first_rotation_picks": [
       {
