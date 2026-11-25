@@ -425,3 +425,10 @@ main.draft-lab.draft-studio footer.studio-preview-footer p { color: var(--studio
 main.draft-lab.draft-studio .draft-flow-options summary .draft-flow-options-hint { display: inline; margin: 0 0 0 6px; font-weight: 400; }
 /* The first draft-panel block's top margin collapsed through the panel, dropping it 12px below the tab rail. */
 main.draft-lab.draft-studio .studio-draft-panel > .solo-draft:first-child { margin-top: 0; }
+
+/* First-visit guide on the team setup step. */
+main.draft-lab.draft-studio .first-visit-guide { display: grid; gap: 8px; margin: 4px 0 12px; padding: 12px 14px; border: 1px solid var(--studio-line); border-left: 3px solid #5b8def; border-radius: 6px; background: var(--studio-raised); color: var(--studio-text); }
+main.draft-lab.draft-studio .first-visit-guide h3 { margin: 0; font-size: 15px; }
+main.draft-lab.draft-studio .first-visit-guide ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; color: var(--studio-muted); font-size: 14px; line-height: 1.45; }
+main.draft-lab.draft-studio .first-visit-guide b { color: var(--studio-text); }
+main.draft-lab.draft-studio .first-visit-guide button { justify-self: start; min-height: 36px; padding: 6px 14px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-panel); color: var(--studio-text); cursor: pointer; }
