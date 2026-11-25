@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- champion portraits use Riot Data Dragon */
 
+import { feedDisplayLabel } from "./feed-display-label";
 import { FirstVisitGuide } from "./first-visit-guide";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { championAssetId, championImageUrl } from "./champion-assets";
@@ -829,7 +830,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       : focusSelection ? { champion_id: focusSelection.champion_id, status: "CONFIRMED", selection: focusSelection } : null;
   return <main className="draft-lab draft-studio" lang="ko">
     <WorkspaceHeader currentSpace={currentSpace}>
-      <div lang={lang.ui}><span>{seriesReport ? report.fixture_only ? t("draft.data.fixture") : t("draft.data.locked") : feedLabel}</span><b>PATCH {report.patch_id}</b></div>
+      <div lang={lang.ui}><span>{seriesReport ? report.fixture_only ? t("draft.data.fixture") : t("draft.data.locked") : feedDisplayLabel(feedLabel, report.cutoff)}</span><b>PATCH {report.patch_id}</b></div>
     </WorkspaceHeader>
 
     <header className="studio-workspace-header">

@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- checked-in art and stable Riot CDN assets */
 
+import { feedDisplayLabel } from "./feed-display-label";
 import { type FormEvent, useState } from "react";
 import { validationForTask, type AIValidationStatus } from "./ai-validation";
 import { championImageUrl } from "./champion-assets";
@@ -100,7 +101,7 @@ export function ProductHome({
     <header className="home-topbar">
       <a className="brand" href={productSpaceHref(currentSpace, "ONBOARDING")} aria-label="Pro Meta Intelligence 홈"><span className="brand-mark">PM</span><span><strong>PRO META</strong><small>INTELLIGENCE</small></span></a>
       <nav aria-label="분야별 분석"><a href={productSpaceHref(currentSpace, "T1")}>T1 오늘 준비</a><a href={productSpaceHref(currentSpace, "TEAM")}>내 팀 분석</a><a href={productSpaceHref(currentSpace, "DRAFT")}>가상 밴픽</a><a href={productSpaceHref(currentSpace, "CREATOR")}>영상 소재</a><a href={productSpaceHref(currentSpace, "RADAR")}>전체 데이터</a><a href={productSpaceHref(currentSpace, "PROOF")}>제출 증거</a></nav>
-      <span className={`home-feed-state ${dataIsStale ? "stale" : ""}`}><i />{dataIsStale ? "STALE · REVIEW ONLY" : feedLabel}</span>
+      <span className={`home-feed-state ${dataIsStale ? "stale" : ""}`}><i />{feedDisplayLabel(dataIsStale ? "STALE · REVIEW ONLY" : feedLabel, dataCutoff)}</span>
     </header>
 
     <div className={`home-app-status ${dataIsStale ? "stale" : ""}`} role="status"><strong>{dataIsStale ? "데이터 갱신 대기 · 과거 기록으로 분석" : "공개 경기 근거로 분석합니다"}</strong><p>패치 {patchId} · {dataCutoff.slice(0, 10)} 기준{dataIsStale ? " · 현재 경기 추천으로 사용하지 않습니다." : " · 최신성은 아래 데이터 상태에서 확인하세요."}</p></div>
