@@ -62,6 +62,9 @@ export function DraftSharePanel({ outgoing, liveReport, ready, incomingReady, on
       if (visible.report !== liveReport) { setPreview({ href, report: liveReport, session }); return; }
       onAccept(session);
       close();
+      // The link was used: drop its fragment so a refresh does not ask to load the same draft again.
+      // (Cancel keeps it, so a later refresh can still offer the link.)
+      if (window.location.hash.startsWith("#draft=")) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
     } catch (error) { setPreview({ href, report: liveReport, error: message(error) }); }
   }
   const teams = visible?.session?.report.opponent_prep?.teams ?? [];

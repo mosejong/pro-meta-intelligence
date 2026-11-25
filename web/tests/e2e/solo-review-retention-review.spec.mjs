@@ -33,7 +33,6 @@ async function start(page, side) {
   }));
   await page.goto(root);
   await enterDraftForReview(page);
-  await enterDraftForReview(page);
   await solo(page).getByLabel("내 진영", { exact: true }).selectOption(side);
   await solo(page).getByRole("checkbox", { name: "상대 자동 밴픽", exact: true }).check();
   if (side === "RED") await expect(progress(page)).toHaveAttribute("value", "1");
@@ -138,6 +137,8 @@ test("accepting an identical shared draft clears private autosave notes", async 
   await expect(progress(page)).toHaveAttribute("value", "4");
   await expect(review(page)).toHaveCount(0);
   await expect.poll(() => sidecar(page)).toBeNull();
+  // Accepting clears the share hash asynchronously; reloading before that would reopen the preview.
+  await expect.poll(() => page.evaluate(() => location.hash)).toBe("");
   await page.reload();
   await enterDraftForReview(page);
   await expect(progress(page)).toHaveAttribute("value", "4");
