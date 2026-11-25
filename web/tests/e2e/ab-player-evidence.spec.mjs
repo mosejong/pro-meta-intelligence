@@ -244,7 +244,8 @@ test("roles → freeze A → change player and roles → annual evidence (error/
     expect(text).not.toMatch(/player-season|season_accepted_game_count|FixtureOther/);
 
     // Read-only replay: role diff recomputed from the file; current work untouched.
-    await comparison(page).locator(".draft-comparison-file input").setInputFiles(filePath);
+    // Pass the bytes, not the path: setInputFiles silently attaches nothing for this non-ASCII output path ("→").
+    await comparison(page).locator(".draft-comparison-file input").setInputFiles({ name: "ab-roles-comparison.json", mimeType: "application/json", buffer: Buffer.from(text) });
     const replay = comparison(page).locator(".draft-comparison-replay");
     await expect(replay.getByRole("status").first()).toContainText("일치합니다");
     await expect(replay.locator('[data-role-diff="changed"]')).toContainText("변경된 역할 배정 2개");
