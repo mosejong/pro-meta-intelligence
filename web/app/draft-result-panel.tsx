@@ -49,10 +49,15 @@ export function DraftResultPanel({ report, blueTeam, redTeam, selections, previo
   if (result.status !== "READY") return result.status === "INVALID" ? <section className="draft-result" lang="ko" role="status">이번 밴픽은 리포트가 지원하는 팀·챔피언·규칙과 일치하는지 확인하지 못했습니다. 선택은 유지하며 결과를 추정하지 않습니다.</section> : null;
   return <section ref={root} id="draft-result" className="draft-result" lang="ko" aria-label="이번 밴픽 리포트">
     <header><div><small>밴픽 완료</small><h2>이번 선택으로 무엇을 가져왔을까?</h2></div><span>패치 {report.patch_id}</span></header>
+    {/* Next actions first: on phones the report below is about two screens tall. */}
+    <div className="draft-result-actions"><button type="button" disabled={disabled} onClick={onReplay}>같은 팀으로 다시 도전</button><button type="button" disabled={disabled} onClick={onNext}>피어리스 다음 세트</button><button type="button" disabled={disabled || imageBusy} aria-busy={imageBusy} onClick={() => { void saveImage(); }}>{imageBusy ? "이미지 만드는 중…" : "밴픽 결과 이미지 저장"}</button>{onOpenSimulation ? <button type="button" className="draft-result-simulation" disabled={disabled} onClick={onOpenSimulation}>가정 시뮬레이션 준비</button> : null}</div>
+    {imageMessage ? <p className="draft-result-image-status" role="status">{imageMessage}</p> : null}
     <p>양 팀의 공개 픽 기록과 이번 밴픽을 대조했어요. 다음 판에서 열어줄 카드와 먼저 가져올 카드를 바꿔 보세요.</p>
     <div className="draft-result-teams">{result.sides.map(team => <article key={team.side} className={team.side.toLowerCase()}>
       <h3><small>{team.side === "BLUE" ? "블루" : "레드"}</small> {team.team_name}</h3><p>팀 공개 표본 {team.game_count}경기 · 아래 횟수는 해당 챔피언의 관측 요약</p>
-      <ol className="draft-result-picks">{team.picks.map(pick => <li key={pick.champion_id}><img src={championImageUrl(pick.champion_id)} alt="" /><div><strong>{nameOf(pick.champion_id)}</strong><small>우리 기록 {pick.own_games === null ? "미확인" : `${pick.own_games}회`} · 상대 기록 {pick.opponent_games === null ? "미확인" : `${pick.opponent_games}회`}</small><small>{pick.roles.length ? `관측 역할 ${pick.roles.map(r => roleName[r] ?? r).join(" · ")}` : "관측 역할 미확인"}</small></div></li>)}</ol>
+      <ol className="draft-result-picks">{team.picks.map(pick => <li key={pick.champion_id}><img src={championImageUrl(pick.champion_id)} alt="" /><div><strong>{nameOf(pick.champion_id)}</strong>{pick.own_games === null && pick.opponent_games === null && !pick.roles.length
+        ? <small>두 팀 공개 기록·관측 역할 모두 미확인</small>
+        : <><small>우리 기록 {pick.own_games === null ? "미확인" : `${pick.own_games}회`} · 상대 기록 {pick.opponent_games === null ? "미확인" : `${pick.opponent_games}회`}</small><small>{pick.roles.length ? `관측 역할 ${pick.roles.map(r => roleName[r] ?? r).join(" · ")}` : "관측 역할 미확인"}</small></>}</div></li>)}</ol>
       <h4>양 팀 기록에 겹치는 픽을 확보했어요</h4>
       {team.contested_claims.length ? <ul>{team.contested_claims.map(item => <li key={item.champion_id}><b>{nameOf(item.champion_id)}</b> · 우리 {item.own_games}회 / 상대 {item.opponent_games}회 관측</li>)}</ul> : <p>양 팀의 우선 픽 요약에 함께 나온 카드를 확보한 기록은 없어요.</p>}
       <h4>상대 주력 기록에서 밴한 카드</h4>
@@ -61,7 +66,5 @@ export function DraftResultPanel({ report, blueTeam, redTeam, selections, previo
       {team.missed_priorities.length ? <ul>{team.missed_priorities.map(item => <li key={item.champion_id}><b>{nameOf(item.champion_id)}</b> · {item.game_count}회 관측 · {item.disposition === "OPEN" ? "이번 밴픽에 남겨둠" : item.disposition === "BANNED" ? "이번에 밴됨" : "상대가 가져감"}</li>)}</ul> : <p>남은 우선 픽 요약에서 비교할 카드가 없어요.</p>}
     </article>)}</div>
     <p className="draft-result-boundary">현재 공개 자료의 우선 픽 요약을 비교합니다. 여러 역할의 기록이 겹치면 횟수를 합산하지 않고 가장 큰 관측 행을 표시합니다. 횟수가 높다고 강한 픽이나 좋은 밴이라는 뜻은 아니며, 기록에 없으면 0회가 아닌 미확인입니다. 역할은 관측 정보이며 배정 결과가 아닙니다. 경기 승패·시너지·상성은 계산하지 않습니다.</p>
-    <div className="draft-result-actions"><button type="button" disabled={disabled} onClick={onReplay}>같은 팀으로 다시 도전</button><button type="button" disabled={disabled} onClick={onNext}>피어리스 다음 세트</button><button type="button" disabled={disabled || imageBusy} aria-busy={imageBusy} onClick={() => { void saveImage(); }}>{imageBusy ? "이미지 만드는 중…" : "밴픽 결과 이미지 저장"}</button>{onOpenSimulation ? <button type="button" className="draft-result-simulation" disabled={disabled} onClick={onOpenSimulation}>가정 시뮬레이션 준비</button> : null}</div>
-    {imageMessage ? <p className="draft-result-image-status" role="status">{imageMessage}</p> : null}
   </section>;
 }
