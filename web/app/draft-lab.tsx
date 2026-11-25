@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- champion portraits use Riot Data Dragon */
 
+import { FirstVisitGuide } from "./first-visit-guide";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { championAssetId, championImageUrl } from "./champion-assets";
 import { useChampionNames } from "./champion-names";
@@ -849,6 +850,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         <ol className="draft-flow-steps" aria-label="진행 단계"><li aria-current="step">1 팀 선택</li><li>2 밴픽</li></ol>
         <h2 id="draft-flow-setup-title" ref={setupHeading} tabIndex={-1}>{resuming ? "진행 중인 밴픽이 있어요" : "두 팀을 고르세요"}</h2>
       </header>
+      {!resuming && <FirstVisitGuide />}
       <section className="draft-match-setup" aria-label={t("draft.setupLabel")} lang={lang.ui} inert={!canSelect}>
         <TeamChooser label="BLUE TEAM" teams={teams} value={blueTeamId} onChange={(id) => changeTeam("BLUE", id)} disabled={room.active || games.length > 0 || hasCurrentWork} locale={locale} />
         <button type="button" onClick={swapSides} disabled={room.active || hasCurrentWork} aria-label={t("draft.swapLabel")}>⇄<small>{t("draft.swap")}</small></button>
