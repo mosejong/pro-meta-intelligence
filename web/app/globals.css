@@ -2162,3 +2162,9 @@ footer span, footer b { font: 700 11px var(--font-geist-mono); } footer p { flex
 @media (max-width: 1050px) { .draft-stage { grid-template-columns: 1fr 1fr; } .draft-control-room { grid-column: 1 / -1; grid-row: 1; } }
 @media (max-width: 680px) { .draft-lab-intro-compact { padding: 16px 5vw; } .draft-lab-intro-compact aside { display: none; } .draft-team-column { padding: 10px; } .draft-team-column > header h2 { font-size: 18px; overflow-wrap: anywhere; } .draft-pick-stack article { grid-template-columns: 20px 1fr; } .draft-pick-stack article img { grid-column: 2; width: 100%; height: 80px; } .draft-pick-stack article div { grid-column: 1 / -1; } .draft-lock-in { flex-wrap: wrap; } .draft-lock-in button { flex: 1; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; } }
+
+/* Failed Data Dragon portraits (see asset-fallback.ts): a neutral silhouette instead of the broken-image icon. */
+img[data-asset-failed] {
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2328292d'/%3E%3Ccircle cx='32' cy='25' r='11' fill='%23555960'/%3E%3Cpath d='M12 58c2-12 10-18 20-18s18 6 20 18z' fill='%23555960'/%3E%3C/svg%3E");
+  object-fit: cover;
+}

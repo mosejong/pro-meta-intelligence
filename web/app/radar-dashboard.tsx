@@ -4,14 +4,14 @@
 
 import { applyScheduleReview } from "./schedule-review";
 import { readWorkspacePreference, writeWorkspacePreference } from "./workspace-storage";
-import { ChangeEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { championImageUrl } from "./champion-assets";
 import { ChampionNameProvider, useChampionNames } from "./champion-names";
 import type { CollectionStatus } from "./collection-status";
 import { DataTrustBar } from "./data-trust-bar";
-import { AIValidationPanel } from "./ai-validation-panel";
-import type { AIValidationStatus } from "./ai-validation";
+// Eager: the server-rendered team page streams it ahead of the workspace (rendered-html.test.mjs).
 import { CreatorExportLab } from "./creator-export";
+import type { AIValidationStatus } from "./ai-validation";
 import type { CreatorBrief } from "./creator-storyboard";
 import {
   createDecisionJournalEntry,
@@ -23,7 +23,6 @@ import {
   type DecisionJournalEntry,
   type DecisionJournalState,
 } from "./decision-journal";
-import { DecisionJournalPanel } from "./decision-journal-panel";
 import {
   reconcileDecisionOutcome,
   type DecisionOutcomesFeed,
@@ -32,11 +31,9 @@ import { isRadarReport, type OpponentChampionTendency, type OpponentTeam, type R
 import { PUBLICATION_FRESHNESS_POLICY, snapshotFreshness } from "./freshness";
 import { buildEmergencyBrief } from "./emergency-brief";
 import { buildMatchupBattlecard, type BattlecardSignal } from "./matchup-battlecard";
-import { SubmissionProof } from "./submission-proof";
 import { TeamChooser } from "./team-chooser";
 import { AppNavigation } from "./app-navigation";
 import { LocaleProvider } from "./locale";
-import { PlayerPracticePanel } from "./player-practice-panel";
 import { productRootHref, productSpaceHref, type ProductSpace } from "./product-space";
 import {
   describePublishedFeed,
@@ -55,9 +52,7 @@ import { sampleReport } from "./sample-report";
 import { buildTeamContext } from "./team-context";
 import { buildTeamBrief, serializeTeamBrief } from "./team-brief";
 import { buildTargetProfile, serializeTargetProfile } from "./target-profile";
-import { TargetProfilePanel } from "./target-profile-panel";
 import { buildTargetMatchDayBrief, serializeTargetMatchDayBrief } from "./target-match-day";
-import { TargetMatchDayPanel } from "./target-match-day-panel";
 import { compareTeamsForDefault } from "./team-defaults";
 import { buildWorkspaceUrl, parseWorkspaceSearch, type WorkspaceViewMode } from "./workspace-link";
 import "./bright-theme.css";
@@ -65,6 +60,18 @@ import { WorkspaceHeader } from "./workspace-header";
 import "./legacy-workspace.css";
 
 // The draft studio is the heaviest client module; load it only on the draft/home page.
+
+/** Panels used only on non-draft spaces load on demand so the draft home page ships less JavaScript. */
+function lazyPanel<P extends object>(load: () => Promise<ComponentType<P>>) {
+  const Lazy = lazy(() => load().then((component) => ({ default: component })));
+  return function LazyPanel(props: P) { return <Suspense fallback={null}><Lazy {...props} /></Suspense>; };
+}
+const AIValidationPanel = lazyPanel(() => import("./ai-validation-panel").then((module) => module.AIValidationPanel));
+const DecisionJournalPanel = lazyPanel(() => import("./decision-journal-panel").then((module) => module.DecisionJournalPanel));
+const SubmissionProof = lazyPanel(() => import("./submission-proof").then((module) => module.SubmissionProof));
+const PlayerPracticePanel = lazyPanel(() => import("./player-practice-panel").then((module) => module.PlayerPracticePanel));
+const TargetProfilePanel = lazyPanel(() => import("./target-profile-panel").then((module) => module.TargetProfilePanel));
+const TargetMatchDayPanel = lazyPanel(() => import("./target-match-day-panel").then((module) => module.TargetMatchDayPanel));
 const DraftLab = lazy(() => import("./draft-lab").then((module) => ({ default: module.DraftLab })));
 
 const MY_TEAM_STORAGE_KEY = "pmi:my-team-id";

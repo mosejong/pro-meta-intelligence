@@ -3,6 +3,9 @@ import { createRoot } from "react-dom/client";
 import { productSpaceFromPath } from "../app/product-space";
 import { RadarDashboard } from "../app/radar-dashboard";
 import "../app/globals.css";
+import { installAssetFallback } from "../app/asset-fallback";
+
+installAssetFallback();
 
 const root = document.getElementById("root");
 
