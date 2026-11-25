@@ -123,3 +123,13 @@ test("with the real feed's patch presence, three Fearless sets complete with onl
     }
   }
 });
+
+test("presence facts read the same-patch counts for the chosen champion", async () => {
+  const ui = await vite.ssrLoadModule("/app/solo-draft-explanation.tsx");
+  const presence = { patch_id: "16.20", cutoff: "2026-11-23T00:00:00+00:00", match_count: 283, champions: [{ champion_id: "Vi", picks: 49, bans: 169 }] };
+  assert.equal(ui.presenceFact("Vi", presence), "이번 패치 283경기 중 218회 픽·밴(77%)");
+  assert.equal(ui.presenceFact("vi", presence), "이번 패치 283경기 중 218회 픽·밴(77%)", "case-insensitive asset ids");
+  assert.equal(ui.presenceFact("Ahri", presence), null);
+  assert.equal(ui.presenceFact("Vi", undefined), null);
+  assert.equal(ui.presenceFact("Vi", { ...presence, match_count: 0 }), null);
+});

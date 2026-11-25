@@ -1,4 +1,6 @@
 import type { DraftSelection } from "./draft-agent";
+import { championAssetId } from "./champion-assets";
+import type { PatchPresence } from "./radar-types";
 import { roleLabel } from "./champion-roles";
 import type { RosterRole } from "./roster-scenario";
 import type { SoloDraftEvidence, SoloDraftExplainedChoice, SoloDraftExplanation } from "./solo-draft";
@@ -55,21 +57,30 @@ function ChoiceLine({ choice, kind, team, nameOf }: { choice: SoloDraftExplained
 const teamLabel = (e: SoloDraftExplanation) => `${e.record_scope === "OPPOSING_TEAM" ? "상대 팀" : "행동 팀"}(${e.record_team})`;
 
 /** One-line summary of a recorded auto choice (shared by the last-choice line and the review list). */
-export function SoloAutoSummary({ record }: { record: SoloAutoRecord }) {
+/** "이번 패치 N경기 중 M회 픽·밴(P%)" for a presence-backed choice; null when the report has no matching row. */
+export function presenceFact(championId: string, presence: PatchPresence | undefined): string | null {
+  if (!presence || presence.match_count <= 0) return null;
+  const row = presence.champions.find(r => championAssetId(r.champion_id).toLowerCase() === championAssetId(championId).toLowerCase());
+  if (!row) return null;
+  const count = row.picks + row.bans;
+  return `이번 패치 ${presence.match_count}경기 중 ${count}회 픽·밴(${Math.round((count / presence.match_count) * 100)}%)`;
+}
+
+export function SoloAutoSummary({ record, presence }: { record: SoloAutoRecord; presence?: PatchPresence }) {
   const e = record.explanation;
   // With an explanation, the summary is derived from the evidence that actually produced the choice;
   // the legacy suggestion reason (unchanged API) is only shown when no explanation exists.
   return e
-    ? <>연습 {e.kind === "BAN" ? "밴" : "픽"} · 근거: {evidenceLabel(e.selected.evidence, teamLabel(e), e.kind)}. 실제 선택을 예측하지 않습니다.
+    ? <>연습 {e.kind === "BAN" ? "밴" : "픽"} · 근거: {evidenceLabel(e.selected.evidence, teamLabel(e), e.kind)}{e.selected.evidence === "PATCH_PRESENCE" && presenceFact(e.selected.champion_id, presence) ? ` — ${presenceFact(e.selected.champion_id, presence)}` : ""}. 실제 선택을 예측하지 않습니다.
         {e.selected.evidence === "PLAYER_SEASON" && " 시즌 기록은 현재 패치의 강함을 뜻하지 않습니다."}
         {e.kind === "PICK" && e.selected.role_supported === false && <> <em>포지션 근거 부족: 조합 구성을 보장하지 않음</em></>}</>
     : <>{record.reason}</>;
 }
 
-export function SoloDraftExplanationPanel({ record, nameOf }: { record: SoloAutoRecord; nameOf: (id: string) => string }) {
+export function SoloDraftExplanationPanel({ record, nameOf, presence }: { record: SoloAutoRecord; nameOf: (id: string) => string; presence?: PatchPresence }) {
   const e = record.explanation;
   return <div className="solo-explain">
-    <p className="solo-draft-last" role="status">마지막 상대 선택 · {nameOf(record.champion_id)} · <SoloAutoSummary record={record} /></p>
+    <p className="solo-draft-last" role="status">마지막 상대 선택 · {nameOf(record.champion_id)} · <SoloAutoSummary record={record} presence={presence} /></p>
     {e && <details>
       <summary>선택 이유와 다른 후보</summary>
       <SoloDraftExplanationBody explanation={e} nameOf={nameOf} />
