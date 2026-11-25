@@ -922,7 +922,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <p>{room.active ? "친구 방에서는 참가자가 직접 밴픽합니다." : soloEnabled ? "내 팀만 선택하면 상대는 공개 기록을 참고해 자기 차례를 진행합니다. 자동 선택은 연습용이며 실제 팀의 전략을 예측하지 않습니다." : "켜면 혼자서도 한 팀만 조작하며 끝까지 연습할 수 있어요. 끄면 양 팀을 직접 선택합니다."}</p>
       {soloEnabled && <p role="status">{soloSeason.loading ? "시즌 선수 기록을 확인하고 있어요…" : soloSeason.error ? "시즌 자료를 확인하지 못해 현재 팀 기록·메타 후보로 연습합니다." : "같은 팀의 현재 관측 선수 시즌 기록을 함께 참고합니다. 가상 로스터 변경은 자동 상대에 반영하지 않습니다."}</p>}
       {soloWaiting && !soloSeason.loading && <p role="status">{autoChoice ? "상대가 카드를 고르고 있어요…" : "자동 선택을 확인하지 못했습니다. 자동 밴픽을 끄고 직접 이어가세요."}</p>}
-      {soloAutoRecordMatches(lastAuto, selections, autoContext) && <SoloDraftExplanationPanel record={lastAuto} nameOf={nameOf} />}
+      {soloAutoRecordMatches(lastAuto, selections, autoContext) && <SoloDraftExplanationPanel record={lastAuto} nameOf={nameOf} presence={report.patch_presence?.patch_id === report.patch_id ? report.patch_presence : undefined} />}
     </section>
     {/* Information priority: only the side/first-selection/Fearless context and the save alert sit above the board;
         notes, room, share, named practice, series reset and file controls follow the board in DOM and visual order. */}
