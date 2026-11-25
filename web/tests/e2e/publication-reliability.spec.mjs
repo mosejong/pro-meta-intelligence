@@ -61,7 +61,7 @@ test("a first core failure shows the explicit demo fallback", async ({ page }) =
   await page.goto(root);
   await enterDraftWorkspace(page);
   // The narrow layout hides the label visually; it must still be the stated feed state.
-  await expect(page.getByText("DEMO FALLBACK", { exact: true })).not.toHaveCount(0);
+  await expect(page.getByText("예시 데이터 · 실제 기록 불러오기 실패", { exact: true })).not.toHaveCount(0);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   expect(errors).toEqual([]);
 });

@@ -1,0 +1,18 @@
+import assert from "node:assert/strict";
+import { fileURLToPath } from "node:url";
+import { test } from "node:test";
+import { createServer } from "vite";
+
+test("feed labels are shown as plain Korean with the data date", async () => {
+  const vite = await createServer({ root: fileURLToPath(new URL("../", import.meta.url)), configFile: false, publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { feedDisplayLabel } = await vite.ssrLoadModule("/app/feed-display-label.ts");
+    assert.equal(feedDisplayLabel("STALE · REVIEW ONLY", "2026-11-24T04:17:26+00:00"), "공개 경기 기준 11/24");
+    assert.equal(feedDisplayLabel("LIVE PUBLISHED FEED", "2026-11-24T20:00:00Z"), "공개 경기 기준 11/25", "Korea time");
+    assert.equal(feedDisplayLabel("LIVE PUBLISHED FEED", null), "공개 경기 기록");
+    assert.equal(feedDisplayLabel("DEMO FALLBACK", null), "예시 데이터 · 실제 기록 불러오기 실패");
+    assert.equal(feedDisplayLabel("FEED CONNECTING", null), "데이터 불러오는 중");
+    assert.equal(feedDisplayLabel("REFRESH FAILED · PREVIOUS FEED", null), "새로고침 실패 · 이전 데이터");
+    assert.equal(feedDisplayLabel("SOMETHING ELSE", null), "SOMETHING ELSE");
+  } finally { await vite.close(); }
+});
