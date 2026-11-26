@@ -17,4 +17,4 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
-      - run: node web/scripts/check-asset-version.mjs
+      - run: node --experimental-strip-types web/scripts/check-asset-version.mjs
