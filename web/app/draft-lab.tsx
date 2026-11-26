@@ -844,6 +844,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       {storageStatus.code === "SAVE_FAILED" && <button type="button" className="studio-save-flag" lang={lang.ui} onClick={focusSaveRetry}>{t("draft.saveFailedFlag")}</button>}
     </header>
 
+    {feedLabel === "DEMO FALLBACK" && <div className="draft-feed-fallback" role="alert" lang="ko"><p>실제 경기 기록을 불러오지 못해 <b>예시 팀</b>으로 보여주고 있어요. 연습은 그대로 할 수 있어요.</p><button type="button" onClick={() => window.location.reload()}>다시 시도</button></div>}
     {/* Step 1 · team selection. Rendered once and kept mounted; hidden + inert on the draft step.
         The stable #draft-workspace target always sits on the visible step (never duplicated). */}
     <section id={step === "SETUP" ? "draft-workspace" : undefined} className="draft-flow-setup" aria-labelledby="draft-flow-setup-title" hidden={step !== "SETUP"} inert={step !== "SETUP"}>
