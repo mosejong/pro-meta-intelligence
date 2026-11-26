@@ -62,6 +62,7 @@ test("a first core failure shows the explicit demo fallback", async ({ page }) =
   await enterDraftWorkspace(page);
   // The narrow layout hides the label visually; it must still be the stated feed state.
   await expect(page.getByText("예시 데이터 · 실제 기록 불러오기 실패", { exact: true })).not.toHaveCount(0);
+  await expect(page.getByRole("alert").filter({ hasText: "예시 팀" }).getByRole("button", { name: "다시 시도" })).toHaveCount(1);
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
   expect(errors).toEqual([]);
 });
