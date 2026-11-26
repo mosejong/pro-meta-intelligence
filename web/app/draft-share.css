@@ -14,3 +14,6 @@ main.draft-lab.draft-studio .draft-share input { display: block; width: 100%; mi
 .draft-share-basis summary { min-height: 32px; cursor: pointer; }
 .draft-share-preview button + button { margin-left: 8px; }
 @media (max-width: 600px) { .draft-share .draft-share-primary { width: 100%; } }
+
+.draft-share-preview .draft-share-picks { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; line-height: 1.45; }
+.draft-share-preview .draft-share-picks b { margin-right: 6px; }

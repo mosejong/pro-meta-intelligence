@@ -11,8 +11,16 @@ const locationSnapshot = () => window.location.href;
 const message = (error: unknown) => error instanceof Error ? error.message : "밴픽 링크를 읽을 수 없습니다.";
 type Preview = { href: string; report: RadarReport; session?: DraftSession; error?: string };
 
-export function DraftSharePanel({ outgoing, liveReport, ready, incomingReady, onAccept }: {
-  outgoing: DraftSession; liveReport: RadarReport; ready: boolean; incomingReady: boolean; onAccept: (session: DraftSession) => void;
+/** "밴 A, B · 픽 C" for one side of a shared draft; empty sides read "아직 없음". */
+export function sharedSideSummary(session: DraftSession, side: "BLUE" | "RED", nameOf: (id: string) => string): string {
+  const list = (kind: "BAN" | "PICK") => session.selections.filter(s => s.side === side && s.kind === kind).map(s => nameOf(s.champion_id));
+  const bans = list("BAN"), picks = list("PICK");
+  const parts = [bans.length ? `밴 ${bans.join(", ")}` : "", picks.length ? `픽 ${picks.join(", ")}` : ""].filter(Boolean);
+  return parts.length ? parts.join(" · ") : "아직 없음";
+}
+
+export function DraftSharePanel({ outgoing, liveReport, ready, incomingReady, onAccept, nameOf = (id) => id }: {
+  outgoing: DraftSession; liveReport: RadarReport; ready: boolean; incomingReady: boolean; onAccept: (session: DraftSession) => void; nameOf?: (championId: string) => string;
 }) {
   const href = useSyncExternalStore(subscribe, locationSnapshot, () => "");
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -81,6 +89,7 @@ export function DraftSharePanel({ outgoing, liveReport, ready, incomingReady, on
       </details>
       {visible.error ? <p role="alert">이 링크를 불러올 수 없습니다. {visible.error}</p> : <>
         <p>{teams.find(t => t.team_id === visible.session!.blueTeamId)?.team_name} (블루) · {teams.find(t => t.team_id === visible.session!.redTeamId)?.team_name} (레드)</p>
+        <ul className="draft-share-picks"><li><b>블루</b> {sharedSideSummary(visible.session!, "BLUE", nameOf)}</li><li><b>레드</b> {sharedSideSummary(visible.session!, "RED", nameOf)}</li></ul>
         <p>{visible.session!.games.length + 1}세트 · 확정 {visible.session!.selections.length}개 · 이전 {visible.session!.games.length}세트{visible.session!.stagedChampion ? " · 올려놓은 챔피언 있음" : ""}</p>
         {stale && <p role="status">공개 자료가 바뀌었습니다. 미리보기를 다시 확인해 주세요.</p>}
         <button type="button" disabled={!incomingReady} onClick={accept}>{stale ? "최신 자료로 미리보기 확인" : "이 밴픽 불러오기"}</button>

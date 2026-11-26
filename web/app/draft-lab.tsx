@@ -993,7 +993,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         setPendingChampion(null); setInspected(null); setQuery(""); setTimer(30); setTimerRunning(false); setPendingReset(null);
         setStep("DRAFT");
       }} />
-      <DraftSharePanel outgoing={shareSession} liveReport={liveReport} ready={canSelect && !room.active} incomingReady={!room.active && sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onAccept={(session) => { if (room.active) return; setComparisonEpoch((epoch) => epoch + 1); setPendingReset(null); restoreSession(session); setStep("DRAFT"); }} />
+      <DraftSharePanel nameOf={nameOf} outgoing={shareSession} liveReport={liveReport} ready={canSelect && !room.active} incomingReady={!room.active && sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onAccept={(session) => { if (room.active) return; setComparisonEpoch((epoch) => epoch + 1); setPendingReset(null); restoreSession(session); setStep("DRAFT"); }} />
       <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={() => setPendingReset("SERIES")} disabled={room.active || (!games.length && !hasCurrentWork)}>{t("draft.resetSeries")}</button></div>
       {/* Named local practices: separate database; loading reuses the file-import reset path. */}
       <DraftPracticeLibraryPanel scenario={saveSnapshot} roster={practiceRoster} season={practiceSeason} rosterBlocked={practiceRosterBlocked} boardKey={practiceBoardKey} hasWork={hasCurrentWork || games.length > 0} locked={room.active || !sessionReady || importing}
