@@ -16,3 +16,18 @@ test("feed labels are shown as plain Korean with the data date", async () => {
     assert.equal(feedDisplayLabel("SOMETHING ELSE", null), "SOMETHING ELSE");
   } finally { await vite.close(); }
 });
+
+test("a shared draft preview lists each side's bans and picks by name", async () => {
+  const vite = await createServer({ root: fileURLToPath(new URL("../", import.meta.url)), configFile: false, publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { sharedSideSummary } = await vite.ssrLoadModule("/app/draft-share-panel.tsx");
+    const session = { selections: [
+      { side: "BLUE", kind: "BAN", champion_id: "Ahri" }, { side: "RED", kind: "BAN", champion_id: "Vi" },
+      { side: "BLUE", kind: "BAN", champion_id: "Rumble" }, { side: "BLUE", kind: "PICK", champion_id: "Azir" },
+    ] };
+    const nameOf = (id) => `챔-${id}`;
+    assert.equal(sharedSideSummary(session, "BLUE", nameOf), "밴 챔-Ahri, 챔-Rumble · 픽 챔-Azir");
+    assert.equal(sharedSideSummary(session, "RED", nameOf), "밴 챔-Vi");
+    assert.equal(sharedSideSummary({ selections: [] }, "RED", nameOf), "아직 없음");
+  } finally { await vite.close(); }
+});
