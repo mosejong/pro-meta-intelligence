@@ -436,3 +436,4 @@ main.draft-lab.draft-studio .first-visit-guide button { justify-self: start; min
 main.draft-lab.draft-studio .draft-feed-fallback { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 12px 4px; padding: 10px 14px; border: 1px solid #b7791f; border-radius: 6px; background: var(--studio-raised); color: var(--studio-text); }
 main.draft-lab.draft-studio .draft-feed-fallback p { margin: 0; flex: 1 1 220px; font-size: 14px; line-height: 1.45; }
 main.draft-lab.draft-studio .draft-feed-fallback button { min-height: 36px; padding: 6px 14px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-panel); color: var(--studio-text); cursor: pointer; }
+main.draft-lab.draft-studio .draft-result-actions .draft-result-share:not(:disabled) { border-color: var(--studio-action); background: var(--studio-action); color: #201b15; font-weight: 700; }

@@ -49,7 +49,8 @@ for (const automatic of [false, true]) {
       expect(names[side]).toHaveLength(5);
     }
     const actions = result(page).locator(".draft-result-actions button");
-    await expect(actions).toHaveCount(4);
+    await expect(actions).toHaveCount(5);
+    await expect(result(page).getByRole("button", { name: "친구에게 공유", exact: true })).toBeVisible();
     for (const action of await actions.all()) {
       expect((await action.boundingBox()).height).toBeGreaterThanOrEqual(44);
     }
