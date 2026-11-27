@@ -8,6 +8,11 @@ const stagingRoot = resolve(webRoot, ".site-public");
 const publishedFiles = [
   "meta-radar-hero-v2.png",
   "og.png",
+  "icon.svg",
+  "icon-192.png",
+  "icon-512.png",
+  "apple-touch-icon.png",
+  "manifest.webmanifest",
   "briefs/worlds-strategy-brief.pdf",
   "feed/current.json",
   "feed/collection-status.json",

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#111214"/>
+  <rect x="40" y="40" width="432" height="432" rx="72" fill="#181a1d" stroke="#34373c" stroke-width="8"/>
+  <text x="256" y="300" text-anchor="middle" font-family="Consolas, 'Courier New', monospace" font-weight="700" font-size="200" fill="#ececea">PM</text>
+  <rect x="136" y="352" width="240" height="24" rx="12" fill="#dfb981"/>
+</svg>
