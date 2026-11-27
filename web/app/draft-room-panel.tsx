@@ -19,7 +19,7 @@ export function roomCutoffLabel(cutoff: string): string {
 export function roomBasisNote(roomCutoff: string, siteCutoff: string): string {
   const room = Date.parse(roomCutoff), site = Date.parse(siteCutoff);
   if (!Number.isFinite(room) || !Number.isFinite(site) || room === site) return "";
-  return room < site ? " · 방을 만든 시점 자료로 끝까지 진행해요 (사이트 자료는 그 뒤에 갱신됨)" : " · 이 화면의 사이트 자료가 방보다 이전이에요. 새로고침하면 맞춰져요";
+  return room < site ? " · 방을 만든 시점 자료로 밴픽·분석을 끝까지 진행해요 (사이트 자료는 그 뒤에 갱신됨)" : " · 이 방은 사이트보다 새 자료로 진행해요. 새로고침하면 사이트 자료도 맞춰져요";
 }
 
 /**
@@ -97,7 +97,8 @@ export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoom
   }
   return <details lang="ko" className="draft-room" open={state.active || !!link || undefined}>
     <summary>친구와 밴픽</summary>
-    {!endpoint ? <p>실시간 대전 준비 중 · 지금은 링크 공유 이용</p> : <>
+    <p className="draft-room-kind"><b>실시간 방</b> · 서로 다른 화면에서 같은 밴픽을 차례대로 함께 진행해요</p>
+    {!endpoint ? <p>실시간 대전 준비 중 · 지금은 아래 링크 보내기 이용</p> : <>
       {!state.active ? <>
         <p>블루·레드가 자기 차례를 진행합니다. 참가하면 현재 밴픽을 방의 밴픽으로 바꿉니다. 분석은 현재 공개 자료를 사용합니다.</p>
         {link ? resume ? <button type="button" disabled={!ready} onClick={() => void client.current?.enter(link)}>이 방에 다시 참여</button> : <>
@@ -115,7 +116,15 @@ export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoom
           <button type="button" disabled={!state.connected || state.sending || state.snapshot?.status !== "COMPLETE"} onClick={() => void client.current?.action("NEXT_GAME")}>방 다음 세트</button>
           <button type="button" disabled={!state.connected || state.sending} onClick={() => setConfirm("RESET")}>방 밴픽 초기화</button>
         </>}
-        <button type="button" onClick={() => { client.current?.leave(); setConfirm(null); setFallback(""); setCopied(false); setResume(!!link && !!client.current?.credentialFor(link.id)); }}>혼자 연습으로 돌아가기</button>
+        <button type="button" onClick={() => {
+          const ended = state.ended, endedId = state.snapshot?.id;
+          client.current?.leave(); setConfirm(null); setFallback(""); setCopied(false);
+          if (ended && endedId) {
+            // An ended room cannot be rejoined: forget its credential and drop the room link from the address.
+            client.current?.forget(endedId); setLink(null); setResume(false);
+            if (window.location.hash.startsWith("#room=")) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+          } else setResume(!!link && !!client.current?.credentialFor(link.id));
+        }}>혼자 연습으로 돌아가기</button>
         <p>돌아가면 마지막 방 밴픽을 개인 연습으로 이어갑니다.</p>
       </>}
       {state.message && <p role="status">{state.message}</p>}

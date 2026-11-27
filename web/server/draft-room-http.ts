@@ -90,12 +90,13 @@ export function createDraftRoomServer(options: Options) {
         record.count++; creates.set(key, record);
         json(response, 201, store.create(await body(request))); return;
       }
-      const route = url.pathname.match(/^\/v1\/rooms\/([A-Za-z0-9_-]{22})(?:\/(join|actions|events))?$/);
+      const route = url.pathname.match(/^\/v1\/rooms\/([A-Za-z0-9_-]{22})(?:\/(join|actions|events|report))?$/);
       if (!route) throw new RoomError(404, "NOT_FOUND", "방 주소를 확인해 주세요.");
       const [, id, action] = route;
       if (action === "join" && request.method === "POST") { json(response, 200, store.join(id, await body(request))); return; }
       if (action === "actions" && request.method === "POST") { json(response, 200, store.act(id, token(request), await body(request))); return; }
       if (!action && request.method === "GET") { json(response, 200, store.read(id, token(request))); return; }
+      if (action === "report" && request.method === "GET") { json(response, 200, store.roomReport(id, token(request))); return; }
       if (action === "events" && request.method === "GET") {
         store.read(id, token(request));
         const resources: { release?: () => void; heartbeat?: ReturnType<typeof setInterval> } = {};

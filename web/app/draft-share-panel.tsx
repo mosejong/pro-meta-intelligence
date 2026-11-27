@@ -77,6 +77,7 @@ export function DraftSharePanel({ outgoing, liveReport, ready, incomingReady, on
   }
   const teams = visible?.session?.report.opponent_prep?.teams ?? [];
   return <section className="draft-share" aria-label="밴픽 링크 공유" lang="ko">
+    <p className="draft-share-kind"><b>링크로 보내기</b> · 지금 밴픽의 복사본을 보내요. 받은 사람이 불러와 따로 이어가요</p>
     <p>{SHARE_SCOPE}</p>
     <button type="button" className="draft-share-primary" disabled={!ready || !outgoingLink.url} onClick={() => void copyLink()}>밴픽 링크 복사</button>
     {outgoingLink.error && <p role="status">{outgoingLink.error}</p>}

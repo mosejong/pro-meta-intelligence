@@ -1,6 +1,6 @@
 import { DRAFT_MODEL_VERSION, nextDraftTurn, serializeDraftScenario } from "./draft-agent";
 import { parseDraftSession, type DraftSession } from "./draft-session";
-import type { RadarReport } from "./radar-types";
+import { isRadarReport, type RadarReport } from "./radar-types";
 
 export type RoomRole = "BLUE" | "RED" | "SPECTATOR";
 export type RoomLink = { v: 1; id: string; invite?: string; view?: string };
@@ -15,14 +15,14 @@ class RoomRequestError extends Error {
   get terminal() { return [401, 404, 410].includes(this.status); }
 }
 /**
- * A room is pinned to the public report it was created with. Within the same patch the site's report may
- * be refreshed (newer cutoff) and the room keeps going on its own cutoff; another patch can no longer be
- * validated here, so it ends the room view with an explanation instead of retrying forever.
+ * A room is pinned to the public report it was created with. When this screen's report differs, the room's
+ * own report is loaded from the server and every snapshot is validated (and analysed) on it. If it cannot be
+ * loaded or does not match the room, the room view ends with an explanation instead of retrying forever.
  */
-export class RoomPatchMismatchError extends Error {
+export class RoomDataUnavailableError extends Error {
   readonly terminal = true;
-  constructor(public roomPatch: string, public sitePatch: string) {
-    super(`이 방은 패치 ${roomPatch} 자료로 만들어졌고, 지금 사이트는 패치 ${sitePatch} 자료예요. 패치가 달라 이 화면에서는 참여할 수 없어요. 혼자 연습으로 돌아가 새 방을 만들어 주세요.`);
+  constructor(public roomPatch: string, public roomCutoff: string) {
+    super(`이 방은 패치 ${roomPatch} 자료(기준 ${roomCutoff.slice(0, 10)})로 진행 중인데, 그 자료를 불러오지 못했어요. 혼자 연습으로 돌아가 새 방을 만들어 주세요.`);
   }
 }
 const invalid = () => new Error("방 정보를 확인할 수 없습니다. 초대 링크와 현재 자료를 확인해 주세요.");
@@ -43,8 +43,7 @@ export function createRoomUrl(href: string, id: string, kind?: "invite" | "view"
   const url = new URL(href); url.search = ""; url.hash = "room=" + encode({ v: 1, id, ...(kind ? { [kind]: key } : {}) }); return url.href;
 }
 export function validateRoomSnapshot(value: unknown, report: RadarReport): { snapshot: RoomSnapshot; session: DraftSession } {
-  if (!record(value) || typeof value.id !== "string" || !idPattern.test(value.id) || !Number.isSafeInteger(value.revision) || (value.revision as number) < 0 || typeof value.patch_id !== "string" || typeof value.cutoff !== "string" || !Number.isFinite(Date.parse(value.cutoff)) || value.model_version !== DRAFT_MODEL_VERSION || !record(value.seats) || value.seats.BLUE !== true || typeof value.seats.RED !== "boolean" || Object.keys(value.seats).some(k => k !== "BLUE" && k !== "RED") || !["WAITING", "DRAFTING", "COMPLETE"].includes(String(value.status)) || typeof value.expiresAt !== "string" || !Number.isFinite(Date.parse(value.expiresAt)) || !Array.isArray(value.selections) || !Array.isArray(value.games) || value.games.length > 99 || !["BLUE", "RED"].includes(String(value.firstPickSide))) throw invalid();
-  if (value.patch_id !== report.patch_id) throw new RoomPatchMismatchError(value.patch_id as string, report.patch_id);
+  if (!record(value) || typeof value.id !== "string" || !idPattern.test(value.id) || !Number.isSafeInteger(value.revision) || (value.revision as number) < 0 || value.patch_id !== report.patch_id || value.cutoff !== report.cutoff || value.model_version !== DRAFT_MODEL_VERSION || !record(value.seats) || value.seats.BLUE !== true || typeof value.seats.RED !== "boolean" || Object.keys(value.seats).some(k => k !== "BLUE" && k !== "RED") || !["WAITING", "DRAFTING", "COMPLETE"].includes(String(value.status)) || typeof value.expiresAt !== "string" || !Number.isFinite(Date.parse(value.expiresAt)) || !Array.isArray(value.selections) || !Array.isArray(value.games) || value.games.length > 99 || !["BLUE", "RED"].includes(String(value.firstPickSide))) throw invalid();
   const allowed = ["id", "revision", "patch_id", "cutoff", "model_version", "blueTeamId", "redTeamId", "firstPickSide", "selections", "games", "seats", "status", "expiresAt"];
   if (Object.keys(value).some(k => !allowed.includes(k))) throw invalid();
   const snapshot = value as RoomSnapshot;
@@ -78,6 +77,11 @@ export function createCredentialStore(storage: () => Storage = () => sessionStor
         for (const k of keys.filter(k => k !== "draft-room:" + x.id).slice(0, Math.max(0, keys.length - 16))) s.removeItem(k);
       } catch { warning = true; }
     },
+    /** Drops the credential of a room that has ended, so the screen stops offering to rejoin it. */
+    delete(id: string) {
+      memory.delete(id);
+      try { storage().removeItem("draft-room:" + id); } catch { warning = true; }
+    },
   };
 }
 export async function fetchNDJSON(response: Response, signal: AbortSignal, onValue: (value: unknown) => void) {
@@ -100,8 +104,11 @@ export async function fetchNDJSON(response: Response, signal: AbortSignal, onVal
 export type RoomState = { active: boolean; connected: boolean; sending: boolean; ended?: boolean; role?: RoomRole; snapshot?: RoomSnapshot; warning?: boolean; message?: string; invite?: string; view?: string };
 export class DraftRoomClient {
   private controller = new AbortController(); private generation = 0; private credential?: Credential; private state: RoomState = { active: false, connected: false, sending: false };
+  /** The room's own report when it differs from this screen's (loaded once per room and identity). */
+  private pinned: { id: string; report: RadarReport } | null = null;
   constructor(private endpoint: string, private report: () => RadarReport, private onState: (s: RoomState) => void, private onSnapshot: (session: DraftSession, reset: boolean) => void, private store = createCredentialStore(), private request: typeof fetch = (...args) => fetch(...args)) { this.endpoint = endpoint.replace(/\/$/, ""); }
   credentialFor(id: string) { return !!this.store.get(id); }
+  forget(id: string) { this.store.delete(id); }
   reconnect() {
     if (!this.credential || !this.state.active || this.state.ended) return;
     this.controller.abort(); this.controller = new AbortController(); this.generation++;
@@ -115,8 +122,28 @@ export class DraftRoomClient {
     const data: unknown = await response.json();
     if (!record(data)) throw invalid(); return data;
   }
+  /** The report a snapshot is validated and analysed on: this screen's when it is the room's, else the loaded room report. */
+  private reportFor(value: unknown, id: string): RadarReport | null {
+    if (!record(value)) return null;
+    const live = this.report();
+    if (value.patch_id === live.patch_id && value.cutoff === live.cutoff) return live;
+    const pinned = this.pinned;
+    return pinned && pinned.id === id && value.patch_id === pinned.report.patch_id && value.cutoff === pinned.report.cutoff ? pinned.report : null;
+  }
+  /** Loads the room's report when needed; it must be a valid public report with exactly the room's patch and cutoff. */
+  private async ensureReport(value: unknown, credential: Credential) {
+    if (this.reportFor(value, credential.id)) return;
+    if (!record(value) || typeof value.patch_id !== "string" || typeof value.cutoff !== "string") throw invalid();
+    let data: unknown;
+    try { data = await this.http(`/v1/rooms/${credential.id}/report`, "GET", undefined, credential); }
+    catch (error) { if (error instanceof RoomRequestError && error.terminal) throw error; throw new RoomDataUnavailableError(value.patch_id, value.cutoff); }
+    if (!isRadarReport(data) || data.patch_id !== value.patch_id || data.cutoff !== value.cutoff) throw new RoomDataUnavailableError(value.patch_id, value.cutoff);
+    this.pinned = { id: credential.id, report: data };
+  }
   private accept(value: unknown, id: string, first = false) {
-    const { snapshot, session } = validateRoomSnapshot(value, this.report());
+    const report = this.reportFor(value, id);
+    if (!report) throw invalid();
+    const { snapshot, session } = validateRoomSnapshot(value, report);
     if (snapshot.id !== id) throw invalid();
     const previous = this.state.snapshot;
     if (previous && snapshot.revision <= previous.revision) return;
@@ -139,10 +166,12 @@ export class DraftRoomClient {
         if (data[kind] !== undefined && (credential.role !== "BLUE" || typeof data[kind] !== "string" || !keyPattern.test(data[kind]) || data[kind] === credential.token)) throw invalid();
       }
       if (!existing && "id" in input && credential.role !== (input.invite ? "RED" : "SPECTATOR")) throw invalid();
+      await this.ensureReport(data.snapshot, credential);
+      if (generation !== this.generation) return;
       this.accept(data.snapshot, credential.id, true); this.credential = credential; this.store.set(credential);
       this.update({ role: credential.role, sending: false, warning: this.store.warning, invite: typeof data.invite === "string" ? data.invite : undefined, view: typeof data.view === "string" ? data.view : undefined, message: "" });
       void this.listen(generation, credential);
-    } catch (error) { if (generation === this.generation) this.update({ sending: false, connected: false, message: error instanceof RoomPatchMismatchError ? error.message : "방에 참여하지 못했습니다. 링크와 현재 자료를 확인해 주세요." }); }
+    } catch (error) { if (generation === this.generation) this.update({ sending: false, connected: false, message: error instanceof RoomDataUnavailableError ? error.message : "방에 참여하지 못했습니다. 링크와 현재 자료를 확인해 주세요." }); }
   }
   private async listen(generation: number, credential: Credential) {
     let attempt = 0; const signal = this.controller.signal;
@@ -151,6 +180,8 @@ export class DraftRoomClient {
         const latest = await this.http(`/v1/rooms/${credential.id}`, "GET", undefined, credential);
         if (generation !== this.generation) return;
         if (latest.id !== credential.id || latest.role !== credential.role) throw invalid();
+        await this.ensureReport(latest.snapshot, credential);
+        if (generation !== this.generation) return;
         this.accept(latest.snapshot, credential.id);
         const response = await this.request(this.endpoint + `/v1/rooms/${credential.id}/events`, { signal, headers: { Authorization: "Bearer " + credential.token }, credentials: "omit", cache: "no-store" });
         await fetchNDJSON(response, signal, value => {
@@ -164,7 +195,7 @@ export class DraftRoomClient {
         });
       } catch (error) {
         if (generation !== this.generation || signal.aborted) return;
-        if ((error instanceof RoomRequestError && error.terminal) || error instanceof RoomPatchMismatchError) {
+        if ((error instanceof RoomRequestError && error.terminal) || error instanceof RoomDataUnavailableError) {
           this.controller.abort(); this.update({ connected: false, sending: false, ended: true, message: error.message }); return;
         }
       }

@@ -87,19 +87,73 @@ test("C3: reload is refused with a persistence file, and the interval setting is
   for (const bad of ["59", "1.5", "abc", "-60"]) assert.throws(() => feed.feedReloadSeconds(bad), /at least 60/);
 });
 
-test("C3 client: a same-patch room with an older cutoff is accepted; another patch ends with an explanation", async () => {
+test("C3 client: snapshots are validated strictly on one report; the room basis note explains a pinned room", async () => {
   const { DRAFT_MODEL_VERSION } = await vite.ssrLoadModule("/app/draft-agent.ts");
   const [blue, red] = report.opponent_prep.teams;
-  const room = { id: "a".repeat(22), revision: 0, patch_id: report.patch_id, cutoff: "2026-11-20T00:00:00.000Z", model_version: DRAFT_MODEL_VERSION,
+  const room = { id: "a".repeat(22), revision: 0, patch_id: report.patch_id, cutoff: report.cutoff, model_version: DRAFT_MODEL_VERSION,
     blueTeamId: blue.team_id, redTeamId: red.team_id, firstPickSide: "BLUE", selections: [], games: [], seats: { BLUE: true, RED: false }, status: "WAITING", expiresAt: "2026-12-01T00:00:00.000Z" };
-  const accepted = client.validateRoomSnapshot(room, report);
-  assert.equal(accepted.snapshot.cutoff, room.cutoff, "the room keeps its own cutoff");
-  assert.throws(() => client.validateRoomSnapshot({ ...room, cutoff: "not a date" }, report));
-  assert.throws(() => client.validateRoomSnapshot({ ...room, patch_id: "99.99" }, report), error => error instanceof client.RoomPatchMismatchError && error.terminal && /패치 99\.99/.test(error.message));
+  assert.equal(client.validateRoomSnapshot(room, report).session.report.cutoff, report.cutoff);
+  // No loose acceptance: another cutoff or patch never validates against this report.
+  assert.throws(() => client.validateRoomSnapshot({ ...room, cutoff: "2026-11-20T00:00:00.000Z" }, report));
+  assert.throws(() => client.validateRoomSnapshot({ ...room, patch_id: "99.99" }, report));
   assert.equal(panel.roomCutoffLabel("2026-11-27T00:40:40Z"), "11/27 09:40");
-  assert.match(panel.roomBasisNote("2026-11-20T00:00:00Z", "2026-11-27T00:00:00Z"), /방을 만든 시점 자료로 끝까지/);
+  assert.match(panel.roomBasisNote("2026-11-20T00:00:00Z", "2026-11-27T00:00:00Z"), /방을 만든 시점 자료로 밴픽·분석을 끝까지/);
   assert.match(panel.roomBasisNote("2026-11-28T00:00:00Z", "2026-11-27T00:00:00Z"), /새로고침/);
   assert.equal(panel.roomBasisNote(report.cutoff, report.cutoff), "");
+});
+
+const memoryStore = () => { const values = new Map(); return { get warning() { return false; }, get: id => values.get(id) ?? null, set: c => values.set(c.id, c), delete: id => values.delete(id) }; };
+const until = async (check, ms = 5000) => { const end = Date.now() + ms; while (!check()) { if (Date.now() > end) throw new Error("timed out"); await new Promise(r => setTimeout(r, 10)); } };
+
+test("C3 end to end: room A, reload B, new room B, then a B screen joins room A and its board uses A's report", async () => {
+  const reportA = structuredClone(report);
+  const reportB = { ...structuredClone(report), cutoff: new Date(Date.parse(report.cutoff) + 3_600_000).toISOString() };
+  await withServer({ maxCreatesPerHour: 10 }, async (base, app) => {
+    const roomA = await (await create(base)).json();
+    assert.equal(feed.reloadFeed(app.store, () => JSON.stringify(reportB)), "UPDATED");
+    assert.equal(feed.reloadFeed(app.store, () => "{broken"), "INVALID_JSON");
+    const roomB = await (await create(base)).json();
+    assert.equal(roomB.snapshot.cutoff, reportB.cutoff);
+    // The room report is participant-only and pinned per room.
+    assert.equal((await fetch(`${base}/v1/rooms/${roomA.id}/report`, { headers: { Origin: "https://example.test" } })).status, 401);
+    const pinnedA = await (await fetch(`${base}/v1/rooms/${roomA.id}/report`, { headers: { Origin: "https://example.test", Authorization: `Bearer ${roomA.view}` } })).json();
+    assert.equal(pinnedA.cutoff, reportA.cutoff);
+    const pinnedB = await (await fetch(`${base}/v1/rooms/${roomB.id}/report`, { headers: { Origin: "https://example.test", Authorization: `Bearer ${roomB.token}` } })).json();
+    assert.equal(pinnedB.cutoff, reportB.cutoff);
+
+    // A screen already on report B joins room A as red: validation and the board use A.
+    const sessions = [], states = [];
+    const request = (url, init = {}) => fetch(url, { ...init, headers: { ...(init.headers ?? {}), Origin: "https://example.test" } });
+    const joiner = new client.DraftRoomClient(base, () => reportB, s => states.push(s), session => sessions.push(session), memoryStore(), request);
+    await joiner.enter({ v: 1, id: roomA.id, invite: roomA.invite });
+    await until(() => sessions.length > 0);
+    assert.equal(sessions[0].report.cutoff, reportA.cutoff, "board/analysis report is the room's A report");
+    assert.equal(states.at(-1).snapshot.cutoff, reportA.cutoff);
+    assert.ok(!states.some(s => s.ended), "joining a pinned room does not end it");
+    // The same screen joining room B (its own report) needs no extra report.
+    const joinerB = new client.DraftRoomClient(base, () => reportB, () => {}, session => sessions.push(session), memoryStore(), request);
+    await joinerB.enter({ v: 1, id: roomB.id, view: roomB.view });
+    await until(() => sessions.length > 1);
+    assert.equal(sessions.at(-1).report.cutoff, reportB.cutoff);
+    joiner.leave(); joinerB.leave();
+  });
+});
+
+test("C3: a room whose report cannot be loaded ends with an explanation instead of using this screen's report", async () => {
+  const [blue, red] = report.opponent_prep.teams;
+  const { DRAFT_MODEL_VERSION } = await vite.ssrLoadModule("/app/draft-agent.ts");
+  const snapshot = { id: "a".repeat(22), revision: 1, patch_id: report.patch_id, cutoff: "2026-11-20T00:00:00.000Z", model_version: DRAFT_MODEL_VERSION,
+    blueTeamId: blue.team_id, redTeamId: red.team_id, firstPickSide: "BLUE", selections: [], games: [], seats: { BLUE: true, RED: true }, status: "DRAFTING", expiresAt: "2026-12-01T00:00:00.000Z" };
+  const json = (value, status = 200) => new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json" } });
+  const states = [], sessions = [];
+  // The server answers the join but returns a report for another cutoff: never accepted.
+  const fake = async url => url.endsWith("/join") ? json({ id: snapshot.id, role: "RED", token: "t".repeat(32), snapshot })
+    : url.endsWith("/report") ? json({ ...report }) : json({ error: { code: "NOT_FOUND" } }, 404);
+  const room = new client.DraftRoomClient("https://rooms.example", () => report, s => states.push(s), s => sessions.push(s), memoryStore(), fake);
+  await room.enter({ v: 1, id: snapshot.id, invite: "i".repeat(32) });
+  assert.equal(sessions.length, 0, "nothing is applied with the wrong report");
+  assert.match(states.at(-1).message, /자료를 불러오지 못했어요/);
+  room.leave();
 });
 
 test("C2: the room address from the build is used only when it is a safe https (or local) URL", () => {

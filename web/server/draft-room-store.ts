@@ -20,6 +20,8 @@ type Listener = (snapshot: RoomSnapshot | null) => void;
 type Entry = {
   snapshot: RoomSnapshot; host: string; guest: string | null; invite: string; view: string;
   actions: Map<string, string>; listeners: Set<Listener>;
+  /** The validated public report this room was created with; it never changes for the room. */
+  report: RadarReport;
 };
 const canonical = new Map(SHARE_CHAMPIONS.flatMap(([name, id]) => [[championAssetId(name).toLowerCase(), id], [id.toLowerCase(), id]] as [string, string][]));
 const secret = () => randomBytes(24).toString("base64url");
@@ -51,7 +53,7 @@ export class DraftRoomStore {
     const text = options.persistence?.load() ?? null;
     if (text !== null) {
       const restored = decodeState(text, { report: this.report, identity: this.identity, now: this.now(), ttlMs: this.ttl(), maxRooms: options.maxRooms ?? 200 });
-      for (const room of restored) this.rooms.set(room.snapshot.id, { ...room, actions: new Map(room.actions), listeners: new Set() });
+      for (const room of restored) this.rooms.set(room.snapshot.id, { ...room, actions: new Map(room.actions), listeners: new Set(), report: this.report });
     }
   }
   get storage(): "ephemeral" | "file" { return this.options.persistence ? "file" : "ephemeral"; }
@@ -134,7 +136,7 @@ export class DraftRoomStore {
         firstPickSide: session.firstPickSide, selections: session.selections, games: session.games,
         seats: { BLUE: true, RED: false }, status: "WAITING",
         expiresAt: new Date(this.now() + this.ttl()).toISOString() },
-      host: secret(), guest: null, invite: secret(), view: secret(), actions: new Map(), listeners: new Set(),
+      host: secret(), guest: null, invite: secret(), view: secret(), actions: new Map(), listeners: new Set(), report: this.report,
     };
     this.persist(entry);
     this.rooms.set(id, entry);
@@ -151,6 +153,11 @@ export class DraftRoomStore {
     entry.guest = guest; entry.snapshot = snapshot;
     this.notify(entry);
     return { id, role: "RED" as const, token: entry.guest, snapshot: this.snapshot(entry) };
+  }
+  /** The room's own report (public data) for an authorized participant, so every screen validates and analyses on it. */
+  roomReport(id: string, token: unknown): RadarReport {
+    const entry = this.entry(id); this.role(entry, token);
+    return entry.report;
   }
   read(id: string, token: unknown) {
     const entry = this.entry(id);
