@@ -19,11 +19,14 @@ export async function shareDraftLink(url: string, title: string, nav: Partial<Pi
   return "이 브라우저에서는 공유할 수 없어요. 아래 '친구와 밴픽'에서 링크를 직접 복사해 주세요.";
 }
 
-export function DraftResultPanel({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, nameOf, onReplay, onNext, disabled, autoReveal = false, positionRecord, onOpenSimulation, shareUrl }: {
+export function DraftResultPanel({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, nameOf, onReplay, onNext, disabled, autoReveal = false, positionRecord, onOpenSimulation, shareUrl, onChangePick, changeableSides = [] }: {
   report: RadarReport; blueTeam: OpponentTeam | null; redTeam: OpponentTeam | null; selections: DraftSelection[]; previousPicks: string[]; firstPickSide: DraftSide;
   nameOf: (id: string) => string; onReplay: () => void; onNext: () => void; disabled: boolean; autoReveal?: boolean;
   /** Builds the shareable draft link; omitted (or null) hides the share button. */
   shareUrl?: () => string | null;
+  /** Rewinds to just before that pick so it can be replaced; omitted hides the per-pick button. */
+  onChangePick?: (side: DraftSide, championId: string) => void;
+  changeableSides?: DraftSide[];
   /** Optional explicit position work; omitted keeps the legacy image. Only used for the PNG, re-validated there. */
   positionRecord?: DraftPositionRecord | null;
   /** Optional navigation only: opens the existing simulation input gate. Omitted (e.g. room mode) hides the button. Never runs a simulation. */
@@ -69,7 +72,7 @@ export function DraftResultPanel({ report, blueTeam, redTeam, selections, previo
       <h3><small>{team.side === "BLUE" ? "블루" : "레드"}</small> {team.team_name}</h3><p>팀 공개 표본 {team.game_count}경기 · 아래 횟수는 해당 챔피언의 관측 요약</p>
       <ol className="draft-result-picks">{team.picks.map(pick => <li key={pick.champion_id}><img src={championImageUrl(pick.champion_id)} alt="" /><div><strong>{nameOf(pick.champion_id)}</strong>{pick.own_games === null && pick.opponent_games === null && !pick.roles.length
         ? <small>두 팀 공개 기록·관측 역할 모두 미확인</small>
-        : <><small>우리 기록 {pick.own_games === null ? "미확인" : `${pick.own_games}회`} · 상대 기록 {pick.opponent_games === null ? "미확인" : `${pick.opponent_games}회`}</small><small>{pick.roles.length ? `관측 역할 ${pick.roles.map(r => roleName[r] ?? r).join(" · ")}` : "관측 역할 미확인"}</small></>}</div></li>)}</ol>
+        : <><small>우리 기록 {pick.own_games === null ? "미확인" : `${pick.own_games}회`} · 상대 기록 {pick.opponent_games === null ? "미확인" : `${pick.opponent_games}회`}</small><small>{pick.roles.length ? `관측 역할 ${pick.roles.map(r => roleName[r] ?? r).join(" · ")}` : "관측 역할 미확인"}</small></>}</div>{onChangePick && changeableSides.includes(team.side) ? <button type="button" className="draft-result-change-pick" disabled={disabled} onClick={() => onChangePick(team.side, pick.champion_id)} aria-label={`${nameOf(pick.champion_id)} 픽 바꾸기`}>이 픽 바꾸기</button> : null}</li>)}</ol>
       <h4>양 팀 기록에 겹치는 픽을 확보했어요</h4>
       {team.contested_claims.length ? <ul>{team.contested_claims.map(item => <li key={item.champion_id}><b>{nameOf(item.champion_id)}</b> · 우리 {item.own_games}회 / 상대 {item.opponent_games}회 관측</li>)}</ul> : <p>양 팀의 우선 픽 요약에 함께 나온 카드를 확보한 기록은 없어요.</p>}
       <h4>상대 주력 기록에서 밴한 카드</h4>

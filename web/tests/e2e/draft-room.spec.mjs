@@ -162,3 +162,28 @@ test("late invite clipboard completion is ignored after leaving", async ({ page 
   await page.evaluate(() => window.__finishRoomCopy());
   await expect(room(page).getByText("초대 링크를 복사했습니다.", { exact: true })).toHaveCount(0);
 });
+
+// Review (#164 P1): entering a room replaces the board, so an in-progress pick change must not come back after leaving.
+test("a pick change in progress does not revive after creating and leaving a room", async ({ page }) => {
+  await prepare(page.context());
+  await page.goto(root); await enterDraftWorkspace(page); await ready(page);
+  const solo = page.getByRole("region", { name: "혼자 밴픽 연습", exact: true });
+  await solo.getByLabel("내 진영", { exact: true }).selectOption("BLUE");
+  await solo.getByRole("checkbox", { name: "상대 자동 밴픽", exact: true }).check();
+  for (let step = 0; step < 30 && Number(await progress(page).getAttribute("value")) < 20; step++) {
+    const before = Number(await progress(page).getAttribute("value"));
+    if (await available(page).count()) await pick(page);
+    else await expect.poll(async () => Number(await progress(page).getAttribute("value"))).toBeGreaterThan(before);
+  }
+  await page.locator(".draft-result-teams > .blue .draft-result-change-pick").first().click();
+  await expect(page.locator(".draft-pick-change")).toBeVisible();
+  await room(page).locator("summary").click();
+  await room(page).getByRole("button", { name: "현재 밴픽으로 방 만들기", exact: true }).click();
+  await room(page).getByRole("button", { name: "동의하고 방 만들기", exact: true }).click();
+  await expect(room(page)).toContainText("블루 · 방장");
+  await expect(page.locator(".draft-pick-change")).toHaveCount(0);
+  await room(page).getByRole("button", { name: "혼자 연습으로 돌아가기", exact: true }).click();
+  await expect(room(page)).not.toContainText("블루 · 방장");
+  await expect(page.locator(".draft-pick-change")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "원래 밴픽으로 돌아가기" })).toHaveCount(0);
+});
