@@ -27,12 +27,12 @@
   "schema_version": "1",
   "source_snapshot": {
     "analysis_window": {
-      "availability_cutoff": "2026-11-24T04:17:26.976788+00:00",
-      "end_inclusive": "2026-11-24T04:17:26.976788+00:00",
+      "availability_cutoff": "2026-11-27T00:40:40.866521+00:00",
+      "end_inclusive": "2026-11-27T00:40:40.866521+00:00",
       "historical": false,
       "mode": "ROLLING"
     },
-    "cutoff": "2026-11-24T04:17:26.976788+00:00",
+    "cutoff": "2026-11-27T00:40:40.866521+00:00",
     "fixture_only": false,
     "patch_id": "16.20",
     "radar_schema_version": "1",

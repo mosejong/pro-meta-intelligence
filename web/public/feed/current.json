@@ -1,46 +1,45 @@
 {
   "analysis_window": {
-    "availability_cutoff": "2026-11-24T04:17:26.976788+00:00",
-    "end_inclusive": "2026-11-24T04:17:26.976788+00:00",
+    "availability_cutoff": "2026-11-27T00:40:40.866521+00:00",
+    "end_inclusive": "2026-11-27T00:40:40.866521+00:00",
     "historical": false,
     "mode": "ROLLING"
   },
-  "cutoff": "2026-11-24T04:17:26.976788+00:00",
+  "cutoff": "2026-11-27T00:40:40.866521+00:00",
   "entries": [
     {
-      "champion_id": "Ahri",
+      "champion_id": "Anivia",
       "eligible_for_review": false,
       "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237012:pick:9",
-        "oe:AL:LOLTMNT05_237027:pick:5",
-        "oe:AL:LOLTMNT05_238019:pick:4"
+        "oe:AL:LOLTMNT05_237029:pick:10"
       ],
       "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 3,
-        "current_pick_presence": 0.333333,
-        "demand_velocity": 0.666667,
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.5,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.333333,
+        "pick_presence_delta": 0.25,
         "prior_demand": 0.0,
         "prior_distinct_team_count": 0,
         "prior_pick_count": 0,
         "prior_pick_presence": 0.0,
         "regional_divergence": 0.0,
-        "team_concentration": 0.666667
+        "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
       "rank": 1,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 3,
-          "pick_presence": 0.333333,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
@@ -48,39 +47,233 @@
       "role": "MID"
     },
     {
-      "champion_id": "Nautilus",
+      "champion_id": "Caitlyn",
       "eligible_for_review": false,
       "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237012:pick:6",
-        "oe:AL:LOLTMNT05_237020:pick:4",
-        "oe:AL:LOLTMNT05_237026:pick:6"
+        "oe:AL:LOLTMNT05_237027:pick:8"
       ],
       "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 3,
-        "current_pick_presence": 0.333333,
-        "demand_velocity": 0.666667,
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.5,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.333333,
+        "pick_presence_delta": 0.25,
         "prior_demand": 0.0,
         "prior_distinct_team_count": 0,
         "prior_pick_count": 0,
         "prior_pick_presence": 0.0,
         "regional_divergence": 0.0,
-        "team_concentration": 0.666667
+        "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
       "rank": 2,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 3,
-          "pick_presence": 0.333333,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "BOTTOM"
+    },
+    {
+      "champion_id": "Cassiopeia",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237028:pick:10"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.5,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.25,
+        "prior_demand": 0.0,
+        "prior_distinct_team_count": 0,
+        "prior_pick_count": 0,
+        "prior_pick_presence": 0.0,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 3,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "TOP"
+    },
+    {
+      "champion_id": "Galio",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237027:pick:7"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.5,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.25,
+        "prior_demand": 0.0,
+        "prior_distinct_team_count": 0,
+        "prior_pick_count": 0,
+        "prior_pick_presence": 0.0,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 4,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "TOP"
+    },
+    {
+      "champion_id": "Jayce",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237026:pick:10"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.5,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.25,
+        "prior_demand": 0.0,
+        "prior_distinct_team_count": 0,
+        "prior_pick_count": 0,
+        "prior_pick_presence": 0.0,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 5,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "TOP"
+    },
+    {
+      "champion_id": "Ornn",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237029:pick:7"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.5,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.25,
+        "prior_demand": 0.0,
+        "prior_distinct_team_count": 0,
+        "prior_pick_count": 0,
+        "prior_pick_presence": 0.0,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 6,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "TOP"
+    },
+    {
+      "champion_id": "Rell",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237029:pick:6"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.5,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.25,
+        "prior_demand": 0.0,
+        "prior_distinct_team_count": 0,
+        "prior_pick_count": 0,
+        "prior_pick_presence": 0.0,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 7,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
@@ -88,39 +281,275 @@
       "role": "SUPPORT"
     },
     {
-      "champion_id": "Rumble",
+      "champion_id": "Ryze",
       "eligible_for_review": false,
       "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237012:pick:1",
-        "oe:AL:LOLTMNT05_237027:pick:4",
-        "oe:AL:LOLTMNT05_238019:pick:5"
+        "oe:AL:LOLTMNT05_237029:pick:1"
       ],
       "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 3,
-        "current_pick_presence": 0.333333,
-        "demand_velocity": 0.666667,
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.5,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.333333,
+        "pick_presence_delta": 0.25,
         "prior_demand": 0.0,
         "prior_distinct_team_count": 0,
         "prior_pick_count": 0,
         "prior_pick_presence": 0.0,
         "regional_divergence": 0.0,
-        "team_concentration": 0.666667
+        "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 3,
+      "rank": 8,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 3,
-          "pick_presence": 0.333333,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "MID"
+    },
+    {
+      "champion_id": "Sivir",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237029:pick:9"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.5,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.25,
+        "prior_demand": 0.0,
+        "prior_distinct_team_count": 0,
+        "prior_pick_count": 0,
+        "prior_pick_presence": 0.0,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 9,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "BOTTOM"
+    },
+    {
+      "champion_id": "Swain",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237029:pick:8"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.5,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.25,
+        "prior_demand": 0.0,
+        "prior_distinct_team_count": 0,
+        "prior_pick_count": 0,
+        "prior_pick_presence": 0.0,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 10,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "TOP"
+    },
+    {
+      "champion_id": "Tristana",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237028:pick:7"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.5,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.25,
+        "prior_demand": 0.0,
+        "prior_distinct_team_count": 0,
+        "prior_pick_count": 0,
+        "prior_pick_presence": 0.0,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 11,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "BOTTOM"
+    },
+    {
+      "champion_id": "Aphelios",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:7",
+        "oe:AL:LOLTMNT05_237027:pick:6"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 12,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "BOTTOM"
+    },
+    {
+      "champion_id": "Cho'Gath",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237026:pick:4",
+        "oe:WLDs:LOLTMNT02_487406:pick:6"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 13,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "JUNGLE"
+    },
+    {
+      "champion_id": "Gnar",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237026:pick:9",
+        "oe:WLDs:LOLTMNT02_487406:pick:8"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 14,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
@@ -135,36 +564,77 @@
         "oe:AL:LOLTMNT05_237026:pick:7"
       ],
       "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": 0.666667,
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.222222,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
-        "team_concentration": 0.5
+        "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 4,
+      "rank": 15,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
       ],
       "role": "BOTTOM"
+    },
+    {
+      "champion_id": "Karma",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237027:pick:9",
+        "oe:WLDs:LOLTMNT02_487406:pick:3"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 16,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "SUPPORT"
     },
     {
       "champion_id": "Leona",
@@ -174,31 +644,32 @@
         "oe:AL:LOLTMNT05_237026:pick:8"
       ],
       "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": 0.666667,
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.222222,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
-        "team_concentration": 0.5
+        "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 5,
+      "rank": 17,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
@@ -206,118 +677,79 @@
       "role": "SUPPORT"
     },
     {
-      "champion_id": "Qiyana",
+      "champion_id": "Neeko",
       "eligible_for_review": false,
       "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237012:pick:2",
-        "oe:AL:LOLTMNT05_237021:pick:1"
+        "oe:AL:LOLTMNT05_237029:pick:5",
+        "oe:WLDs:LOLTMNT02_488489:pick:6"
       ],
       "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": 0.666667,
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.222222,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 0.5
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
-      ],
-      "rank": 6,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "JUNGLE"
-    },
-    {
-      "champion_id": "Xin Zhao",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237029:pick:3",
-        "oe:AL:LOLTMNT05_238019:pick:7"
-      ],
-      "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": 0.666667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.222222,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 0.5
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
-      ],
-      "rank": 7,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "JUNGLE"
-    },
-    {
-      "champion_id": "Vi",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237012:pick:8",
-        "oe:AL:LOLTMNT05_237029:pick:4",
-        "oe:AL:LOLTMNT05_238019:pick:1",
-        "oe:WLDs:LOLTMNT02_487408:pick:3"
-      ],
-      "metrics": {
-        "current_demand": 1.0,
-        "current_distinct_team_count": 3,
-        "current_pick_count": 3,
-        "current_pick_presence": 0.333333,
-        "demand_velocity": 0.5,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.083333,
-        "prior_demand": 0.5,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
-        "team_concentration": 0.333333
+        "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 8,
+      "rank": 18,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 3,
-          "pick_presence": 0.333333,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "SUPPORT"
+    },
+    {
+      "champion_id": "Nocturne",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237027:pick:1",
+        "oe:WLDs:LOLTMNT02_488489:pick:2"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 19,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
@@ -325,82 +757,44 @@
       "role": "JUNGLE"
     },
     {
-      "champion_id": "Aatrox",
+      "champion_id": "Rakan",
       "eligible_for_review": false,
       "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237013:pick:5",
-        "oe:AL:LOLTMNT05_237021:pick:6"
+        "oe:AL:LOLTMNT05_237028:pick:6",
+        "oe:WLDs:LOLTMNT02_487408:pick:8"
       ],
       "metrics": {
-        "current_demand": 0.333333,
+        "current_demand": 0.5,
         "current_distinct_team_count": 1,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": 0.333333,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.222222,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 9,
+      "rank": 20,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
       ],
-      "role": "TOP"
-    },
-    {
-      "champion_id": "Aphelios",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237012:pick:7",
-        "oe:AL:LOLTMNT05_237027:pick:6"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.222222,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
-      ],
-      "rank": 10,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "BOTTOM"
+      "role": "SUPPORT"
     },
     {
       "champion_id": "Skarner",
@@ -410,31 +804,32 @@
         "oe:AL:LOLTMNT05_237028:pick:4"
       ],
       "metrics": {
-        "current_demand": 0.333333,
+        "current_demand": 0.5,
         "current_distinct_team_count": 1,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": 0.333333,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.222222,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 11,
+      "rank": 21,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
@@ -442,907 +837,165 @@
       "role": "JUNGLE"
     },
     {
-      "champion_id": "Anivia",
+      "champion_id": "Syndra",
       "eligible_for_review": false,
       "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237029:pick:10"
+        "oe:AL:LOLTMNT05_237026:pick:1",
+        "oe:WLDs:LOLTMNT02_487405:pick:4"
       ],
       "metrics": {
-        "current_demand": 0.333333,
+        "current_demand": 0.5,
         "current_distinct_team_count": 1,
         "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 12,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "MID"
-    },
-    {
-      "champion_id": "Ashe",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_238019:pick:2"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 13,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "BOTTOM"
-    },
-    {
-      "champion_id": "Caitlyn",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237027:pick:8"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 14,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "BOTTOM"
-    },
-    {
-      "champion_id": "Cassiopeia",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237028:pick:10"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 15,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "TOP"
-    },
-    {
-      "champion_id": "Galio",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237020:pick:7"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 16,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "MID"
-    },
-    {
-      "champion_id": "Galio",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237027:pick:7"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 17,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "TOP"
-    },
-    {
-      "champion_id": "Jayce",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237026:pick:10"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 18,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "TOP"
-    },
-    {
-      "champion_id": "LeBlanc",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237012:pick:10"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 19,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "MID"
-    },
-    {
-      "champion_id": "Lucian",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_238019:pick:8"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 20,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "BOTTOM"
-    },
-    {
-      "champion_id": "Milio",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_238019:pick:9"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 21,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "SUPPORT"
-    },
-    {
-      "champion_id": "Ornn",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237029:pick:7"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
       "rank": 22,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 1,
-          "pick_presence": 0.111111,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
       ],
-      "role": "TOP"
+      "role": "MID"
     },
     {
-      "champion_id": "Poppy",
+      "champion_id": "Viktor",
       "eligible_for_review": false,
       "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237013:pick:10"
+        "oe:AL:LOLTMNT05_237027:pick:10",
+        "oe:WLDs:LOLTMNT02_487408:pick:6"
       ],
       "metrics": {
-        "current_demand": 0.333333,
+        "current_demand": 0.5,
         "current_distinct_team_count": 1,
         "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
       "rank": 23,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 1,
-          "pick_presence": 0.111111,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
       ],
-      "role": "SUPPORT"
+      "role": "MID"
     },
     {
-      "champion_id": "Rell",
+      "champion_id": "Xin Zhao",
       "eligible_for_review": false,
       "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237029:pick:6"
+        "oe:AL:LOLTMNT05_237029:pick:3",
+        "oe:AL:LOLTMNT05_238019:pick:7"
       ],
       "metrics": {
-        "current_demand": 0.333333,
+        "current_demand": 0.5,
         "current_distinct_team_count": 1,
         "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.3,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
+        "pick_presence_delta": 0.138889,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
       "rank": 24,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 1,
-          "pick_presence": 0.111111,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
       ],
-      "role": "SUPPORT"
+      "role": "JUNGLE"
     },
     {
-      "champion_id": "Renekton",
+      "champion_id": "Ahri",
       "eligible_for_review": false,
       "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237013:pick:6"
+        "oe:AL:LOLTMNT05_237012:pick:9",
+        "oe:AL:LOLTMNT05_237027:pick:5",
+        "oe:AL:LOLTMNT05_238019:pick:4"
       ],
       "metrics": {
-        "current_demand": 0.333333,
+        "current_demand": 0.5,
         "current_distinct_team_count": 1,
         "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.1,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
+        "pick_presence_delta": 0.027778,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
         "regional_divergence": 0.0,
         "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
       "rank": 25,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "TOP"
-    },
-    {
-      "champion_id": "Ryze",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237029:pick:1"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 26,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
       ],
       "role": "MID"
-    },
-    {
-      "champion_id": "Seraphine",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_238019:pick:3"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 27,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "SUPPORT"
-    },
-    {
-      "champion_id": "Sivir",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237029:pick:9"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 28,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "BOTTOM"
-    },
-    {
-      "champion_id": "Swain",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237029:pick:8"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 29,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "TOP"
-    },
-    {
-      "champion_id": "Tristana",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237028:pick:7"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 30,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "BOTTOM"
-    },
-    {
-      "champion_id": "Vex",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237021:pick:10"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": 0.333333,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.111111,
-        "prior_demand": 0.0,
-        "prior_distinct_team_count": 0,
-        "prior_pick_count": 0,
-        "prior_pick_presence": 0.0,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 31,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "MID"
-    },
-    {
-      "champion_id": "Lulu",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237012:pick:5",
-        "oe:AL:LOLTMNT05_237020:pick:3",
-        "oe:AL:LOLTMNT05_237027:pick:3",
-        "oe:WLDs:LOLTMNT02_488489:pick:1"
-      ],
-      "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 3,
-        "current_pick_presence": 0.333333,
-        "demand_velocity": 0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.083333,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 0.666667
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
-      ],
-      "rank": 32,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 3,
-          "pick_presence": 0.333333,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "SUPPORT"
-    },
-    {
-      "champion_id": "Orianna",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237013:pick:2",
-        "oe:AL:LOLTMNT05_237020:pick:5",
-        "oe:AL:LOLTMNT05_237028:pick:1",
-        "oe:WLDs:LOLTMNT02_487406:pick:7"
-      ],
-      "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 3,
-        "current_pick_presence": 0.333333,
-        "demand_velocity": 0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.083333,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 0.666667
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
-      ],
-      "rank": 33,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 3,
-          "pick_presence": 0.333333,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "MID"
-    },
-    {
-      "champion_id": "Yunara",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237012:pick:4",
-        "oe:AL:LOLTMNT05_237020:pick:2",
-        "oe:AL:LOLTMNT05_237029:pick:2",
-        "oe:WLDs:LOLTMNT02_488489:pick:3"
-      ],
-      "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 3,
-        "current_pick_presence": 0.333333,
-        "demand_velocity": 0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.083333,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 0.666667
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
-      ],
-      "rank": 34,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 3,
-          "pick_presence": 0.333333,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "BOTTOM"
     },
     {
       "champion_id": "Akali",
@@ -1353,31 +1006,32 @@
         "oe:WLDs:LOLTMNT02_488489:pick:8"
       ],
       "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": 0.166667,
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.1,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.027778,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "pick_presence_delta": 0.027778,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
         "regional_divergence": 0.0,
-        "team_concentration": 0.5
+        "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 35,
+      "rank": 26,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
@@ -1393,31 +1047,32 @@
         "oe:WLDs:LOLTMNT02_487408:pick:7"
       ],
       "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": 0.166667,
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.1,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.027778,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "pick_presence_delta": 0.027778,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
         "regional_divergence": 0.0,
-        "team_concentration": 0.5
+        "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 36,
+      "rank": 27,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
@@ -1433,31 +1088,32 @@
         "oe:WLDs:LOLTMNT02_487408:pick:1"
       ],
       "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": 0.166667,
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.1,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.027778,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "pick_presence_delta": 0.027778,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
         "regional_divergence": 0.0,
-        "team_concentration": 0.5
+        "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 37,
+      "rank": 28,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
@@ -1473,36 +1129,119 @@
         "oe:WLDs:LOLTMNT02_487405:pick:8"
       ],
       "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": 0.166667,
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.1,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.027778,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "pick_presence_delta": 0.027778,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
         "regional_divergence": 0.0,
-        "team_concentration": 0.5
+        "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 38,
+      "rank": 29,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
       ],
       "role": "BOTTOM"
+    },
+    {
+      "champion_id": "Jhin",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237013:pick:7",
+        "oe:AL:LOLTMNT05_237026:pick:5",
+        "oe:WLDs:LOLTMNT02_487408:pick:9"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.1,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.027778,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 30,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "BOTTOM"
+    },
+    {
+      "champion_id": "Locke",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237013:pick:4",
+        "oe:AL:LOLTMNT05_237026:pick:2",
+        "oe:WLDs:LOLTMNT02_487405:pick:6"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.1,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.027778,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 31,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "MID"
     },
     {
       "champion_id": "Naafiri",
@@ -1513,31 +1252,155 @@
         "oe:WLDs:LOLTMNT02_487406:pick:5"
       ],
       "metrics": {
-        "current_demand": 0.666667,
-        "current_distinct_team_count": 2,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": 0.166667,
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.1,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.027778,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "pick_presence_delta": 0.027778,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
         "regional_divergence": 0.0,
-        "team_concentration": 0.5
+        "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 39,
+      "rank": 32,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "JUNGLE"
+    },
+    {
+      "champion_id": "Nautilus",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:6",
+        "oe:AL:LOLTMNT05_237020:pick:4",
+        "oe:AL:LOLTMNT05_237026:pick:6"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.1,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.027778,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 33,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "SUPPORT"
+    },
+    {
+      "champion_id": "Rumble",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:1",
+        "oe:AL:LOLTMNT05_237027:pick:4",
+        "oe:AL:LOLTMNT05_238019:pick:5"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.1,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.027778,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 34,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "TOP"
+    },
+    {
+      "champion_id": "Wukong",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237020:pick:6",
+        "oe:AL:LOLTMNT05_237027:pick:2",
+        "oe:WLDs:LOLTMNT02_487408:pick:4"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.1,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": 0.027778,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 35,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
@@ -1554,756 +1417,205 @@
         "oe:WLDs:LOLTMNT02_487405:pick:1"
       ],
       "metrics": {
-        "current_demand": 0.333333,
+        "current_demand": 0.5,
         "current_distinct_team_count": 1,
-        "current_pick_count": 3,
-        "current_pick_presence": 0.333333,
-        "demand_velocity": -0.166667,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": 0.1,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": 0.083333,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "pick_presence_delta": -0.083333,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 3,
+        "prior_pick_presence": 0.333333,
         "regional_divergence": 0.0,
         "team_concentration": 1.0
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 36,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "JUNGLE"
+    },
+    {
+      "champion_id": "Lulu",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:5",
+        "oe:AL:LOLTMNT05_237020:pick:3",
+        "oe:AL:LOLTMNT05_237027:pick:3",
+        "oe:WLDs:LOLTMNT02_488489:pick:1"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": -0.1,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.083333,
+        "prior_demand": 0.6,
+        "prior_distinct_team_count": 3,
+        "prior_pick_count": 3,
+        "prior_pick_presence": 0.333333,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 37,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "SUPPORT"
+    },
+    {
+      "champion_id": "Orianna",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237013:pick:2",
+        "oe:AL:LOLTMNT05_237020:pick:5",
+        "oe:AL:LOLTMNT05_237028:pick:1",
+        "oe:WLDs:LOLTMNT02_487406:pick:7"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": -0.1,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.083333,
+        "prior_demand": 0.6,
+        "prior_distinct_team_count": 3,
+        "prior_pick_count": 3,
+        "prior_pick_presence": 0.333333,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 38,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "MID"
+    },
+    {
+      "champion_id": "Vi",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:8",
+        "oe:AL:LOLTMNT05_237029:pick:4",
+        "oe:AL:LOLTMNT05_238019:pick:1",
+        "oe:WLDs:LOLTMNT02_487408:pick:3"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": -0.1,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.083333,
+        "prior_demand": 0.6,
+        "prior_distinct_team_count": 3,
+        "prior_pick_count": 3,
+        "prior_pick_presence": 0.333333,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 39,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "JUNGLE"
+    },
+    {
+      "champion_id": "Yunara",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:4",
+        "oe:AL:LOLTMNT05_237020:pick:2",
+        "oe:AL:LOLTMNT05_237029:pick:2",
+        "oe:WLDs:LOLTMNT02_488489:pick:3"
+      ],
+      "metrics": {
+        "current_demand": 0.5,
+        "current_distinct_team_count": 1,
+        "current_pick_count": 1,
+        "current_pick_presence": 0.25,
+        "demand_velocity": -0.1,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.083333,
+        "prior_demand": 0.6,
+        "prior_distinct_team_count": 3,
+        "prior_pick_count": 3,
+        "prior_pick_presence": 0.333333,
+        "regional_divergence": 0.0,
+        "team_concentration": 1.0
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
       ],
       "rank": 40,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 3,
-          "pick_presence": 0.333333,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "JUNGLE"
-    },
-    {
-      "champion_id": "Jhin",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237013:pick:7",
-        "oe:AL:LOLTMNT05_237026:pick:5",
-        "oe:WLDs:LOLTMNT02_487408:pick:9"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.027778,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
-      ],
-      "rank": 41,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
+          "match_count": 4,
+          "pick_count": 1,
+          "pick_presence": 0.25,
           "region": "EMEA",
           "sample_eligible": true
         }
       ],
       "role": "BOTTOM"
-    },
-    {
-      "champion_id": "K'Sante",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237012:pick:3",
-        "oe:AL:LOLTMNT05_238019:pick:6",
-        "oe:WLDs:LOLTMNT02_487405:pick:7"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.027778,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
-      ],
-      "rank": 42,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "TOP"
-    },
-    {
-      "champion_id": "Locke",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237013:pick:4",
-        "oe:AL:LOLTMNT05_237026:pick:2",
-        "oe:WLDs:LOLTMNT02_487405:pick:6"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.027778,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
-      ],
-      "rank": 43,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "MID"
-    },
-    {
-      "champion_id": "Wukong",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237020:pick:6",
-        "oe:AL:LOLTMNT05_237027:pick:2",
-        "oe:WLDs:LOLTMNT02_487408:pick:4"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 2,
-        "current_pick_presence": 0.222222,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.027778,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES"
-      ],
-      "rank": 44,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 2,
-          "pick_presence": 0.222222,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "JUNGLE"
-    },
-    {
-      "champion_id": "Cassiopeia",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_238019:pick:10",
-        "oe:WLDs:LOLTMNT02_487406:pick:1"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 45,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "MID"
-    },
-    {
-      "champion_id": "Cho'Gath",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237026:pick:4",
-        "oe:WLDs:LOLTMNT02_487406:pick:6"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 46,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "JUNGLE"
-    },
-    {
-      "champion_id": "Ezreal",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237020:pick:1",
-        "oe:WLDs:LOLTMNT02_487406:pick:2"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 47,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "BOTTOM"
-    },
-    {
-      "champion_id": "Gnar",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237026:pick:9",
-        "oe:WLDs:LOLTMNT02_487406:pick:8"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 48,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "TOP"
-    },
-    {
-      "champion_id": "Jax",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237020:pick:10",
-        "oe:WLDs:LOLTMNT02_487408:pick:2"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 49,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "TOP"
-    },
-    {
-      "champion_id": "Kalista",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237013:pick:8",
-        "oe:WLDs:LOLTMNT02_487405:pick:3"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 50,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "BOTTOM"
-    },
-    {
-      "champion_id": "Karma",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237027:pick:9",
-        "oe:WLDs:LOLTMNT02_487406:pick:3"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 51,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "SUPPORT"
-    },
-    {
-      "champion_id": "Neeko",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237029:pick:5",
-        "oe:WLDs:LOLTMNT02_488489:pick:6"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 52,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "SUPPORT"
-    },
-    {
-      "champion_id": "Nocturne",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237027:pick:1",
-        "oe:WLDs:LOLTMNT02_488489:pick:2"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 53,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "JUNGLE"
-    },
-    {
-      "champion_id": "Olaf",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237021:pick:5",
-        "oe:WLDs:LOLTMNT02_487405:pick:5"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 54,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "TOP"
-    },
-    {
-      "champion_id": "Rakan",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237028:pick:6",
-        "oe:WLDs:LOLTMNT02_487408:pick:8"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 55,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "SUPPORT"
-    },
-    {
-      "champion_id": "Renata Glasc",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237013:pick:9",
-        "oe:WLDs:LOLTMNT02_487405:pick:2"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 56,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "SUPPORT"
-    },
-    {
-      "champion_id": "Syndra",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237026:pick:1",
-        "oe:WLDs:LOLTMNT02_487405:pick:4"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 57,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "MID"
-    },
-    {
-      "champion_id": "Viktor",
-      "eligible_for_review": false,
-      "evidence_event_ids": [
-        "oe:AL:LOLTMNT05_237027:pick:10",
-        "oe:WLDs:LOLTMNT02_487408:pick:6"
-      ],
-      "metrics": {
-        "current_demand": 0.333333,
-        "current_distinct_team_count": 1,
-        "current_pick_count": 1,
-        "current_pick_presence": 0.111111,
-        "demand_velocity": -0.166667,
-        "most_divergent_region": "EMEA",
-        "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.138889,
-        "prior_demand": 0.5,
-        "prior_distinct_team_count": 1,
-        "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
-        "regional_divergence": 0.0,
-        "team_concentration": 1.0
-      },
-      "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
-        "LOW_CURRENT_PICK_COUNT"
-      ],
-      "rank": 58,
-      "region_presence": [
-        {
-          "delta_from_global": 0.0,
-          "match_count": 9,
-          "pick_count": 1,
-          "pick_presence": 0.111111,
-          "region": "EMEA",
-          "sample_eligible": true
-        }
-      ],
-      "role": "MID"
     },
     {
       "champion_id": "Annie",
@@ -2316,26 +1628,26 @@
         "current_distinct_team_count": 0,
         "current_pick_count": 0,
         "current_pick_presence": 0.0,
-        "demand_velocity": -0.5,
+        "demand_velocity": -0.2,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.25,
-        "prior_demand": 0.5,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": null
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 59,
+      "rank": 41,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 0,
           "pick_presence": 0.0,
           "region": "EMEA",
@@ -2343,6 +1655,45 @@
         }
       ],
       "role": "MID"
+    },
+    {
+      "champion_id": "Ashe",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_238019:pick:2"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.2,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 42,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "BOTTOM"
     },
     {
       "champion_id": "Aurora",
@@ -2355,26 +1706,26 @@
         "current_distinct_team_count": 0,
         "current_pick_count": 0,
         "current_pick_presence": 0.0,
-        "demand_velocity": -0.5,
+        "demand_velocity": -0.2,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.25,
-        "prior_demand": 0.5,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": null
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 60,
+      "rank": 43,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 0,
           "pick_presence": 0.0,
           "region": "EMEA",
@@ -2394,26 +1745,26 @@
         "current_distinct_team_count": 0,
         "current_pick_count": 0,
         "current_pick_presence": 0.0,
-        "demand_velocity": -0.5,
+        "demand_velocity": -0.2,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.25,
-        "prior_demand": 0.5,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": null
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 61,
+      "rank": 44,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 0,
           "pick_presence": 0.0,
           "region": "EMEA",
@@ -2421,6 +1772,45 @@
         }
       ],
       "role": "SUPPORT"
+    },
+    {
+      "champion_id": "Galio",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237020:pick:7"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.2,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 45,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "MID"
     },
     {
       "champion_id": "Gwen",
@@ -2433,26 +1823,26 @@
         "current_distinct_team_count": 0,
         "current_pick_count": 0,
         "current_pick_presence": 0.0,
-        "demand_velocity": -0.5,
+        "demand_velocity": -0.2,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.25,
-        "prior_demand": 0.5,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": null
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 62,
+      "rank": 46,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 0,
           "pick_presence": 0.0,
           "region": "EMEA",
@@ -2472,26 +1862,26 @@
         "current_distinct_team_count": 0,
         "current_pick_count": 0,
         "current_pick_presence": 0.0,
-        "demand_velocity": -0.5,
+        "demand_velocity": -0.2,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.25,
-        "prior_demand": 0.5,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": null
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 63,
+      "rank": 47,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 0,
           "pick_presence": 0.0,
           "region": "EMEA",
@@ -2499,6 +1889,123 @@
         }
       ],
       "role": "JUNGLE"
+    },
+    {
+      "champion_id": "LeBlanc",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:10"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.2,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 48,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "MID"
+    },
+    {
+      "champion_id": "Lucian",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_238019:pick:8"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.2,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 49,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "BOTTOM"
+    },
+    {
+      "champion_id": "Milio",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_238019:pick:9"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.2,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 50,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "SUPPORT"
     },
     {
       "champion_id": "Nami",
@@ -2511,26 +2018,26 @@
         "current_distinct_team_count": 0,
         "current_pick_count": 0,
         "current_pick_presence": 0.0,
-        "demand_velocity": -0.5,
+        "demand_velocity": -0.2,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.25,
-        "prior_demand": 0.5,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": null
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 64,
+      "rank": 51,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 0,
           "pick_presence": 0.0,
           "region": "EMEA",
@@ -2550,26 +2057,26 @@
         "current_distinct_team_count": 0,
         "current_pick_count": 0,
         "current_pick_presence": 0.0,
-        "demand_velocity": -0.5,
+        "demand_velocity": -0.2,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.25,
-        "prior_demand": 0.5,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": null
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 65,
+      "rank": 52,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 0,
           "pick_presence": 0.0,
           "region": "EMEA",
@@ -2577,6 +2084,123 @@
         }
       ],
       "role": "JUNGLE"
+    },
+    {
+      "champion_id": "Poppy",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237013:pick:10"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.2,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 53,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "SUPPORT"
+    },
+    {
+      "champion_id": "Renekton",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237013:pick:6"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.2,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 54,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "TOP"
+    },
+    {
+      "champion_id": "Seraphine",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_238019:pick:3"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.2,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 55,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "SUPPORT"
     },
     {
       "champion_id": "Taliyah",
@@ -2589,26 +2213,26 @@
         "current_distinct_team_count": 0,
         "current_pick_count": 0,
         "current_pick_presence": 0.0,
-        "demand_velocity": -0.5,
+        "demand_velocity": -0.2,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.25,
-        "prior_demand": 0.5,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": null
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 66,
+      "rank": 56,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 0,
           "pick_presence": 0.0,
           "region": "EMEA",
@@ -2628,26 +2252,26 @@
         "current_distinct_team_count": 0,
         "current_pick_count": 0,
         "current_pick_presence": 0.0,
-        "demand_velocity": -0.5,
+        "demand_velocity": -0.2,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.25,
-        "prior_demand": 0.5,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": null
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 67,
+      "rank": 57,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 0,
           "pick_presence": 0.0,
           "region": "EMEA",
@@ -2667,26 +2291,26 @@
         "current_distinct_team_count": 0,
         "current_pick_count": 0,
         "current_pick_presence": 0.0,
-        "demand_velocity": -0.5,
+        "demand_velocity": -0.2,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.25,
-        "prior_demand": 0.5,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": null
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 68,
+      "rank": 58,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 0,
           "pick_presence": 0.0,
           "region": "EMEA",
@@ -2694,6 +2318,45 @@
         }
       ],
       "role": "TOP"
+    },
+    {
+      "champion_id": "Vex",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237021:pick:10"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.2,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 1,
+        "prior_pick_presence": 0.111111,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 59,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "MID"
     },
     {
       "champion_id": "Xayah",
@@ -2706,26 +2369,26 @@
         "current_distinct_team_count": 0,
         "current_pick_count": 0,
         "current_pick_presence": 0.0,
-        "demand_velocity": -0.5,
+        "demand_velocity": -0.2,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.25,
-        "prior_demand": 0.5,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": null
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 69,
+      "rank": 60,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 0,
           "pick_presence": 0.0,
           "region": "EMEA",
@@ -2745,26 +2408,26 @@
         "current_distinct_team_count": 0,
         "current_pick_count": 0,
         "current_pick_presence": 0.0,
-        "demand_velocity": -0.5,
+        "demand_velocity": -0.2,
         "most_divergent_region": "EMEA",
         "most_divergent_region_delta": 0.0,
-        "pick_presence_delta": -0.25,
-        "prior_demand": 0.5,
+        "pick_presence_delta": -0.111111,
+        "prior_demand": 0.2,
         "prior_distinct_team_count": 1,
         "prior_pick_count": 1,
-        "prior_pick_presence": 0.25,
+        "prior_pick_presence": 0.111111,
         "regional_divergence": 0.0,
         "team_concentration": null
       },
       "quality_flags": [
-        "INSUFFICIENT_PRIOR_MATCHES",
+        "INSUFFICIENT_RECENT_MATCHES",
         "LOW_CURRENT_PICK_COUNT"
       ],
-      "rank": 70,
+      "rank": 61,
       "region_presence": [
         {
           "delta_from_global": 0.0,
-          "match_count": 9,
+          "match_count": 4,
           "pick_count": 0,
           "pick_presence": 0.0,
           "region": "EMEA",
@@ -2772,25 +2435,386 @@
         }
       ],
       "role": "BOTTOM"
+    },
+    {
+      "champion_id": "Aatrox",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237013:pick:5",
+        "oe:AL:LOLTMNT05_237021:pick:6"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.2,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.222222,
+        "prior_demand": 0.2,
+        "prior_distinct_team_count": 1,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 62,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "TOP"
+    },
+    {
+      "champion_id": "Cassiopeia",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_238019:pick:10",
+        "oe:WLDs:LOLTMNT02_487406:pick:1"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.4,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.222222,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 63,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "MID"
+    },
+    {
+      "champion_id": "Ezreal",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237020:pick:1",
+        "oe:WLDs:LOLTMNT02_487406:pick:2"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.4,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.222222,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 64,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "BOTTOM"
+    },
+    {
+      "champion_id": "Jax",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237020:pick:10",
+        "oe:WLDs:LOLTMNT02_487408:pick:2"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.4,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.222222,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 65,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "TOP"
+    },
+    {
+      "champion_id": "Kalista",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237013:pick:8",
+        "oe:WLDs:LOLTMNT02_487405:pick:3"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.4,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.222222,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 66,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "BOTTOM"
+    },
+    {
+      "champion_id": "Olaf",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237021:pick:5",
+        "oe:WLDs:LOLTMNT02_487405:pick:5"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.4,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.222222,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 67,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "TOP"
+    },
+    {
+      "champion_id": "Qiyana",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:2",
+        "oe:AL:LOLTMNT05_237021:pick:1"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.4,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.222222,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 68,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "JUNGLE"
+    },
+    {
+      "champion_id": "Renata Glasc",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237013:pick:9",
+        "oe:WLDs:LOLTMNT02_487405:pick:2"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.4,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.222222,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 2,
+        "prior_pick_presence": 0.222222,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 69,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "SUPPORT"
+    },
+    {
+      "champion_id": "K'Sante",
+      "eligible_for_review": false,
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:3",
+        "oe:AL:LOLTMNT05_238019:pick:6",
+        "oe:WLDs:LOLTMNT02_487405:pick:7"
+      ],
+      "metrics": {
+        "current_demand": 0.0,
+        "current_distinct_team_count": 0,
+        "current_pick_count": 0,
+        "current_pick_presence": 0.0,
+        "demand_velocity": -0.4,
+        "most_divergent_region": "EMEA",
+        "most_divergent_region_delta": 0.0,
+        "pick_presence_delta": -0.333333,
+        "prior_demand": 0.4,
+        "prior_distinct_team_count": 2,
+        "prior_pick_count": 3,
+        "prior_pick_presence": 0.333333,
+        "regional_divergence": 0.0,
+        "team_concentration": null
+      },
+      "quality_flags": [
+        "INSUFFICIENT_RECENT_MATCHES",
+        "LOW_CURRENT_PICK_COUNT"
+      ],
+      "rank": 70,
+      "region_presence": [
+        {
+          "delta_from_global": 0.0,
+          "match_count": 4,
+          "pick_count": 0,
+          "pick_presence": 0.0,
+          "region": "EMEA",
+          "sample_eligible": true
+        }
+      ],
+      "role": "TOP"
     }
   ],
   "evidence_index": {
     "prior_match_ids": [
+      "oe:AL:LOLTMNT05_237012",
+      "oe:AL:LOLTMNT05_237013",
+      "oe:AL:LOLTMNT05_237020",
+      "oe:AL:LOLTMNT05_237021",
+      "oe:AL:LOLTMNT05_238019",
       "oe:WLDs:LOLTMNT02_487405",
       "oe:WLDs:LOLTMNT02_487406",
       "oe:WLDs:LOLTMNT02_487408",
       "oe:WLDs:LOLTMNT02_488489"
     ],
     "recent_match_ids": [
-      "oe:AL:LOLTMNT05_237012",
-      "oe:AL:LOLTMNT05_237013",
-      "oe:AL:LOLTMNT05_237020",
-      "oe:AL:LOLTMNT05_237021",
       "oe:AL:LOLTMNT05_237026",
       "oe:AL:LOLTMNT05_237027",
       "oe:AL:LOLTMNT05_237028",
-      "oe:AL:LOLTMNT05_237029",
-      "oe:AL:LOLTMNT05_238019"
+      "oe:AL:LOLTMNT05_237029"
     ],
     "source_versions": [
       {
@@ -2812,16 +2836,16 @@
   "history_status": {
     "aggregate": null,
     "archive": {
-      "active_cohort": 16,
-      "cohort_count": 16,
-      "collection_span_days": 93.028,
-      "last_retrieved_at": "2026-11-24T04:17:26.976788+00:00",
+      "active_cohort": 17,
+      "cohort_count": 17,
+      "collection_span_days": 95.877,
+      "last_retrieved_at": "2026-11-27T00:40:40.866521+00:00",
       "matured_cutoff_count": 24,
-      "retrieval_count": 28,
+      "retrieval_count": 29,
       "unique_normalized_state_count": 26
     },
     "artifact_type": "oe-history-status",
-    "as_of": "2026-11-24T04:17:26.976788+00:00",
+    "as_of": "2026-11-27T00:40:40.866521+00:00",
     "benchmark_ready": false,
     "blocking_reasons": [
       "RETRIEVAL_COUNT_BELOW_MINIMUM",
@@ -2831,36 +2855,36 @@
     ],
     "boundary": "Operational collection readiness only; not evidence that the Radar predicts adoption.",
     "collection": {
-      "collection_span_days": 1.168,
-      "first_retrieved_at": "2026-11-23T00:14:59.674945+00:00",
-      "last_retrieved_at": "2026-11-24T04:17:26.976788+00:00",
+      "collection_span_days": 0.0,
+      "first_retrieved_at": "2026-11-27T00:40:40.866521+00:00",
+      "last_retrieved_at": "2026-11-27T00:40:40.866521+00:00",
       "matured_cutoff_count": 0,
-      "retrieval_count": 2,
+      "retrieval_count": 1,
       "unique_normalized_state_count": 1
     },
     "continuity": {
-      "continuity_deadline_at": "2026-11-26T04:17:26.976788+00:00",
+      "continuity_deadline_at": "2026-11-29T00:40:40.866521+00:00",
       "maximum_gap_hours": 48,
-      "next_collection_due_at": "2026-11-25T04:17:26.976788+00:00",
+      "next_collection_due_at": "2026-11-28T00:40:40.866521+00:00",
       "status": "ON_TRACK"
     },
     "forecast": {
       "assumption": "UNINTERRUPTED_DAILY_COLLECTION_WITH_REQUIRED_DISTINCT_STATES",
-      "continuity_deadline_at": "2026-11-26T04:17:26.976788+00:00",
-      "earliest_possible_ready_at": "2026-12-07T00:14:59.674945+00:00",
+      "continuity_deadline_at": "2026-11-29T00:40:40.866521+00:00",
+      "earliest_possible_ready_at": "2026-12-11T00:40:40.866521+00:00",
       "guaranteed": false,
-      "next_collection_due_at": "2026-11-25T04:17:26.976788+00:00",
+      "next_collection_due_at": "2026-11-28T00:40:40.866521+00:00",
       "remaining": {
-        "collection_span_days": 12.832,
+        "collection_span_days": 14.0,
         "matured_cutoffs": 2,
-        "retrievals": 12,
+        "retrievals": 13,
         "unique_states": 2
       }
     },
-    "gate_progress_percent": 14,
+    "gate_progress_percent": 10,
     "gates": [
       {
-        "current": 2,
+        "current": 1,
         "id": "RETRIEVALS",
         "passed": false,
         "required": 14,
@@ -2874,7 +2898,7 @@
         "unit": "states"
       },
       {
-        "current": 1.168,
+        "current": 0.0,
         "id": "COLLECTION_SPAN",
         "passed": false,
         "required": 14,
@@ -3967,7 +3991,7 @@
         }
       ],
       "rejected_game_count": 652,
-      "retrieved_at": "2026-11-24T04:17:26.976788+00:00",
+      "retrieved_at": "2026-11-27T00:40:40.866521+00:00",
       "row_count": 119412,
       "source_id": "oracles-elixir-match-data",
       "source_timezone": "UTC",
@@ -4025,7 +4049,7 @@
       ],
       "top_champions": 5
     },
-    "cutoff": "2026-11-24T04:17:26.976788+00:00",
+    "cutoff": "2026-11-27T00:40:40.866521+00:00",
     "evidence_index": {
       "source_versions": [
         {
@@ -37132,7 +37156,7 @@
         ]
       }
     ],
-    "cutoff": "2026-11-24T04:17:26.976788+00:00",
+    "cutoff": "2026-11-27T00:40:40.866521+00:00",
     "match_count": 283,
     "patch_id": "16.20"
   },
@@ -38002,7 +38026,7 @@
       }
     ],
     "ready_for_radar": true,
-    "retrieved_at": "2026-11-24T04:17:26.976788+00:00",
+    "retrieved_at": "2026-11-27T00:40:40.866521+00:00",
     "schema_version": "2",
     "selected_patch": {
       "distinct_team_count": 46,
@@ -38095,18 +38119,18 @@
   },
   "windows": {
     "prior": {
-      "active_team_count": 2,
+      "active_team_count": 5,
       "days": 7,
-      "end_inclusive": "2026-11-17T04:17:26.976788+00:00",
-      "match_count": 4,
-      "start_exclusive": "2026-11-10T04:17:26.976788+00:00"
+      "end_inclusive": "2026-11-20T00:40:40.866521+00:00",
+      "match_count": 9,
+      "start_exclusive": "2026-11-13T00:40:40.866521+00:00"
     },
     "recent": {
-      "active_team_count": 3,
+      "active_team_count": 2,
       "days": 7,
-      "end_inclusive": "2026-11-24T04:17:26.976788+00:00",
-      "match_count": 9,
-      "start_exclusive": "2026-11-17T04:17:26.976788+00:00"
+      "end_inclusive": "2026-11-27T00:40:40.866521+00:00",
+      "match_count": 4,
+      "start_exclusive": "2026-11-20T00:40:40.866521+00:00"
     }
   }
 }
