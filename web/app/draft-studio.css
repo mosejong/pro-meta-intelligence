@@ -444,3 +444,14 @@ main.draft-lab.draft-studio .draft-pick-change p { margin: 0; }
 main.draft-lab.draft-studio .draft-pick-change div { display: flex; flex-wrap: wrap; gap: 8px; }
 main.draft-lab.draft-studio .draft-pick-change button { min-height: 40px; padding: 6px 12px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-panel); color: var(--studio-text); cursor: pointer; }
 main.draft-lab.draft-studio .draft-result-picks .draft-result-change-pick { flex: 0 0 auto; margin-left: auto; min-height: 32px; padding: 2px 10px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-panel); color: var(--studio-text); font-size: 12px; cursor: pointer; vertical-align: middle; }
+
+/* The footer notice used the studio paragraph size (13px), so the legal line took ~5 rows on phones.
+   Keep it readable but compact: the notice is fine print, not content. */
+main.draft-lab.draft-studio footer.studio-preview-footer > p { font-size: 11px; line-height: 1.5; }
+main.draft-lab.draft-studio footer.studio-preview-footer .tester-feedback-open { margin: 2px 0 8px; }
+
+/* Below 1100px the tab rail is pinned to the top; scrolling the board into view (phone start, pick change)
+   must leave its first row visible instead of under the rail. */
+@media (max-width: 1099px) {
+  main.draft-lab.draft-studio .draft-control-room { scroll-margin-top: 56px; }
+}
