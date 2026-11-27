@@ -158,7 +158,7 @@ def test_hosted_oe_collector_restores_private_state_and_publishes_only_safe_head
     ):
         assert private not in publish
 
-    assert 'cron: "13 7,19 * * *"' in workflow
+    assert 'cron: "13 1,7,13,19 * * *"' in workflow
     assert 'cron: "13 7 * * *"' not in workflow
     assert "SourceAttemptLedger" in (ROOT / "src/pro_meta_intelligence/cli.py").read_text(
         encoding="utf-8"
