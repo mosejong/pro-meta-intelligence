@@ -9,9 +9,21 @@ import type { DraftPositionRecord } from "./draft-position-session";
 import type { OpponentTeam, RadarReport } from "./radar-types";
 import "./solo-draft.css";
 const roleName: Record<string, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", ADC: "바텀", SUPPORT: "서포터" };
-export function DraftResultPanel({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, nameOf, onReplay, onNext, disabled, autoReveal = false, positionRecord, onOpenSimulation }: {
+/** Native share sheet when available (phones), otherwise copy the link. Returns the status line to show. */
+export async function shareDraftLink(url: string, title: string, nav: Partial<Pick<Navigator, "share" | "clipboard">> = globalThis.navigator ?? {}): Promise<string | null> {
+  if (typeof nav.share === "function") {
+    try { await nav.share({ title, text: title, url }); return null; }
+    catch (error) { if (error instanceof Error && error.name === "AbortError") return null; }
+  }
+  try { await nav.clipboard?.writeText(url); if (nav.clipboard) return "밴픽 링크를 복사했어요. 카톡·디스코드에 붙여넣어 보내세요."; } catch { /* fall through */ }
+  return "이 브라우저에서는 공유할 수 없어요. 아래 '친구와 밴픽'에서 링크를 직접 복사해 주세요.";
+}
+
+export function DraftResultPanel({ report, blueTeam, redTeam, selections, previousPicks, firstPickSide, nameOf, onReplay, onNext, disabled, autoReveal = false, positionRecord, onOpenSimulation, shareUrl }: {
   report: RadarReport; blueTeam: OpponentTeam | null; redTeam: OpponentTeam | null; selections: DraftSelection[]; previousPicks: string[]; firstPickSide: DraftSide;
   nameOf: (id: string) => string; onReplay: () => void; onNext: () => void; disabled: boolean; autoReveal?: boolean;
+  /** Builds the shareable draft link; omitted (or null) hides the share button. */
+  shareUrl?: () => string | null;
   /** Optional explicit position work; omitted keeps the legacy image. Only used for the PNG, re-validated there. */
   positionRecord?: DraftPositionRecord | null;
   /** Optional navigation only: opens the existing simulation input gate. Omitted (e.g. room mode) hides the button. Never runs a simulation. */
@@ -50,7 +62,7 @@ export function DraftResultPanel({ report, blueTeam, redTeam, selections, previo
   return <section ref={root} id="draft-result" className="draft-result" lang="ko" aria-label="이번 밴픽 리포트">
     <header><div><small>밴픽 완료</small><h2>이번 선택으로 무엇을 가져왔을까?</h2></div><span>패치 {report.patch_id}</span></header>
     {/* Next actions first: on phones the report below is about two screens tall. */}
-    <div className="draft-result-actions"><button type="button" disabled={disabled} onClick={onReplay}>같은 팀으로 다시 도전</button><button type="button" disabled={disabled} onClick={onNext}>피어리스 다음 세트</button><button type="button" disabled={disabled || imageBusy} aria-busy={imageBusy} onClick={() => { void saveImage(); }}>{imageBusy ? "이미지 만드는 중…" : "밴픽 결과 이미지 저장"}</button>{onOpenSimulation ? <button type="button" className="draft-result-simulation" disabled={disabled} onClick={onOpenSimulation}>가정 시뮬레이션 준비</button> : null}</div>
+    <div className="draft-result-actions">{shareUrl ? <button type="button" className="draft-result-share" disabled={disabled} onClick={() => { const url = shareUrl(); if (!url) { setImageMessage("지금은 공유 링크를 만들 수 없어요. 잠시 후 다시 시도해 주세요."); return; } void shareDraftLink(url, `${blueTeam?.team_name ?? "블루"} vs ${redTeam?.team_name ?? "레드"} 모의 밴픽`).then(msg => { if (msg) setImageMessage(msg); }); }}>친구에게 공유</button> : null}<button type="button" disabled={disabled} onClick={onReplay}>같은 팀으로 다시 도전</button><button type="button" disabled={disabled} onClick={onNext}>피어리스 다음 세트</button><button type="button" disabled={disabled || imageBusy} aria-busy={imageBusy} onClick={() => { void saveImage(); }}>{imageBusy ? "이미지 만드는 중…" : "밴픽 결과 이미지 저장"}</button>{onOpenSimulation ? <button type="button" className="draft-result-simulation" disabled={disabled} onClick={onOpenSimulation}>가정 시뮬레이션 준비</button> : null}</div>
     {imageMessage ? <p className="draft-result-image-status" role="status">{imageMessage}</p> : null}
     <p>양 팀의 공개 픽 기록과 이번 밴픽을 대조했어요. 다음 판에서 열어줄 카드와 먼저 가져올 카드를 바꿔 보세요.</p>
     <div className="draft-result-teams">{result.sides.map(team => <article key={team.side} className={team.side.toLowerCase()}>

@@ -31,3 +31,20 @@ test("a shared draft preview lists each side's bans and picks by name", async ()
     assert.equal(sharedSideSummary({ selections: [] }, "RED", nameOf), "아직 없음");
   } finally { await vite.close(); }
 });
+
+test("result sharing uses the native share sheet, then the clipboard, then explains", async () => {
+  const vite = await createServer({ root: fileURLToPath(new URL("../", import.meta.url)), configFile: false, publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+  try {
+    const { shareDraftLink } = await vite.ssrLoadModule("/app/draft-result-panel.tsx");
+    const shared = [];
+    assert.equal(await shareDraftLink("https://x/#draft=a", "A vs B", { share: async (d) => { shared.push(d); } }), null);
+    assert.deepEqual(shared, [{ title: "A vs B", text: "A vs B", url: "https://x/#draft=a" }]);
+    const abort = Object.assign(new Error("x"), { name: "AbortError" });
+    assert.equal(await shareDraftLink("u", "t", { share: async () => { throw abort; } }), null, "cancelling the sheet is silent");
+    const copied = [];
+    assert.match(await shareDraftLink("u", "t", { clipboard: { writeText: async (v) => { copied.push(v); } } }), /복사했어요/);
+    assert.deepEqual(copied, ["u"]);
+    assert.match(await shareDraftLink("u", "t", {}), /직접 복사/);
+    assert.match(await shareDraftLink("u", "t", { clipboard: { writeText: async () => { throw new Error("denied"); } } }), /직접 복사/);
+  } finally { await vite.close(); }
+});
