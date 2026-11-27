@@ -68,7 +68,7 @@ def test_history_only_input_is_manual_boolean_default_false_and_adds_no_schedule
     assert "default: false" in history
     assert "type: boolean" in history
     assert WORKFLOW.count("cron:") == 1
-    assert 'cron: "13 7,19 * * *"' in WORKFLOW
+    assert 'cron: "13 1,7,13,19 * * *"' in WORKFLOW
     # Scheduled runs carry no inputs, so history mode can only come from a manual dispatch.
     assert (
         "HISTORY_ONLY: ${{ github.event_name == 'workflow_dispatch' && "
