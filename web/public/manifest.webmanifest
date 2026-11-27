@@ -1,0 +1,16 @@
+{
+  "name": "Pro Meta Intelligence · 모의 밴픽",
+  "short_name": "모의 밴픽",
+  "description": "프로 팀을 골라 5밴 5픽을 혼자 또는 친구와 연습해 보세요.",
+  "lang": "ko",
+  "start_url": "/pro-meta-intelligence/",
+  "scope": "/pro-meta-intelligence/",
+  "display": "standalone",
+  "background_color": "#111214",
+  "theme_color": "#111214",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
