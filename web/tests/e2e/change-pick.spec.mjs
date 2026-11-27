@@ -149,3 +149,31 @@ test("픽을 바꾸는 중에 보관함 연습을 불러오면 바꾸기 안내�
   await expect.poll(() => pickNames(page, "blue")).toEqual(saved);
   await expect(banner(page)).toHaveCount(0);
 });
+
+test("픽을 바꾸는 중에는 팀을 바꿀 수 없고, 세트를 초기화해 팀을 바꿨다 되돌리면 이전 바꾸기 안내가 살아나지 않는다", async ({ page }) => {
+  await page.goto(root); await soloBlue(page); await complete(page);
+  await result(page).locator(".draft-result-teams > .blue .draft-result-change-pick").first().click();
+  await expect(banner(page)).toBeVisible();
+  const back = page.getByRole("button", { name: "팀 선택으로", exact: true });
+  const blueTrigger = page.locator(".draft-flow-setup .team-chooser-trigger").first();
+  // Setup keeps the board: the team choosers are locked while work is in progress.
+  await back.click();
+  await expect(blueTrigger).toBeDisabled();
+  const blueTeam = await blueTrigger.locator("strong").textContent();
+  await page.locator(".draft-flow-setup").getByRole("button", { name: /^밴픽 (시작|이어가기)$/ }).click();
+  await expect(banner(page)).toBeVisible();
+  // Changing teams requires a reset, which ends the pick change for good (also after switching back).
+  await page.getByRole("button", { name: "현재 세트 초기화", exact: true }).click();
+  await page.getByRole("dialog", { name: "현재 세트를 초기화할까요?", exact: true }).getByRole("button", { name: "초기화", exact: true }).click();
+  await expect(banner(page)).toHaveCount(0);
+  await back.click();
+  const swap = page.locator(".draft-flow-setup .draft-match-setup > button");
+  await expect(swap).toBeEnabled();
+  await swap.click();
+  await swap.click();
+  await expect(blueTrigger.locator("strong")).toHaveText(blueTeam);
+  await page.locator(".draft-flow-setup").getByRole("button", { name: /^밴픽 (시작|이어가기)$/ }).click();
+  await expect(progress(page)).toHaveAttribute("value", "0");
+  await expect(banner(page)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "원래 밴픽으로 돌아가기" })).toHaveCount(0);
+});
