@@ -1049,7 +1049,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     </section>}
     {/* Secondary management, always mounted (never collapsed): incoming share/room previews scroll and focus themselves. */}
     <section className="draft-series draft-series-management" aria-label="밴픽 관리·공유" lang={lang.ui}>
-      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={next => { setRoom(next); if (next.active) { restoreGeneration.current += 1; setPickChange(null); setStep("DRAFT"); setSoloEnabled(false); setSetupChoice(null); setLastAuto(null); setAutoHistory([]); setRestoredNotes([]); setPositionState({ context: "", roles: {} }); } }} onSnapshot={(session, reset) => {
+      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={next => { setRoom(next); if (next.active) { restoreGeneration.current += 1; setStep("DRAFT"); setSoloEnabled(false); setSetupChoice(null); setLastAuto(null); setAutoHistory([]); setRestoredNotes([]); setPositionState({ context: "", roles: {} }); setPickChange(null); } }} onSnapshot={(session, reset) => {
         restoreGeneration.current += 1;
         if (reset) setComparisonEpoch(epoch => epoch + 1);
         setSeriesReport(session.report); setBlueTeamId(session.blueTeamId); setRedTeamId(session.redTeamId);
