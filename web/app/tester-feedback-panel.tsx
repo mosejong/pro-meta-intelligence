@@ -146,12 +146,12 @@ export function TesterFeedbackPanel({ context: appContext, prompt }: { context: 
 
   return <>
     {prompt
-      ? <p className="tester-feedback-prompt"><span>{prompt}</span><button type="button" className="tester-feedback-open" onClick={openForm} aria-haspopup="dialog">테스트 의견 남기기</button></p>
-      : <button type="button" className="tester-feedback-open" onClick={openForm} aria-haspopup="dialog">테스트 의견 남기기</button>}
+      ? <p className="tester-feedback-prompt"><span>{prompt}</span><button type="button" className="tester-feedback-open" onClick={openForm} aria-haspopup="dialog">의견 보내기</button></p>
+      : <button type="button" className="tester-feedback-open" onClick={openForm} aria-haspopup="dialog">의견 보내기</button>}
     <dialog ref={dialog} className="tester-feedback-dialog" aria-labelledby={titleId} aria-describedby={introId}
       onClose={() => setOpen(false)} lang="ko">
       <header>
-        <h2 id={titleId}>테스트 의견 남기기</h2>
+        <h2 id={titleId}>의견 보내기</h2>
         <button type="button" onClick={() => setOpen(false)} aria-label="의견 창 닫기">닫기</button>
       </header>
       <p id={introId}>써보면서 막히거나 헷갈린 곳이 가장 큰 도움이 돼요. 답하고 싶은 것만 고르면 됩니다.

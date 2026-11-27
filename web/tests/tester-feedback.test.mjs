@@ -111,7 +111,7 @@ test("context lines clamp counts and clean basis strings", () => {
 
 test("server render shows only the entry button; the form mounts on open", () => {
   const html = renderToStaticMarkup(createElement(panel.TesterFeedbackPanel, { context: { ...CONTEXT, viewportWidth: undefined } }));
-  assert.match(html, /테스트 의견 남기기<\/button>/);
+  assert.match(html, /의견 보내기<\/button>/);
   assert.match(html, /<dialog[^>]*class="tester-feedback-dialog"/);
   assert.ok(!/<dialog[^>]* open/.test(html), "dialog starts closed");
   assert.ok(!html.includes("<form"), "no form markup before open");

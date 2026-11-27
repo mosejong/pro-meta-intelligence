@@ -13,8 +13,8 @@ test("tester feedback: answer, keep across reload, copy readable text, save .txt
   await page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ }).click();
   await expect(page.locator(".draft-turn-progress")).toHaveAttribute("value", "1");
 
-  await page.getByRole("button", { name: "테스트 의견 남기기", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "테스트 의견 남기기" });
+  await page.getByRole("button", { name: "의견 보내기", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "의견 보내기" });
   await expect(dialog).toBeVisible();
   const copy = dialog.getByRole("button", { name: "의견 복사", exact: true });
   await expect(copy).toBeDisabled();
@@ -37,7 +37,7 @@ test("tester feedback: answer, keep across reload, copy readable text, save .txt
   expect(stored).not.toContain("16.");
   await page.reload();
   await enterDraftForReview(page);
-  await page.getByRole("button", { name: "테스트 의견 남기기", exact: true }).click();
+  await page.getByRole("button", { name: "의견 보내기", exact: true }).click();
   await expect(dialog.getByLabel("휴대폰")).toBeChecked();
   await expect(dialog.getByLabel("딱 하나만 고친다면 무엇인가요?")).toHaveValue("저장 위치 안내\n연락은 010-1234-5678");
 
@@ -84,8 +84,8 @@ test("tester feedback works when browser storage is blocked", async ({ page }) =
   });
   await page.goto("/pro-meta-intelligence/");
   await enterDraftForReview(page);
-  await page.getByRole("button", { name: "테스트 의견 남기기", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "테스트 의견 남기기" });
+  await page.getByRole("button", { name: "의견 보내기", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "의견 보내기" });
   await dialog.getByRole("group", { name: "다시 써볼 생각이 있나요?" }).getByLabel("또 써볼 것 같다").check();
   await expect(dialog.getByText("작성 내용을 임시 보관할 수 없어요", { exact: false })).toBeVisible();
   await expect(dialog.getByRole("button", { name: "의견 복사", exact: true })).toBeEnabled();
@@ -101,19 +101,19 @@ test("a finished set offers feedback; both entry points share one local draft", 
     await page.locator(".draft-lock-in").getByRole("button", { name: /^(밴|픽) 확정$/ }).click();
   }
   await expect(prompt).toContainText("한 세트 끝! 써보니 어땠나요?");
-  await prompt.getByRole("button", { name: "테스트 의견 남기기" }).click();
-  const first = page.getByRole("dialog", { name: "테스트 의견 남기기" });
+  await prompt.getByRole("button", { name: "의견 보내기" }).click();
+  const first = page.getByRole("dialog", { name: "의견 보내기" });
   await expect(first).toHaveCount(1);
   await first.getByLabel("바로 알았다").check();
   await expect(first.getByRole("list", { name: "함께 붙는 화면 상태" })).toContainText("현재 세트 20/20 차례");
   await first.getByRole("button", { name: "의견 창 닫기" }).click();
 
-  await page.locator("footer.studio-preview-footer").getByRole("button", { name: "테스트 의견 남기기" }).click();
-  const second = page.getByRole("dialog", { name: "테스트 의견 남기기" });
+  await page.locator("footer.studio-preview-footer").getByRole("button", { name: "의견 보내기" }).click();
+  const second = page.getByRole("dialog", { name: "의견 보내기" });
   await expect(second.getByLabel("바로 알았다")).toBeChecked();
   await second.getByLabel("상황 따라").check();
   await page.keyboard.press("Escape");
 
-  await prompt.getByRole("button", { name: "테스트 의견 남기기" }).click();
-  await expect(page.getByRole("dialog", { name: "테스트 의견 남기기" }).getByLabel("상황 따라")).toBeChecked();
+  await prompt.getByRole("button", { name: "의견 보내기" }).click();
+  await expect(page.getByRole("dialog", { name: "의견 보내기" }).getByLabel("상황 따라")).toBeChecked();
 });

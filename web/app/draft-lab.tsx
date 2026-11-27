@@ -1094,8 +1094,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <p id="draft-reset-description">{pendingReset === "SERIES" ? t("draft.reset.seriesBody") : t("draft.reset.gameBody")}</p>
       <div><button ref={cancelReset} type="button" onClick={() => setPendingReset(null)}>{t("draft.reset.cancel")}</button><button type="button" onClick={() => { if (pendingReset === "SERIES") resetSeries(); else if (pendingReset === "GAME") resetDraft(); setPendingReset(null); }}>{t("draft.reset.confirm")}</button></div>
     </dialog>
-    <footer className="studio-preview-footer" aria-label="테스트판과 Riot Games 비제휴 고지">
-      <p>한국어 테스트판 · 구단은 이 브라우저에 저장됩니다. 실제 경기 승률과 완성된 경기 시뮬레이션은 제공하지 않습니다.</p>
+    <footer className="studio-preview-footer" aria-label="저장 안내와 Riot Games 비제휴 고지">
+      <p>구단·연습 기록은 이 브라우저에만 저장됩니다. 공개 경기 기록을 보여줄 뿐, 경기 결과나 승률을 예측하지 않습니다.</p>
       <TesterFeedbackPanel context={feedbackContext} />
       <p>Pro Meta Intelligence isn&apos;t endorsed by Riot Games and doesn&apos;t reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</p>
     </footer>
