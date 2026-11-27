@@ -91,3 +91,61 @@ test("바꾼 밴픽을 그대로 두면 안내가 사라지고 새로고침 후�
   await expect(progress(page)).toHaveAttribute("value", "20");
   expect(await pickNames(page, "blue")).toEqual(changedBlue);
 });
+
+// Review (#164 P1): a pick change belongs to its own board. Replacing the board must drop the backup so
+// "원래 밴픽으로 돌아가기" can never overwrite a draft that was loaded afterwards.
+async function soloBlue(page) {
+  await enterDraftWorkspace(page);
+  await enterDraftForReview(page);
+  await solo(page).getByLabel("내 진영", { exact: true }).selectOption("BLUE");
+  await solo(page).getByRole("checkbox", { name: "상대 자동 밴픽", exact: true }).check();
+}
+
+test("픽을 바꾸는 중에 같은 팀의 다른 공유 밴픽을 불러오면 바꾸기 안내와 원래 밴픽 백업이 사라진다", async ({ browser }) => {
+  // Draft B in its own browser context; its link is read from the copy field.
+  const other = await browser.newContext();
+  await other.addInitScript(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async v => { window.__link = v; } } }));
+  const b = await other.newPage();
+  await b.goto(root); await soloBlue(b); await complete(b, 7);
+  const draftB = await pickNames(b, "blue");
+  await b.getByRole("button", { name: "밴픽 링크 복사", exact: true }).click();
+  await expect.poll(() => b.evaluate(() => window.__link ?? "")).toMatch(/#draft=/);
+  const link = await b.evaluate(() => window.__link);
+  await other.close();
+
+  const page = await browser.newPage();
+  await page.goto(root); await soloBlue(page); await complete(page);
+  const draftA = await pickNames(page, "blue");
+  expect(draftA).not.toEqual(draftB);
+  await result(page).locator(".draft-result-teams > .blue .draft-result-change-pick").nth(1).click();
+  await expect(banner(page)).toBeVisible();
+
+  await page.evaluate(h => { location.hash = new URL(h).hash; }, link);
+  await page.getByRole("region", { name: "공유 밴픽 미리보기", exact: true }).getByRole("button", { name: "이 밴픽 불러오기", exact: true }).click();
+  await expect(progress(page)).toHaveAttribute("value", "20");
+  expect(await pickNames(page, "blue")).toEqual(draftB);
+  await expect(banner(page)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "원래 밴픽으로 돌아가기" })).toHaveCount(0);
+  await page.close();
+});
+
+test("픽을 바꾸는 중에 보관함 연습을 불러오면 바꾸기 안내가 사라지고 불러온 밴픽이 유지된다", async ({ page }) => {
+  await page.goto(root); await soloBlue(page); await complete(page, 5);
+  const saved = await pickNames(page, "blue");
+  const library = page.locator("details.draft-practice-library");
+  await library.locator("summary").click();
+  await library.getByLabel("연습 이름", { exact: true }).fill("바꾸기 전 저장");
+  await library.getByRole("button", { name: "이 연습 저장", exact: true }).click();
+  await expect(library.getByRole("button", { name: "바꾸기 전 저장 열기", exact: true })).toBeEnabled();
+
+  await result(page).locator(".draft-result-teams > .blue .draft-result-change-pick").first().click();
+  await expect(banner(page)).toBeVisible();
+  await complete(page, 1);
+  expect(await pickNames(page, "blue")).not.toEqual(saved);
+  await expect(banner(page)).toContainText("바꾼 밴픽이에요");
+
+  await library.getByRole("button", { name: "바꾸기 전 저장 열기", exact: true }).click();
+  await library.getByRole("alertdialog").getByRole("button", { name: "바꾸기", exact: true }).click();
+  await expect.poll(() => pickNames(page, "blue")).toEqual(saved);
+  await expect(banner(page)).toHaveCount(0);
+});

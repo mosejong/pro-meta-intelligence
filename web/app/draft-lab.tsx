@@ -118,6 +118,16 @@ type ImportStatus =
 
 // Key builders kept outside components; each return is checked against the dictionary keys.
 const sideKey = (side: DraftSide): MessageKey => `draft.side.${side}`;
+/** The first `count` turns of both boards are the same confirmed choices (a pick change only applies to its own board). */
+function samePrefix(current: DraftSelection[], backup: DraftSelection[], count: number) {
+  if (current.length < count || backup.length < count) return false;
+  for (let i = 0; i < count; i++) {
+    const a = current[i], b = backup[i];
+    if (a.turn !== b.turn || a.side !== b.side || a.kind !== b.kind || a.champion_id !== b.champion_id) return false;
+  }
+  return true;
+}
+
 type PickChange = {
   turn: number; champion_id: string; side: DraftSide; blueTeamId: string; redTeamId: string; gameCount: number;
   backup: { selections: DraftSelection[]; positionState: { context: string; roles: RoleAssignments; unassigned?: Record<string, string[]> }; autoHistory: SoloAutoHistory; lastAuto: SoloAutoRecord | null };
@@ -376,7 +386,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   if (prunedHistory !== autoHistory && (prunedHistory.length || autoHistory.length)) setAutoHistory(prunedHistory);
   // A pick change belongs to the board it was made on: another team pair, set or a friend room ends it.
   const activePickChange = pickChange && !room.active && pickChange.blueTeamId === blueTeamId && pickChange.redTeamId === redTeamId
-    && pickChange.gameCount === games.length ? pickChange : null;
+    && pickChange.gameCount === games.length && samePrefix(selections, pickChange.backup.selections, pickChange.turn - 1) ? pickChange : null;
   const changedTo = activePickChange ? selections.find(item => item.turn === activePickChange.turn)?.champion_id ?? null : null;
   if (lastAuto && !soloAutoRecordMatches(lastAuto, selections, autoContext)) setLastAuto(null);
   useEffect(() => {
@@ -430,6 +440,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     setRedTeamId(session.redTeamId);
     setGames(session.games);
     setSelections(session.selections);
+    // A replaced board never inherits an in-progress pick change (its backup belongs to the old board).
+    setPickChange(null);
     setFirstPickSide(session.firstPickSide);
     setPendingChampion(session.stagedChampion);
     setInspected(null);
@@ -521,6 +533,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       setBlueTeamId(nextBlue?.team_id ?? "");
       setRedTeamId(nextRed?.team_id ?? "");
       setSelections([]);
+      setPickChange(null);
       setPendingChampion(null);
       setTimer(30);
       setTimerRunning(false);
@@ -649,6 +662,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     // Same series lock as a first manual choice: the displayed report becomes the fixed series report.
     if (!seriesReport) setSeriesReport(structuredClone(report));
     setSelections(example.selections);
+    setPickChange(null);
     setPositionState({ context: positionContext, unassigned: {}, roles: Object.fromEntries(Object.entries(example.roles).map(([id, roles]) => [id, { ...roles }])) });
     setPendingChampion(null);
     setInspected(null);
@@ -1035,11 +1049,11 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     </section>}
     {/* Secondary management, always mounted (never collapsed): incoming share/room previews scroll and focus themselves. */}
     <section className="draft-series draft-series-management" aria-label="밴픽 관리·공유" lang={lang.ui}>
-      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={next => { setRoom(next); if (next.active) { restoreGeneration.current += 1; setStep("DRAFT"); setSoloEnabled(false); setSetupChoice(null); setLastAuto(null); setAutoHistory([]); setRestoredNotes([]); setPositionState({ context: "", roles: {} }); } }} onSnapshot={(session, reset) => {
+      <DraftRoomPanel outgoing={shareSession} liveReport={liveReport} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onRoomChange={next => { setRoom(next); if (next.active) { restoreGeneration.current += 1; setPickChange(null); setStep("DRAFT"); setSoloEnabled(false); setSetupChoice(null); setLastAuto(null); setAutoHistory([]); setRestoredNotes([]); setPositionState({ context: "", roles: {} }); } }} onSnapshot={(session, reset) => {
         restoreGeneration.current += 1;
         if (reset) setComparisonEpoch(epoch => epoch + 1);
         setSeriesReport(session.report); setBlueTeamId(session.blueTeamId); setRedTeamId(session.redTeamId);
-        setGames(session.games); setSelections(session.selections); setFirstPickSide(session.firstPickSide);
+        setGames(session.games); setSelections(session.selections); setFirstPickSide(session.firstPickSide); setPickChange(null);
         setPendingChampion(null); setInspected(null); setQuery(""); setTimer(30); setTimerRunning(false); setPendingReset(null);
         setStep("DRAFT");
       }} />
