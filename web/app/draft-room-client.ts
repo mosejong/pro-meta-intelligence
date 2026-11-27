@@ -14,6 +14,17 @@ class RoomRequestError extends Error {
   }
   get terminal() { return [401, 404, 410].includes(this.status); }
 }
+/**
+ * A room is pinned to the public report it was created with. Within the same patch the site's report may
+ * be refreshed (newer cutoff) and the room keeps going on its own cutoff; another patch can no longer be
+ * validated here, so it ends the room view with an explanation instead of retrying forever.
+ */
+export class RoomPatchMismatchError extends Error {
+  readonly terminal = true;
+  constructor(public roomPatch: string, public sitePatch: string) {
+    super(`이 방은 패치 ${roomPatch} 자료로 만들어졌고, 지금 사이트는 패치 ${sitePatch} 자료예요. 패치가 달라 이 화면에서는 참여할 수 없어요. 혼자 연습으로 돌아가 새 방을 만들어 주세요.`);
+  }
+}
 const invalid = () => new Error("방 정보를 확인할 수 없습니다. 초대 링크와 현재 자료를 확인해 주세요.");
 const record = (x: unknown): x is Record<string, unknown> => !!x && typeof x === "object" && !Array.isArray(x);
 const encode = (x: unknown) => btoa(JSON.stringify(x)).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
@@ -32,7 +43,8 @@ export function createRoomUrl(href: string, id: string, kind?: "invite" | "view"
   const url = new URL(href); url.search = ""; url.hash = "room=" + encode({ v: 1, id, ...(kind ? { [kind]: key } : {}) }); return url.href;
 }
 export function validateRoomSnapshot(value: unknown, report: RadarReport): { snapshot: RoomSnapshot; session: DraftSession } {
-  if (!record(value) || typeof value.id !== "string" || !idPattern.test(value.id) || !Number.isSafeInteger(value.revision) || (value.revision as number) < 0 || value.patch_id !== report.patch_id || value.cutoff !== report.cutoff || value.model_version !== DRAFT_MODEL_VERSION || !record(value.seats) || value.seats.BLUE !== true || typeof value.seats.RED !== "boolean" || Object.keys(value.seats).some(k => k !== "BLUE" && k !== "RED") || !["WAITING", "DRAFTING", "COMPLETE"].includes(String(value.status)) || typeof value.expiresAt !== "string" || !Number.isFinite(Date.parse(value.expiresAt)) || !Array.isArray(value.selections) || !Array.isArray(value.games) || value.games.length > 99 || !["BLUE", "RED"].includes(String(value.firstPickSide))) throw invalid();
+  if (!record(value) || typeof value.id !== "string" || !idPattern.test(value.id) || !Number.isSafeInteger(value.revision) || (value.revision as number) < 0 || typeof value.patch_id !== "string" || typeof value.cutoff !== "string" || !Number.isFinite(Date.parse(value.cutoff)) || value.model_version !== DRAFT_MODEL_VERSION || !record(value.seats) || value.seats.BLUE !== true || typeof value.seats.RED !== "boolean" || Object.keys(value.seats).some(k => k !== "BLUE" && k !== "RED") || !["WAITING", "DRAFTING", "COMPLETE"].includes(String(value.status)) || typeof value.expiresAt !== "string" || !Number.isFinite(Date.parse(value.expiresAt)) || !Array.isArray(value.selections) || !Array.isArray(value.games) || value.games.length > 99 || !["BLUE", "RED"].includes(String(value.firstPickSide))) throw invalid();
+  if (value.patch_id !== report.patch_id) throw new RoomPatchMismatchError(value.patch_id as string, report.patch_id);
   const allowed = ["id", "revision", "patch_id", "cutoff", "model_version", "blueTeamId", "redTeamId", "firstPickSide", "selections", "games", "seats", "status", "expiresAt"];
   if (Object.keys(value).some(k => !allowed.includes(k))) throw invalid();
   const snapshot = value as RoomSnapshot;
@@ -130,7 +142,7 @@ export class DraftRoomClient {
       this.accept(data.snapshot, credential.id, true); this.credential = credential; this.store.set(credential);
       this.update({ role: credential.role, sending: false, warning: this.store.warning, invite: typeof data.invite === "string" ? data.invite : undefined, view: typeof data.view === "string" ? data.view : undefined, message: "" });
       void this.listen(generation, credential);
-    } catch { if (generation === this.generation) this.update({ sending: false, connected: false, message: "방에 참여하지 못했습니다. 링크와 현재 자료를 확인해 주세요." }); }
+    } catch (error) { if (generation === this.generation) this.update({ sending: false, connected: false, message: error instanceof RoomPatchMismatchError ? error.message : "방에 참여하지 못했습니다. 링크와 현재 자료를 확인해 주세요." }); }
   }
   private async listen(generation: number, credential: Credential) {
     let attempt = 0; const signal = this.controller.signal;
@@ -152,7 +164,7 @@ export class DraftRoomClient {
         });
       } catch (error) {
         if (generation !== this.generation || signal.aborted) return;
-        if (error instanceof RoomRequestError && error.terminal) {
+        if ((error instanceof RoomRequestError && error.terminal) || error instanceof RoomPatchMismatchError) {
           this.controller.abort(); this.update({ connected: false, sending: false, ended: true, message: error.message }); return;
         }
       }

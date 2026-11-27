@@ -6,12 +6,42 @@ import type { DraftSession } from "./draft-session";
 import type { RadarReport } from "./radar-types";
 import "./draft-room-panel.css";
 
+/** "11/27 09:40" in Korea time, the audience's clock. */
+export function roomCutoffLabel(cutoff: string): string {
+  const time = Date.parse(cutoff);
+  if (!Number.isFinite(time)) return "확인 불가";
+  const kst = new Date(time + 9 * 3600 * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${kst.getUTCMonth() + 1}/${kst.getUTCDate()} ${pad(kst.getUTCHours())}:${pad(kst.getUTCMinutes())}`;
+}
+
+/** Same patch, different cutoff: the room stays on the data it was created with. */
+export function roomBasisNote(roomCutoff: string, siteCutoff: string): string {
+  const room = Date.parse(roomCutoff), site = Date.parse(siteCutoff);
+  if (!Number.isFinite(room) || !Number.isFinite(site) || room === site) return "";
+  return room < site ? " · 방을 만든 시점 자료로 끝까지 진행해요 (사이트 자료는 그 뒤에 갱신됨)" : " · 이 화면의 사이트 자료가 방보다 이전이에요. 새로고침하면 맞춰져요";
+}
+
+/**
+ * Room server address from the build. Only https (or loopback http for local checks) without credentials,
+ * query or fragment is used; anything else counts as unset and the panel keeps its "not ready" notice.
+ */
+export function draftRoomEndpoint(raw: unknown): string {
+  if (typeof raw !== "string" || !raw.trim()) return "";
+  try {
+    const url = new URL(raw.trim());
+    const loopback = url.protocol === "http:" && (url.hostname === "127.0.0.1" || url.hostname === "localhost");
+    if ((url.protocol !== "https:" && !loopback) || url.username || url.password || url.search || url.hash) return "";
+    return url.origin + url.pathname.replace(/\/+$/, "");
+  } catch { return ""; }
+}
+
 export type RoomControls = RoomState & { action: (kind: "SELECT" | "NEXT_GAME" | "RESET", championId?: string) => void };
 export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoomChange }: {
   outgoing: DraftSession; liveReport: RadarReport; ready: boolean;
   onSnapshot: (session: DraftSession, reset: boolean) => void; onRoomChange: (state: RoomControls) => void;
 }) {
-  const endpoint = (import.meta as ImportMeta & { env?: { VITE_DRAFT_ROOM_ENDPOINT?: string } }).env?.VITE_DRAFT_ROOM_ENDPOINT?.trim() ?? "";
+  const endpoint = draftRoomEndpoint((import.meta as ImportMeta & { env?: { VITE_DRAFT_ROOM_ENDPOINT?: string } }).env?.VITE_DRAFT_ROOM_ENDPOINT);
   const latest = useRef({ liveReport, onSnapshot, onRoomChange });
   useLayoutEffect(() => { latest.current = { liveReport, onSnapshot, onRoomChange }; }, [liveReport, onSnapshot, onRoomChange]);
   const copyEpoch = useRef(0);
@@ -77,6 +107,7 @@ export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoom
         </> : <button type="button" disabled={!ready} onClick={() => setConfirm("CREATE")}>현재 밴픽으로 방 만들기</button>}
       </> : <>
         <p role="status">{state.role === "BLUE" ? "블루 · 방장" : state.role === "RED" ? "레드" : state.role === "SPECTATOR" ? "관전 중" : "참여 확인 중"} · {state.ended ? "방 이용이 끝났습니다." : state.connected ? state.snapshot?.status === "WAITING" ? "레드 참가를 기다리고 있습니다." : state.snapshot?.status === "COMPLETE" ? "이번 세트 완료" : "밴픽 진행 중" : "연결 확인 중"}</p>
+        {state.snapshot && <p className="draft-room-basis">방 자료 · 패치 {state.snapshot.patch_id} · 기준 {roomCutoffLabel(state.snapshot.cutoff)}{roomBasisNote(state.snapshot.cutoff, liveReport.cutoff)}</p>}
         {state.warning && <p role="status">새로고침하면 방 참여 정보 없어짐</p>}
         {state.invite && <button type="button" disabled={state.ended} onClick={() => void copy("invite")}>레드 초대 링크 복사</button>}
         {state.view && <button type="button" disabled={state.ended} onClick={() => void copy("view")}>관전 링크 복사</button>}

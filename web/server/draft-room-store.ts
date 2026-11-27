@@ -55,6 +55,21 @@ export class DraftRoomStore {
     }
   }
   get storage(): "ephemeral" | "file" { return this.options.persistence ? "file" : "ephemeral"; }
+  /** Patch and cutoff that new rooms are created with (existing rooms keep the values in their snapshot). */
+  get feed() { return { patch_id: this.report.patch_id, cutoff: this.report.cutoff }; }
+  /**
+   * Validated refresh for new rooms only. Live rooms never read the report after creation, so they finish on
+   * the data they were created with. An invalid report is rejected and the last valid one stays.
+   * Not available with a persistence file: its single feed identity would refuse the older rooms on restart.
+   */
+  replaceReport(report: unknown): boolean {
+    if (this.options.persistence) throw new Error("Feed reload cannot be combined with room persistence");
+    if (!isRadarReport(report) || !report.opponent_prep) throw new Error("A validated public report is required");
+    const next = structuredClone(report), identity = feedIdentity(next);
+    if (identity.sha256 === this.identity.sha256) return false;
+    this.report = next; this.identity = identity;
+    return true;
+  }
   private now() { return this.options.clock?.() ?? Date.now(); }
   private ttl() { return this.options.ttlMs ?? 2 * 60 * 60 * 1000; }
   /** Writes all live rooms (with `candidate` replacing/adding its room) or throws without side effects. */

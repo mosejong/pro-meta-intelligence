@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { isIP } from "node:net";
 import { DraftRoomStore, RoomError } from "./draft-room-store";
 import type { DraftRoomPersistence } from "./draft-room-persistence";
 import type { RadarReport } from "../app/radar-types";
@@ -8,7 +9,29 @@ type Options = {
   maxRooms?: number; maxListeners?: number; maxCreatesPerHour?: number;
   /** Explicit opt-in single-process file backend; omitted means ephemeral memory only. */
   persistence?: DraftRoomPersistence;
+  /**
+   * Exact addresses of reverse proxies the operator runs in front of this server. Only requests whose socket
+   * comes from one of them have X-Forwarded-For read; everyone else is keyed by the socket address.
+   */
+  trustedProxies?: string[];
 };
+const normalizeAddress = (value: string) => value.startsWith("::ffff:") && isIP(value.slice(7)) === 4 ? value.slice(7) : value;
+/**
+ * The address used for the create limit. Without trusted proxies (or from any other peer) it is the socket
+ * address, so a forged X-Forwarded-For changes nothing. From a trusted proxy it is the right-most forwarded
+ * hop that is not itself a trusted proxy; a malformed hop falls back to the socket address (shared bucket).
+ */
+export function clientAddress(request: Pick<IncomingMessage, "socket" | "headers">, trusted: ReadonlySet<string>): string {
+  const socket = normalizeAddress(request.socket.remoteAddress ?? "unknown");
+  if (!trusted.has(socket)) return socket;
+  const header = request.headers["x-forwarded-for"];
+  const hops = (Array.isArray(header) ? header.join(",") : header ?? "").split(",").map(value => normalizeAddress(value.trim())).filter(Boolean);
+  for (let index = hops.length - 1; index >= 0; index--) {
+    if (!isIP(hops[index])) return socket;
+    if (!trusted.has(hops[index])) return hops[index];
+  }
+  return socket;
+}
 const json = (response: ServerResponse, status: number, data: unknown) => {
   if (response.destroyed || response.writableEnded) return;
   response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" });
@@ -37,6 +60,8 @@ export function createDraftRoomServer(options: Options) {
   if (origins.has("*") || [...origins].some(origin => {
     try { return new URL(origin).origin !== origin; } catch { return true; }
   })) throw new Error("Explicit origins are required");
+  const trusted = new Set((options.trustedProxies ?? []).map(value => normalizeAddress(value.trim())));
+  if ([...trusted].some(value => !isIP(value))) throw new Error("Trusted proxies must be exact IP addresses");
   const store = new DraftRoomStore(options.report, options);
   const creates = new Map<string, { at: number; count: number }>();
   const streams = new Set<ServerResponse>();
@@ -58,7 +83,7 @@ export function createDraftRoomServer(options: Options) {
         json(response, 200, { status: "ok", protocol: 1, storage: store.storage }); return;
       }
       if (url.pathname === "/v1/rooms" && request.method === "POST") {
-        const now = options.clock?.() ?? Date.now(), key = request.socket.remoteAddress ?? "unknown";
+        const now = options.clock?.() ?? Date.now(), key = clientAddress(request, trusted);
         for (const [ip, record] of creates) if (now - record.at >= 3_600_000) creates.delete(ip);
         const record = creates.get(key) ?? { at: now, count: 0 };
         if (record.count >= (options.maxCreatesPerHour ?? 10) || (!creates.has(key) && creates.size >= 1000)) throw new RoomError(429, "CREATE_RATE_LIMIT", "방을 너무 자주 만들었습니다. 잠시 후 다시 시도해 주세요.");

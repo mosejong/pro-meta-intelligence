@@ -36,6 +36,8 @@ jobs:
         env:
           # Cloud save stays hidden until the owner sets this repository variable to the deployed worker URL.
           VITE_CLOUD_SAVE_URL: ${{ vars.CLOUD_SAVE_URL }}
+          # Friend rooms stay "not ready" until the owner sets this variable to a reviewed https room server.
+          VITE_DRAFT_ROOM_ENDPOINT: ${{ vars.DRAFT_ROOM_ENDPOINT }}
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
