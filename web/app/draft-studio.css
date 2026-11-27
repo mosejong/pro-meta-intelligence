@@ -437,3 +437,10 @@ main.draft-lab.draft-studio .draft-feed-fallback { display: flex; flex-wrap: wra
 main.draft-lab.draft-studio .draft-feed-fallback p { margin: 0; flex: 1 1 220px; font-size: 14px; line-height: 1.45; }
 main.draft-lab.draft-studio .draft-feed-fallback button { min-height: 36px; padding: 6px 14px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-panel); color: var(--studio-text); cursor: pointer; }
 main.draft-lab.draft-studio .draft-result-actions .draft-result-share:not(:disabled) { border-color: var(--studio-action); background: var(--studio-action); color: #201b15; font-weight: 700; }
+
+/* "Change one pick": rewind banner on the board and per-pick button in the result. */
+main.draft-lab.draft-studio .draft-pick-change { display: grid; gap: 8px; margin-bottom: 10px; padding: 10px 12px; border: 1px solid var(--studio-action); border-radius: 6px; background: var(--studio-raised); color: var(--studio-text); font-size: 14px; line-height: 1.45; }
+main.draft-lab.draft-studio .draft-pick-change p { margin: 0; }
+main.draft-lab.draft-studio .draft-pick-change div { display: flex; flex-wrap: wrap; gap: 8px; }
+main.draft-lab.draft-studio .draft-pick-change button { min-height: 40px; padding: 6px 12px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-panel); color: var(--studio-text); cursor: pointer; }
+main.draft-lab.draft-studio .draft-result-picks .draft-result-change-pick { flex: 0 0 auto; margin-left: auto; min-height: 32px; padding: 2px 10px; border: 1px solid var(--studio-line); border-radius: 4px; background: var(--studio-panel); color: var(--studio-text); font-size: 12px; cursor: pointer; vertical-align: middle; }

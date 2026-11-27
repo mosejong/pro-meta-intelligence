@@ -12,7 +12,10 @@ export async function enterDraftForReview(page) {
   const begin = setup.getByRole("button", { name: /^밴픽 (시작|이어가기)$/ });
   await expect.poll(async () => {
     if (await back.isVisible()) return "DRAFT";
-    if (await setup.isVisible() && await begin.isEnabled()) return "SETUP";
+    // isEnabled() waits for its element: a restored/deep-linked board leaves setup right after load, so the
+    // start button can vanish between the two calls and a waiting check would hang the whole poll. Read it
+    // only while it exists, with a bounded read (a vanished button counts as "not yet", and the poll retries).
+    if (await setup.isVisible() && await begin.count() === 1 && await begin.isEnabled({ timeout: 1_000 }).catch(() => false)) return "SETUP";
     return "LOADING";
   }, { timeout: 45_000 }).not.toBe("LOADING"); // local restore can be slow under parallel test load
   if (!(await back.isVisible())) await begin.click();
