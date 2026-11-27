@@ -25,7 +25,10 @@ export async function enterDraftWorkspace(page) {
   const start = setup.getByRole("button", { name: /^(밴픽 시작|밴픽 이어가기)$/ });
   // The start enables only after the local restore settled, and a restore with work already switched
   // steps by then, so wait for either final state before deciding (never click a hidden button).
-  await expect.poll(async () => (await draft.isVisible()) || ((await setup.isVisible()) && (await start.isEnabled())), { timeout: 45_000 }).toBe(true);
+  // isEnabled() waits for its element, and a restore leaves setup right after load, so the start button can
+  // vanish mid-check and hang the poll. Read it only while it exists, with a bounded read (see enter-draft-review.mjs).
+  await expect.poll(async () => (await draft.isVisible())
+    || ((await setup.isVisible()) && (await start.count()) === 1 && (await start.isEnabled({ timeout: 1_000 }).catch(() => false))), { timeout: 45_000 }).toBe(true);
   if (!(await draft.isVisible())) await start.click();
   await expect(draft).toBeVisible();
   await expect(page.locator(".draft-stage")).not.toHaveAttribute("inert", "");
