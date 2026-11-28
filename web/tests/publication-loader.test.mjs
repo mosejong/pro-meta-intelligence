@@ -12,7 +12,9 @@ const files = ["current.json", "collection-status.json", "current-creator.json",
 
 before(async () => {
   vite = await createServer({ root: fileURLToPath(new URL("../", import.meta.url)), configFile: false,
-    publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+    // No file watcher: the timer-release test counts every global setTimeout in this process, and a watcher
+    // reacting to other test processes writing files would add unrelated timers to that count.
+    publicDir: false, server: { middlewareMode: true, watch: null }, appType: "custom", logLevel: "silent" });
   L = await vite.ssrLoadModule("/app/publication-loader.ts");
   for (const file of files) feed[file] = JSON.parse(await readFile(new URL(`../public/feed/${file}`, import.meta.url), "utf8"));
 });
