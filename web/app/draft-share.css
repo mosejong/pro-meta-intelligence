@@ -1,6 +1,7 @@
 .draft-share { display: flex; flex: 1 1 100%; min-width: 0; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-block: 10px; margin-block: 8px; border-block: 1px solid var(--studio-line, #34373c); color: var(--studio-text, #ececea); }
 .draft-share p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
-.draft-share > p:first-child { flex: 1 1 350px; font-size: 12px; }
+.draft-share > p:first-child { flex: 1 1 100%; margin: 0; font-size: 13px; }
+.draft-share > p:nth-of-type(2) { flex: 1 1 350px; font-size: 12px; }
 .draft-share button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--studio-line, #34373c); border-radius: 6px; background: var(--studio-panel, #181a1d); color: var(--studio-text, #ececea); cursor: pointer; }
 .draft-share button:disabled { opacity: .5; cursor: default; }
 main.draft-lab.draft-studio .draft-share .draft-share-primary { background: var(--studio-action, #dfb981); color: var(--studio-bg, #111214); border-color: var(--studio-action, #dfb981); font-weight: 700; }

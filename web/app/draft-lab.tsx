@@ -50,6 +50,7 @@ import "./draft-workspace.css";
 import "./draft-studio.css";
 import { WorkspaceHeader } from "./workspace-header";
 import { DraftSharePanel } from "./draft-share-panel";
+import { ExperimentLinkNoticePanel } from "./experiment-link-notice-panel";
 import { DraftRoomPanel, type RoomControls } from "./draft-room-panel";
 import { useSoloSeasonHistory } from "./use-solo-season-history";
 import { explainSoloDraftTurn, suggestSoloDraftTurn } from "./solo-draft";
@@ -61,6 +62,8 @@ import { emptyChampionRoles, championKey, teamPicks, type ChampionRoles, type Ro
 import { buildDraftPositionBoard, reconcileChampionRoles, moveChampionRole } from "./draft-position-board";
 import { normalizeDraftPositions } from "./draft-position-session";
 import { DraftPracticeLibraryPanel } from "./draft-practice-library-panel";
+import { RosterObservationSummary } from "./roster-observation-panel";
+import type { ObservationPreparation } from "./roster-observation-session";
 import { loadPublishedSeasonCatalog } from "./season-catalog-loader";
 import { basisKey, buildRosterIndex, pairKey, rosterBasis, serializeRosterScenario, type RosterRole } from "./roster-scenario";
 import { DraftResultPanel } from "./draft-result-panel";
@@ -309,6 +312,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
   // Explicit roster restore from the practice library (token + validated payload).
   const [rosterRequest, setRosterRequest] = useState<RosterRestoreRequest | null>(null);
   const rosterToken = useRef(0);
+  // Explicitly prepared roster observation context published by the roster editor (withdrawn on any change).
+  const [observationPrep, setObservationPrep] = useState<ObservationPreparation | null>(null);
   /** Current ready simulation input (with explicit roles) reported by the readiness panel, or null. */
   const [readyInput, setReadyInput] = useState<SimulationInputSnapshot | null>(null);
   // Past-season players: practice/saving/observation only, never assumption-experiment input.
@@ -498,6 +503,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     return serializeRosterScenario({ basis: liveRoster.basis, team_ids: teamIds, rosters: liveRoster.rosters }, buildRosterIndex(seriesReport.opponent_prep?.teams ?? []));
   }, [saveSnapshot, seriesReport, liveRoster, rosterMeta, blueTeamId, redTeamId]);
   const practiceSeason = practiceRoster !== null ? rosterMeta?.season ?? null : null;
+  // A friend room never carries or attaches a preparation; it is summary/save metadata only, never experiment input.
+  const preparedObservation = room.active ? null : observationPrep;
   const practiceRosterBlocked = rosterMeta?.seasonPlayers && !rosterMeta.season
     ? "시즌 선수 자료가 불러와지지 않았거나 저장된 시즌 선수를 현재 자료에서 확인하지 못해 선수 구성은 함께 저장할 수 없습니다. 밴픽만 저장하거나 시즌 자료를 다시 불러와 주세요."
     : null;
@@ -692,6 +699,14 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       setRedTeamId(teamId);
       if (teamId === blueTeamId) setBlueTeamId(teams.find((team) => team.team_id !== teamId)?.team_id ?? "");
     }
+    resetDraft();
+  }
+
+  /** Received #experiment= link: picks its two teams only on the user's click, only on an empty board and series. */
+  function chooseLinkTeams(nextBlue: string, nextRed: string) {
+    if (room.active || games.length || hasCurrentWork) return;
+    setBlueTeamId(nextBlue);
+    setRedTeamId(nextRed);
     resetDraft();
   }
 
@@ -909,6 +924,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         <h2 id="draft-flow-setup-title" ref={setupHeading} tabIndex={-1}>{resuming ? "진행 중인 밴픽이 있어요" : "두 팀을 고르세요"}</h2>
       </header>
       {!resuming && <FirstVisitGuide />}
+      <ExperimentLinkNoticePanel teams={teams} patch={report.patch_id} blueTeamId={blueTeamId} redTeamId={redTeamId}
+        hasWork={resuming} roomActive={room.active} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onChooseTeams={chooseLinkTeams} />
       <section className="draft-match-setup" aria-label={t("draft.setupLabel")} lang={lang.ui} inert={!canSelect}>
         <TeamChooser label="BLUE TEAM" teams={teams} value={blueTeamId} onChange={(id) => changeTeam("BLUE", id)} disabled={room.active || games.length > 0 || hasCurrentWork} locale={locale} />
         <button type="button" onClick={swapSides} disabled={room.active || hasCurrentWork} aria-label={t("draft.swapLabel")}>⇄<small>{t("draft.swap")}</small></button>
@@ -1060,14 +1077,15 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       <DraftSharePanel nameOf={nameOf} outgoing={shareSession} liveReport={liveReport} ready={canSelect && !room.active} incomingReady={!room.active && sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onAccept={(session) => { if (room.active) return; setComparisonEpoch((epoch) => epoch + 1); setPendingReset(null); restoreSession(session); setStep("DRAFT"); }} />
       <div className="draft-series-actions" inert={!sessionReady || importing}><button type="button" onClick={() => setPendingReset("SERIES")} disabled={room.active || (!games.length && !hasCurrentWork)}>{t("draft.resetSeries")}</button></div>
       {/* Named local practices: separate database; loading reuses the file-import reset path. */}
-      <DraftPracticeLibraryPanel scenario={saveSnapshot} roster={practiceRoster} season={practiceSeason} rosterBlocked={practiceRosterBlocked} boardKey={practiceBoardKey} hasWork={hasCurrentWork || games.length > 0} locked={room.active || !sessionReady || importing}
+      <DraftPracticeLibraryPanel scenario={saveSnapshot} roster={practiceRoster} season={practiceSeason} observation={preparedObservation?.context ?? null} rosterBlocked={practiceRosterBlocked} boardKey={practiceBoardKey} hasWork={hasCurrentWork || games.length > 0} locked={room.active || !sessionReady || importing}
         loadSeasonCatalog={loadSeasonCatalog}
-        onLoad={(session, roster, season) => {
+        onLoad={(session, roster, season, observation) => {
           if (room.active) return;
           setComparisonEpoch((epoch) => epoch + 1); setPendingReset(null); restoreSession(session); setStep("DRAFT");
           // Withdraw the old roster until the editor applies the saved one, so A/B and simulation never capture a mixed state.
           // Draft, current roster and season refs arrive together, already fully verified by the panel.
-          if (roster) { setLiveRoster(null); setRosterRequest({ token: ++rosterToken.current, roster, season }); }
+          setObservationPrep(null);
+          if (roster) { setLiveRoster(null); setRosterRequest({ token: ++rosterToken.current, roster, season, observation: observation ?? null }); }
         }} />
       <CloudSavePanel disabled={room.active || !sessionReady || importing}
         getScenario={() => blueTeam && redTeam && (selections.length || games.length) ? serializeDraftScenario(report, blueTeam, redTeam, selections, games, pendingChampion, firstPickSide, positionRecord) : null}
@@ -1089,7 +1107,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         already frozen A is not changed retroactively. */}
     <RosterWorkshop report={report} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={!canSelect}
       selections={selections} previousPicks={previousPicks} focusChampionId={championFocus?.champion_id ?? null}
-      publicationRoot={productRootHref(currentSpace)} defaultOpen onRosterChange={setLiveRoster} restoreRequest={rosterRequest} onRosterMeta={setRosterMeta} />
+      publicationRoot={productRootHref(currentSpace)} defaultOpen onRosterChange={setLiveRoster} restoreRequest={rosterRequest} onRosterMeta={setRosterMeta}
+      onObservation={setObservationPrep} observationBlocked={room.active} />
     </div>
 
     <div id={panelOf("DETAILS")} className="studio-details-panel" role="tabpanel" aria-labelledby={`${panelOf("DETAILS")}-tab`} hidden={studioTab !== "DETAILS"}>
@@ -1147,6 +1166,7 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
       })} />
     {/* Assumption experiment on the validated ready input; runs only on its explicit button.
         Past-season players are not experiment input, so a stale ready input is never passed on. */}
+    <RosterObservationSummary preparation={preparedObservation} />
     <ExperimentReplayPanel readyInput={experimentReadyInput} blocked={!canSelect || room.active} nameOf={nameOf} />
     </div>
     </div>

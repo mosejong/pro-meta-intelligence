@@ -8,15 +8,18 @@ import { ROSTER_ROLES, type RosterRole } from "./roster-scenario";
 import type { PoolSelection } from "./player-pool-evidence";
 import { seasonPoolContext, seasonPoolStateLabel } from "./season-pool-context";
 import { SeasonPlayerComparisonPanel } from "./season-player-comparison-panel";
+import type { SeasonChampionAnalysis } from "./season-champion-detail-panel";
 const roles: Record<RosterRole, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
 const NO_SELECTIONS: readonly PoolSelection[] = [];
 const NO_PICKS: readonly string[] = [];
-export function SeasonLineupPanel({ catalog, onCatalog, lineups, teams, publicationRoot, disabled, onChoose, onApplyPreset, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null }: {
+export function SeasonLineupPanel({ catalog, onCatalog, lineups, teams, publicationRoot, disabled, onChoose, onApplyPreset, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null, analysis = null }: {
   catalog: SeasonCardCatalog | null; onCatalog: (c: SeasonCardCatalog) => void; lineups: TeamSeasonSlots; teams: { id: string; name: string; side: string }[]; publicationRoot: string; disabled: boolean;
   onChoose: (teamId: string, role: RosterRole, ref: SeasonCardRef | null) => void;
   onApplyPreset: (teamId: string, slots: SeasonSlots) => void;
   /** Live draft state, read only for the observed-champion state labels. */
   selections?: readonly PoolSelection[]; previousPicks?: readonly string[]; focusChampionId?: string | null;
+  /** Current publication, read only by the season comparison's champion detail; omitted = shown as not connected. */
+  analysis?: SeasonChampionAnalysis | null;
 }) {
   const { nameOf } = useChampionNames();
   const [busy, setBusy] = useState(false), [message, setMessage] = useState("");
@@ -99,7 +102,7 @@ export function SeasonLineupPanel({ catalog, onCatalog, lineups, teams, publicat
           </div>;
         })}
       </section>)}</div>
-      <SeasonPlayerComparisonPanel catalog={catalog} lineups={lineups} teams={teams} selections={selections} previousPicks={previousPicks} nameOf={nameOf} />
+      <SeasonPlayerComparisonPanel catalog={catalog} lineups={lineups} teams={teams} selections={selections} previousPicks={previousPicks} nameOf={nameOf} analysis={analysis} />
       <p>시즌 선수를 배정하면 해당 현재 선수 슬롯은 비웁니다. 시즌 선정을 해제해도 이전 선수를 자동 복원하지 않습니다.</p>
     </>}
   </details>;

@@ -26,11 +26,16 @@ import {
 } from "./roster-scenario";
 import type { LiveRoster } from "./roster-comparison";
 import { PlayerPoolPanel } from "./player-pool-panel";
+import { rosterSlotCounts, seasonSlotIdentity } from "./roster-season-slots";
+import { SeasonSlotNote } from "./roster-season-slot-note";
 import { GuestClubPanel } from "./guest-club-panel";
 import { SeasonLineupPanel } from "./season-lineup-panel";
 import { emptySeasonSlots, validateSeasonLineup, type SeasonCardCatalog, type TeamSeasonSlots, type SeasonCardRef, type SeasonSlots } from "./season-player-cards";
 import { poolBasis, type PoolBasis, type PoolSelection } from "./player-pool-evidence";
 import type { SeasonPracticePart } from "./practice-roster-bundle";
+import { RosterObservationPanel, type ObservationRestore } from "./roster-observation-panel";
+import type { ObservationPreparation } from "./roster-observation-session";
+import type { RosterObservationContext } from "./roster-observation-context";
 import "./roster-workshop.css";
 
 /** Device copy of the latest edited roster scenario (small, separate from the draft session). */
@@ -65,9 +70,13 @@ type RosterWorkshopProps = {
   restoreRequest?: RosterRestoreRequest | null;
   /** Small meta for the parent: whether season players are assigned (null while no editor). Stable function. */
   onRosterMeta?: (meta: RosterMeta | null) => void;
+  /** Receives the explicitly prepared observation context, or null when it is withdrawn. Stable function. */
+  onObservation?: (value: ObservationPreparation | null) => void;
+  /** Extra block for observation preparation (e.g. a friend room); any change withdraws a preparation. */
+  observationBlocked?: boolean;
 };
 /** `season` (optional) was verified by the caller against the live catalog it carries; re-checked here. */
-export type RosterRestoreRequest = { token: number; roster: RosterScenario; season?: { catalog: SeasonCardCatalog; lineups: TeamSeasonSlots } | null };
+export type RosterRestoreRequest = { token: number; roster: RosterScenario; season?: { catalog: SeasonCardCatalog; lineups: TeamSeasonSlots } | null; observation?: { expected: RosterObservationContext } | null };
 /**
  * `season` is the savable season part: present only when season players are assigned, a catalog is
  * loaded and every reference still resolves in it under the shared lineup rules; otherwise null.
@@ -78,6 +87,7 @@ const NO_SELECTIONS: readonly PoolSelection[] = [];
 const NO_PICKS: readonly string[] = [];
 const IGNORE_ROSTER = () => {};
 const IGNORE_META = () => {};
+const IGNORE_OBSERVATION = () => {};
 
 /**
  * Collapsible virtual roster editor next to the team setup. Remounts per snapshot basis and
@@ -85,28 +95,30 @@ const IGNORE_META = () => {};
  * its own observations. It never touches the draft or analysis; its live roster becomes the
  * A/B comparison's current B, and an already frozen A is never changed retroactively.
  */
-export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null, publicationRoot = "./", defaultOpen = false, onRosterChange = IGNORE_ROSTER, restoreRequest = null, onRosterMeta = IGNORE_META }: RosterWorkshopProps) {
+export function RosterWorkshop({ report, teams, blueTeam, redTeam, disabled, selections = NO_SELECTIONS, previousPicks = NO_PICKS, focusChampionId = null, publicationRoot = "./", defaultOpen = false, onRosterChange = IGNORE_ROSTER, restoreRequest = null, onRosterMeta = IGNORE_META, onObservation = IGNORE_OBSERVATION, observationBlocked = false }: RosterWorkshopProps) {
   const basis = useMemo(() => rosterBasis(report), [report]);
   const pool = useMemo(() => poolBasis(report), [report]);
   // Survives editor remounts, so one request is applied at most once.
   const consumedRef = useRef(0);
   if (!blueTeam || !redTeam || blueTeam.team_id === redTeam.team_id) return null;
   return <RosterWorkshopBody key={`${basisKey(basis)}|${pairKey([blueTeam.team_id, redTeam.team_id])}`}
-    basis={basis} patchId={report.patch_id} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={disabled}
+    basis={basis} report={report} patchId={report.patch_id} teams={teams} blueTeam={blueTeam} redTeam={redTeam} disabled={disabled}
     pool={pool} selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} publicationRoot={publicationRoot}
-    defaultOpen={defaultOpen} onRosterChange={onRosterChange} restoreRequest={restoreRequest} consumedRef={consumedRef} onRosterMeta={onRosterMeta} />;
+    defaultOpen={defaultOpen} onRosterChange={onRosterChange} restoreRequest={restoreRequest} consumedRef={consumedRef} onRosterMeta={onRosterMeta}
+    onObservation={onObservation} observationBlocked={observationBlocked} />;
 }
 
 type Status = { tone: "info" | "error"; text: string } | null;
 
-function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled, pool, selections, previousPicks, focusChampionId, publicationRoot, defaultOpen, onRosterChange, restoreRequest, consumedRef, onRosterMeta }: {
-  basis: RosterBasis; patchId: string; teams: OpponentTeam[]; blueTeam: OpponentTeam; redTeam: OpponentTeam; disabled: boolean;
+function RosterWorkshopBody({ basis, report, patchId, teams, blueTeam, redTeam, disabled, pool, selections, previousPicks, focusChampionId, publicationRoot, defaultOpen, onRosterChange, restoreRequest, consumedRef, onRosterMeta, onObservation, observationBlocked }: {
+  basis: RosterBasis; report: RadarReport; patchId: string; teams: OpponentTeam[]; blueTeam: OpponentTeam; redTeam: OpponentTeam; disabled: boolean;
   pool: PoolBasis; selections: readonly PoolSelection[]; previousPicks: readonly string[]; focusChampionId: string | null; publicationRoot: string;
   onRosterChange: (roster: LiveRoster | null) => void;
   restoreRequest: RosterRestoreRequest | null; consumedRef: { current: number }; onRosterMeta: (meta: RosterMeta | null) => void;
-  defaultOpen: boolean;
+  defaultOpen: boolean; onObservation: (value: ObservationPreparation | null) => void; observationBlocked: boolean;
 }) {
   const season = useMemo(() => ({ basis, publicationRoot }), [basis, publicationRoot]);
+  const seasonAnalysis = useMemo(() => ({ report, blueTeam, redTeam }), [report, blueTeam, redTeam]);
   const index = useMemo(() => buildRosterIndex(teams), [teams]);
   const teamIds = useMemo(() => [blueTeam.team_id, redTeam.team_id].sort() as [string, string], [blueTeam.team_id, redTeam.team_id]);
   const observed = useMemo(() => observedRosters(teams, teamIds, index), [teams, teamIds, index]);
@@ -123,6 +135,8 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   const [restored, setRestored] = useState(false);
   // Bumped by an explicit restore so an identical roster is still republished after the parent withdrew it.
   const [publishTick, setPublishTick] = useState(0);
+  // Explicit practice restore of an observation context; set in the same commit as the restored roster.
+  const [observationRestore, setObservationRestore] = useState<ObservationRestore | null>(null);
   const restoreDone = useRef(false);
   const mounted = useRef(false);
 
@@ -135,7 +149,7 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   // restore so its timer runs first and a stale localStorage roster can never overwrite it later.
   useEffect(() => {
     if (!restoreRequest || restoreRequest.token <= consumedRef.current) return;
-    const { token, roster, season: savedSeason = null } = restoreRequest;
+    const { token, roster, season: savedSeason = null, observation: savedObservation = null } = restoreRequest;
     if (basisKey(roster.basis) !== basisKey(basis) || pairKey(roster.team_ids) !== pairKey(teamIds)) return;
     const timer = window.setTimeout(() => {
       if (!mounted.current || token <= consumedRef.current) return;
@@ -143,7 +157,7 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
       restoreDone.current = true;
       setRestored(true);
       const checked = validateRosters(roster.rosters, teamIds, index);
-      if (!checked.ok) { setStorage({ tone: "error", text: `보관함의 선수 구성을 적용하지 못했습니다: ${checked.error}` }); setPublishTick((tick) => tick + 1); return; }
+      if (!checked.ok) { setStorage({ tone: "error", text: `보관함의 선수 구성을 적용하지 못했습니다: ${checked.error}` }); setPublishTick((tick) => tick + 1); setObservationRestore({ token, expected: null }); return; }
       const lineups: TeamSeasonSlots = {};
       if (savedSeason) {
         // Same shared rules as manual assignment; on failure nothing (roster or season) is applied.
@@ -154,6 +168,7 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
         } catch {
           setStorage({ tone: "error", text: "보관함의 시즌 선수 구성을 확인하지 못해 선수 구성을 적용하지 않았습니다. 기존 구성을 유지합니다." });
           setPublishTick((tick) => tick + 1);
+          setObservationRestore({ token, expected: null });
           return;
         }
         setSeasonCatalog(savedSeason.catalog);
@@ -161,6 +176,9 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
       setSeasonLineups(lineups);
       setRosters(checked.value);
       setPublishTick((tick) => tick + 1);
+      // The owner rebuilds the saved context from exactly this applied state (same commit) and
+      // restores "prepared" only on a full canonical match.
+      setObservationRestore({ token, expected: savedSeason && savedObservation ? savedObservation.expected : null });
       setEditStatus("");
       const restoredText = savedSeason ? "연습 보관함에 함께 저장된 현재 선수·시즌 선수 구성을 복원했습니다. 시즌 선수는 이 기기 로스터 사본에는 저장되지 않습니다." : "연습 보관함에 함께 저장된 선수 구성을 복원했습니다.";
       try {
@@ -294,24 +312,27 @@ function RosterWorkshopBody({ basis, patchId, teams, blueTeam, redTeam, disabled
   }
 
   const statuses = (side: DraftSide, team: OpponentTeam) => ROSTER_ROLES.map((role) =>
-    ({ role, status: slotStatus(team.team_id, role, rosters[team.team_id]?.[role] ?? null, observed[team.team_id]?.[role] ?? null, index), side }));
+    ({ role, teamId: team.team_id, status: slotStatus(team.team_id, role, rosters[team.team_id]?.[role] ?? null, observed[team.team_id]?.[role] ?? null, index), side }));
   const all = [...statuses("BLUE", blueTeam), ...statuses("RED", redTeam)];
   const changedCount = all.filter((item) => item.status.changed).length;
-  const emptyCount = all.filter((item) => !item.status.player).length;
+  // Season-player slots have no current player but are not "빈칸".
+  const { empty: emptyCount, season: seasonCount } = rosterSlotCounts(all.map((item) => ({ teamId: item.teamId, role: item.role, hasPlayer: !!item.status.player })), seasonLineups);
   const hasSeasonPlayers = seasonAssigned;
 
   return <details className="roster-workshop" lang="ko" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
-    <summary>가상 로스터·포지션 <small>원관측과 다른 슬롯 {changedCount} · 빈칸 {emptyCount}</small></summary>
+    <summary>가상 로스터·포지션 <small>원관측과 다른 슬롯 {changedCount} · 빈칸 {emptyCount}{seasonCount > 0 && ` · 시즌 선수 ${seasonCount}`}</small></summary>
     {open && <div className="roster-workshop-body">
       <GuestClubPanel publicationRoot={publicationRoot} basis={basis} index={index} rosters={rosters} seasonLineups={seasonLineups} seasonCatalog={seasonCatalog} onSeasonApply={(teamId, slots) => setSeasonLineups(current => ({ ...current, [teamId]: slots }))} blueTeamId={blueTeam.team_id} redTeamId={redTeam.team_id} disabled={disabled || reading || !restored} onApply={(next) => { commit(next); setEditStatus("저장한 구단의 선수 구성을 적용했습니다."); }} />
-      <SeasonLineupPanel catalog={seasonCatalog} onCatalog={setSeasonCatalog} lineups={seasonLineups} teams={[{ id: blueTeam.team_id, name: blueTeam.team_name, side: "BLUE" }, { id: redTeam.team_id, name: redTeam.team_name, side: "RED" }]} publicationRoot={publicationRoot} disabled={disabled || reading || !restored} onChoose={chooseSeason} onApplyPreset={applySeasonPreset} selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} />
+      <RosterObservationPanel ownerKey={`${basisKey(basis)}|${pairKey(teamIds)}`} report={report} catalog={seasonCatalog} teamIds={teamIds} teamName={teamName} index={index}
+        rosters={rosters} seasonLineups={seasonLineups} blocked={disabled || reading || !restored || observationBlocked} restore={observationRestore} onPublish={onObservation} />
+      <SeasonLineupPanel catalog={seasonCatalog} onCatalog={setSeasonCatalog} lineups={seasonLineups} teams={[{ id: blueTeam.team_id, name: blueTeam.team_name, side: "BLUE" }, { id: redTeam.team_id, name: redTeam.team_name, side: "RED" }]} publicationRoot={publicationRoot} disabled={disabled || reading || !restored} onChoose={chooseSeason} onApplyPreset={applySeasonPreset} selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} analysis={seasonAnalysis} />
       <p className="roster-workshop-note" role="note"><b>기존 추천 순위·예측/시뮬레이션에는 로스터 변경이 아직 반영되지 않습니다.</b> 변경은 아래 선수 근거·남은 관측 챔프 표시와 A/B 비교의 현재 B 로스터에만 반영되며, 이미 고정된 기준 A는 소급 변경되지 않습니다. 같은 공개 스냅샷에서 관측된 선수만 고를 수 있으며, CURRENT는 자료상의 관측 표시일 뿐 공식 최신 소속이 아닙니다. 역할 관측이 하나로 정해지지 않으면 빈칸으로 둡니다.</p>
       <div className="roster-workshop-teams">
-        <RosterTeam side="BLUE" team={blueTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} />
-        <RosterTeam side="RED" team={redTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} />
+        <RosterTeam side="BLUE" team={blueTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} seasonLineups={seasonLineups} seasonCatalog={seasonCatalog} />
+        <RosterTeam side="RED" team={redTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} seasonLineups={seasonLineups} seasonCatalog={seasonCatalog} />
       </div>
       <PlayerPoolPanel basis={pool} teams={teams} index={index} rosters={rosters} blueTeam={blueTeam} redTeam={redTeam}
-        selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} season={season} />
+        selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} season={season} seasonLineups={seasonLineups} seasonCatalog={seasonCatalog} />
       {editStatus && <p className="roster-workshop-status" role="status">{editStatus}</p>}
       <div className="roster-workshop-actions">
         <button type="button" disabled={disabled || reading || (changedCount === 0 && !Object.values(seasonLineups).some(slots => Object.values(slots).some(Boolean)))} onClick={() => { setSeasonLineups({}); setEditStatus("원관측 배치로 되돌렸습니다. 시즌 배정도 해제했습니다."); commit(observed); }}>원관측으로 되돌리기</button>
@@ -330,9 +351,10 @@ function playerLabel(player: RosterPlayer, index: RosterIndex) {
   return `${player.player_name} · ${roleLabel(player.observed_role)}${player.roster_status === "CURRENT" ? "" : " · 현재 관측 아님"}${id}`;
 }
 
-function RosterTeam({ side, team, rosters, observed, index, teams, disabled, onChoose }: {
+function RosterTeam({ side, team, rosters, observed, index, teams, disabled, onChoose, seasonLineups, seasonCatalog }: {
   side: DraftSide; team: OpponentTeam; rosters: RosterState; observed: RosterState; index: RosterIndex; teams: OpponentTeam[];
   disabled: boolean; onChoose: (teamId: string, role: RosterRole, value: string) => void;
+  seasonLineups: TeamSeasonSlots; seasonCatalog: SeasonCardCatalog | null;
 }) {
   const own = [...index.players.values()].filter((player) => player.source_team_id === team.team_id)
     .sort((left, right) => Number(right.roster_status === "CURRENT") - Number(left.roster_status === "CURRENT")
@@ -351,12 +373,13 @@ function RosterTeam({ side, team, rosters, observed, index, teams, disabled, onC
         const original = observed[team.team_id]?.[role] ?? null;
         const status = slotStatus(team.team_id, role, assigned, original, index);
         const originalPlayer = original ? index.players.get(playerKey(original.source_team_id, original.player_id)) : null;
+        const seasonSlot = status.player ? null : seasonSlotIdentity({ lineups: seasonLineups, catalog: seasonCatalog, rosters, teamId: team.team_id, role });
         return <li key={role} className={status.changed ? "changed" : ""} data-role={role}>
           <label><span>{roleLabel(role)}</span>
             <select aria-label={`${team.team_name} ${roleLabel(role)} 선수`} disabled={disabled}
               value={assigned ? playerKey(assigned.source_team_id, assigned.player_id) : ""}
               onChange={(event) => onChoose(team.team_id, role, event.target.value)}>
-              <option value="">빈칸 · 미확인</option>
+              <option value="">{seasonSlot ? "시즌 선수 배정 중 · 현재 선수 없음" : "빈칸 · 미확인"}</option>
               <optgroup label={`${team.team_name} 관측 선수`}>
                 {own.map((player) => <option key={player.key} value={player.key}>{playerLabel(player, index)}</option>)}
               </optgroup>
@@ -366,7 +389,7 @@ function RosterTeam({ side, team, rosters, observed, index, teams, disabled, onC
             </select>
           </label>
           <p className="roster-slot-flags">
-            {!status.player && <em>빈칸 · 미확인</em>}
+            {!status.player && (seasonSlot ? <SeasonSlotNote identity={seasonSlot} /> : <em>빈칸 · 미확인</em>)}
             {status.player && !status.changed && <em>원관측</em>}
             {status.changed && <b>원관측과 다름 (원관측: {originalPlayer ? originalPlayer.player_name : "빈칸"})</b>}
             {status.otherTeam && <b className="virtual">가상 변경: {status.player?.source_team_name} 관측 선수</b>}

@@ -9,7 +9,7 @@ const previous = globalThis.indexedDB;
 const REAL_TIMEOUT = globalThis.setTimeout, REAL_CLEAR = globalThis.clearTimeout;
 before(async () => {
   vite = await createServer({ root: fileURLToPath(new URL("../", import.meta.url)), configFile: false,
-    publicDir: false, server: { middlewareMode: true }, appType: "custom", logLevel: "silent" });
+    publicDir: false, server: { middlewareMode: true, watch: null }, appType: "custom", logLevel: "silent" });
   S = await vite.ssrLoadModule("/app/draft-session.ts");
   codec = await vite.ssrLoadModule("/app/solo-review-retention.ts");
 });
@@ -83,7 +83,7 @@ function install({ data = [], quota = () => false, hang = () => false, failGet =
   return s;
 }
 
-/** Counts timers the module creates and leaves pending. */
+/** Counts timers the module creates and leaves pending (the Vite server runs without a file watcher so it adds none). */
 async function withTimers(run) {
   const live = new Set();
   globalThis.setTimeout = (fn, ms, ...args) => { const id = REAL_TIMEOUT(() => { live.delete(id); fn(...args); }, ms); live.add(id); return id; };

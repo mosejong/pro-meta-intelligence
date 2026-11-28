@@ -14,6 +14,9 @@ import {
 } from "./player-season-history";
 import type { OpponentTeam } from "./radar-types";
 import { basisKey, playerKey, ROSTER_ROLES, type RosterBasis, type RosterIndex, type RosterState } from "./roster-scenario";
+import { seasonSlotIdentity, type SeasonSlotIdentity } from "./roster-season-slots";
+import { SeasonSlotNote } from "./roster-season-slot-note";
+import type { SeasonCardCatalog, TeamSeasonSlots } from "./season-player-cards";
 
 const roleLabels: Record<string, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
 const roleLabel = (role: string) => roleLabels[role] ?? `역할 미확인(${role})`;
@@ -41,14 +44,18 @@ type Props = {
   redTeam: OpponentTeam;
   selections: readonly PoolSelection[];
   previousPicks: readonly string[];
+  /** Past-season players assigned in the roster editor; their slots are named instead of "빈칸". */
+  seasonLineups?: TeamSeasonSlots;
+  seasonCatalog?: SeasonCardCatalog | null;
 };
+const NO_SEASON: TeamSeasonSlots = {};
 
 /**
  * Season per-role records for the current virtual roster, kept apart from the snapshot pool above.
  * The file is requested only when this section is opened; closing it, changing the basis or the
  * team pair aborts the request and a late response is dropped instead of reaching a new view.
  */
-export function PlayerSeasonSection({ basis, publicationRoot, path, index, rosters, blueTeam, redTeam, selections, previousPicks }: Props) {
+export function PlayerSeasonSection({ basis, publicationRoot, path, index, rosters, blueTeam, redTeam, selections, previousPicks, seasonLineups = NO_SEASON, seasonCatalog = null }: Props) {
   const key = `${publicationRoot}${path}|${basisKey(basis)}`;
   const [open, setOpen] = useState(false);
   const [scope, setScope] = useState<SeasonScope>("season");
@@ -94,8 +101,8 @@ export function PlayerSeasonSection({ basis, publicationRoot, path, index, roste
         ? <p className="player-season-status" role="status">연간 자료 불러오는 중…</p>
         : current.status === "error"
           ? <div><p className="player-season-status" role="alert" data-season-error="">연간 자료 미연결: {current.error} 위 현재 스냅샷 근거와 밴픽·로스터는 그대로입니다.</p><button type="button" className="player-season-retry" onClick={start}>연간 자료 다시 불러오기</button></div>
-          : <SeasonBody history={current.history} scope={scope} onScope={setScope} index={index} rosters={rosters}
-            blueTeam={blueTeam} redTeam={redTeam} selections={selections} previousPicks={previousPicks} />}
+          : <PlayerSeasonBody history={current.history} scope={scope} onScope={setScope} index={index} rosters={rosters}
+            blueTeam={blueTeam} redTeam={redTeam} selections={selections} previousPicks={previousPicks} seasonLineups={seasonLineups} seasonCatalog={seasonCatalog} />}
     </div>}
   </details>;
 }
@@ -106,9 +113,11 @@ const scopeLabels = (history: SeasonHistory): Record<SeasonScope, string> => ({
   patch: `현재 패치 ${history.reference_patch}`,
 });
 
-function SeasonBody({ history, scope, onScope, index, rosters, blueTeam, redTeam, selections, previousPicks }: {
+/** Loaded annual body; exported for rendering tests only. */
+export function PlayerSeasonBody({ history, scope, onScope, index, rosters, blueTeam, redTeam, selections, previousPicks, seasonLineups = NO_SEASON, seasonCatalog = null }: {
   history: SeasonHistory; scope: SeasonScope; onScope: (scope: SeasonScope) => void; index: RosterIndex; rosters: RosterState;
   blueTeam: OpponentTeam; redTeam: OpponentTeam; selections: readonly PoolSelection[]; previousPicks: readonly string[];
+  seasonLineups?: TeamSeasonSlots; seasonCatalog?: SeasonCardCatalog | null;
 }) {
   const labels = scopeLabels(history);
   const summary = history.import_summary;
@@ -134,18 +143,22 @@ function SeasonBody({ history, scope, onScope, index, rosters, blueTeam, redTeam
           const assigned = rosters[team.team_id]?.[role] ?? null;
           const slot = seasonSlot({ history, role, assigned, scope, selections, previousPicks });
           const name = assigned ? index.players.get(playerKey(assigned.source_team_id, assigned.player_id))?.player_name ?? assigned.player_id : "";
+          const seasonPlayer = assigned ? null : seasonSlotIdentity({ lineups: seasonLineups, catalog: seasonCatalog, rosters, teamId: team.team_id, role });
           return <SeasonRow key={role} slot={slot} name={name} playerKey={assigned ? playerKey(assigned.source_team_id, assigned.player_id) : ""}
-            scopeLabel={labels[scope]} />;
+            scopeLabel={labels[scope]} seasonSlot={seasonPlayer} year={history.season} />;
         })}</ul>
       </section>)}
     </div>
   </>;
 }
 
-function SeasonRow({ slot, name, playerKey: key, scopeLabel }: { slot: SeasonSlot; name: string; playerKey: string; scopeLabel: string }) {
+function SeasonRow({ slot, name, playerKey: key, scopeLabel, seasonSlot, year }: { slot: SeasonSlot; name: string; playerKey: string; scopeLabel: string; seasonSlot: SeasonSlotIdentity | null; year: number }) {
   const { nameOf } = useChampionNames();
   const head = <b className="player-pool-role">{roleLabel(slot.role)}</b>;
   const attrs = { "data-role": slot.role, "data-status": slot.status, "data-player-key": key || undefined };
+  // A season player's slot: never this year's record of a current roster player.
+  if (slot.status === "EMPTY" && seasonSlot) return <li data-role={slot.role} data-status="SEASON">{head} <SeasonSlotNote identity={seasonSlot}
+    boundary={`${year} 연간 기록은 현재 스냅샷 선수만 대상 · 시즌 기록은 ‘과거 시즌 선수로 구성하기’에서 확인`} /></li>;
   if (slot.status === "EMPTY") return <li {...attrs}>{head} 빈칸</li>;
   if (slot.status === "UNCONFIRMED") return <li {...attrs}>{head} <strong>{name}</strong> · 연간 자료에서 이 원팀·선수 ID 기록 미확인 <small>(0경기가 아니라 자료 없음)</small></li>;
   const player = slot.player!;

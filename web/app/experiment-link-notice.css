@@ -1,0 +1,19 @@
+/* Received assumption link on the team-selection step: existing studio palette, 44px targets, no horizontal overflow. */
+main.draft-lab.draft-studio .experiment-link-notice { display: grid; gap: 8px; min-width: 0; padding: 12px 14px; border: 1px solid var(--studio-action); border-left-width: 4px; color: var(--studio-text); font-size: 13px; }
+main.draft-lab.draft-studio .experiment-link-notice h3 { margin: 0; font-size: 15px; font-weight: 700; }
+main.draft-lab.draft-studio .experiment-link-notice p { margin: 0; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-link-notice-teams { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+main.draft-lab.draft-studio .experiment-link-notice-teams li { display: flex; flex-wrap: wrap; gap: 2px 10px; min-width: 0; padding: 6px 8px; border: 1px solid var(--studio-line); overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-link-notice-teams li span { color: var(--studio-muted); font-variant-numeric: tabular-nums; }
+main.draft-lab.draft-studio .experiment-link-notice-teams small { min-width: 0; color: var(--studio-muted); overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-link-notice-meta,
+main.draft-lab.draft-studio .experiment-link-notice-scope p { color: var(--studio-muted); font-size: 12px; }
+main.draft-lab.draft-studio .experiment-link-notice-scope > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+main.draft-lab.draft-studio .experiment-link-notice-scope p + p { margin-top: 4px; }
+main.draft-lab.draft-studio .experiment-link-notice-reason { color: #f0d6ae; }
+main.draft-lab.draft-studio .experiment-link-notice-actions { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+main.draft-lab.draft-studio .experiment-link-notice-actions button { min-height: 44px; min-width: 0; max-width: 100%; padding: 8px 14px; overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-link-notice-actions .experiment-link-notice-primary { flex: 1 1 200px; border-color: var(--studio-action); font-weight: 700; }
+main.draft-lab.draft-studio .experiment-link-notice-status:focus { outline: none; }
+main.draft-lab.draft-studio .experiment-link-notice-status:focus-visible { outline: 2px solid #f0d6ae; outline-offset: 2px; }
+main.draft-lab.draft-studio .experiment-link-notice-next ol { margin: 4px 0; padding-left: 20px; }

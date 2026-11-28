@@ -177,3 +177,47 @@ test("픽을 바꾸는 중에는 팀을 바꿀 수 없고, 세트를 초기화�
   await expect(banner(page)).toHaveCount(0);
   await expect(page.getByRole("button", { name: "원래 밴픽으로 돌아가기" })).toHaveCount(0);
 });
+
+test("직접 모드에서는 양 팀 픽을 모두 바꿀 수 있고, 피어리스 2세트에서 바꿔도 1세트 잠금은 그대로다", async ({ page }) => {
+  await page.goto(root);
+  await enterDraftWorkspace(page);
+  await enterDraftForReview(page);
+  // Manual mode (default): every turn is made by hand.
+  await expect(solo(page).getByRole("checkbox", { name: "상대 자동 밴픽", exact: true })).not.toBeChecked();
+  await complete(page);
+  const blueButtons = result(page).locator(".draft-result-teams > .blue .draft-result-change-pick");
+  const redButtons = result(page).locator(".draft-result-teams > .red .draft-result-change-pick");
+  await expect(blueButtons).toHaveCount(5);
+  await expect(redButtons).toHaveCount(5);
+
+  // Set 2 under Fearless: the ten set-1 picks are locked before and after a change.
+  const setOnePicks = [...await pickNames(page, "blue"), ...await pickNames(page, "red")];
+  await page.getByRole("button", { name: "세트 저장하고 다음 세트", exact: true }).click();
+  await expect(progress(page)).toHaveAttribute("value", "0");
+  await complete(page);
+  const setTwoRed = await pickNames(page, "red");
+  for (const name of setTwoRed) expect(setOnePicks).not.toContain(name);
+  await result(page).locator(".draft-result-teams > .red .draft-result-change-pick").nth(2).click();
+  await expect(banner(page)).toContainText(`${setTwoRed[2]} 픽을 바꾸는 중이에요`);
+  await expect(page.getByRole("region", { name: "피어리스 시리즈", exact: true })).toContainText("피어리스 · 2세트");
+  await page.getByRole("checkbox", { name: "선택 가능한 챔피언만", exact: true }).uncheck();
+  for (const name of setOnePicks) {
+    const champion = page.locator(".draft-picker-grid button").filter({ has: page.locator("span", { hasText: new RegExp(`^${name}$`) }) });
+    await expect(champion).toBeDisabled();
+  }
+  await page.getByRole("checkbox", { name: "선택 가능한 챔피언만", exact: true }).check();
+  await complete(page, 4);
+  const changedRed = await pickNames(page, "red");
+  expect(changedRed).not.toEqual(setTwoRed);
+  for (const name of changedRed) expect(setOnePicks).not.toContain(name);
+  // Restoring in set 2 brings back the exact set-2 board and keeps the series (set 1 locks) intact.
+  await banner(page).getByRole("button", { name: "원래 밴픽으로 돌아가기" }).click();
+  await expect(banner(page)).toHaveCount(0);
+  expect(await pickNames(page, "red")).toEqual(setTwoRed);
+  await expect(page.getByRole("region", { name: "피어리스 시리즈", exact: true })).toContainText("피어리스 · 2세트");
+  await page.getByRole("checkbox", { name: "선택 가능한 챔피언만", exact: true }).uncheck();
+  for (const name of setOnePicks) {
+    const champion = page.locator(".draft-picker-grid button").filter({ has: page.locator("span", { hasText: new RegExp(`^${name}$`) }) });
+    await expect(champion).toBeDisabled();
+  }
+});

@@ -6,6 +6,9 @@ import { teamEvidence, type PoolBasis, type PoolChampionState, type PoolSelectio
 import type { RosterBasis, RosterIndex, RosterState } from "./roster-scenario";
 import { PLAYER_SEASON_PATH } from "./player-season-history";
 import { PlayerSeasonSection } from "./player-season-panel";
+import { seasonSlotIdentity, type SeasonSlotIdentity } from "./roster-season-slots";
+import { SeasonSlotNote } from "./roster-season-slot-note";
+import type { SeasonCardCatalog, TeamSeasonSlots } from "./season-player-cards";
 
 const roleLabels: Record<string, string> = { TOP: "탑", JUNGLE: "정글", MID: "미드", BOTTOM: "바텀", SUPPORT: "서포터" };
 const roleLabel = (role: string) => roleLabels[role] ?? `역할 미확인(${role})`;
@@ -29,14 +32,18 @@ type PlayerPoolPanelProps = {
   focusChampionId: string | null;
   /** Season history link (loaded only when its section is opened); omitted = section hidden. */
   season?: { basis: RosterBasis; publicationRoot: string };
+  /** Past-season players assigned in the roster editor (their current slots are empty); omitted = none. */
+  seasonLineups?: TeamSeasonSlots;
+  seasonCatalog?: SeasonCardCatalog | null;
 };
+const NO_SEASON: TeamSeasonSlots = {};
 
 /**
  * Read-only, collapsed evidence for the current virtual roster: each slot's own public record and
  * which listed champions remain open under this game's bans/picks and earlier games' picks.
  * Nothing here selects, stages or confirms a champion, and it feeds no recommendation.
  */
-export function PlayerPoolPanel({ basis, teams, index, rosters, blueTeam, redTeam, selections, previousPicks, focusChampionId, season }: PlayerPoolPanelProps) {
+export function PlayerPoolPanel({ basis, teams, index, rosters, blueTeam, redTeam, selections, previousPicks, focusChampionId, season, seasonLineups = NO_SEASON, seasonCatalog = null }: PlayerPoolPanelProps) {
   const common = { teams, index, basis, selections, previousPicks, focusChampionId, rosters };
   const sides = [
     { side: "BLUE", team: blueTeam, rows: teamEvidence({ ...common, teamId: blueTeam.team_id }) },
@@ -56,17 +63,21 @@ export function PlayerPoolPanel({ basis, teams, index, rosters, blueTeam, redTea
     <div className="player-pool-teams">
       {sides.map(({ side, team, rows }) => <section key={side} className={`player-pool-team ${side.toLowerCase()}`} aria-label={`${side} ${team.team_name} 선수 근거`}>
         <h4><span>{side}</span>{team.team_name}</h4>
-        <ul>{rows.map((row) => <PoolRow key={row.role} row={row} index={index} />)}</ul>
+        <ul>{rows.map((row) => <PoolRow key={row.role} row={row} index={index}
+          seasonSlot={row.status === "EMPTY" ? seasonSlotIdentity({ lineups: seasonLineups, catalog: seasonCatalog, rosters, teamId: team.team_id, role: row.role }) : null} />)}</ul>
       </section>)}
     </div>
     {season && <PlayerSeasonSection basis={season.basis} publicationRoot={season.publicationRoot} path={PLAYER_SEASON_PATH}
-      index={index} rosters={rosters} blueTeam={blueTeam} redTeam={redTeam} selections={selections} previousPicks={previousPicks} />}
+      index={index} rosters={rosters} blueTeam={blueTeam} redTeam={redTeam} selections={selections} previousPicks={previousPicks}
+      seasonLineups={seasonLineups} seasonCatalog={seasonCatalog} />}
   </details>;
 }
 
-function PoolRow({ row, index }: { row: SlotEvidence; index: RosterIndex }) {
+function PoolRow({ row, index, seasonSlot }: { row: SlotEvidence; index: RosterIndex; seasonSlot: SeasonSlotIdentity | null }) {
   const { nameOf } = useChampionNames();
   const head = <b className="player-pool-role">{roleLabel(row.role)}</b>;
+  // A season player's slot: its identity and boundary only, never a current roster player's evidence.
+  if (row.status === "EMPTY" && seasonSlot) return <li data-role={row.role} data-status="SEASON">{head} <SeasonSlotNote identity={seasonSlot} /></li>;
   if (row.status === "EMPTY") return <li data-role={row.role} data-status="EMPTY">{head} 빈칸 · 선수 근거 미확인</li>;
   if (row.status === "UNRESOLVED" || !row.player) return <li data-role={row.role} data-status="UNRESOLVED">{head} 현재 스냅샷에서 선수 기록을 확인할 수 없음</li>;
   const player = row.player;

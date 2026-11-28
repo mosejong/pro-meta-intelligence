@@ -84,13 +84,17 @@ test("entry shows only the draft panel and hidden panels do not lengthen the pag
   await expect(page.locator(".draft-match-setup")).toHaveCount(1);
   await expect(page.locator(".studio-shell .draft-match-setup")).toHaveCount(0);
 
-  // Each panel, when shown, ends the document (nothing else is laid out below it), and the hidden ones take no space.
+  // Each panel, when shown, ends the content: only the shared page footer follows it, the document ends at that footer
+  // (plus the space reserved under the fixed phone navigation), and the hidden panels take no space.
   const measure = () => page.evaluate(() => {
     const shown = document.querySelector('.studio-panels > [role="tabpanel"]:not([hidden])');
     const box = shown.getBoundingClientRect();
+    const footer = document.querySelector("footer.studio-preview-footer").getBoundingClientRect();
+    const reserved = parseFloat(getComputedStyle(document.body).paddingBottom) || 0;
     return {
       id: shown.id, height: Math.round(box.height),
-      below: Math.round(document.documentElement.scrollHeight - Math.max(box.bottom + window.scrollY, window.innerHeight)),
+      below: Math.round(footer.top - box.bottom),
+      afterFooter: Math.round(document.documentElement.scrollHeight - Math.max(footer.bottom + window.scrollY + reserved, window.innerHeight)),
       doc: document.documentElement.scrollHeight,
       hiddenHeights: [...document.querySelectorAll('.studio-panels > [role="tabpanel"][hidden]')].map((panel) => panel.getBoundingClientRect().height),
     };
@@ -102,6 +106,7 @@ test("entry shows only the draft panel and hidden panels do not lengthen the pag
     expect(sizes[id].id).toBe(`studio-panel-${id.toLowerCase()}`);
     expect(sizes[id].hiddenHeights).toEqual([0, 0, 0, 0]);
     expect(sizes[id].below, `${id}: content below the shown panel`).toBeLessThan(200);
+    expect(sizes[id].afterFooter, `${id}: content after the page footer`).toBeLessThanOrEqual(1);
   }
   // Stacking every panel (the previous single page) would add the other panels' heights to the draft page.
   const others = IDS.filter((id) => id !== "DRAFT").reduce((sum, id) => sum + sizes[id].height, 0);
@@ -228,7 +233,16 @@ test("desktop rail sits on the left; mobile rail is a top strip with no page ove
   } else {
     const viewport = page.viewportSize();
     expect(railBox.width).toBeLessThanOrEqual(viewport.width);
-    expect(railBox.y + railBox.height).toBeLessThanOrEqual(panelBox.y + 1);
+    // Starting on a phone scrolls to the board: the rail stays pinned at the top and does not cover the board.
+    expect(Math.abs(railBox.y)).toBeLessThan(2);
+    const board = await page.locator(".draft-control-room").boundingBox();
+    expect(board.y).toBeGreaterThanOrEqual(railBox.y + railBox.height - 1);
+    // In the page layout (scrolled to the top) the rail is a strip above the panel.
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    const topRail = await rail.boundingBox();
+    const topPanel = await studioPanel(page, "DRAFT").boundingBox();
+    expect(topRail.y + topRail.height).toBeLessThanOrEqual(topPanel.y + 1);
     for (let i = 1; i < tabBoxes.length; i += 1) expect(tabBoxes[i].x).toBeGreaterThan(tabBoxes[i - 1].x);
     // The fixed bottom navigation does not cover the rail.
     const bottomNav = await page.locator("nav.app-bottom-navigation").boundingBox();

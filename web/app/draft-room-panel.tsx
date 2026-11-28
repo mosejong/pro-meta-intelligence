@@ -6,12 +6,47 @@ import type { DraftSession } from "./draft-session";
 import type { RadarReport } from "./radar-types";
 import "./draft-room-panel.css";
 
+/** "11/27 09:40" in Korea time, the audience's clock. */
+export function roomCutoffLabel(cutoff: string): string {
+  const time = Date.parse(cutoff);
+  if (!Number.isFinite(time)) return "확인 불가";
+  const kst = new Date(time + 9 * 3600 * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${kst.getUTCMonth() + 1}/${kst.getUTCDate()} ${pad(kst.getUTCHours())}:${pad(kst.getUTCMinutes())}`;
+}
+
+/** Same patch, different cutoff: the room stays on the data it was created with. */
+export function roomBasisNote(roomCutoff: string, siteCutoff: string): string {
+  const room = Date.parse(roomCutoff), site = Date.parse(siteCutoff);
+  if (!Number.isFinite(room) || !Number.isFinite(site) || room === site) return "";
+  return room < site ? " · 방을 만든 시점 자료로 밴픽·분석을 끝까지 진행해요 (사이트 자료는 그 뒤에 갱신됨)" : " · 이 방은 사이트보다 새 자료로 진행해요. 새로고침하면 사이트 자료도 맞춰져요";
+}
+
+/**
+ * Room server address from the build. Only https (or loopback http for local checks) without credentials,
+ * query or fragment is used; anything else counts as unset and the panel keeps its "not ready" notice.
+ */
+export function draftRoomEndpoint(raw: unknown): string {
+  if (typeof raw !== "string" || !raw.trim()) return "";
+  try {
+    const url = new URL(raw.trim());
+    const loopback = url.protocol === "http:" && (url.hostname === "127.0.0.1" || url.hostname === "localhost");
+    if ((url.protocol !== "https:" && !loopback) || url.username || url.password || url.search || url.hash) return "";
+    return url.origin + url.pathname.replace(/\/+$/, "");
+  } catch { return ""; }
+}
+
+/** The seat is forgotten on leave only when the server confirmed the room gone; an unverifiable-data end keeps it. */
+export function forgetOnLeave(state: Pick<RoomState, "ended" | "closed" | "roomId" | "snapshot">): string | null {
+  return state.ended && state.closed ? state.snapshot?.id ?? state.roomId ?? null : null;
+}
+
 export type RoomControls = RoomState & { action: (kind: "SELECT" | "NEXT_GAME" | "RESET", championId?: string) => void };
 export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoomChange }: {
   outgoing: DraftSession; liveReport: RadarReport; ready: boolean;
   onSnapshot: (session: DraftSession, reset: boolean) => void; onRoomChange: (state: RoomControls) => void;
 }) {
-  const endpoint = (import.meta as ImportMeta & { env?: { VITE_DRAFT_ROOM_ENDPOINT?: string } }).env?.VITE_DRAFT_ROOM_ENDPOINT?.trim() ?? "";
+  const endpoint = draftRoomEndpoint((import.meta as ImportMeta & { env?: { VITE_DRAFT_ROOM_ENDPOINT?: string } }).env?.VITE_DRAFT_ROOM_ENDPOINT);
   const latest = useRef({ liveReport, onSnapshot, onRoomChange });
   useLayoutEffect(() => { latest.current = { liveReport, onSnapshot, onRoomChange }; }, [liveReport, onSnapshot, onRoomChange]);
   const copyEpoch = useRef(0);
@@ -34,7 +69,12 @@ export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoom
         copyEpoch.current++; feedbackRoom.current = nextId; setCopied(false); setFallback("");
       }
       setState(next);
-      if (next.role === "BLUE" && next.snapshot && next.invite) {
+      if (next.ended && next.closed) {
+        // The room no longer exists on the server: drop its link so the screen stops offering to rejoin it.
+        setLink(null); setResume(false);
+        if (window.location.hash.startsWith("#room=")) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+      }
+      if (!next.ended && next.role === "BLUE" && next.snapshot && next.invite) {
         const resumeLink: RoomLink = { v: 1, id: next.snapshot.id };
         window.history.replaceState(null, "", createRoomUrl(window.location.href, resumeLink.id));
         setLink(resumeLink); setResume(true);
@@ -67,7 +107,8 @@ export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoom
   }
   return <details lang="ko" className="draft-room" open={state.active || !!link || undefined}>
     <summary>친구와 밴픽</summary>
-    {!endpoint ? <p>실시간 대전 준비 중 · 지금은 링크 공유 이용</p> : <>
+    <p className="draft-room-kind"><b>실시간 방</b> · 서로 다른 화면에서 같은 밴픽을 차례대로 함께 진행해요</p>
+    {!endpoint ? <p>실시간 대전 준비 중 · 지금은 아래 링크 보내기 이용</p> : <>
       {!state.active ? <>
         <p>블루·레드가 자기 차례를 진행합니다. 참가하면 현재 밴픽을 방의 밴픽으로 바꿉니다. 분석은 현재 공개 자료를 사용합니다.</p>
         {link ? resume ? <button type="button" disabled={!ready} onClick={() => void client.current?.enter(link)}>이 방에 다시 참여</button> : <>
@@ -77,6 +118,7 @@ export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoom
         </> : <button type="button" disabled={!ready} onClick={() => setConfirm("CREATE")}>현재 밴픽으로 방 만들기</button>}
       </> : <>
         <p role="status">{state.role === "BLUE" ? "블루 · 방장" : state.role === "RED" ? "레드" : state.role === "SPECTATOR" ? "관전 중" : "참여 확인 중"} · {state.ended ? "방 이용이 끝났습니다." : state.connected ? state.snapshot?.status === "WAITING" ? "레드 참가를 기다리고 있습니다." : state.snapshot?.status === "COMPLETE" ? "이번 세트 완료" : "밴픽 진행 중" : "연결 확인 중"}</p>
+        {state.snapshot && <p className="draft-room-basis">방 자료 · 패치 {state.snapshot.patch_id} · 기준 {roomCutoffLabel(state.snapshot.cutoff)}{roomBasisNote(state.snapshot.cutoff, liveReport.cutoff)}</p>}
         {state.warning && <p role="status">새로고침하면 방 참여 정보 없어짐</p>}
         {state.invite && <button type="button" disabled={state.ended} onClick={() => void copy("invite")}>레드 초대 링크 복사</button>}
         {state.view && <button type="button" disabled={state.ended} onClick={() => void copy("view")}>관전 링크 복사</button>}
@@ -84,7 +126,16 @@ export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoom
           <button type="button" disabled={!state.connected || state.sending || state.snapshot?.status !== "COMPLETE"} onClick={() => void client.current?.action("NEXT_GAME")}>방 다음 세트</button>
           <button type="button" disabled={!state.connected || state.sending} onClick={() => setConfirm("RESET")}>방 밴픽 초기화</button>
         </>}
-        <button type="button" onClick={() => { client.current?.leave(); setConfirm(null); setFallback(""); setCopied(false); setResume(!!link && !!client.current?.credentialFor(link.id)); }}>혼자 연습으로 돌아가기</button>
+        <button type="button" onClick={() => {
+          // Only a room the server confirmed gone (closed) is forgotten; a view ended for unverifiable data keeps its seat.
+          const endedId = forgetOnLeave(state);
+          client.current?.leave(); setConfirm(null); setFallback(""); setCopied(false);
+          if (endedId) {
+            // An ended room cannot be rejoined: forget its credential and drop the room link from the address.
+            client.current?.forget(endedId); setLink(null); setResume(false);
+            if (window.location.hash.startsWith("#room=")) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+          } else setResume(!!link && !!client.current?.credentialFor(link.id));
+        }}>혼자 연습으로 돌아가기</button>
         <p>돌아가면 마지막 방 밴픽을 개인 연습으로 이어갑니다.</p>
       </>}
       {state.message && <p role="status">{state.message}</p>}

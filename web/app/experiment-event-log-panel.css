@@ -1,0 +1,4 @@
+main.draft-lab.draft-studio .experiment-event-log { display: grid; gap: 6px; min-width: 0; }
+main.draft-lab.draft-studio .experiment-event-log-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; min-width: 0; }
+main.draft-lab.draft-studio .experiment-event-log-head p { margin: 0; color: var(--studio-muted); overflow-wrap: anywhere; }
+main.draft-lab.draft-studio .experiment-replay .experiment-event-log-head button { min-height: 44px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }

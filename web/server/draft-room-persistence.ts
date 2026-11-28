@@ -5,7 +5,7 @@ import { isDeepStrictEqual } from "node:util";
 import { championAssetId } from "../app/champion-assets";
 import { SHARE_CHAMPIONS } from "../app/share-champion-ids";
 import { applyDraftSelection, completeFearlessGame, DRAFT_MODEL_VERSION, fearlessLocks, type DraftGame, type DraftSelection } from "../app/draft-agent";
-import type { RadarReport } from "../app/radar-types";
+import { isRadarReport, type RadarReport } from "../app/radar-types";
 import type { RoomSnapshot } from "./draft-room-store";
 
 /**
@@ -13,9 +13,25 @@ import type { RoomSnapshot } from "./draft-room-store";
  * The file holds live seat credentials (host/guest/invite/view). It is server-only sensitive data:
  * it is NOT encrypted, is written with POSIX mode 0600 (no equivalent ACL hardening on Windows),
  * and must never live under a public/static/deploy directory.
+ *
+ * State v2 (written by this version):
+ *   { schema, version: 2, feed, saved_at, reports, rooms }
+ *   - `reports`: [{ identity, report }] - every public report a live room was created with plus the active
+ *     one, each stored once (keyed by the sha256 of its JSON text, which `identity.sha256` must equal).
+ *   - `feed`: the identity of the ACTIVE report (the one new rooms were created with when the file was saved).
+ *     It must reference a stored report. On start the report the server is started with (the feed file)
+ *     becomes active instead; the stored active report is kept only while a live room still uses it and is
+ *     dropped on the next write otherwise. A reload replaces the active report through a normal write.
+ *   - `rooms`: each room's credentials/snapshot/actions plus `report_sha256`, the report it was created with.
+ *     Its draft is re-validated against THAT report on load.
+ *   Only reports referenced by a live room or the active hash are written. A write that would exceed
+ *   MAX_STATE_BYTES is refused (the mutation fails); live rooms are never deleted to make space.
+ * State v1 (older single-feed files) still loads only when the starting report has exactly the file's feed
+ * identity; loading never rewrites the file, the next real mutation writes v2.
  */
 export const STATE_SCHEMA = "draft-room-state";
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
+export const LEGACY_STATE_VERSION = 1;
 export const MAX_STATE_BYTES = 8 * 1024 * 1024;
 export const MAX_PERSISTED_ROOMS = 1000;
 export const MAX_PERSISTED_ACTIONS = 256;
@@ -34,10 +50,20 @@ export type PersistedRoom = {
   snapshot: RoomSnapshot; host: string; guest: string | null; invite: string; view: string;
   actions: [string, string][];
 };
+/** A room as stored in state v2: the v1 fields plus the hash of the report the room was created with. */
+export type StoredRoom = { report_sha256: string } & PersistedRoom;
 export type FeedIdentity = { sha256: string; patch_id: string; cutoff: string; model_version: string };
+/** A validated report with its identity and the exact JSON text the hash was computed over. */
+export type StoredReport = { identity: FeedIdentity; report: RadarReport; text: string };
+/** `active` is the hash of the report the file marks as active for new rooms (v1: the identical starting report). */
+export type RestoredState = { version: 1 | 2; rooms: StoredRoom[]; reports: Map<string, StoredReport>; active: string };
 
+export function storedReport(report: RadarReport): StoredReport {
+  const text = JSON.stringify(report);
+  return { report, text, identity: { sha256: createHash("sha256").update(text).digest("hex"), patch_id: report.patch_id, cutoff: report.cutoff, model_version: DRAFT_MODEL_VERSION } };
+}
 export function feedIdentity(report: RadarReport): FeedIdentity {
-  return { sha256: createHash("sha256").update(JSON.stringify(report)).digest("hex"), patch_id: report.patch_id, cutoff: report.cutoff, model_version: DRAFT_MODEL_VERSION };
+  return storedReport(report).identity;
 }
 export const actionFingerprint = (kind: unknown, championId: unknown) =>
   createHash("sha256").update(JSON.stringify([kind, championId ?? null])).digest("base64url");
@@ -95,56 +121,116 @@ function validateDraft(snapshot: Record<string, unknown>, report: RadarReport) {
   if (!isDeepStrictEqual(replay, stored)) fail("ILLEGAL_DRAFT");
 }
 
-export function encodeState(identity: FeedIdentity, rooms: PersistedRoom[], now: number) {
+/**
+ * State v2 text. Report bodies are spliced in from their cached JSON text (the exact bytes that were hashed),
+ * so a write does not re-serialize megabytes of unchanged public data.
+ */
+export function encodeState(active: FeedIdentity, reports: StoredReport[], rooms: StoredRoom[], now: number) {
   if (rooms.length > MAX_PERSISTED_ROOMS) fail("STATE_TOO_LARGE");
-  const text = JSON.stringify({ schema: STATE_SCHEMA, version: STATE_VERSION, feed: identity, saved_at: new Date(now).toISOString(), rooms });
+  const keys = new Set(reports.map(stored => stored.identity.sha256));
+  if (keys.size !== reports.length || !keys.has(active.sha256) || rooms.some(room => !keys.has(room.report_sha256))) fail("STATE_CORRUPT");
+  const head = JSON.stringify({ schema: STATE_SCHEMA, version: STATE_VERSION, feed: active, saved_at: new Date(now).toISOString() });
+  const parts = reports.map(stored => `{"identity":${JSON.stringify(stored.identity)},"report":${stored.text}}`);
+  const text = `${head.slice(0, -1)},"reports":[${parts.join(",")}],"rooms":${JSON.stringify(rooms)}}`;
   if (Buffer.byteLength(text, "utf8") > MAX_STATE_BYTES) fail("STATE_TOO_LARGE");
   return text;
 }
 
-/** Validates the whole file before anything is restored. Expired rooms are dropped, never extended. */
-export function decodeState(text: string, context: { report: RadarReport; identity: FeedIdentity; now: number; ttlMs: number; maxRooms: number }): PersistedRoom[] {
+type DecodeContext = { report: RadarReport; identity: FeedIdentity; now: number; ttlMs: number; maxRooms: number };
+const IDENTITY_KEYS = ["sha256", "patch_id", "cutoff", "model_version"];
+const ROOM_KEYS = ["snapshot", "host", "guest", "invite", "view", "actions"];
+const SNAPSHOT_KEYS = ["id", "revision", "patch_id", "cutoff", "model_version", "blueTeamId", "redTeamId", "firstPickSide", "selections", "games", "seats", "status", "expiresAt"];
+
+/** Validates one room against the report it was created with; returns null when it has already expired. */
+function decodeRoom(room: Record<string, unknown>, report: RadarReport, context: DecodeContext, ids: Set<string>, secrets: Set<string>): PersistedRoom | null {
+  const snapshot = record(room.snapshot, SNAPSHOT_KEYS, "STATE_CORRUPT");
+  if (typeof snapshot.id !== "string" || !ROOM_ID.test(snapshot.id) || ids.has(snapshot.id)) fail("STATE_CORRUPT");
+  ids.add(snapshot.id as string);
+  if (snapshot.patch_id !== report.patch_id || snapshot.cutoff !== report.cutoff || snapshot.model_version !== DRAFT_MODEL_VERSION) fail("FEED_MISMATCH");
+  if (!Number.isSafeInteger(snapshot.revision) || (snapshot.revision as number) < 0) fail("STATE_CORRUPT");
+  const tokens = [room.host, room.invite, room.view, ...(room.guest === null ? [] : [room.guest])];
+  for (const token of tokens) {
+    if (typeof token !== "string" || !TOKEN.test(token) || secrets.has(token)) fail("CREDENTIAL_INVALID");
+    secrets.add(token as string);
+  }
+  const seats = record(snapshot.seats, ["BLUE", "RED"], "STATE_CORRUPT");
+  if (seats.BLUE !== true || seats.RED !== (room.guest !== null)) fail("CREDENTIAL_INVALID");
+  validateDraft(snapshot, report);
+  const status = !seats.RED ? "WAITING" : (snapshot.selections as unknown[]).length === 20 ? "COMPLETE" : "DRAFTING";
+  if (snapshot.status !== status) fail("ILLEGAL_DRAFT");
+  if (!isoTime(snapshot.expiresAt)) fail("STATE_CORRUPT");
+  const expiresAt = Date.parse(snapshot.expiresAt as string);
+  if (expiresAt > context.now + context.ttlMs) fail("EXPIRY_INVALID");
+  if (!Array.isArray(room.actions) || room.actions.length > MAX_PERSISTED_ACTIONS) fail("STATE_CORRUPT");
+  const keys = new Set<string>();
+  for (const action of room.actions as unknown[]) {
+    if (!isActionEntry(action)) fail("STATE_CORRUPT");
+    const [key] = action;
+    if (keys.has(key) || (key.startsWith("RED:") && room.guest === null)) fail("STATE_CORRUPT");
+    keys.add(key);
+  }
+  if (expiresAt <= context.now) return null;
+  const { snapshot: kept, host, guest, invite, view, actions } = structuredClone(room) as unknown as PersistedRoom;
+  return { snapshot: kept, host, guest, invite, view, actions };
+}
+
+/** Every stored report must pass the public report validator and hash to its own key. */
+function decodeReports(value: unknown): Map<string, StoredReport> {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_PERSISTED_ROOMS + 1) fail("STATE_CORRUPT");
+  const reports = new Map<string, StoredReport>();
+  for (const raw of value as unknown[]) {
+    const item = record(raw, ["identity", "report"], "STATE_CORRUPT");
+    const identity = record(item.identity, IDENTITY_KEYS, "STATE_CORRUPT");
+    if (IDENTITY_KEYS.some(key => typeof identity[key] !== "string")) fail("STATE_CORRUPT");
+    if (identity.model_version !== DRAFT_MODEL_VERSION) fail("FEED_MISMATCH");
+    if (!isRadarReport(item.report) || !item.report.opponent_prep) fail("REPORT_INVALID");
+    const stored = storedReport(item.report);
+    if (!isDeepStrictEqual(identity, stored.identity)) fail("REPORT_MISMATCH");
+    if (reports.has(stored.identity.sha256)) fail("STATE_CORRUPT");
+    reports.set(stored.identity.sha256, stored);
+  }
+  return reports;
+}
+
+/**
+ * Validates the whole file before anything is restored (fail closed, never a partial restore).
+ * Expired rooms are validated, then dropped, never extended.
+ */
+export function decodeState(text: string, context: DecodeContext): RestoredState {
   if (Buffer.byteLength(text, "utf8") > MAX_STATE_BYTES) fail("STATE_TOO_LARGE");
   let data: unknown;
   try { data = JSON.parse(text); } catch { fail("STATE_CORRUPT"); }
-  const top = record(data, ["schema", "version", "feed", "saved_at", "rooms"], "STATE_CORRUPT");
-  if (top.schema !== STATE_SCHEMA || top.version !== STATE_VERSION) fail("STATE_SCHEMA");
-  if (!isDeepStrictEqual(record(top.feed, ["sha256", "patch_id", "cutoff", "model_version"], "STATE_CORRUPT"), context.identity)) fail("FEED_MISMATCH");
+  if (!data || typeof data !== "object" || Array.isArray(data)) fail("STATE_CORRUPT");
+  const { schema, version } = data as Record<string, unknown>;
+  if (schema !== STATE_SCHEMA || (version !== STATE_VERSION && version !== LEGACY_STATE_VERSION)) fail("STATE_SCHEMA");
+  const legacy = version === LEGACY_STATE_VERSION;
+  const top = record(data, legacy ? ["schema", "version", "feed", "saved_at", "rooms"] : ["schema", "version", "feed", "saved_at", "reports", "rooms"], "STATE_CORRUPT");
+  const feed = record(top.feed, IDENTITY_KEYS, "STATE_CORRUPT");
+  let reports: Map<string, StoredReport>;
+  if (legacy) {
+    // v1 had one feed and no report body: only the identical starting report can vouch for its rooms.
+    if (!isDeepStrictEqual(feed, context.identity)) fail("FEED_MISMATCH");
+    reports = new Map([[context.identity.sha256, storedReport(context.report)]]);
+  } else {
+    reports = decodeReports(top.reports);
+    const active = typeof feed.sha256 === "string" ? reports.get(feed.sha256) : undefined;
+    if (!active || !isDeepStrictEqual(feed, active.identity)) fail("FEED_MISMATCH");
+  }
   if (!isoTime(top.saved_at)) fail("STATE_CORRUPT");
   if (!Array.isArray(top.rooms) || top.rooms.length > Math.min(MAX_PERSISTED_ROOMS, context.maxRooms)) fail("ROOM_LIMIT");
-  const ids = new Set<string>(), secrets = new Set<string>(), result: PersistedRoom[] = [];
+  const ids = new Set<string>(), secrets = new Set<string>(), referenced = new Set<string>([feed.sha256 as string]), rooms: StoredRoom[] = [];
   for (const raw of top.rooms as unknown[]) {
-    const room = record(raw, ["snapshot", "host", "guest", "invite", "view", "actions"], "STATE_CORRUPT");
-    const snapshot = record(room.snapshot, ["id", "revision", "patch_id", "cutoff", "model_version", "blueTeamId", "redTeamId", "firstPickSide", "selections", "games", "seats", "status", "expiresAt"], "STATE_CORRUPT");
-    if (typeof snapshot.id !== "string" || !ROOM_ID.test(snapshot.id) || ids.has(snapshot.id)) fail("STATE_CORRUPT");
-    ids.add(snapshot.id as string);
-    if (snapshot.patch_id !== context.report.patch_id || snapshot.cutoff !== context.report.cutoff || snapshot.model_version !== DRAFT_MODEL_VERSION) fail("FEED_MISMATCH");
-    if (!Number.isSafeInteger(snapshot.revision) || (snapshot.revision as number) < 0) fail("STATE_CORRUPT");
-    const tokens = [room.host, room.invite, room.view, ...(room.guest === null ? [] : [room.guest])];
-    for (const token of tokens) {
-      if (typeof token !== "string" || !TOKEN.test(token) || secrets.has(token)) fail("CREDENTIAL_INVALID");
-      secrets.add(token as string);
-    }
-    const seats = record(snapshot.seats, ["BLUE", "RED"], "STATE_CORRUPT");
-    if (seats.BLUE !== true || seats.RED !== (room.guest !== null)) fail("CREDENTIAL_INVALID");
-    validateDraft(snapshot, context.report);
-    const status = !seats.RED ? "WAITING" : (snapshot.selections as unknown[]).length === 20 ? "COMPLETE" : "DRAFTING";
-    if (snapshot.status !== status) fail("ILLEGAL_DRAFT");
-    if (!isoTime(snapshot.expiresAt)) fail("STATE_CORRUPT");
-    const expiresAt = Date.parse(snapshot.expiresAt as string);
-    if (expiresAt > context.now + context.ttlMs) fail("EXPIRY_INVALID");
-    if (!Array.isArray(room.actions) || room.actions.length > MAX_PERSISTED_ACTIONS) fail("STATE_CORRUPT");
-    const keys = new Set<string>();
-    for (const action of room.actions as unknown[]) {
-      if (!isActionEntry(action)) fail("STATE_CORRUPT");
-      const [key] = action;
-      if (keys.has(key) || (key.startsWith("RED:") && room.guest === null)) fail("STATE_CORRUPT");
-      keys.add(key);
-    }
-    if (expiresAt <= context.now) continue;
-    result.push(structuredClone(room) as unknown as PersistedRoom);
+    const room = record(raw, legacy ? ROOM_KEYS : ["report_sha256", ...ROOM_KEYS], "STATE_CORRUPT");
+    const sha = legacy ? context.identity.sha256 : room.report_sha256;
+    const stored = typeof sha === "string" ? reports.get(sha) : undefined;
+    if (!stored) fail("REPORT_MISSING");
+    referenced.add(stored.identity.sha256);
+    const kept = decodeRoom(room, stored.report, context, ids, secrets);
+    if (kept) rooms.push({ report_sha256: stored.identity.sha256, ...kept });
   }
-  return result;
+  // Every stored report must be in use; an orphan body is never something this store writes.
+  if ([...reports.keys()].some(key => !referenced.has(key))) fail("STATE_CORRUPT");
+  return { version: legacy ? 1 : 2, rooms, reports, active: feed.sha256 as string };
 }
 
 /** Directory names that are (or are built into) statically served output in this project or common hosts. */

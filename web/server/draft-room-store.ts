@@ -4,7 +4,7 @@ import { SHARE_CHAMPIONS } from "../app/share-champion-ids";
 import { applyDraftSelection, completeFearlessGame, DRAFT_MODEL_VERSION, fearlessLocks, nextDraftTurn, type DraftSelection, type DraftGame, type DraftSide } from "../app/draft-agent";
 import { parseDraftShareUrl } from "../app/draft-share";
 import { isRadarReport, type RadarReport } from "../app/radar-types";
-import { actionFingerprint, decodeState, encodeState, feedIdentity, MAX_PERSISTED_ACTIONS, type DraftRoomPersistence, type FeedIdentity, type PersistedRoom } from "./draft-room-persistence";
+import { actionFingerprint, decodeState, encodeState, MAX_PERSISTED_ACTIONS, storedReport, type DraftRoomPersistence, type FeedIdentity, type StoredReport, type StoredRoom } from "./draft-room-persistence";
 
 export type RoomRole = DraftSide | "SPECTATOR";
 export type RoomSnapshot = {
@@ -20,6 +20,10 @@ type Listener = (snapshot: RoomSnapshot | null) => void;
 type Entry = {
   snapshot: RoomSnapshot; host: string; guest: string | null; invite: string; view: string;
   actions: Map<string, string>; listeners: Set<Listener>;
+  /** The validated public report this room was created with; it never changes for the room. */
+  report: RadarReport;
+  /** Content hash of that report (its persisted `report_sha256`). */
+  reportSha: string;
 };
 const canonical = new Map(SHARE_CHAMPIONS.flatMap(([name, id]) => [[championAssetId(name).toLowerCase(), id], [id.toLowerCase(), id]] as [string, string][]));
 const secret = () => randomBytes(24).toString("base64url");
@@ -44,31 +48,83 @@ export class DraftRoomStore {
   private rooms = new Map<string, Entry>();
   private report: RadarReport;
   private identity: FeedIdentity;
+  /** Persistence only: hashed JSON text of the reports the last write kept, so writes reuse it. */
+  private stored = new Map<string, StoredReport>();
+  /**
+   * With persistence, rooms are restored with the report they were created with (state v2 keeps each report
+   * body by hash). The report given here (the current feed file) becomes the active report for new rooms.
+   * When a v2 file marks another report as active, the candidate state with this report as active is saved
+   * before the constructor returns (a failed or oversized write throws STORAGE_UNAVAILABLE and leaves the
+   * file as it was), so an unpersisted active report is never exposed. A v1 file (identical identity only)
+   * or a v2 file already active on this report is not rewritten by loading alone.
+   */
   constructor(report: RadarReport, private options: { clock?: () => number; ttlMs?: number; maxRooms?: number; maxListeners?: number; persistence?: DraftRoomPersistence } = {}) {
     if (!isRadarReport(report) || !report.opponent_prep) throw new Error("A validated public report is required");
-    this.report = structuredClone(report);
-    this.identity = feedIdentity(this.report);
+    const start = storedReport(structuredClone(report));
+    this.report = start.report;
+    this.identity = start.identity;
     const text = options.persistence?.load() ?? null;
+    let restoredActive: string | null = null;
     if (text !== null) {
       const restored = decodeState(text, { report: this.report, identity: this.identity, now: this.now(), ttlMs: this.ttl(), maxRooms: options.maxRooms ?? 200 });
-      for (const room of restored) this.rooms.set(room.snapshot.id, { ...room, actions: new Map(room.actions), listeners: new Set() });
+      for (const { report_sha256: sha, ...room } of restored.rooms) {
+        // Rooms on the same content share one report object (the starting one when the hash matches).
+        const source = sha === start.identity.sha256 ? start : restored.reports.get(sha)!;
+        this.stored.set(sha, source);
+        this.rooms.set(room.snapshot.id, { ...room, actions: new Map(room.actions), listeners: new Set(), report: source.report, reportSha: sha });
+      }
+      if (restored.version === 2) restoredActive = restored.active;
+    }
+    if (options.persistence) {
+      this.stored.set(start.identity.sha256, start);
+      if (restoredActive !== null && restoredActive !== start.identity.sha256) this.persist(undefined, start);
     }
   }
   get storage(): "ephemeral" | "file" { return this.options.persistence ? "file" : "ephemeral"; }
+  /** Patch and cutoff that new rooms are created with (existing rooms keep the values in their snapshot). */
+  get feed() { return { patch_id: this.report.patch_id, cutoff: this.report.cutoff }; }
+  /**
+   * Validated refresh for new rooms only. Live rooms never read the report after creation, so they finish on
+   * the data they were created with. An invalid report is rejected and the last valid one stays.
+   * With persistence the new active report is written (with every live room and its own report) before it is
+   * used; a failed or over-budget write throws STORAGE_UNAVAILABLE and keeps the previous active report.
+   */
+  replaceReport(report: unknown): boolean {
+    if (!isRadarReport(report) || !report.opponent_prep) throw new Error("A validated public report is required");
+    const next = storedReport(structuredClone(report));
+    if (next.identity.sha256 === this.identity.sha256) return false;
+    this.persist(undefined, next);
+    this.report = next.report; this.identity = next.identity;
+    return true;
+  }
   private now() { return this.options.clock?.() ?? Date.now(); }
   private ttl() { return this.options.ttlMs ?? 2 * 60 * 60 * 1000; }
-  /** Writes all live rooms (with `candidate` replacing/adding its room) or throws without side effects. */
-  private persist(candidate?: Entry) {
+  /**
+   * Writes all live rooms (with `candidate` replacing/adding its room), the reports they use and the active
+   * report (`active`, default the current one), or throws without side effects. Unreferenced reports are left out.
+   */
+  private persist(candidate?: Entry, active?: StoredReport) {
     const persistence = this.options.persistence;
     if (!persistence) return;
-    const now = this.now(), rooms: PersistedRoom[] = [], entries = new Map(this.rooms);
+    const now = this.now(), rooms: StoredRoom[] = [], entries = new Map(this.rooms), reports = new Map<string, StoredReport>();
+    const keep = (report: RadarReport, sha: string) => {
+      if (reports.has(sha)) return;
+      const cached = this.stored.get(sha) ?? storedReport(report);
+      if (cached.identity.sha256 !== sha) throw new RoomError(500, "SERVER_ERROR", "방 자료가 올바르지 않습니다.");
+      reports.set(sha, cached);
+    };
+    const current = active ?? { report: this.report, identity: this.identity };
+    if (active) reports.set(active.identity.sha256, active);
+    else keep(current.report, current.identity.sha256);
     if (candidate) entries.set(candidate.snapshot.id, candidate);
     for (const entry of entries.values()) {
       if (Date.parse(entry.snapshot.expiresAt) <= now) continue;
-      rooms.push({ snapshot: entry.snapshot, host: entry.host, guest: entry.guest, invite: entry.invite, view: entry.view, actions: [...entry.actions] });
+      keep(entry.report, entry.reportSha);
+      rooms.push({ report_sha256: entry.reportSha, snapshot: entry.snapshot, host: entry.host, guest: entry.guest, invite: entry.invite, view: entry.view, actions: [...entry.actions] });
     }
-    try { persistence.save(encodeState(this.identity, rooms, now)); }
+    try { persistence.save(encodeState(current.identity, [...reports.values()], rooms, now)); }
     catch { throw new RoomError(503, "STORAGE_UNAVAILABLE", "방 상태를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요."); }
+    this.stored = reports;
   }
   /** Expiry is deterministic and restore drops expired rooms, so pruning the file is best effort. */
   private prune() { try { this.persist(); } catch { /* retried on the next successful write */ } }
@@ -119,15 +175,15 @@ export class DraftRoomStore {
         firstPickSide: session.firstPickSide, selections: session.selections, games: session.games,
         seats: { BLUE: true, RED: false }, status: "WAITING",
         expiresAt: new Date(this.now() + this.ttl()).toISOString() },
-      host: secret(), guest: null, invite: secret(), view: secret(), actions: new Map(), listeners: new Set(),
+      host: secret(), guest: null, invite: secret(), view: secret(), actions: new Map(), listeners: new Set(), report: this.report, reportSha: this.identity.sha256,
     };
     this.persist(entry);
     this.rooms.set(id, entry);
-    return { id, role: "BLUE" as const, token: entry.host, snapshot: this.snapshot(entry), invite: entry.invite, view: entry.view };
+    return { id, role: "BLUE" as const, token: entry.host, snapshot: this.snapshot(entry), invite: entry.invite, view: entry.view, report_sha256: entry.reportSha };
   }
   join(id: string, body: unknown) {
     const entry = this.entry(id), value = object(body);
-    if (typeof value.view === "string" && same(value.view, entry.view)) return { id, role: "SPECTATOR" as const, token: entry.view, snapshot: this.snapshot(entry) };
+    if (typeof value.view === "string" && same(value.view, entry.view)) return { id, role: "SPECTATOR" as const, token: entry.view, snapshot: this.snapshot(entry), report_sha256: entry.reportSha };
     if (typeof value.invite !== "string" || !same(value.invite, entry.invite)) throw new RoomError(401, "INVALID_INVITE", "초대 링크가 올바르지 않습니다.");
     if (entry.guest) throw new RoomError(409, "SEAT_TAKEN", "레드 자리는 이미 참여했습니다. 참여했던 창에서 다시 연결해 주세요.");
     const guest = secret(), snapshot = structuredClone(entry.snapshot);
@@ -135,12 +191,17 @@ export class DraftRoomStore {
     this.persist({ ...entry, guest, snapshot });
     entry.guest = guest; entry.snapshot = snapshot;
     this.notify(entry);
-    return { id, role: "RED" as const, token: entry.guest, snapshot: this.snapshot(entry) };
+    return { id, role: "RED" as const, token: entry.guest, snapshot: this.snapshot(entry), report_sha256: entry.reportSha };
+  }
+  /** The room's own report (public data) for an authorized participant, so every screen validates and analyses on it. */
+  roomReport(id: string, token: unknown): RadarReport {
+    const entry = this.entry(id); this.role(entry, token);
+    return entry.report;
   }
   read(id: string, token: unknown) {
     const entry = this.entry(id);
     const role = this.role(entry, token);
-    return { id, role, snapshot: this.snapshot(entry),
+    return { id, role, snapshot: this.snapshot(entry), report_sha256: entry.reportSha,
       ...(role === "BLUE" ? { invite: entry.invite, view: entry.view } : {}) };
   }
   subscribe(id: string, token: unknown, listener: Listener) {

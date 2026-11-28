@@ -27,6 +27,7 @@ import { eventNavigation } from "./experiment-event-navigation";
 import { ExperimentResultSharePanel } from "./experiment-result-share-panel";
 import { ExperimentInputLinkPanel } from "./experiment-input-link-panel";
 import { ExperimentResourceHistoryPanel } from "./experiment-resource-history-panel";
+import { ExperimentEventLogPanel } from "./experiment-event-log-panel";
 import "./experiment-replay-panel.css";
 
 type ExperimentReplayPanelProps = {
@@ -219,13 +220,7 @@ export function ExperimentReplayPanel({ readyInput, blocked, nameOf }: Experimen
       })}</div>
       <ExperimentResourceHistoryPanel run={run} shownMinute={frame.minute} />
 
-      <ol className="experiment-replay-log" aria-label="지금까지의 모델 사건">{frame.log.length ? frame.log.slice(-8).map((event, index) => {
-        const actor = teamOf(event.actor as CoreTeamId).name;
-        const text = event.kind === "SKIRMISH" ? `${actor} 교전 우세 (모델 킬 +${event.amount})`
-          : event.kind === "OBJECTIVE" ? `${actor} 추상 오브젝트 +1`
-          : `${actor} 상대 기지 피해 ${event.amount}`;
-        return <li key={`${event.minute}-${event.kind}-${index}`}><span>{event.minute}분</span>{text}</li>;
-      }) : <li>아직 교전·오브젝트 사건이 없습니다.</li>}</ol>
+      <ExperimentEventLogPanel runId={run.runId} log={frame.log} nameOf={(actor) => teamOf(actor as CoreTeamId).name} />
 
       {frame.outcome ? <p className="experiment-replay-outcome" role="status">
         <b>모델 내부 결과:</b> {teamOf(frame.outcome.winner).name} · {frame.outcome.minute}분 · {reasonLabel[frame.outcome.reason]}. 사용자 가정과 작성 규칙의 결과이며 실제 승패·승률 예측이 아닙니다.
