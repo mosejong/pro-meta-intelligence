@@ -78,9 +78,9 @@ test("C3: a reload serves new rooms the new feed while live rooms keep their own
   });
 });
 
-test("C3: reload is refused with a persistence file, and the interval setting is validated", () => {
+test("C3: reload works with a persistence file (unchanged report is a no-op), and the interval setting is validated", () => {
   const persisted = new store.DraftRoomStore(report, { persistence: { load: () => null, save: () => {} } });
-  assert.throws(() => persisted.replaceReport(report), /persistence/);
+  assert.equal(persisted.replaceReport(report), false, "state v2: reload is allowed with persistence; the same report changes nothing");
   assert.equal(feed.feedReloadSeconds(undefined), null);
   assert.equal(feed.feedReloadSeconds(""), null);
   assert.equal(feed.feedReloadSeconds("300"), 300);

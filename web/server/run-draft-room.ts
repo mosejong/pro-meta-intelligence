@@ -16,7 +16,8 @@ const trustedProxies = (process.env.DRAFT_ROOM_TRUSTED_PROXIES ?? "").split(",")
 const reloadSeconds = feedReloadSeconds(process.env.DRAFT_ROOM_FEED_RELOAD_SECONDS);
 // Opt-in only. The state file holds live room credentials: keep it server-only (never public/dist/static).
 const stateFile = process.env.DRAFT_ROOM_STATE_FILE;
-if (stateFile !== undefined && reloadSeconds !== null) throw new Error("DRAFT_ROOM_STATE_FILE and DRAFT_ROOM_FEED_RELOAD_SECONDS cannot be combined yet: the state file is tied to one feed");
+// It can be combined with feed reloads: state v2 keeps every live room's own report, and on restart the feed
+// file's report becomes the one new rooms use while restored rooms keep theirs.
 const persistence = stateFile === undefined ? undefined
   : createFileRoomPersistence(stateFile, { forbiddenRoots: [...["public", "static-site", ".site-public", "dist", "dist-pages", "dist-room-pages", ".next"].map(folder => resolve(folder)), dirname(feedPath)] });
 const app = createDraftRoomServer({ report, allowedOrigins, persistence, trustedProxies });
@@ -24,9 +25,15 @@ const app = createDraftRoomServer({ report, allowedOrigins, persistence, trusted
 app.server.listen(port, host, () => { console.log(`Draft room prototype listening on ${host}:${port} (${app.store.storage})`); });
 const reload = reloadSeconds === null ? undefined : setInterval(() => {
   const before = app.store.feed;
-  const result = reloadFeed(app.store, () => readFileSync(feedPath, "utf8"));
+  // A valid report whose state write failed (disk error or over the size budget) is reported as storage, not
+  // as an invalid report. Only the error code is logged.
+  let storage = false;
+  const result = reloadFeed({ replaceReport: next => {
+    try { return app.store.replaceReport(next); }
+    catch (error) { storage = (error as { code?: unknown }).code === "STORAGE_UNAVAILABLE"; throw error; }
+  } }, () => readFileSync(feedPath, "utf8"));
   if (result === "UPDATED") console.log(`Feed for new rooms: ${before.patch_id} ${before.cutoff} -> ${app.store.feed.patch_id} ${app.store.feed.cutoff}`);
-  else if (result !== "UNCHANGED") console.warn(`Feed reload kept the last valid report (${result})`);
+  else if (result !== "UNCHANGED") console.warn(`Feed reload kept the last valid report (${storage ? "STORAGE_UNAVAILABLE" : result})`);
 }, reloadSeconds * 1000);
 reload?.unref();
 const close = () => { if (reload) clearInterval(reload); app.closeStreams(); app.server.close(); };

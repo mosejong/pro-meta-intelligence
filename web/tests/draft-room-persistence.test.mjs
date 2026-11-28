@@ -87,7 +87,7 @@ test("corrupt, schema, feed, draft, credential and expiry tampering fail closed 
   const original = await readFile(path, "utf8");
   const cases = [
     ["STATE_CORRUPT", () => "{not json"],
-    ["STATE_SCHEMA", s => ({ ...s, version: 2 })],
+    ["STATE_SCHEMA", s => ({ ...s, version: 3 })],
     ["FEED_MISMATCH", s => ({ ...s, feed: { ...s.feed, sha256: "0".repeat(64) } })],
     ["ILLEGAL_DRAFT", s => { s.rooms[0].snapshot.selections[0].champion_id = "Garen"; s.rooms[0].snapshot.selections.push({ ...s.rooms[0].snapshot.selections[0], turn: 2 }); return s; }],
     ["ILLEGAL_DRAFT", s => { s.rooms[0].snapshot.selections[0].side = "RED"; return s; }],
@@ -107,7 +107,8 @@ test("corrupt, schema, feed, draft, credential and expiry tampering fail closed 
   }
   await writeFile(path, original);
   const changed = { ...structuredClone(report), cutoff: "2000-01-01T00:00:00Z" };
-  assert.throws(() => new Store(changed, { persistence: backend(path) }), code("FEED_MISMATCH"));
+  // State v2: a different starting feed no longer refuses the file; rooms keep their own stored report.
+  assert.equal(new Store(changed, { persistence: backend(path) }).storage, "file");
   assert.equal(await readFile(path, "utf8"), original);
   const small = persistence.createFileRoomPersistence(path, { maxBytes: 16 });
   assert.throws(() => new Store(report, { persistence: small }), code("STATE_TOO_LARGE"));
