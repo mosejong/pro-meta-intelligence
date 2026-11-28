@@ -118,6 +118,26 @@ test("ignore hides the notice and keeps focus on the step; a reload asks again",
   await expect(notice(page)).toBeVisible();
 });
 
+test("every dismissed link stays hidden in this page view: A, then B, then back to A does not ask again", async ({ page }) => {
+  const linkB = `experiment=${encode({ ...payload, seed: 777 })}`;
+  await page.goto(`${root}#${linkHash}`);
+  await waitReady(page);
+  await notice(page).getByRole("button", { name: "무시", exact: true }).click();
+  await expect(notice(page)).toHaveCount(0);
+  await page.evaluate(hash => { location.hash = hash; }, linkB);
+  await expect(notice(page)).toBeVisible();
+  await expect(notice(page)).toContainText("777");
+  await notice(page).getByRole("button", { name: "무시", exact: true }).click();
+  await expect(notice(page)).toHaveCount(0);
+  await page.goBack();
+  await expect.poll(() => page.evaluate(() => location.hash)).toBe(`#${linkHash}`);
+  await expect(notice(page)).toHaveCount(0);
+  // A reload starts a new page view and asks again.
+  await page.reload();
+  await waitReady(page);
+  await expect(notice(page)).toBeVisible();
+});
+
 test("draft in progress is never overwritten by the link", async ({ page }) => {
   await page.goto(root);
   await enterDraftWorkspace(page);

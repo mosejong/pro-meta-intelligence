@@ -176,7 +176,6 @@ export class DraftRoomClient {
       const existing = "id" in input ? this.store.get(input.id) : null;
       if (!("share" in input) && !existing && !input.invite && !input.view) throw invalid();
       const data = "share" in input ? await this.http("/v1/rooms", "POST", input) : existing ? await this.http(`/v1/rooms/${input.id}`, "GET", undefined, existing) : await this.http(`/v1/rooms/${input.id}/join`, "POST", input.invite ? { invite: input.invite } : { view: input.view });
-      if (generation !== this.generation) return;
       const credential = existing ?? { id: data.id, role: data.role, token: data.token } as Credential;
       if (!idPattern.test(credential.id) || !keyPattern.test(credential.token) || !["BLUE", "RED", "SPECTATOR"].includes(credential.role) || data.id !== credential.id || data.role !== credential.role || ("id" in input && input.id !== credential.id)) throw invalid();
       if ("share" in input && (credential.role !== "BLUE" || typeof data.invite !== "string" || !keyPattern.test(data.invite) || typeof data.view !== "string" || !keyPattern.test(data.view) || data.invite === credential.token || data.view === credential.token)) throw invalid();
@@ -184,9 +183,12 @@ export class DraftRoomClient {
         if (data[kind] !== undefined && (credential.role !== "BLUE" || typeof data[kind] !== "string" || !keyPattern.test(data[kind]) || data[kind] === credential.token)) throw invalid();
       }
       if (!existing && "id" in input && credential.role !== (input.invite ? "RED" : "SPECTATOR")) throw invalid();
-      // The seat is taken on the server now: keep the credential before loading any report so a failed report
-      // request never loses it (a retry or a later rejoin reuses the same seat).
-      this.credential = credential; this.store.set(credential);
+      // The seat is taken on the server now: keep the verified credential before anything else, even when the
+      // user already left while the response was in flight (late responses never touch the screen or the board,
+      // but the seat stays recoverable), and before loading any report (a failed report request never loses it).
+      this.store.set(credential);
+      if (generation !== this.generation) return;
+      this.credential = credential;
       this.update({ roomId: credential.id, role: credential.role, sending: false, warning: this.store.warning, invite: typeof data.invite === "string" ? data.invite : undefined, view: typeof data.view === "string" ? data.view : undefined, message: "" });
       try {
         await this.ensureReport(data, credential);

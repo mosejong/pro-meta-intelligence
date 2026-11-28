@@ -234,6 +234,44 @@ test("review 3: same patch and cutoff but different content uses the room's repo
   });
 });
 
+test("review 5: leaving while the join response is in flight keeps the verified seat but never touches the screen", async () => {
+  await withServer({}, async base => {
+    const roomA = await (await create(base)).json();
+    let release, started = false;
+    const gate = new Promise(resolve => { release = resolve; });
+    const request = async (url, init = {}) => {
+      const response = await fetch(url, { ...init, signal: undefined, headers: { ...(init.headers ?? {}), Origin: "https://example.test" } });
+      if (url.endsWith("/join")) { started = true; await gate; }
+      return response;
+    };
+    const store = memoryStore(), applied = [], states = [];
+    const red = new client.DraftRoomClient(base, () => report, s => states.push(s), session => applied.push(session), store, request);
+    const entering = red.enter({ v: 1, id: roomA.id, invite: roomA.invite });
+    await until(() => started);
+    red.leave();
+    release();
+    await entering;
+    assert.equal(applied.length, 0, "a late response never replaces the board");
+    assert.equal(states.at(-1).active, false, "the room view stays left");
+    const kept = store.get(roomA.id);
+    assert.equal(kept?.role, "RED");
+    assert.match(kept?.token ?? "", /^[A-Za-z0-9_-]{32}$/, "the seat the server assigned stays recoverable");
+    // Rejoining later recovers the same seat instead of SEAT_TAKEN.
+    const again = new client.DraftRoomClient(base, () => report, s => states.push(s), session => applied.push(session), store, (url, init = {}) => fetch(url, { ...init, headers: { ...(init.headers ?? {}), Origin: "https://example.test" } }));
+    await again.enter({ v: 1, id: roomA.id });
+    await until(() => applied.length > 0 && states.at(-1)?.role === "RED");
+    again.leave();
+  });
+});
+
+test("review 6: leaving forgets the seat only when the server confirmed the room gone", () => {
+  const snapshot = { id: "a".repeat(22) };
+  assert.equal(panel.forgetOnLeave({ ended: true, closed: true, snapshot }), snapshot.id);
+  assert.equal(panel.forgetOnLeave({ ended: true, closed: true, roomId: "b".repeat(22) }), "b".repeat(22), "first rejoin without a snapshot");
+  assert.equal(panel.forgetOnLeave({ ended: true, closed: false, snapshot }), null, "unverifiable room data keeps the seat");
+  assert.equal(panel.forgetOnLeave({ ended: false, snapshot }), null);
+});
+
 test("C2: the room address from the build is used only when it is a safe https (or local) URL", () => {
   for (const unset of [undefined, "", "   ", "ftp://rooms.example", "http://rooms.example", "https://user:pw@rooms.example", "https://rooms.example/?k=1", "https://rooms.example/#x", "not a url"])
     assert.equal(panel.draftRoomEndpoint(unset), "", String(unset));

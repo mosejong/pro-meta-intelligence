@@ -38,14 +38,16 @@ type Outcome = { href: string; text: string; chosen: boolean };
  */
 export function ExperimentLinkNoticePanel({ onChooseTeams, ...context }: Props) {
   const href = useSyncExternalStore(subscribe, currentHref, serverHref);
-  const [dismissed, setDismissed] = useState("");
+  // Every link address dismissed in this page view stays hidden (A, then B, then back to A does not ask again);
+  // a reload starts a new page view and asks again, like a dismissed #draft share.
+  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set());
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [focusRequest, setFocusRequest] = useState(0);
   const statusRef = useRef<HTMLParagraphElement>(null);
   useEffect(() => { if (focusRequest) statusRef.current?.focus(); }, [focusRequest]);
 
   const notice = experimentLinkNotice(href, context);
-  if (notice.kind === "NONE" || dismissed === href) return null;
+  if (notice.kind === "NONE" || dismissed.has(href)) return null;
   const shownOutcome = outcome?.href === href ? outcome : null;
 
   function choose() {
@@ -64,7 +66,7 @@ export function ExperimentLinkNoticePanel({ onChooseTeams, ...context }: Props) 
     setFocusRequest((n) => n + 1);
   }
   function dismiss() {
-    setDismissed(href);
+    setDismissed(current => new Set(current).add(href));
     setOutcome(null);
     // The notice disappears; keep keyboard focus on the step instead of losing it to the page.
     document.getElementById("draft-flow-setup-title")?.focus();

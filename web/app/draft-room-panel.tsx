@@ -36,6 +36,11 @@ export function draftRoomEndpoint(raw: unknown): string {
   } catch { return ""; }
 }
 
+/** The seat is forgotten on leave only when the server confirmed the room gone; an unverifiable-data end keeps it. */
+export function forgetOnLeave(state: Pick<RoomState, "ended" | "closed" | "roomId" | "snapshot">): string | null {
+  return state.ended && state.closed ? state.snapshot?.id ?? state.roomId ?? null : null;
+}
+
 export type RoomControls = RoomState & { action: (kind: "SELECT" | "NEXT_GAME" | "RESET", championId?: string) => void };
 export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoomChange }: {
   outgoing: DraftSession; liveReport: RadarReport; ready: boolean;
@@ -122,9 +127,10 @@ export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoom
           <button type="button" disabled={!state.connected || state.sending} onClick={() => setConfirm("RESET")}>방 밴픽 초기화</button>
         </>}
         <button type="button" onClick={() => {
-          const ended = state.ended, endedId = state.snapshot?.id ?? state.roomId;
+          // Only a room the server confirmed gone (closed) is forgotten; a view ended for unverifiable data keeps its seat.
+          const endedId = forgetOnLeave(state);
           client.current?.leave(); setConfirm(null); setFallback(""); setCopied(false);
-          if (ended && endedId) {
+          if (endedId) {
             // An ended room cannot be rejoined: forget its credential and drop the room link from the address.
             client.current?.forget(endedId); setLink(null); setResume(false);
             if (window.location.hash.startsWith("#room=")) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
