@@ -139,21 +139,99 @@ test("C3 end to end: room A, reload B, new room B, then a B screen joins room A 
   });
 });
 
-test("C3: a room whose report cannot be loaded ends with an explanation instead of using this screen's report", async () => {
+test("C3: a room report that does not match the room's hash is never used and ends the room view", async () => {
   const [blue, red] = report.opponent_prep.teams;
   const { DRAFT_MODEL_VERSION } = await vite.ssrLoadModule("/app/draft-agent.ts");
   const snapshot = { id: "a".repeat(22), revision: 1, patch_id: report.patch_id, cutoff: "2026-11-20T00:00:00.000Z", model_version: DRAFT_MODEL_VERSION,
     blueTeamId: blue.team_id, redTeamId: red.team_id, firstPickSide: "BLUE", selections: [], games: [], seats: { BLUE: true, RED: true }, status: "DRAFTING", expiresAt: "2026-12-01T00:00:00.000Z" };
   const json = (value, status = 200) => new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json" } });
   const states = [], sessions = [];
-  // The server answers the join but returns a report for another cutoff: never accepted.
-  const fake = async url => url.endsWith("/join") ? json({ id: snapshot.id, role: "RED", token: "t".repeat(32), snapshot })
-    : url.endsWith("/report") ? json({ ...report }) : json({ error: { code: "NOT_FOUND" } }, 404);
-  const room = new client.DraftRoomClient("https://rooms.example", () => report, s => states.push(s), s => sessions.push(s), memoryStore(), fake);
+  // The join claims a report hash the served report does not have.
+  const fake = async url => url.endsWith("/join") ? json({ id: snapshot.id, role: "RED", token: "t".repeat(32), snapshot, report_sha256: "f".repeat(64) })
+    : url.endsWith("/report") ? json({ ...report, cutoff: snapshot.cutoff }) : json({ error: { code: "NOT_FOUND" } }, 404);
+  const store = memoryStore();
+  const room = new client.DraftRoomClient("https://rooms.example", () => report, s => states.push(s), s => sessions.push(s), store, fake);
   await room.enter({ v: 1, id: snapshot.id, invite: "i".repeat(32) });
   assert.equal(sessions.length, 0, "nothing is applied with the wrong report");
   assert.match(states.at(-1).message, /자료를 불러오지 못했어요/);
+  assert.equal(states.at(-1).ended, true);
+  assert.ok(store.get(snapshot.id), "the seat is kept (the room still exists), only this view ends");
   room.leave();
+});
+
+test("review 1: a temporary report failure after joining keeps the red seat and recovers it", async () => {
+  const reportB = { ...structuredClone(report), cutoff: new Date(Date.parse(report.cutoff) + 3_600_000).toISOString() };
+  await withServer({}, async base => {
+    const roomA = await (await create(base)).json();
+    let failures = 1;
+    const request = (url, init = {}) => {
+      if (url.endsWith("/report") && failures > 0) { failures--; return Promise.resolve(new Response("busy", { status: 503 })); }
+      return fetch(url, { ...init, headers: { ...(init.headers ?? {}), Origin: "https://example.test" } });
+    };
+    const store = memoryStore(), sessions = [], states = [];
+    const red = new client.DraftRoomClient(base, () => reportB, s => states.push(s), session => sessions.push(session), store, request);
+    await red.enter({ v: 1, id: roomA.id, invite: roomA.invite });
+    assert.equal(store.get(roomA.id)?.role, "RED", "the credential is stored before the report is loaded");
+    await until(() => sessions.length > 0, 8000);
+    assert.equal(sessions[0].report.cutoff, report.cutoff, "after the retry the board uses the room's own report");
+    assert.equal(states.at(-1).role, "RED");
+    assert.ok(!states.some(s => s.ended));
+    red.leave();
+    // Rejoining later reuses the same seat (no SEAT_TAKEN).
+    const again = new client.DraftRoomClient(base, () => reportB, s => states.push(s), session => sessions.push(session), store, request);
+    await again.enter({ v: 1, id: roomA.id });
+    await until(() => states.at(-1)?.role === "RED" && states.at(-1)?.connected, 8000);
+    again.leave();
+  });
+});
+
+test("review 2: rejoining an expired room after a refresh ends it, forgets the seat and keeps the board", async () => {
+  let roomId, credential;
+  await withServer({}, async base => {
+    const roomA = await (await create(base)).json();
+    roomId = roomA.id; credential = { id: roomA.id, role: "BLUE", token: roomA.token };
+  });
+  // A new (restarted, in-memory) server no longer has the room.
+  await withServer({}, async base => {
+    const store = memoryStore(); store.set(credential);
+    const states = [], sessions = [];
+    const request = (url, init = {}) => fetch(url, { ...init, headers: { ...(init.headers ?? {}), Origin: "https://example.test" } });
+    const host = new client.DraftRoomClient(base, () => report, s => states.push(s), session => sessions.push(session), store, request);
+    await host.enter({ v: 1, id: roomId });
+    const last = states.at(-1);
+    assert.equal(last.ended, true); assert.equal(last.closed, true); assert.equal(last.roomId, roomId);
+    assert.match(last.message, /종료되었거나 만료/);
+    assert.equal(store.get(roomId), null, "the dead seat is forgotten");
+    assert.equal(sessions.length, 0, "the existing board is not replaced");
+    host.leave();
+  });
+});
+
+test("review 3: same patch and cutoff but different content uses the room's report, not this screen's", async () => {
+  const roomReport = structuredClone(report);
+  const screen = structuredClone(report);
+  screen.opponent_prep.teams[0] = { ...screen.opponent_prep.teams[0], team_name: screen.opponent_prep.teams[0].team_name + " (다른 내용)" };
+  assert.equal(screen.patch_id, roomReport.patch_id); assert.equal(screen.cutoff, roomReport.cutoff);
+  await withServer({}, async base => {
+    const roomA = await (await create(base)).json();
+    assert.match(roomA.report_sha256, /^[0-9a-f]{64}$/);
+    assert.equal(roomA.report_sha256, await client.reportSha256(roomReport));
+    const sessions = [];
+    const request = (url, init = {}) => fetch(url, { ...init, headers: { ...(init.headers ?? {}), Origin: "https://example.test" } });
+    const viewer = new client.DraftRoomClient(base, () => screen, () => {}, session => sessions.push(session), memoryStore(), request);
+    await viewer.enter({ v: 1, id: roomA.id, view: roomA.view });
+    await until(() => sessions.length > 0);
+    assert.equal(sessions[0].report.opponent_prep.teams[0].team_name, roomReport.opponent_prep.teams[0].team_name, "the room's content, not the screen's");
+    viewer.leave();
+    // Identical content: no extra download needed, the screen's report is used.
+    let reportRequests = 0;
+    const counting = (url, init) => { if (url.endsWith("/report")) reportRequests++; return request(url, init); };
+    const same = new client.DraftRoomClient(base, () => roomReport, () => {}, session => sessions.push(session), memoryStore(), counting);
+    await same.enter({ v: 1, id: roomA.id, view: roomA.view });
+    await until(() => sessions.length > 1);
+    assert.equal(reportRequests, 0);
+    same.leave();
+  });
 });
 
 test("C2: the room address from the build is used only when it is a safe https (or local) URL", () => {

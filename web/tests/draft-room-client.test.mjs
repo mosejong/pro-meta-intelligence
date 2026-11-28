@@ -8,7 +8,9 @@ import ts from "typescript";
 
 let directory, api, report, snapshot;
 const id = "a".repeat(22), token = "b".repeat(32), invite = "c".repeat(32), view = "d".repeat(32);
-const json = value => new Response(JSON.stringify(value), { headers: { "Content-Type": "application/json" } });
+let reportSha;
+// Like the real server, room create/join/read responses carry the content hash of the room's report.
+const json = value => new Response(JSON.stringify(value && typeof value === "object" && "role" in value && "snapshot" in value && !("report_sha256" in value) ? { ...value, report_sha256: reportSha } : value), { headers: { "Content-Type": "application/json" } });
 const tick = () => new Promise(resolve => setTimeout(resolve, 5));
 before(async () => {
   directory = await mkdtemp(path.join(tmpdir(), "draft-room-client-test-"));
@@ -27,6 +29,7 @@ before(async () => {
   api = await import(pathToFileURL(path.join(directory, "draft-room-client.mjs")));
   const agent = await import(pathToFileURL(path.join(directory, "draft-agent.mjs")));
   report = JSON.parse(await readFile(new URL("../public/feed/current.json", import.meta.url), "utf8"));
+  reportSha = await api.reportSha256(report);
   snapshot = { id, revision: 0, patch_id: report.patch_id, cutoff: report.cutoff, model_version: agent.DRAFT_MODEL_VERSION,
     blueTeamId: report.opponent_prep.teams[0].team_id, redTeamId: report.opponent_prep.teams[1].team_id,
     firstPickSide: "BLUE", selections: [], games: [], seats: { BLUE: true, RED: false }, status: "WAITING", expiresAt: "2099-01-01T00:00:00Z" };

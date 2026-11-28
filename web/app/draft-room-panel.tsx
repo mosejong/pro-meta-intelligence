@@ -64,7 +64,12 @@ export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoom
         copyEpoch.current++; feedbackRoom.current = nextId; setCopied(false); setFallback("");
       }
       setState(next);
-      if (next.role === "BLUE" && next.snapshot && next.invite) {
+      if (next.ended && next.closed) {
+        // The room no longer exists on the server: drop its link so the screen stops offering to rejoin it.
+        setLink(null); setResume(false);
+        if (window.location.hash.startsWith("#room=")) window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+      }
+      if (!next.ended && next.role === "BLUE" && next.snapshot && next.invite) {
         const resumeLink: RoomLink = { v: 1, id: next.snapshot.id };
         window.history.replaceState(null, "", createRoomUrl(window.location.href, resumeLink.id));
         setLink(resumeLink); setResume(true);
@@ -117,7 +122,7 @@ export function DraftRoomPanel({ outgoing, liveReport, ready, onSnapshot, onRoom
           <button type="button" disabled={!state.connected || state.sending} onClick={() => setConfirm("RESET")}>방 밴픽 초기화</button>
         </>}
         <button type="button" onClick={() => {
-          const ended = state.ended, endedId = state.snapshot?.id;
+          const ended = state.ended, endedId = state.snapshot?.id ?? state.roomId;
           client.current?.leave(); setConfirm(null); setFallback(""); setCopied(false);
           if (ended && endedId) {
             // An ended room cannot be rejoined: forget its credential and drop the room link from the address.

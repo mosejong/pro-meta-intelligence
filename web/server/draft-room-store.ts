@@ -22,6 +22,8 @@ type Entry = {
   actions: Map<string, string>; listeners: Set<Listener>;
   /** The validated public report this room was created with; it never changes for the room. */
   report: RadarReport;
+  /** Content hash of that report (same value as the persisted feed identity). */
+  reportSha: string;
 };
 const canonical = new Map(SHARE_CHAMPIONS.flatMap(([name, id]) => [[championAssetId(name).toLowerCase(), id], [id.toLowerCase(), id]] as [string, string][]));
 const secret = () => randomBytes(24).toString("base64url");
@@ -53,7 +55,7 @@ export class DraftRoomStore {
     const text = options.persistence?.load() ?? null;
     if (text !== null) {
       const restored = decodeState(text, { report: this.report, identity: this.identity, now: this.now(), ttlMs: this.ttl(), maxRooms: options.maxRooms ?? 200 });
-      for (const room of restored) this.rooms.set(room.snapshot.id, { ...room, actions: new Map(room.actions), listeners: new Set(), report: this.report });
+      for (const room of restored) this.rooms.set(room.snapshot.id, { ...room, actions: new Map(room.actions), listeners: new Set(), report: this.report, reportSha: this.identity.sha256 });
     }
   }
   get storage(): "ephemeral" | "file" { return this.options.persistence ? "file" : "ephemeral"; }
@@ -136,15 +138,15 @@ export class DraftRoomStore {
         firstPickSide: session.firstPickSide, selections: session.selections, games: session.games,
         seats: { BLUE: true, RED: false }, status: "WAITING",
         expiresAt: new Date(this.now() + this.ttl()).toISOString() },
-      host: secret(), guest: null, invite: secret(), view: secret(), actions: new Map(), listeners: new Set(), report: this.report,
+      host: secret(), guest: null, invite: secret(), view: secret(), actions: new Map(), listeners: new Set(), report: this.report, reportSha: this.identity.sha256,
     };
     this.persist(entry);
     this.rooms.set(id, entry);
-    return { id, role: "BLUE" as const, token: entry.host, snapshot: this.snapshot(entry), invite: entry.invite, view: entry.view };
+    return { id, role: "BLUE" as const, token: entry.host, snapshot: this.snapshot(entry), invite: entry.invite, view: entry.view, report_sha256: entry.reportSha };
   }
   join(id: string, body: unknown) {
     const entry = this.entry(id), value = object(body);
-    if (typeof value.view === "string" && same(value.view, entry.view)) return { id, role: "SPECTATOR" as const, token: entry.view, snapshot: this.snapshot(entry) };
+    if (typeof value.view === "string" && same(value.view, entry.view)) return { id, role: "SPECTATOR" as const, token: entry.view, snapshot: this.snapshot(entry), report_sha256: entry.reportSha };
     if (typeof value.invite !== "string" || !same(value.invite, entry.invite)) throw new RoomError(401, "INVALID_INVITE", "초대 링크가 올바르지 않습니다.");
     if (entry.guest) throw new RoomError(409, "SEAT_TAKEN", "레드 자리는 이미 참여했습니다. 참여했던 창에서 다시 연결해 주세요.");
     const guest = secret(), snapshot = structuredClone(entry.snapshot);
@@ -152,7 +154,7 @@ export class DraftRoomStore {
     this.persist({ ...entry, guest, snapshot });
     entry.guest = guest; entry.snapshot = snapshot;
     this.notify(entry);
-    return { id, role: "RED" as const, token: entry.guest, snapshot: this.snapshot(entry) };
+    return { id, role: "RED" as const, token: entry.guest, snapshot: this.snapshot(entry), report_sha256: entry.reportSha };
   }
   /** The room's own report (public data) for an authorized participant, so every screen validates and analyses on it. */
   roomReport(id: string, token: unknown): RadarReport {
@@ -162,7 +164,7 @@ export class DraftRoomStore {
   read(id: string, token: unknown) {
     const entry = this.entry(id);
     const role = this.role(entry, token);
-    return { id, role, snapshot: this.snapshot(entry),
+    return { id, role, snapshot: this.snapshot(entry), report_sha256: entry.reportSha,
       ...(role === "BLUE" ? { invite: entry.invite, view: entry.view } : {}) };
   }
   subscribe(id: string, token: unknown, listener: Listener) {
