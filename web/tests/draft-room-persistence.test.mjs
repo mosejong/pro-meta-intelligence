@@ -107,9 +107,14 @@ test("corrupt, schema, feed, draft, credential and expiry tampering fail closed 
   }
   await writeFile(path, original);
   const changed = { ...structuredClone(report), cutoff: "2000-01-01T00:00:00Z" };
-  // State v2: a different starting feed no longer refuses the file; rooms keep their own stored report.
+  // State v2: a different starting feed no longer refuses the file; rooms keep their own stored report and the new
+  // starting feed is saved as active before the store is returned (a v1 file with the same identity is not rewritten;
+  // see draft-room-persistence-v2.test.mjs).
   assert.equal(new Store(changed, { persistence: backend(path) }).storage, "file");
-  assert.equal(await readFile(path, "utf8"), original);
+  const rewritten = JSON.parse(await readFile(path, "utf8"));
+  assert.equal(rewritten.feed.cutoff, changed.cutoff);
+  assert.deepEqual(rewritten.rooms.map(room => room.snapshot.id), JSON.parse(original).rooms.map(room => room.snapshot.id));
+  await writeFile(path, original);
   const small = persistence.createFileRoomPersistence(path, { maxBytes: 16 });
   assert.throws(() => new Store(report, { persistence: small }), code("STATE_TOO_LARGE"));
   assert.throws(() => new Store(report, { persistence: backend(dir) }), code("STATE_UNREADABLE"), "directories are not state files");

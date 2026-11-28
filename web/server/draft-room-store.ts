@@ -52,8 +52,11 @@ export class DraftRoomStore {
   private stored = new Map<string, StoredReport>();
   /**
    * With persistence, rooms are restored with the report they were created with (state v2 keeps each report
-   * body by hash). The report given here (the current feed file) becomes the active report for new rooms;
-   * nothing is written until the next real mutation.
+   * body by hash). The report given here (the current feed file) becomes the active report for new rooms.
+   * When a v2 file marks another report as active, the candidate state with this report as active is saved
+   * before the constructor returns (a failed or oversized write throws STORAGE_UNAVAILABLE and leaves the
+   * file as it was), so an unpersisted active report is never exposed. A v1 file (identical identity only)
+   * or a v2 file already active on this report is not rewritten by loading alone.
    */
   constructor(report: RadarReport, private options: { clock?: () => number; ttlMs?: number; maxRooms?: number; maxListeners?: number; persistence?: DraftRoomPersistence } = {}) {
     if (!isRadarReport(report) || !report.opponent_prep) throw new Error("A validated public report is required");
@@ -61,6 +64,7 @@ export class DraftRoomStore {
     this.report = start.report;
     this.identity = start.identity;
     const text = options.persistence?.load() ?? null;
+    let restoredActive: string | null = null;
     if (text !== null) {
       const restored = decodeState(text, { report: this.report, identity: this.identity, now: this.now(), ttlMs: this.ttl(), maxRooms: options.maxRooms ?? 200 });
       for (const { report_sha256: sha, ...room } of restored.rooms) {
@@ -69,8 +73,12 @@ export class DraftRoomStore {
         this.stored.set(sha, source);
         this.rooms.set(room.snapshot.id, { ...room, actions: new Map(room.actions), listeners: new Set(), report: source.report, reportSha: sha });
       }
+      if (restored.version === 2) restoredActive = restored.active;
     }
-    if (options.persistence) this.stored.set(start.identity.sha256, start);
+    if (options.persistence) {
+      this.stored.set(start.identity.sha256, start);
+      if (restoredActive !== null && restoredActive !== start.identity.sha256) this.persist(undefined, start);
+    }
   }
   get storage(): "ephemeral" | "file" { return this.options.persistence ? "file" : "ephemeral"; }
   /** Patch and cutoff that new rooms are created with (existing rooms keep the values in their snapshot). */

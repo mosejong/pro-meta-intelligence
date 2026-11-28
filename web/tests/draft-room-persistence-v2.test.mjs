@@ -69,10 +69,15 @@ test("mixed generations: A room, reload B, B room, restart on C restores both wi
   assert.equal(beforeA.report_sha256, sha(A)); assert.equal(beforeB.report_sha256, sha(B));
   assert.equal(beforeA.snapshot.revision, 2);
   clock += 60_000;
-  const saved = backend.text, saves = backend.saves;
+  const saves = backend.saves;
   const restarted = new Store(C, { persistence: backend, clock: () => clock });
-  assert.equal(backend.saves, saves, "loading never writes");
-  assert.equal(backend.text, saved);
+  // Starting on another report than the file's active one persists C as active before returning (exactly once).
+  assert.equal(backend.saves, saves + 1, "a changed active report is saved during startup");
+  assert.equal(JSON.parse(backend.text).feed.sha256, sha(C));
+  const settled = backend.text;
+  new Store(C, { persistence: backend, clock: () => clock });
+  assert.equal(backend.saves, saves + 1, "the same active report needs no rewrite");
+  assert.equal(backend.text, settled);
   assertRoom(restarted, roomA, A, beforeA);
   assertRoom(restarted, roomB, B, beforeB);
   assert.equal(restarted.read(roomA.host.id, roomA.host.token).snapshot.expiresAt, new Date(T0 + 2 * 3600_000).toISOString(), "expiry is not extended");
@@ -267,8 +272,15 @@ test("a write over the 8 MiB budget is refused and never deletes a live room", (
   assert.equal(state.feed.sha256, sha(reports[refused.at - 1]));
   const extra = store.create(setup(reports[refused.at - 1]));
   assert.equal(extra.report_sha256, sha(reports[refused.at - 1]));
-  const restored = new Store(C, { persistence: memory(backend.text), clock: () => clock });
-  for (const room of rooms) assert.equal(restored.read(room.id, room.token).report_sha256, sha(room.report), "no live room was deleted to make space");
+  // Starting on yet another report would exceed the budget: the constructor refuses and the file stays as it was.
+  const current = backend.text, full = memory(current);
+  assert.throws(() => new Store(C, { persistence: full, clock: () => clock }), code("STORAGE_UNAVAILABLE"));
+  assert.equal(full.text, current);
+  // Starting on the file's active report needs no write and restores every room.
+  const restored = new Store(reports[refused.at - 1], { persistence: full, clock: () => clock });
+  assert.equal(full.text, current);
+  assert.equal(full.saves, 0);
+  for (const room of [...rooms, { id: extra.id, token: extra.token, report: reports[refused.at - 1] }]) assert.equal(restored.read(room.id, room.token).report_sha256, sha(room.report), "no live room was deleted to make space");
 });
 
 test("expired rooms drop their no-longer-referenced reports on the next write", () => {
@@ -302,9 +314,11 @@ test("real file backend: mixed generations survive a restart with a new backend 
   const hostB = first.create(setup(B));
   const beforeA = first.read(host.id, guest.token), beforeB = first.read(hostB.id, hostB.view);
   clock += 60_000;
-  const bytes = await readFile(path, "utf8");
+  const original = await readFile(path, "utf8");
   const restarted = new Store(C, { persistence: persistence.createFileRoomPersistence(path), clock: () => clock });
-  assert.equal(await readFile(path, "utf8"), bytes, "restart alone does not rewrite the file");
+  const bytes = await readFile(path, "utf8");
+  assert.notEqual(bytes, original, "a restart on another report persists it as active before serving");
+  assert.equal(JSON.parse(bytes).feed.sha256, sha(C));
   const readA = restarted.read(host.id, host.token);
   assert.equal(readA.role, "BLUE");
   assert.ok(readA.invite === host.invite && readA.view === host.view);

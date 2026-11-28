@@ -55,7 +55,8 @@ export type StoredRoom = { report_sha256: string } & PersistedRoom;
 export type FeedIdentity = { sha256: string; patch_id: string; cutoff: string; model_version: string };
 /** A validated report with its identity and the exact JSON text the hash was computed over. */
 export type StoredReport = { identity: FeedIdentity; report: RadarReport; text: string };
-export type RestoredState = { version: 1 | 2; rooms: StoredRoom[]; reports: Map<string, StoredReport> };
+/** `active` is the hash of the report the file marks as active for new rooms (v1: the identical starting report). */
+export type RestoredState = { version: 1 | 2; rooms: StoredRoom[]; reports: Map<string, StoredReport>; active: string };
 
 export function storedReport(report: RadarReport): StoredReport {
   const text = JSON.stringify(report);
@@ -229,7 +230,7 @@ export function decodeState(text: string, context: DecodeContext): RestoredState
   }
   // Every stored report must be in use; an orphan body is never something this store writes.
   if ([...reports.keys()].some(key => !referenced.has(key))) fail("STATE_CORRUPT");
-  return { version: legacy ? 1 : 2, rooms, reports };
+  return { version: legacy ? 1 : 2, rooms, reports, active: feed.sha256 as string };
 }
 
 /** Directory names that are (or are built into) statically served output in this project or common hosts. */
