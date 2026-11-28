@@ -1,0 +1,28 @@
+/* Observation-context preparation card inside the roster editor; wraps, never scrolls sideways at 390px. */
+.roster-observation,
+.roster-observation-summary { min-width: 0; max-width: 100%; padding: 8px 10px; border: 1px solid var(--studio-line, currentColor); background: var(--studio-panel, transparent); overflow-wrap: anywhere; }
+.roster-observation header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+.roster-observation h4 { margin: 0; font-size: 13px; color: var(--studio-text, inherit); }
+.roster-observation header label { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; }
+.roster-observation-note { margin: 4px 0; color: var(--studio-muted, inherit); }
+.roster-observation-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0; }
+.roster-observation-actions button { min-height: 44px; padding: 0 14px; font: inherit; cursor: pointer; }
+.roster-observation-actions button:disabled { cursor: not-allowed; opacity: 0.55; }
+.roster-observation-status { margin: 4px 0; }
+.roster-observation-status.refused { color: var(--draft-red, inherit); font-weight: 600; }
+.roster-observation-card { display: grid; gap: 6px; margin-top: 6px; padding: 8px; border-left: 3px solid var(--studio-action, currentColor); background: var(--studio-raised, transparent); }
+.roster-observation-ready { margin: 0; color: var(--studio-text, inherit); }
+.roster-observation-basis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 4px 12px; margin: 0; }
+.roster-observation-basis div { display: grid; gap: 1px; min-width: 0; }
+.roster-observation-basis dt { font-size: 11px; color: var(--studio-muted, inherit); }
+.roster-observation-basis dd { margin: 0; color: var(--studio-text, inherit); }
+.roster-observation code,
+.roster-observation-summary code { font-size: 11px; }
+.roster-observation-teams { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 8px; }
+.roster-observation-teams h5 { margin: 0 0 4px; font-size: 12px; color: var(--studio-text, inherit); }
+.roster-observation-teams ol { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; }
+.roster-observation-teams li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 0 6px; padding: 2px 4px; border-left: 2px solid var(--studio-line, currentColor); }
+.roster-observation-teams li[data-kind="SEASON"] { border-left-color: var(--studio-action, currentColor); }
+.roster-observation-teams li small { grid-column: 2; font-size: 11px; color: var(--studio-muted, inherit); }
+.roster-observation-summary { display: grid; gap: 2px; margin: 8px 0; font-size: 12px; }
+.roster-observation-summary small { color: var(--studio-muted, inherit); }

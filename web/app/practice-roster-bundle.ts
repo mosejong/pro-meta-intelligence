@@ -1,6 +1,8 @@
 import { MAX_DRAFT_FILE_BYTES, parseDraftSession, type DraftSession, type DraftSessionErrorCode } from "./draft-session";
 import { buildRosterIndex, MAX_ROSTER_FILE_BYTES, parseRosterScenario, ROSTER_ROLES, rosterBasis, type RosterErrorCode, type RosterScenario } from "./roster-scenario";
 import { emptySeasonSlots, isCardHash, validateSeasonLineup, type SeasonCardCatalog, type SeasonSlots, type TeamSeasonSlots } from "./season-player-cards";
+import { canonicalText, MAX_OBSERVATION_CONTEXT_BYTES, parseRosterObservationShape, type RosterObservationContext } from "./roster-observation-context";
+import { observationSlotsOf } from "./roster-observation-session";
 
 /**
  * Optional "current players" bundle for the practice library. The stored value is either the
@@ -13,8 +15,15 @@ export const PRACTICE_BUNDLE_ARTIFACT = "practice-bundle";
 export const PRACTICE_BUNDLE_VERSION = 1;
 /** v2 = v1 + season-player references (catalog identity + per-team SeasonCardRef slots). */
 export const PRACTICE_BUNDLE_VERSION_SEASON = 2;
+/**
+ * v3 = v2 + an explicitly prepared roster observation context (roster-observation-context schema 1)
+ * for exactly that draft report, roster and season lineup. v1/v2 values are read unchanged and are
+ * never rewritten as v3. This is the BUNDLE `schema_version`; the library ENTRY schema numbers
+ * (draft-practice-library.ts) are a separate sequence.
+ */
+export const PRACTICE_BUNDLE_VERSION_OBSERVATION = 3;
 export const MAX_SEASON_PART_BYTES = 8 * 1024;
-export const MAX_PRACTICE_CONTENT_BYTES = MAX_DRAFT_FILE_BYTES + MAX_ROSTER_FILE_BYTES + MAX_SEASON_PART_BYTES + 1024;
+export const MAX_PRACTICE_CONTENT_BYTES = MAX_DRAFT_FILE_BYTES + MAX_ROSTER_FILE_BYTES + MAX_SEASON_PART_BYTES + MAX_OBSERVATION_CONTEXT_BYTES + 1024;
 
 /**
  * Season part of a v2 bundle: only references into a published season-player-cards catalog
@@ -22,12 +31,20 @@ export const MAX_PRACTICE_CONTENT_BYTES = MAX_DRAFT_FILE_BYTES + MAX_ROSTER_FILE
  * a win rate or player rating. Structural checks run on read; catalog checks need the live catalog.
  */
 export type SeasonPracticePart = { catalog_id: string; cutoff: string; lineups: TeamSeasonSlots };
-export type PracticeContent = { session: DraftSession; roster: RosterScenario | null; season: SeasonPracticePart | null };
+/**
+ * `observation` (bundle v3 only) is STRUCTURAL on read: its shape, report cutoff, catalog version,
+ * team pair and every slot agree with this bundle's draft/roster/season, but its digests and
+ * context_key are not trusted until re-verified against the saved report and the loaded catalog.
+ * `observationDropped` is true for a v3 value whose observation part failed that structural check:
+ * the valid draft/roster/season are still returned, and the preparation is simply not restored.
+ */
+export type PracticeContent = { session: DraftSession; roster: RosterScenario | null; season: SeasonPracticePart | null; observation: RosterObservationContext | null; observationDropped?: boolean };
 export type PracticeContentError =
   | { code: "TOO_LARGE" }
   | { code: "INVALID_SCENARIO"; sessionCode?: DraftSessionErrorCode }
   | { code: "INVALID_ROSTER"; rosterCode: RosterErrorCode }
   | { code: "INVALID_SEASON" }
+  | { code: "INVALID_OBSERVATION" }
   | { code: "CORRUPT" };
 export type PracticeContentResult = ({ ok: true } & PracticeContent & { text: string }) | ({ ok: false } & PracticeContentError);
 
@@ -46,7 +63,7 @@ export function sessionRosterContext(session: DraftSession) {
 function parseDraft(text: string): PracticeContentResult {
   if (bytes(text) > MAX_DRAFT_FILE_BYTES) return { ok: false, code: "TOO_LARGE" };
   const parsed = parseDraftSession(text);
-  return parsed.ok ? { ok: true, session: parsed.session, roster: null, season: null, text } : { ok: false, code: "INVALID_SCENARIO", sessionCode: parsed.code };
+  return parsed.ok ? { ok: true, session: parsed.session, roster: null, season: null, observation: null, text } : { ok: false, code: "INVALID_SCENARIO", sessionCode: parsed.code };
 }
 
 function parseRosterFor(session: DraftSession, rosterText: unknown): { ok: true; roster: RosterScenario } | { ok: false; error: PracticeContentError } {
@@ -60,12 +77,12 @@ function parseRosterFor(session: DraftSession, rosterText: unknown): { ok: true;
  * Build the stored value. Without a roster the draft string is stored verbatim (legacy format);
  * with one, both strings are strictly validated and wrapped in the envelope.
  */
-export function buildPracticeContent(draftText: string, rosterText: string | null = null, season: unknown = null): PracticeContentResult {
+export function buildPracticeContent(draftText: string, rosterText: string | null = null, season: unknown = null, observation: unknown = null): PracticeContentResult {
   if (typeof draftText !== "string") return { ok: false, code: "INVALID_SCENARIO" };
   const draft = parseDraft(draftText);
   if (!draft.ok) return draft;
   // A season part is only meaningful next to the current-player roster it was checked against.
-  if (rosterText === null) return season === null ? draft : { ok: false, code: "INVALID_SEASON" };
+  if (rosterText === null) return season !== null ? { ok: false, code: "INVALID_SEASON" } : observation !== null ? { ok: false, code: "INVALID_OBSERVATION" } : draft;
   const roster = parseRosterFor(draft.session, rosterText);
   if (!roster.ok) return { ok: false, ...roster.error };
   let seasonPart: SeasonPracticePart | null = null;
@@ -74,11 +91,21 @@ export function buildPracticeContent(draftText: string, rosterText: string | nul
     seasonPart = parseSeasonPart(season, roster.roster);
     if (!seasonPart) return { ok: false, code: "INVALID_SEASON" };
   }
-  const text = JSON.stringify(seasonPart
-    ? { artifact_type: PRACTICE_BUNDLE_ARTIFACT, schema_version: PRACTICE_BUNDLE_VERSION_SEASON, draft: draftText, roster: rosterText, season: seasonPart }
-    : { artifact_type: PRACTICE_BUNDLE_ARTIFACT, schema_version: PRACTICE_BUNDLE_VERSION, draft: draftText, roster: rosterText });
+  // An observation context only travels next to the exact season lineup and roster it describes.
+  let observationPart: RosterObservationContext | null = null;
+  if (observation !== null) {
+    if (!seasonPart) return { ok: false, code: "INVALID_OBSERVATION" };
+    if (bytes(JSON.stringify(observation) ?? "") > MAX_OBSERVATION_CONTEXT_BYTES) return { ok: false, code: "TOO_LARGE" };
+    observationPart = parseObservationPart(observation, draft.session, roster.roster, seasonPart);
+    if (!observationPart) return { ok: false, code: "INVALID_OBSERVATION" };
+  }
+  const text = JSON.stringify(observationPart
+    ? { artifact_type: PRACTICE_BUNDLE_ARTIFACT, schema_version: PRACTICE_BUNDLE_VERSION_OBSERVATION, draft: draftText, roster: rosterText, season: seasonPart, observation: observationPart }
+    : seasonPart
+      ? { artifact_type: PRACTICE_BUNDLE_ARTIFACT, schema_version: PRACTICE_BUNDLE_VERSION_SEASON, draft: draftText, roster: rosterText, season: seasonPart }
+      : { artifact_type: PRACTICE_BUNDLE_ARTIFACT, schema_version: PRACTICE_BUNDLE_VERSION, draft: draftText, roster: rosterText });
   if (bytes(text) > MAX_PRACTICE_CONTENT_BYTES) return { ok: false, code: "TOO_LARGE" };
-  return { ok: true, session: draft.session, roster: roster.roster, season: seasonPart, text };
+  return { ok: true, session: draft.session, roster: roster.roster, season: seasonPart, observation: observationPart, text };
 }
 
 const exact = (value: Record<string, unknown>, keys: readonly string[]) => Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
@@ -138,7 +165,28 @@ export function verifySeasonPart(season: SeasonPracticePart, roster: RosterScena
   return { ok: true, lineups: structuredClone(season.lineups) };
 }
 
-/** Parse a stored value: legacy plain draft string, a v1 envelope (draft + roster) or a v2 envelope (+ season refs). */
+/**
+ * Structural check of a v3 observation part against this bundle's validated draft, roster and season
+ * part (no catalog, no hashing): exact context shape, the draft report's cutoff, the season part's
+ * catalog version, the roster's team pair, and every one of the ten slots equal to the slot the
+ * roster/season part implies. Returns a fresh copy, or null.
+ */
+export function parseObservationPart(value: unknown, session: DraftSession, roster: RosterScenario, season: SeasonPracticePart): RosterObservationContext | null {
+  const context = parseRosterObservationShape(value);
+  if (!context) return null;
+  if (context.report_cutoff !== session.report.cutoff || context.catalog_id !== season.catalog_id || context.catalog_cutoff !== season.cutoff) return null;
+  const teamIds = [...roster.team_ids].sort() as [string, string];
+  if (context.team_ids[0] !== teamIds[0] || context.team_ids[1] !== teamIds[1]) return null;
+  const implied = observationSlotsOf(teamIds, roster.rosters, season.lineups, season.catalog_id);
+  if (!implied.ok || canonicalText(implied.teams) !== canonicalText(context.teams)) return null;
+  return context;
+}
+
+/**
+ * Parse a stored value: legacy plain draft string, a v1 envelope (draft + roster), a v2 envelope
+ * (+ season refs) or a v3 envelope (+ observation context). A v3 observation part that fails the
+ * structural check is dropped (`observationDropped`), never repaired; draft/roster/season still load.
+ */
 export function parsePracticeContent(raw: unknown): PracticeContentResult {
   if (typeof raw !== "string") return { ok: false, code: "CORRUPT" };
   if (bytes(raw) > MAX_PRACTICE_CONTENT_BYTES) return { ok: false, code: "TOO_LARGE" };
@@ -147,13 +195,18 @@ export function parsePracticeContent(raw: unknown): PracticeContentResult {
   if (!record(value) || value.artifact_type !== PRACTICE_BUNDLE_ARTIFACT) return parseDraft(raw);
   const v1 = value.schema_version === PRACTICE_BUNDLE_VERSION && exact(value, ["artifact_type", "schema_version", "draft", "roster"]);
   const v2 = value.schema_version === PRACTICE_BUNDLE_VERSION_SEASON && exact(value, ["artifact_type", "schema_version", "draft", "roster", "season"]);
-  if ((!v1 && !v2) || typeof value.draft !== "string") return { ok: false, code: "CORRUPT" };
+  const v3 = value.schema_version === PRACTICE_BUNDLE_VERSION_OBSERVATION && exact(value, ["artifact_type", "schema_version", "draft", "roster", "season", "observation"]);
+  if ((!v1 && !v2 && !v3) || typeof value.draft !== "string") return { ok: false, code: "CORRUPT" };
   const draft = parseDraft(value.draft);
   if (!draft.ok) return draft;
   const roster = parseRosterFor(draft.session, value.roster);
   if (!roster.ok) return { ok: false, ...roster.error };
-  if (!v2) return { ok: true, session: draft.session, roster: roster.roster, season: null, text: raw };
+  if (v1) return { ok: true, session: draft.session, roster: roster.roster, season: null, observation: null, text: raw };
   const season = parseSeasonPart(value.season, roster.roster);
   if (!season) return { ok: false, code: "INVALID_SEASON" };
-  return { ok: true, session: draft.session, roster: roster.roster, season, text: raw };
+  if (v2) return { ok: true, session: draft.session, roster: roster.roster, season, observation: null, text: raw };
+  const observation = parseObservationPart(value.observation, draft.session, roster.roster, season);
+  return observation
+    ? { ok: true, session: draft.session, roster: roster.roster, season, observation, text: raw }
+    : { ok: true, session: draft.session, roster: roster.roster, season, observation: null, observationDropped: true, text: raw };
 }
