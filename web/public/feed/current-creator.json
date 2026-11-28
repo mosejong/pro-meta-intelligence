@@ -27,12 +27,12 @@
   "schema_version": "1",
   "source_snapshot": {
     "analysis_window": {
-      "availability_cutoff": "2026-11-27T00:40:40.866521+00:00",
-      "end_inclusive": "2026-11-27T00:40:40.866521+00:00",
-      "historical": false,
-      "mode": "ROLLING"
+      "availability_cutoff": "2026-11-28T01:57:24.244257+00:00",
+      "end_inclusive": "2026-11-20T18:40:57+00:00",
+      "historical": true,
+      "mode": "LAST_ACTIVE_PATCH"
     },
-    "cutoff": "2026-11-27T00:40:40.866521+00:00",
+    "cutoff": "2026-11-28T01:57:24.244257+00:00",
     "fixture_only": false,
     "patch_id": "16.20",
     "radar_schema_version": "1",
@@ -45,8 +45,370 @@
     ]
   },
   "template_version": "creator-brief-v1",
-  "topic_candidates": [],
+  "topic_candidates": [
+    {
+      "approved_claims": [
+        {
+          "claim_id": "Cho'Gath:JUNGLE:pick-presence",
+          "metric": "pick_presence_delta",
+          "text": "최근 7일 Cho'Gath JUNGLE 픽 점유율은 15.4%이며 이전 구간 대비 +15.4pp 변했다.",
+          "value": 0.153846
+        },
+        {
+          "claim_id": "Cho'Gath:JUNGLE:team-demand",
+          "metric": "demand_velocity",
+          "text": "최근 채택 팀은 2개이며 팀 수요는 이전 구간 대비 +40.0pp 변했다.",
+          "value": 0.4
+        },
+        {
+          "claim_id": "Cho'Gath:JUNGLE:regional-divergence",
+          "metric": "most_divergent_region_delta",
+          "text": "INTERNATIONAL의 최근 픽 점유율은 글로벌 점유율과 +9.6pp 차이가 난다.",
+          "value": 0.096154
+        }
+      ],
+      "candidate_id": "Cho'Gath:JUNGLE",
+      "champion_id": "Cho'Gath",
+      "chapter_outline": [
+        {
+          "chapter": "HOOK",
+          "uses": [
+            "Cho'Gath:JUNGLE:pick-presence"
+          ]
+        },
+        {
+          "chapter": "WHAT CHANGED",
+          "uses": [
+            "Cho'Gath:JUNGLE:pick-presence",
+            "Cho'Gath:JUNGLE:team-demand",
+            "Cho'Gath:JUNGLE:regional-divergence"
+          ]
+        },
+        {
+          "chapter": "WHY IT MAY MATTER",
+          "uses": [
+            "Cho'Gath:JUNGLE:team-demand"
+          ]
+        },
+        {
+          "chapter": "COUNTERPOINT",
+          "uses": []
+        },
+        {
+          "chapter": "TAKEAWAY AND NEXT CHECK",
+          "uses": []
+        }
+      ],
+      "counterpoint": "최근 근거가 2경기에 불과해 다음 스냅샷에서 재확인이 필요하다.",
+      "data_cards": [
+        {
+          "card": "PICK_PRESENCE_COMPARISON",
+          "current": 0.153846,
+          "prior": 0.0
+        },
+        {
+          "card": "TEAM_DEMAND_COMPARISON",
+          "current": 0.4,
+          "prior": 0.0
+        },
+        {
+          "card": "REGIONAL_PRESENCE",
+          "values": [
+            {
+              "delta_from_global": -0.042735,
+              "match_count": 9,
+              "pick_count": 1,
+              "pick_presence": 0.111111,
+              "region": "EMEA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": 0.096154,
+              "match_count": 4,
+              "pick_count": 1,
+              "pick_presence": 0.25,
+              "region": "INTERNATIONAL",
+              "sample_eligible": true
+            }
+          ]
+        }
+      ],
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237026:pick:4",
+        "oe:WLDs:LOLTMNT02_487406:pick:6"
+      ],
+      "falsifiers": [
+        {
+          "condition": "next comparable snapshot is less than or equal to zero",
+          "metric": "demand_velocity"
+        },
+        {
+          "condition": "adoption does not expand beyond the currently observed teams",
+          "metric": "current_distinct_team_count"
+        }
+      ],
+      "hook": "Cho'Gath JUNGLE의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "quality_flags": [],
+      "radar_rank": 1,
+      "review_state": "HUMAN_REVIEW_REQUIRED",
+      "role": "JUNGLE",
+      "short_summary": "Cho'Gath JUNGLE의 최근 픽 점유율은 15.4%로, 이전 구간 대비 +15.4pp 변했습니다. 다만 최근 근거가 2경기에 불과해 다음 스냅샷에서 재확인이 필요하다.",
+      "thumbnail_copy": [
+        "Cho'Gath JUNGLE",
+        "+15.4pp"
+      ],
+      "title_candidates": [
+        "왜 지금 Cho'Gath JUNGLE인가: +15.4pp 변화의 근거",
+        "INTERNATIONAL에서 먼저 보인 Cho'Gath JUNGLE, 글로벌과 +9.6pp 차이",
+        "Cho'Gath JUNGLE은 진짜 신호일까? 데이터와 반론"
+      ]
+    },
+    {
+      "approved_claims": [
+        {
+          "claim_id": "Corki:BOTTOM:pick-presence",
+          "metric": "pick_presence_delta",
+          "text": "최근 7일 Corki BOTTOM 픽 점유율은 23.1%이며 이전 구간 대비 +16.2pp 변했다.",
+          "value": 0.161804
+        },
+        {
+          "claim_id": "Corki:BOTTOM:team-demand",
+          "metric": "demand_velocity",
+          "text": "최근 채택 팀은 3개이며 팀 수요는 이전 구간 대비 +37.8pp 변했다.",
+          "value": 0.377778
+        },
+        {
+          "claim_id": "Corki:BOTTOM:regional-divergence",
+          "metric": "most_divergent_region_delta",
+          "text": "INTERNATIONAL의 최근 픽 점유율은 글로벌 점유율과 +1.9pp 차이가 난다.",
+          "value": 0.019231
+        }
+      ],
+      "candidate_id": "Corki:BOTTOM",
+      "champion_id": "Corki",
+      "chapter_outline": [
+        {
+          "chapter": "HOOK",
+          "uses": [
+            "Corki:BOTTOM:pick-presence"
+          ]
+        },
+        {
+          "chapter": "WHAT CHANGED",
+          "uses": [
+            "Corki:BOTTOM:pick-presence",
+            "Corki:BOTTOM:team-demand",
+            "Corki:BOTTOM:regional-divergence"
+          ]
+        },
+        {
+          "chapter": "WHY IT MAY MATTER",
+          "uses": [
+            "Corki:BOTTOM:team-demand"
+          ]
+        },
+        {
+          "chapter": "COUNTERPOINT",
+          "uses": []
+        },
+        {
+          "chapter": "TAKEAWAY AND NEXT CHECK",
+          "uses": []
+        }
+      ],
+      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "data_cards": [
+        {
+          "card": "PICK_PRESENCE_COMPARISON",
+          "current": 0.230769,
+          "prior": 0.068966
+        },
+        {
+          "card": "TEAM_DEMAND_COMPARISON",
+          "current": 0.6,
+          "prior": 0.222222
+        },
+        {
+          "card": "REGIONAL_PRESENCE",
+          "values": [
+            {
+              "delta_from_global": -0.008547,
+              "match_count": 9,
+              "pick_count": 2,
+              "pick_presence": 0.222222,
+              "region": "EMEA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": 0.019231,
+              "match_count": 4,
+              "pick_count": 1,
+              "pick_presence": 0.25,
+              "region": "INTERNATIONAL",
+              "sample_eligible": true
+            }
+          ]
+        }
+      ],
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237021:pick:3",
+        "oe:AL:LOLTMNT05_237028:pick:8",
+        "oe:LAS:LOLTMNT02_488269:pick:10",
+        "oe:WLDs:LOLTMNT02_487405:pick:8",
+        "oe:WLDs:LOLTMNT02_488293:pick:10"
+      ],
+      "falsifiers": [
+        {
+          "condition": "next comparable snapshot is less than or equal to zero",
+          "metric": "demand_velocity"
+        },
+        {
+          "condition": "adoption does not expand beyond the currently observed teams",
+          "metric": "current_distinct_team_count"
+        }
+      ],
+      "hook": "Corki BOTTOM의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "quality_flags": [],
+      "radar_rank": 2,
+      "review_state": "HUMAN_REVIEW_REQUIRED",
+      "role": "BOTTOM",
+      "short_summary": "Corki BOTTOM의 최근 픽 점유율은 23.1%로, 이전 구간 대비 +16.2pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "thumbnail_copy": [
+        "Corki BOTTOM",
+        "+16.2pp"
+      ],
+      "title_candidates": [
+        "왜 지금 Corki BOTTOM인가: +16.2pp 변화의 근거",
+        "INTERNATIONAL에서 먼저 보인 Corki BOTTOM, 글로벌과 +1.9pp 차이",
+        "Corki BOTTOM은 진짜 신호일까? 데이터와 반론"
+      ]
+    },
+    {
+      "approved_claims": [
+        {
+          "claim_id": "Vi:JUNGLE:pick-presence",
+          "metric": "pick_presence_delta",
+          "text": "최근 7일 Vi JUNGLE 픽 점유율은 30.8%이며 이전 구간 대비 +13.5pp 변했다.",
+          "value": 0.135279
+        },
+        {
+          "claim_id": "Vi:JUNGLE:team-demand",
+          "metric": "demand_velocity",
+          "text": "최근 채택 팀은 4개이며 팀 수요는 이전 구간 대비 +35.6pp 변했다.",
+          "value": 0.355556
+        },
+        {
+          "claim_id": "Vi:JUNGLE:regional-divergence",
+          "metric": "most_divergent_region_delta",
+          "text": "INTERNATIONAL의 최근 픽 점유율은 글로벌 점유율과 -5.8pp 차이가 난다.",
+          "value": -0.057692
+        }
+      ],
+      "candidate_id": "Vi:JUNGLE",
+      "champion_id": "Vi",
+      "chapter_outline": [
+        {
+          "chapter": "HOOK",
+          "uses": [
+            "Vi:JUNGLE:pick-presence"
+          ]
+        },
+        {
+          "chapter": "WHAT CHANGED",
+          "uses": [
+            "Vi:JUNGLE:pick-presence",
+            "Vi:JUNGLE:team-demand",
+            "Vi:JUNGLE:regional-divergence"
+          ]
+        },
+        {
+          "chapter": "WHY IT MAY MATTER",
+          "uses": [
+            "Vi:JUNGLE:team-demand"
+          ]
+        },
+        {
+          "chapter": "COUNTERPOINT",
+          "uses": []
+        },
+        {
+          "chapter": "TAKEAWAY AND NEXT CHECK",
+          "uses": []
+        }
+      ],
+      "counterpoint": "관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "data_cards": [
+        {
+          "card": "PICK_PRESENCE_COMPARISON",
+          "current": 0.307692,
+          "prior": 0.172414
+        },
+        {
+          "card": "TEAM_DEMAND_COMPARISON",
+          "current": 0.8,
+          "prior": 0.444444
+        },
+        {
+          "card": "REGIONAL_PRESENCE",
+          "values": [
+            {
+              "delta_from_global": 0.025641,
+              "match_count": 9,
+              "pick_count": 3,
+              "pick_presence": 0.333333,
+              "region": "EMEA",
+              "sample_eligible": true
+            },
+            {
+              "delta_from_global": -0.057692,
+              "match_count": 4,
+              "pick_count": 1,
+              "pick_presence": 0.25,
+              "region": "INTERNATIONAL",
+              "sample_eligible": true
+            }
+          ]
+        }
+      ],
+      "evidence_event_ids": [
+        "oe:AL:LOLTMNT05_237012:pick:8",
+        "oe:AL:LOLTMNT05_237029:pick:4",
+        "oe:AL:LOLTMNT05_238019:pick:1",
+        "oe:LAS:LOLTMNT02_487197:pick:1",
+        "oe:LAS:LOLTMNT02_488181:pick:1",
+        "oe:LAS:LOLTMNT02_488236:pick:1",
+        "oe:LAS:LOLTMNT02_488269:pick:1",
+        "oe:WLDs:LOLTMNT02_487213:pick:1",
+        "oe:WLDs:LOLTMNT02_487408:pick:3"
+      ],
+      "falsifiers": [
+        {
+          "condition": "next comparable snapshot is less than or equal to zero",
+          "metric": "demand_velocity"
+        },
+        {
+          "condition": "adoption does not expand beyond the currently observed teams",
+          "metric": "current_distinct_team_count"
+        }
+      ],
+      "hook": "Vi JUNGLE의 픽 점유율과 채택 팀 수가 같은 구간에서 움직였습니다. 이 신호가 검토할 가치가 있는지 근거와 반론을 함께 보겠습니다.",
+      "quality_flags": [],
+      "radar_rank": 3,
+      "review_state": "HUMAN_REVIEW_REQUIRED",
+      "role": "JUNGLE",
+      "short_summary": "Vi JUNGLE의 최근 픽 점유율은 30.8%로, 이전 구간 대비 +13.5pp 변했습니다. 다만 관측된 채택 변화만으로 챔피언의 강함, 승리 기여, 인과관계를 증명할 수 없다.",
+      "thumbnail_copy": [
+        "Vi JUNGLE",
+        "+13.5pp"
+      ],
+      "title_candidates": [
+        "왜 지금 Vi JUNGLE인가: +13.5pp 변화의 근거",
+        "INTERNATIONAL에서 먼저 보인 Vi JUNGLE, 글로벌과 -5.8pp 차이",
+        "Vi JUNGLE은 진짜 신호일까? 데이터와 반론"
+      ]
+    }
+  ],
   "warnings": [
-    "NO_ELIGIBLE_CANDIDATES"
+    "INACTIVE_PATCH_HISTORICAL_WINDOW"
   ]
 }
