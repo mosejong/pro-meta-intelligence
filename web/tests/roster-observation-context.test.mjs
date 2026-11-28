@@ -22,6 +22,7 @@ before(async () => {
   const index = R.buildRosterIndex(report.opponent_prep.teams);
   const third = R.observedRosters(report.opponent_prep.teams, [report.opponent_prep.teams[2].team_id, report.opponent_prep.teams[3].team_id], index);
   spare = third[report.opponent_prep.teams[2].team_id].JUNGLE;
+  AS_OF = laterCutoffPlusHour(report.cutoff, catalog.cutoff);
 });
 after(async () => { await vite?.close(); });
 
@@ -38,7 +39,13 @@ function slots({ rosters, seasonLineups }) {
   assert.equal(r.ok, true, r.message);
   return r.teams;
 }
-const AS_OF = "2026-11-28T00:00:00Z";
+// Derived from the shipped data: the collector refreshes feed/current.json several times a day, so a fixed
+// timestamp would fall behind the report cutoff. One hour after the later of the two cutoffs (whole seconds).
+let AS_OF;
+function laterCutoffPlusHour(...cutoffs) {
+  const ms = Math.max(...cutoffs.map(c => Date.parse(c)));
+  return new Date(Math.ceil(ms / 1000) * 1000 + 3_600_000).toISOString().replace(".000Z", "Z");
+}
 const build = (over = {}) => C.buildRosterObservationContext({ report, catalog, analysis_as_of: AS_OF, teams: slots(lineup()), ...over });
 
 test("builds a verified mixed context with refs and data basis only; refuses empty, duplicate and unresolved refs without touching inputs", async () => {

@@ -89,9 +89,14 @@ function mixed() {
   const season = { catalog_id: catalog.catalog_id, cutoff: catalog.cutoff, lineups };
   return { rosters, roster, season };
 }
+// One hour after the later data cutoff: feed/current.json is refreshed several times a day by the collector.
+function asOf() {
+  const ms = Math.max(Date.parse(report.cutoff), Date.parse(catalog.cutoff));
+  return new Date(Math.ceil(ms / 1000) * 1000 + 3_600_000).toISOString().replace(".000Z", "Z");
+}
 async function prepared(state = mixed()) {
   const teams = OS.observationSlotsOf(teamIds(), state.rosters, state.season.lineups, catalog.catalog_id);
-  const built = await C.buildRosterObservationContext({ report, catalog, analysis_as_of: "2026-11-28T00:00:00Z", teams: teams.teams });
+  const built = await C.buildRosterObservationContext({ report, catalog, analysis_as_of: asOf(), teams: teams.teams });
   assert.equal(built.ok, true, built.message);
   return built.context;
 }
