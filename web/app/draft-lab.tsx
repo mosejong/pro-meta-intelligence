@@ -50,6 +50,7 @@ import "./draft-workspace.css";
 import "./draft-studio.css";
 import { WorkspaceHeader } from "./workspace-header";
 import { DraftSharePanel } from "./draft-share-panel";
+import { ExperimentLinkNoticePanel } from "./experiment-link-notice-panel";
 import { DraftRoomPanel, type RoomControls } from "./draft-room-panel";
 import { useSoloSeasonHistory } from "./use-solo-season-history";
 import { explainSoloDraftTurn, suggestSoloDraftTurn } from "./solo-draft";
@@ -695,6 +696,14 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
     resetDraft();
   }
 
+  /** Received #experiment= link: picks its two teams only on the user's click, only on an empty board and series. */
+  function chooseLinkTeams(nextBlue: string, nextRed: string) {
+    if (room.active || games.length || hasCurrentWork) return;
+    setBlueTeamId(nextBlue);
+    setRedTeamId(nextRed);
+    resetDraft();
+  }
+
   function swapSides() {
     if (room.active) return;
     if (hasCurrentWork) return;
@@ -909,6 +918,8 @@ export function DraftLab({ currentSpace, report: liveReport, feedLabel }: DraftL
         <h2 id="draft-flow-setup-title" ref={setupHeading} tabIndex={-1}>{resuming ? "진행 중인 밴픽이 있어요" : "두 팀을 고르세요"}</h2>
       </header>
       {!resuming && <FirstVisitGuide />}
+      <ExperimentLinkNoticePanel teams={teams} patch={report.patch_id} blueTeamId={blueTeamId} redTeamId={redTeamId}
+        hasWork={resuming} roomActive={room.active} ready={sessionReady && !importing && feedLabel !== "FEED CONNECTING"} onChooseTeams={chooseLinkTeams} />
       <section className="draft-match-setup" aria-label={t("draft.setupLabel")} lang={lang.ui} inert={!canSelect}>
         <TeamChooser label="BLUE TEAM" teams={teams} value={blueTeamId} onChange={(id) => changeTeam("BLUE", id)} disabled={room.active || games.length > 0 || hasCurrentWork} locale={locale} />
         <button type="button" onClick={swapSides} disabled={room.active || hasCurrentWork} aria-label={t("draft.swapLabel")}>⇄<small>{t("draft.swap")}</small></button>
