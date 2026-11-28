@@ -26,6 +26,8 @@ import {
 } from "./roster-scenario";
 import type { LiveRoster } from "./roster-comparison";
 import { PlayerPoolPanel } from "./player-pool-panel";
+import { rosterSlotCounts, seasonSlotIdentity } from "./roster-season-slots";
+import { SeasonSlotNote } from "./roster-season-slot-note";
 import { GuestClubPanel } from "./guest-club-panel";
 import { SeasonLineupPanel } from "./season-lineup-panel";
 import { emptySeasonSlots, validateSeasonLineup, type SeasonCardCatalog, type TeamSeasonSlots, type SeasonCardRef, type SeasonSlots } from "./season-player-cards";
@@ -295,24 +297,25 @@ function RosterWorkshopBody({ basis, report, patchId, teams, blueTeam, redTeam, 
   }
 
   const statuses = (side: DraftSide, team: OpponentTeam) => ROSTER_ROLES.map((role) =>
-    ({ role, status: slotStatus(team.team_id, role, rosters[team.team_id]?.[role] ?? null, observed[team.team_id]?.[role] ?? null, index), side }));
+    ({ role, teamId: team.team_id, status: slotStatus(team.team_id, role, rosters[team.team_id]?.[role] ?? null, observed[team.team_id]?.[role] ?? null, index), side }));
   const all = [...statuses("BLUE", blueTeam), ...statuses("RED", redTeam)];
   const changedCount = all.filter((item) => item.status.changed).length;
-  const emptyCount = all.filter((item) => !item.status.player).length;
+  // Season-player slots have no current player but are not "빈칸".
+  const { empty: emptyCount, season: seasonCount } = rosterSlotCounts(all.map((item) => ({ teamId: item.teamId, role: item.role, hasPlayer: !!item.status.player })), seasonLineups);
   const hasSeasonPlayers = seasonAssigned;
 
   return <details className="roster-workshop" lang="ko" open={open} onToggle={(event) => setOpen(event.currentTarget.open)}>
-    <summary>가상 로스터·포지션 <small>원관측과 다른 슬롯 {changedCount} · 빈칸 {emptyCount}</small></summary>
+    <summary>가상 로스터·포지션 <small>원관측과 다른 슬롯 {changedCount} · 빈칸 {emptyCount}{seasonCount > 0 && ` · 시즌 선수 ${seasonCount}`}</small></summary>
     {open && <div className="roster-workshop-body">
       <GuestClubPanel publicationRoot={publicationRoot} basis={basis} index={index} rosters={rosters} seasonLineups={seasonLineups} seasonCatalog={seasonCatalog} onSeasonApply={(teamId, slots) => setSeasonLineups(current => ({ ...current, [teamId]: slots }))} blueTeamId={blueTeam.team_id} redTeamId={redTeam.team_id} disabled={disabled || reading || !restored} onApply={(next) => { commit(next); setEditStatus("저장한 구단의 선수 구성을 적용했습니다."); }} />
       <SeasonLineupPanel catalog={seasonCatalog} onCatalog={setSeasonCatalog} lineups={seasonLineups} teams={[{ id: blueTeam.team_id, name: blueTeam.team_name, side: "BLUE" }, { id: redTeam.team_id, name: redTeam.team_name, side: "RED" }]} publicationRoot={publicationRoot} disabled={disabled || reading || !restored} onChoose={chooseSeason} onApplyPreset={applySeasonPreset} selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} analysis={seasonAnalysis} />
       <p className="roster-workshop-note" role="note"><b>기존 추천 순위·예측/시뮬레이션에는 로스터 변경이 아직 반영되지 않습니다.</b> 변경은 아래 선수 근거·남은 관측 챔프 표시와 A/B 비교의 현재 B 로스터에만 반영되며, 이미 고정된 기준 A는 소급 변경되지 않습니다. 같은 공개 스냅샷에서 관측된 선수만 고를 수 있으며, CURRENT는 자료상의 관측 표시일 뿐 공식 최신 소속이 아닙니다. 역할 관측이 하나로 정해지지 않으면 빈칸으로 둡니다.</p>
       <div className="roster-workshop-teams">
-        <RosterTeam side="BLUE" team={blueTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} />
-        <RosterTeam side="RED" team={redTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} />
+        <RosterTeam side="BLUE" team={blueTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} seasonLineups={seasonLineups} seasonCatalog={seasonCatalog} />
+        <RosterTeam side="RED" team={redTeam} rosters={rosters} observed={observed} index={index} teams={teams} disabled={disabled || reading} onChoose={choose} seasonLineups={seasonLineups} seasonCatalog={seasonCatalog} />
       </div>
       <PlayerPoolPanel basis={pool} teams={teams} index={index} rosters={rosters} blueTeam={blueTeam} redTeam={redTeam}
-        selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} season={season} />
+        selections={selections} previousPicks={previousPicks} focusChampionId={focusChampionId} season={season} seasonLineups={seasonLineups} seasonCatalog={seasonCatalog} />
       {editStatus && <p className="roster-workshop-status" role="status">{editStatus}</p>}
       <div className="roster-workshop-actions">
         <button type="button" disabled={disabled || reading || (changedCount === 0 && !Object.values(seasonLineups).some(slots => Object.values(slots).some(Boolean)))} onClick={() => { setSeasonLineups({}); setEditStatus("원관측 배치로 되돌렸습니다. 시즌 배정도 해제했습니다."); commit(observed); }}>원관측으로 되돌리기</button>
@@ -331,9 +334,10 @@ function playerLabel(player: RosterPlayer, index: RosterIndex) {
   return `${player.player_name} · ${roleLabel(player.observed_role)}${player.roster_status === "CURRENT" ? "" : " · 현재 관측 아님"}${id}`;
 }
 
-function RosterTeam({ side, team, rosters, observed, index, teams, disabled, onChoose }: {
+function RosterTeam({ side, team, rosters, observed, index, teams, disabled, onChoose, seasonLineups, seasonCatalog }: {
   side: DraftSide; team: OpponentTeam; rosters: RosterState; observed: RosterState; index: RosterIndex; teams: OpponentTeam[];
   disabled: boolean; onChoose: (teamId: string, role: RosterRole, value: string) => void;
+  seasonLineups: TeamSeasonSlots; seasonCatalog: SeasonCardCatalog | null;
 }) {
   const own = [...index.players.values()].filter((player) => player.source_team_id === team.team_id)
     .sort((left, right) => Number(right.roster_status === "CURRENT") - Number(left.roster_status === "CURRENT")
@@ -352,12 +356,13 @@ function RosterTeam({ side, team, rosters, observed, index, teams, disabled, onC
         const original = observed[team.team_id]?.[role] ?? null;
         const status = slotStatus(team.team_id, role, assigned, original, index);
         const originalPlayer = original ? index.players.get(playerKey(original.source_team_id, original.player_id)) : null;
+        const seasonSlot = status.player ? null : seasonSlotIdentity({ lineups: seasonLineups, catalog: seasonCatalog, rosters, teamId: team.team_id, role });
         return <li key={role} className={status.changed ? "changed" : ""} data-role={role}>
           <label><span>{roleLabel(role)}</span>
             <select aria-label={`${team.team_name} ${roleLabel(role)} 선수`} disabled={disabled}
               value={assigned ? playerKey(assigned.source_team_id, assigned.player_id) : ""}
               onChange={(event) => onChoose(team.team_id, role, event.target.value)}>
-              <option value="">빈칸 · 미확인</option>
+              <option value="">{seasonSlot ? "시즌 선수 배정 중 · 현재 선수 없음" : "빈칸 · 미확인"}</option>
               <optgroup label={`${team.team_name} 관측 선수`}>
                 {own.map((player) => <option key={player.key} value={player.key}>{playerLabel(player, index)}</option>)}
               </optgroup>
@@ -367,7 +372,7 @@ function RosterTeam({ side, team, rosters, observed, index, teams, disabled, onC
             </select>
           </label>
           <p className="roster-slot-flags">
-            {!status.player && <em>빈칸 · 미확인</em>}
+            {!status.player && (seasonSlot ? <SeasonSlotNote identity={seasonSlot} /> : <em>빈칸 · 미확인</em>)}
             {status.player && !status.changed && <em>원관측</em>}
             {status.changed && <b>원관측과 다름 (원관측: {originalPlayer ? originalPlayer.player_name : "빈칸"})</b>}
             {status.otherTeam && <b className="virtual">가상 변경: {status.player?.source_team_name} 관측 선수</b>}
