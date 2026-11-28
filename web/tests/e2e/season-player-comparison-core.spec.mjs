@@ -125,3 +125,47 @@ test("a compared champion opens a read-only season/current detail and returns fo
   await expect(page.locator(".draft-turn-progress")).toHaveAttribute("value", before.progress);
   await expect(page.locator(".draft-lock-in > div > span")).toHaveText(staged);
 });
+
+test("swapping sides withdraws an open season champion detail instead of keeping the old BLUE/RED labels", async ({ page }) => {
+  await page.goto("/pro-meta-intelligence/");
+  await enterDraftForReview(page); // no turn taken: side swap is only offered while no work is in progress
+  await showPanel(page, "ROSTER");
+  const season = page.locator("details.season-lineup");
+  await season.locator(":scope > summary").click();
+  await season.getByRole("button", { name: "시즌 선수 자료 불러오기", exact: true }).click();
+  const year = season.getByLabel("선수 시즌", { exact: true });
+  const assign = async (side, label) => {
+    const select = season.getByLabel(`${side} 탑 시즌 선수`, { exact: true });
+    const value = await select.locator("option").evaluateAll((options, text) => options.find(o => o.textContent.includes(text))?.value, label);
+    expect(value).toBeTruthy(); await select.selectOption(value);
+  };
+  await year.selectOption("2015"); await assign("BLUE", "2015 MaRin");
+  await year.selectOption("2022"); await assign("RED", "2022 Nuguri");
+  const comparison = season.locator("details.season-compare");
+  await comparison.locator(":scope > summary").click();
+  const sideNames = () => comparison.locator(".season-compare-side > strong").allInnerTexts();
+  const [blueBefore, redBefore] = await sideNames();
+  const detail = comparison.locator(".season-champ-detail");
+  await comparison.locator(".season-compare-side").first().getByRole("button", { name: /상세 보기 \(탑 시즌 관측\)/ }).first().click();
+  await expect(detail.locator('[data-side="BLUE"]')).toContainText("2015 MaRin");
+  await expect(detail.locator('[data-side="RED"]')).toContainText("2022 Nuguri");
+
+  await page.getByRole("button", { name: "팀 선택으로", exact: true }).click();
+  const swap = page.locator(".draft-flow-setup .draft-match-setup > button");
+  await expect(swap).toBeEnabled();
+  await swap.click();
+  await page.locator(".draft-flow-setup").getByRole("button", { name: /^밴픽 (시작|이어가기)$/ }).click();
+  await showPanel(page, "ROSTER");
+  // Both teams and their season lineups survive the swap, now on the other sides.
+  const blueName = blueBefore.replace(/^블루 · /, ""), redName = redBefore.replace(/^레드 · /, "");
+  expect(blueName).not.toBe(redName);
+  await expect.poll(sideNames).toEqual([`블루 · ${redName}`, `레드 · ${blueName}`]);
+  await expect(season.getByLabel("BLUE 탑 시즌 선수", { exact: true }).locator("option:checked")).toContainText("2022 Nuguri");
+  await expect(detail).toHaveCount(0);
+
+  // Reopened, the detail follows the current sides.
+  await comparison.locator(".season-compare-side").first().getByRole("button", { name: /상세 보기 \(탑 시즌 관측\)/ }).first().click();
+  await expect(detail.locator('[data-side="BLUE"]')).toContainText("2022 Nuguri");
+  await expect(detail.locator('[data-side="RED"]')).toContainText("2015 MaRin");
+  await expect(page.locator(".draft-turn-progress")).toHaveAttribute("value", "0");
+});

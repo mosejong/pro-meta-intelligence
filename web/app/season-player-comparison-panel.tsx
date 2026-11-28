@@ -14,7 +14,7 @@ const roles: Record<RosterRole, string> = { TOP: "탑", JUNGLE: "정글", MID: "
 /**
  * Read-only comparison of observed champion records for past-season cards assigned to the same role on both sides.
  * Each listed champion opens an in-panel, read-only detail (season observation vs. current publication) that is
- * withdrawn when the catalog or either compared card changes; it never stages or confirms a draft selection.
+ * withdrawn when the catalog, either compared card or the side of either team changes; it never stages or confirms a draft selection.
  */
 export function SeasonPlayerComparisonPanel({ catalog, lineups, teams, selections, previousPicks, nameOf, analysis = null }: {
   catalog: SeasonCardCatalog | null; lineups: TeamSeasonSlots; teams: readonly { id: string; name: string; side: string }[];
@@ -26,10 +26,12 @@ export function SeasonPlayerComparisonPanel({ catalog, lineups, teams, selection
   const trigger = useRef<HTMLButtonElement | null>(null);
   const heading = useRef<HTMLHeadingElement | null>(null);
   const summaryRef = useRef<HTMLElement | null>(null);
-  const detail = seasonChampionDetail(target, catalog, lineups, selections, previousPicks);
+  const blues = teams.filter(t => t.side === "BLUE"), reds = teams.filter(t => t.side === "RED");
+  const sides = { blue: blues.length === 1 ? blues[0].id : null, red: reds.length === 1 ? reds[0].id : null };
+  const detail = seasonChampionDetail(target, catalog, lineups, sides, selections, previousPicks);
   const stale = !!target && !detail;
   const [withdrawn, setWithdrawn] = useState(0);
-  // Catalog or compared-card change: withdraw the old detail for good (it never reappears if the same
+  // Catalog, compared-card or side-swap change: withdraw the old detail for good (it never reappears if the same
   // cards come back), then let focus fall back to the panel summary if it was lost with the detail.
   if (stale) { setTarget(null); setWithdrawn((count) => count + 1); }
   useEffect(() => {
@@ -45,7 +47,6 @@ export function SeasonPlayerComparisonPanel({ catalog, lineups, teams, selection
   if (!catalog) return null;
   const anyRef = Object.values(lineups).some(slots => slots && Object.values(slots).some(Boolean));
   if (!anyRef) return null;
-  const blues = teams.filter(t => t.side === "BLUE"), reds = teams.filter(t => t.side === "RED");
   const body = (() => {
     if (blues.length !== 1 || reds.length !== 1) return <p>블루와 레드 팀이 각각 하나씩 있어야 시즌 선수 관측을 비교할 수 있습니다.</p>;
     const [blue, red] = [blues[0], reds[0]];

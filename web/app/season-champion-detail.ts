@@ -5,9 +5,9 @@ import { resolveSeasonRef, type SeasonCard, type SeasonCardCatalog, type TeamSea
 /**
  * Read-only champion detail opened from the season player comparison (season-champion-detail v1).
  *
- * A target remembers exactly which comparison it was opened from: catalog version, role and the two
- * season cards. It stays valid only while the same catalog is loaded and both sides still hold those
- * same cards in that role; otherwise the caller withdraws the detail instead of showing it for a
+ * A target remembers exactly which comparison it was opened from: catalog version, role, which team
+ * was on which side and the two season cards. It stays valid only while the same catalog is loaded,
+ * the same teams are on the same sides and both still hold those same cards in that role; otherwise the caller withdraws the detail instead of showing it for a
  * different comparison. Nothing here stages, confirms or recommends a champion.
  *
  * Per side, the champion's count on that season card (aliases collapse to the largest row, never
@@ -48,9 +48,17 @@ const resolve = (lineups: TeamSeasonSlots, teamId: string, role: RosterRole, cat
   try { return resolveSeasonRef(ref, role, catalog); } catch { return null; }
 };
 
-/** True only while the same catalog and the same two season cards are still in that role. */
-export function seasonChampionTargetValid(target: SeasonChampionTarget | null, catalog: SeasonCardCatalog | null, lineups: TeamSeasonSlots): boolean {
+/** The team currently on each side (null when that side has no single team). */
+export type SeasonChampionSides = { blue: string | null; red: string | null };
+
+/**
+ * True only while the same catalog and the same two season cards are still in that role, and each
+ * team is still on the side it was opened on. A side swap keeps both teams (and their season
+ * lineups), so without the side check the detail would keep labelling the old BLUE card as BLUE.
+ */
+export function seasonChampionTargetValid(target: SeasonChampionTarget | null, catalog: SeasonCardCatalog | null, lineups: TeamSeasonSlots, sides: SeasonChampionSides): boolean {
   if (!target || !catalog || catalog.catalog_id !== target.catalog_id || !ROSTER_ROLES.includes(target.role)) return false;
+  if (!sides || sides.blue !== target.blue.team_id || sides.red !== target.red.team_id) return false;
   const blue = resolve(lineups, target.blue.team_id, target.role, catalog);
   const red = resolve(lineups, target.red.team_id, target.role, catalog);
   return !!blue && !!red && blue.id === target.blue.card_id && red.id === target.red.card_id;
@@ -69,8 +77,8 @@ function side(label: "BLUE" | "RED", card: SeasonCard, championId: string): Seas
 
 /** Null when the target is no longer valid (the caller then withdraws the detail). */
 export function seasonChampionDetail(target: SeasonChampionTarget | null, catalog: SeasonCardCatalog | null, lineups: TeamSeasonSlots,
-  selections: readonly PoolSelection[], previousPicks: readonly string[]): SeasonChampionDetail | null {
-  if (!target || !catalog || !seasonChampionTargetValid(target, catalog, lineups)) return null;
+  sides: SeasonChampionSides, selections: readonly PoolSelection[], previousPicks: readonly string[]): SeasonChampionDetail | null {
+  if (!target || !catalog || !seasonChampionTargetValid(target, catalog, lineups, sides)) return null;
   const blue = resolve(lineups, target.blue.team_id, target.role, catalog)!;
   const red = resolve(lineups, target.red.team_id, target.role, catalog)!;
   return {

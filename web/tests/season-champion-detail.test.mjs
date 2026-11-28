@@ -17,6 +17,7 @@ before(async () => {
 });
 after(async () => { await vite?.close(); });
 
+const SIDES = { blue: "blue", red: "red" };
 const empty = () => ({ TOP: null, JUNGLE: null, MID: null, BOTTOM: null, SUPPORT: null });
 const pick = (name, season) => catalog.cards.filter(c => c.player_name === name && c.season === season && c.role === "TOP").sort((a, b) => b.game_count - a.game_count)[0];
 const ref = c => ({ catalog_id: catalog.catalog_id, card_id: c.id, player_id: c.player_id });
@@ -33,7 +34,7 @@ test("detail: per-side observed counts from the actual cards; a champion absent 
   const snap = structuredClone([catalog, lineups]);
   const only = onlyOn(marin, nuguri);
   assert.ok(only, "MaRin 2015 has a champion Nuguri 2022 lacks");
-  const detail = D.seasonChampionDetail(targetFor(marin, nuguri, only.champion_id), catalog, lineups, [{ kind: "BAN", champion_id: only.champion_id }], []);
+  const detail = D.seasonChampionDetail(targetFor(marin, nuguri, only.champion_id), catalog, lineups, SIDES, [{ kind: "BAN", champion_id: only.champion_id }], []);
   assert.equal(detail.state, "BANNED_NOW");
   assert.deepEqual(detail.sides.map(s => [s.side, s.player_name, s.season, s.game_count]), [["BLUE", "MaRin", 2015, marin.game_count], ["RED", "Nuguri", 2022, nuguri.game_count]]);
   assert.equal(detail.sides[0].games, only.games);
@@ -46,7 +47,7 @@ test("detail: aliases collapse to the largest single row, never summed", () => {
   const local = structuredClone(catalog);
   const blue = local.cards.find(c => c.id === marin.id);
   blue.champions = [{ champion_id: "Wukong", games: 2 }, { champion_id: "MonkeyKing", games: 5 }];
-  const detail = D.seasonChampionDetail(targetFor(marin, nuguri, "MonkeyKing"), local, lineups, [], ["Wukong"]);
+  const detail = D.seasonChampionDetail(targetFor(marin, nuguri, "MonkeyKing"), local, lineups, SIDES, [], ["Wukong"]);
   assert.equal(detail.sides[0].games, 5);
   assert.equal(detail.state, "FEARLESS_LOCKED");
 });
@@ -54,25 +55,40 @@ test("detail: aliases collapse to the largest single row, never summed", () => {
 test("target is withdrawn when the catalog version or either compared card changes", () => {
   const { marin, nuguri, lineups } = setup();
   const target = targetFor(marin, nuguri, "Gnar");
-  assert.equal(D.seasonChampionTargetValid(target, catalog, lineups), true);
-  assert.equal(D.seasonChampionTargetValid(target, null, lineups), false);
-  assert.equal(D.seasonChampionTargetValid(target, { ...catalog, catalog_id: "f".repeat(64) }, lineups), false);
-  assert.equal(D.seasonChampionTargetValid(target, catalog, { ...lineups, red: empty() }), false);
+  assert.equal(D.seasonChampionTargetValid(target, catalog, lineups, SIDES), true);
+  assert.equal(D.seasonChampionTargetValid(target, null, lineups, SIDES), false);
+  assert.equal(D.seasonChampionTargetValid(target, { ...catalog, catalog_id: "f".repeat(64) }, lineups, SIDES), false);
+  assert.equal(D.seasonChampionTargetValid(target, catalog, { ...lineups, red: empty() }, SIDES), false);
   const other = catalog.cards.find(c => c.role === "TOP" && c.id !== nuguri.id && c.player_id !== marin.player_id);
-  assert.equal(D.seasonChampionTargetValid(target, catalog, { ...lineups, red: { ...empty(), TOP: ref(other) } }), false);
-  assert.equal(D.seasonChampionTargetValid({ ...target, role: "MID" }, catalog, lineups), false);
-  assert.equal(D.seasonChampionTargetValid(target, catalog, Object.create({ blue: lineups.blue, red: lineups.red })), false);
-  assert.equal(D.seasonChampionDetail(target, catalog, { blue: lineups.blue }, [], []), null);
-  assert.equal(D.seasonChampionDetail(null, catalog, lineups, [], []), null);
+  assert.equal(D.seasonChampionTargetValid(target, catalog, { ...lineups, red: { ...empty(), TOP: ref(other) } }, SIDES), false);
+  assert.equal(D.seasonChampionTargetValid({ ...target, role: "MID" }, catalog, lineups, SIDES), false);
+  assert.equal(D.seasonChampionTargetValid(target, catalog, Object.create({ blue: lineups.blue, red: lineups.red }), SIDES), false);
+  assert.equal(D.seasonChampionDetail(target, catalog, { blue: lineups.blue }, SIDES, [], []), null);
+  assert.equal(D.seasonChampionDetail(null, catalog, lineups, SIDES, [], []), null);
 });
 
 const team = (team_id, team_name, extra = {}) => ({ team_id, team_name, game_count: 10, priority_picks: [], frequent_bans: [], received_bans: [], recent_games: [], ...extra });
 const report = { patch_id: "26.22", cutoff: "2026-11-20T00:00:00Z", entries: [{ champion_id: "Gnar", role: "TOP", metrics: { current_pick_count: 4, current_distinct_team_count: 3 }, eligible_for_review: true, evidence_event_ids: ["e1", "e2"] }] };
 const view = (detail, analysis) => renderToStaticMarkup(createElement(V.SeasonChampionDetailView, { detail, analysis, nameOf: id => `N:${id}`, onClose: () => {} }));
 
+test("side swap: the same two teams on swapped sides withdraw the detail instead of keeping old BLUE/RED labels", () => {
+  const { marin, nuguri, lineups } = setup();
+  const target = targetFor(marin, nuguri, "Maokai");
+  assert.equal(D.seasonChampionTargetValid(target, catalog, lineups, SIDES), true);
+  // Lineups stay keyed by team, so only the side check can notice the swap.
+  assert.equal(D.seasonChampionTargetValid(target, catalog, lineups, { blue: "red", red: "blue" }), false);
+  assert.equal(D.seasonChampionDetail(target, catalog, lineups, { blue: "red", red: "blue" }, [], []), null);
+  assert.equal(D.seasonChampionTargetValid(target, catalog, lineups, { blue: "blue", red: null }), false);
+  assert.equal(D.seasonChampionTargetValid(target, catalog, lineups, { blue: "other", red: "red" }), false);
+  // Reopened after the swap, BLUE is the team now on blue (Nuguri's), never the old one.
+  const reopened = { ...target, blue: { team_id: "red", card_id: nuguri.id }, red: { team_id: "blue", card_id: marin.id } };
+  const detail = D.seasonChampionDetail(reopened, catalog, lineups, { blue: "red", red: "blue" }, [], []);
+  assert.deepEqual(detail.sides.map(s => [s.side, s.player_name]), [["BLUE", "Nuguri"], ["RED", "MaRin"]]);
+});
+
 test("detail view: season and current publication halves are separate; unobserved stays 미관측", () => {
   const { marin, nuguri, lineups } = setup();
-  const detail = { ...D.seasonChampionDetail(targetFor(marin, nuguri, "Gnar"), catalog, lineups, [], []), champion_id: "Gnar" };
+  const detail = { ...D.seasonChampionDetail(targetFor(marin, nuguri, "Gnar"), catalog, lineups, SIDES, [], []), champion_id: "Gnar" };
   detail.sides = [{ ...detail.sides[0], games: 7 }, { ...detail.sides[1], games: null }];
   const blueTeam = team("b", "블루팀", { priority_picks: [{ champion_id: "Gnar", role: "TOP", game_count: 3, evidence_event_ids: ["x1", "x2", "x3"] }] });
   const linked = view(detail, { report, blueTeam, redTeam: team("r", "레드팀") });
